@@ -1,3 +1,8 @@
+---
+layout: default
+title: The Amazon Ion Binary Encoding
+---
+
 # The Amazon Ion Binary Encoding
 
 ## Value Streams
