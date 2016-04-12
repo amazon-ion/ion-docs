@@ -1,3 +1,8 @@
+---
+layout: default
+title: Amazon Ion Strings and Clobs
+---
+
 # Amazon Ion Strings and Clobs
 
 This document is a proposal to clarify the semantics of the Amazon Ion

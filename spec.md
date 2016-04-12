@@ -1,3 +1,8 @@
+---
+layout: default
+title: The Amazon Ion Specification
+---
+
 # The Amazon Ion Specification
 
 The Amazon Ion specification has three parts:

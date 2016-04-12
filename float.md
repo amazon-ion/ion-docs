@@ -1,3 +1,8 @@
+---
+layout: default
+title: Amazon Ion Floats
+---
+
 # Amazon Ion Floats
 Amazon Ion supports IEEE-754 binary floating point values using the IEEE-754
 32-bit (`binary32`) and 64-bit (`binary64`) encodings.

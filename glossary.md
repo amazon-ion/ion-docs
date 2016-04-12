@@ -1,3 +1,8 @@
+---
+layout: default
+title: Glossary
+---
+
 # Glossary
 
 The following terms have particular definitions as it relates to their usage

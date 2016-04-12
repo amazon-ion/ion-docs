@@ -1,3 +1,8 @@
+---
+layout: default
+title: The Amazon Ion Text Encoding
+---
+
 # The Amazon Ion Text Encoding
 
 A [value stream](glossary.html#value_stream) in the text encoding must be a

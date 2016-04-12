@@ -1,3 +1,8 @@
+---
+layout: default
+title: Amazon Ion Decimals
+---
+
 # Amazon Ion Decimals
 
 Amazon Ion supports a decimal numeric type to allow accurate representation

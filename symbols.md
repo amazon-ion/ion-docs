@@ -1,3 +1,8 @@
+---
+layout: default
+title: Amazon Ion Symbols
+---
+
 # Amazon Ion Symbols
 
 Amazon Ion symbols are critical to the notation's performance and
