@@ -1,2 +1,4 @@
 name: Ion Docs
 markdown: kramdown
+kramdown:
+  input: GFM
