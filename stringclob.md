@@ -1,9 +1,8 @@
 ---
-layout: default
 title: Amazon Ion Strings and Clobs
 ---
 
-# Amazon Ion Strings and Clobs
+# {{ page.title }}
 
 This document is a proposal to clarify the semantics of the Amazon Ion
 `string` and `clob` data types with respect to
@@ -13,8 +12,7 @@ As of the date of this writing, the Unicode Standard is on [version
 5.0](http://www.unicode.org/versions/Unicode5.0.0/). This specification
 is to that standard.
 
-Unicode Primer
---------------
+## Unicode Primer
 
 The Unicode standard specifies a large set of *code points*, the
 Universal Character Set (UCS), which is an integer in the range of 0
@@ -50,63 +48,68 @@ U+0010FFFF range. Refer to sections [3.8 and 3.9 of the Unicode
 Standard](http://www.unicode.org/versions/Unicode4.0.0/ch03.pdf) for
 details.
 
-Ion String
-----------
+## Ion String
 
 The Ion String data type is a sequence of Unicode *code points*. The Ion
 semantics of this are agnostic to any particular Unicode encoding (_e.g._
 UTF-16, UTF-8), except for the *concrete* syntax specification of the
 Ion binary and text formats.
 
-#### Text Format
+### Text Format
 
 The formal Ion Text encoding for the `string` type is specified by the
 following EBNF:
 
-    string        ::= '"' short '"' | ( "'''" long "'''" )+
+```
+string        ::= '"' short '"' | ( "'''" long "'''" )+
 
-    short         ::= short_char*
+short         ::= short_char*
 
-    long          ::= long_char*
+long          ::= long_char*
 
-    short_char    ::= (<any valid Unicode code point> - ('\' | control_char | '"'))
-                  |   common_escape
-                  |   nl_escape
+short_char    ::= (<any valid Unicode code point> - ('\' | control_char | '"'))
+              |   common_escape
+              |   nl_escape
 
-    long_char     ::= (<any valid Unicode code point> - ('\' | control_char | "'''"))
-                  |   common_escape
-                  |   nl_escape
-                  |   nl_raw
+long_char     ::= (<any valid Unicode code point> - ('\' | control_char | "'''"))
+              |   common_escape
+              |   nl_escape
+              |   nl_raw
 
-    nl_escape     ::= '\' nl_raw
+nl_escape     ::= '\' nl_raw
 
-    common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'U' | 'u' | 'x' )
+common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'U' | 'u' | 'x' )
 
-    nl_raw        ::= U+000A | U+000D | U+000D U+000A
+nl_raw        ::= U+000A | U+000D | U+000D U+000A
 
-    control_char  ::= <U+0000 to U+001F>
+control_char  ::= <U+0000 to U+001F>
+```
 
 Multiple Ion long `string` literals that are adjacent to each other by
 zero or more whitespace are concatenated automatically. For example the
 following two blocks of Ion text syntax are semantically equivalent.
 Note that short `string` literals do not exhibit this behavior.
 
-    "1234"    '''Hello'''    '''World'''
+```
+"1234"    '''Hello'''    '''World'''
 
-    "1234"    "HelloWorld"
+"1234"    "HelloWorld"
+```
 
 Each individual long `string` literal must be a valid Unicode character
 sequence when unescaped. The following examples are invalid due to
 splitting Unicode escapes, an escaped surrogate pair, and a common
 escape, respectively.
 
-    '''\u'''    '''1234'''
+```
+'''\u'''    '''1234'''
 
-    '''\U0000'''    '''1234'''
+'''\U0000'''    '''1234'''
 
-    '''\uD800'''    '''\uDC00'''
+'''\uD800'''    '''\uDC00'''
 
-    '''\'''    '''n'''
+'''\'''    '''n'''
+```
 
 Within long `string` literals unescaped newlines are normalized such that
 U+000D U+000A pairs (CARRIAGE RETURN and LINE FEED respectively) and U+000D are
@@ -115,13 +118,15 @@ systems.
 
 Normalization can be subverted by using a combination of escapes:
 
-    CARRIAGE RETURN only:
-    '''one\r\
-    two'''
+```
+CARRIAGE RETURN only:
+'''one\r\
+two'''
 
-    CARRIAGE RETURN and LINE FEED:
-    '''one\r
-    two'''
+CARRIAGE RETURN and LINE FEED:
+'''one\r
+two'''
+```
 
 The `nl_escape` is not replaced with any characters (_i.e._ the newline is
 removed). In addition, the following table describes the `string` escape
@@ -249,7 +254,7 @@ code point U+00010000. In this regard, the Ion `string` data type does
 not conform to the Unicode specification. A strict Unicode
 implementation of the Ion text should not accept such sequences.
 
-#### Binary Format
+### Binary Format
 
 The Ion *binary format* encodes the `string` data type directly as a
 sequence of UTF-8 octets. A strict, Unicode compliant implementation of
@@ -257,8 +262,7 @@ Ion should not allow invalid UTF-8 sequences (_e.g._ surrogate code
 points, overlong values, and values outside of the inclusive range,
 U+0000 to U+0010FFFF).
 
-Ion Clob
---------
+## Ion Clob
 
 An Ion `clob` type is similar to the `blob` type except that the
 denotation in the Ion text format uses an ASCII-based string notation
@@ -266,29 +270,31 @@ rather than a *base64* encoding to denote its binary value. It is
 important to make the distinction that `clob` is a sequence of raw
 octets and `string` is a sequence of Unicode code points.
 
-#### Text Format
+### Text Format
 
 The formal Ion Text encoding for the `clob` type is specified by the
 following EBNF:
 
-    clob          ::= '{' '{' '"' short '"' | ( "'''" long "'''" )+ '}' '}'
-     
-    short         ::= short_char*
+```
+clob          ::= '{' '{' '"' short '"' | ( "'''" long "'''" )+ '}' '}'
 
-    long          ::= long_char*
+short         ::= short_char*
 
-    short_char    ::= <any printable ascii character or
-                       the new line (U+000A, U+000D, U+000D followed by U+000A)>
-                  |   common_escape
-                  |   nl_escape
+long          ::= long_char*
 
-    long_char     ::= <any printable ascii character>
-                  |   common_escape
-                  |   nl_escape
+short_char    ::= <any printable ascii character or
+                   the new line (U+000A, U+000D, U+000D followed by U+000A)>
+              |   common_escape
+              |   nl_escape
 
-    nl_escape     ::= '\' U+000A | '\' U+000D | '\' U+000D U+000A
+long_char     ::= <any printable ascii character>
+              |   common_escape
+              |   nl_escape
 
-    common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'x' )
+nl_escape     ::= '\' U+000A | '\' U+000D | '\' U+000D U+000A
+
+common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'x' )
+```
 
 Similar to `string`, multiple long string literals within an Ion
 `clob`that are adjacent to each other by zero or more whitespace are
@@ -296,9 +302,11 @@ concatenated automatically. Within a `clob`, only one short string
 literal or multiple long string literals are allowed. For example, the
 following two blocks of Ion text syntax are semantically equivalent.
 
+{% raw %}
     {{ '''Hello'''    '''World''' }}
 
     {{ "HelloWorld" }}
+{% endraw %}
 
 The rules for the quoted strings within a `clob` follow the similarly to
 the `string` type, except for the following exceptions. Unicode newline
@@ -414,14 +422,13 @@ ASCII compatible or should be octet editable by a human (escaped string
 syntax vs. base64 encoded data). Clearly non-ASCII based encodings will
 not be very readable (_e.g._ the `clob` for the EBCDIC encoded string
 representing "hello" could be denoted as
-`{{ "\xc7\xc1%%?" }}`).
+`{% raw %}{{ "\xc7\xc1%%?" }}{% endraw %}`).
 
 #### Binary Format
 
 This is represented directly as the octet values in the `clob` value.
 
-References
-----------
+## References
 
   * [The Unicode Home Page](http://unicode.org)
   * [Unicode Encoding FAQ](http://www.unicode.org/faq/utf_bom.html)

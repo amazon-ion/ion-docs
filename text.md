@@ -1,9 +1,8 @@
 ---
-layout: default
 title: The Amazon Ion Text Encoding
 ---
 
-# The Amazon Ion Text Encoding
+# {{ page.title }}
 
 A [value stream](glossary.html#value_stream) in the text encoding must be a
 valid sequence of Unicode code points in any of the three encoding forms

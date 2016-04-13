@@ -1,9 +1,8 @@
 ---
-layout: default
 title: The Amazon Ion Binary Encoding
 ---
 
-# The Amazon Ion Binary Encoding
+# {{ page.title }}
 
 ## Value Streams
 
@@ -212,8 +211,7 @@ Null value |    0    |    15   |
 Values of type `null` always have empty lengths and representations. The only
 valid _L_ value is 15, representing the only value of this type, `null.null`.
 
-<a id="nop-pad"></a>
-#### NOP Padding
+#### NOP Padding {#nop-pad}
 
 <pre class="textdiagram">
          7       4 3       0
@@ -610,8 +608,7 @@ a NOP pad, which is not allowed generally for annotations:
     // {$0:name::<NOP>}
     0xD5 0x80 0xE3 0x81 0x84 0x00
 
-<a id="annotations"></a>
-### 14: Annotations
+### 14: Annotations {#annotations}
 
 This special type code doesn't map to an Ion value type, but instead is a
 wrapper used to associate annotations with content.

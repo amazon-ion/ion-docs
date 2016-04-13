@@ -1,9 +1,8 @@
 ---
-layout: default
 title: Amazon Ion Floats
 ---
 
-# Amazon Ion Floats
+# {{ page.title }}
 Amazon Ion supports IEEE-754 binary floating point values using the IEEE-754
 32-bit (`binary32`) and 64-bit (`binary64`) encodings.
 In the data model, all floating point values are treated as though they are
@@ -97,14 +96,16 @@ Although the textual representative of `1.2e0` itself is irrational, its
 canonical form in the data model is not (based on the rounding rules), thus
 the following text forms all map to the same `binary64` value:
 
-    // the most human-friendly representation
-    1.2e0
-    
-    // the exact textual representation in base-10 for the binary64 value 1.2e0 represents
-    1.1999999999999999555910790149937383830547332763671875e0
-      
-    // a shortened, irrational version, but still the same value
-    1.1999999999999999e0
-    
-    // a lengthened, irrational version that is still the same value
-    1.19999999999999999999999999999999999999999999999999999999e0
+```
+// the most human-friendly representation
+1.2e0
+
+// the exact textual representation in base-10 for the binary64 value 1.2e0 represents
+1.1999999999999999555910790149937383830547332763671875e0
+
+// a shortened, irrational version, but still the same value
+1.1999999999999999e0
+
+// a lengthened, irrational version that is still the same value
+1.19999999999999999999999999999999999999999999999999999999e0
+```

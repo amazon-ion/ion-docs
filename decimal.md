@@ -1,9 +1,8 @@
 ---
-layout: default
 title: Amazon Ion Decimals
 ---
 
-# Amazon Ion Decimals
+# {{ page.title }}
 
 Amazon Ion supports a decimal numeric type to allow accurate representation
 of base-10 floating point values such as currency amounts. This
@@ -47,59 +46,73 @@ Where `X` is any unsigned integer, all of the following formulae can be
 demonstrated to be equivalent using the text conversion rules and the data
 model.
 
-    // Exponent implicitly zero
-    X.
-    // Exponent explicitly zero
-    Xd0
-    // Exponent explicitly negative zero (equivalent to zero).
-    Xd-0
+```
+// Exponent implicitly zero
+X.
+// Exponent explicitly zero
+Xd0
+// Exponent explicitly negative zero (equivalent to zero).
+Xd-0
+```
 
 Other equivalent representations include the following, where `Y` is the number
 of digits in `X`.
 
-    // There are Y digits past the decimal point in the
-    // decimal-part, making the exponent zero. One leading zero
-    // is removed.
-    0.XdY
+```
+// There are Y digits past the decimal point in the
+// decimal-part, making the exponent zero. One leading zero
+// is removed.
+0.XdY
+```
 
 For example, all of the following text Ion decimal representations are equivalent
 to each other.
 
-    0.
-    0d0
-    0d-0
-    0.0d1
+```
+0.
+0d0
+0d-0
+0.0d1
+```
 
 Additionally, all of the following are equivalent to each other (but not to
 any forms of positive zero).
 
-    -0.
-    -0d0
-    -0d-0
-    -0.0d1
+```
+-0.
+-0d0
+-0d-0
+-0.0d1
+```
 
 Because all forms of zero are distinctly identified by the *exponent*, the
 following are **not** equivalent to each other.
 
-    // Exponent implicitly zero.
-    0.
-    // Exponent explicitly 5.
-    0d5
+```
+// Exponent implicitly zero.
+0.
+// Exponent explicitly 5.
+0d5
+```
 
 All of the following are equivalent to each other.
 
-    42.
-    42d0
-    42d-0
-    4.2d1
-    0.42d2
+```
+42.
+42d0
+42d-0
+4.2d1
+0.42d2
+```
 
 However, the following are **not** equivalent to each other.
 
-    // Text converted to 42.
-    0.42d2
-    // Text converted to 42.0
-    0.420d2
+```
+// Text converted to 42.
+0.42d2
+// Text converted to 42.0
+0.420d2
+```
 
 ### Binary Format
 
