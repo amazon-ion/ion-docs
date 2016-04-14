@@ -477,7 +477,7 @@ When parsing `blob` text, an error must be raised if the data:
 Within `blob` values, whitespace is ignored and comments are not allowed.
 The `/` character is always considered part of the Base64 data.
 
-```
+{% raw %}
 // A null blob value
 null.blob
 
@@ -500,7 +500,7 @@ null.blob
 
 // ERROR: Invalid character within the data.
 {{ dHdvIHBhZGRpbmc_gY2hhcmFjdGVycw= }}
-```
+{% endraw %}
 
 #### Clobs {#clob}
 
@@ -519,7 +519,7 @@ within the value.
 [Strings and Clobs](stringclob.html) gives details on the
 subtle, but profound, differences between Ion strings and clobs.
 
-```
+{% raw %}
 null.clob  // A null clob value
 
 {{ "This is a CLOB of text." }}
@@ -534,7 +534,7 @@ shift_jis ::
   // ERROR
   "comments not allowed"
 }}
-```
+{% endraw %}
 
 Note that the `shift_jis` type annotation above is, like all
 [type annotations](#annot), application-defined. Ion does not interpret or
@@ -652,7 +652,7 @@ their order. Duplicate annotation symbols are allowed but discouraged.
 In the text format, type annotations are denoted by a non-null symbol
 token and double-colons preceding any content:
 
-```
+{% raw %}
 int32::12                                // Suggests 32 bits as end-user type
 'my.custom.type' :: { x : 12 , y : -1 }  // Gives a struct a user-defined type
 
@@ -662,7 +662,7 @@ jpeg :: {{ ... }}                        // Indicates the blob contains jpeg dat
 bool :: null.int                         // A very misleading annotation on the integer null
 '' :: 1                                  // An empty annotation
 null.symbol :: 1                         // ERROR: type annotation cannot be null 
-```
+{% endraw %}
 
 Except for a small number of predefined system annotations, Ion itself
 neither defines nor validates such annotations; that behavior is left to
