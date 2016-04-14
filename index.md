@@ -1,5 +1,5 @@
 ---
-title: Amazon Ion Specification
+title: Amazon Ion Documentation
 ---
 
 # {{ page.title }}
