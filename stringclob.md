@@ -102,13 +102,13 @@ splitting Unicode escapes, an escaped surrogate pair, and a common
 escape, respectively.
 
 ```
-'''\u'''    '''1234'''
+'''\u'''        '''1234'''
 
 '''\U0000'''    '''1234'''
 
 '''\uD800'''    '''\uDC00'''
 
-'''\'''    '''n'''
+'''\'''         '''n'''
 ```
 
 Within long `string` literals unescaped newlines are normalized such that
@@ -302,11 +302,13 @@ concatenated automatically. Within a `clob`, only one short string
 literal or multiple long string literals are allowed. For example, the
 following two blocks of Ion text syntax are semantically equivalent.
 
+```
 {% raw %}
-    {{ '''Hello'''    '''World''' }}
+{{ '''Hello'''    '''World''' }}
 
-    {{ "HelloWorld" }}
+{{ "HelloWorld" }}
 {% endraw %}
+```
 
 The rules for the quoted strings within a `clob` follow the similarly to
 the `string` type, except for the following exceptions. Unicode newline
