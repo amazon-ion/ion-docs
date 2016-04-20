@@ -1,0 +1,127 @@
+@charset "utf-8";
+
+body {
+    margin-top: 0;
+    margin-bottom: 2em;
+    padding: 0 2em;
+    font-family: -apple-system, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.8em;
+    color: black;
+    text-align: left;
+    background-color: white;
+    font-size: 11pt;
+}
+
+a, a:link, a:visited {
+    text-decoration: none;
+    color: #0066c0;
+}
+
+a:hover {
+    text-decoration: underline;
+    cursor: pointer;
+    color: #c45500;
+}
+
+tt, code, pre {
+    font-family: Menlo, Monaco, monospace;
+    color: #767676;
+    font-size: 95%;
+}
+
+tt .c, code .c, pre .c {
+    color: rgb(0, 131, 18);
+}
+
+tt .s, code .s, pre .s {
+    color: rgb(196, 26, 22);
+}
+
+tt .k, code .k, pre .k {
+    color: rgb(170, 51, 145);
+}
+
+pre {
+    border-radius: .25em;
+    position: relative;
+    padding: 0 .5em 0 .5em;
+    border-left: 0.4em #ddd solid;
+}
+
+table {
+    border-collapse: collapse;
+    border: 1px solid rgb(234, 234, 234);
+}
+
+th {
+    -webkit-background-clip: border-box;
+    -webkit-background-origin: padding-box;
+    -webkit-background-size: auto;
+    -webkit-border-horizontal-spacing: 0px;
+    -webkit-border-vertical-spacing: 0px;
+    -webkit-box-shadow: rgba(255, 255, 255, 0.498039) 0 1px 0 0 inset;
+    background-attachment: scroll;
+    background-clip: border-box;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: linear-gradient(rgb(248, 248, 248), rgb(238, 238, 238));
+    background-origin: padding-box;
+    background-size: auto;
+    box-shadow: rgba(255, 255, 255, 0.498039) 0 1px 0 0 inset;
+    border: 1px solid rgb(238, 238, 238);
+    box-sizing: border-box;
+    color: rgb(17, 17, 17);
+    font-weight: bold;
+    font-size: 90%;
+    height: 33px;
+    line-height: 19px;
+    padding: .5em 1em;
+    text-align: left;
+    vertical-align: top;
+    width: 37px;
+}
+
+td {
+    -webkit-border-horizontal-spacing: 0px;
+    -webkit-border-vertical-spacing: 0px;
+    border-bottom-color: rgb(234, 234, 234);
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-collapse: collapse;
+    box-sizing: border-box;
+    color: rgb(17, 17, 17);
+    height: 33px;
+    line-height: 1.3em;
+    padding: .5em 1em;
+    vertical-align: top;
+}
+
+tr:nth-child(even) {
+    background: rgb(234, 234, 234);
+}
+
+tr:nth-child(odd) {
+    background: white;
+}
+
+blockquote {
+    border-radius: .25em;
+    padding: 0.01em 1.3em 0.01em 1.2em;
+    border-left: 0.4em rgb(245, 215, 142) solid;
+    background-color: rgb(249, 243, 229);
+    line-height: 1.4em;
+    font-size: 90%;
+}
+
+footer {
+    font-size: 80%;
+    color: #999;
+    text-align: center;
+    width: 100%;
+}
+
+@media print {
+    footer {
+        position: absolute;
+        bottom: 0;
+    }
+}
