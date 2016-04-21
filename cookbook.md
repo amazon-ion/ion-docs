@@ -239,7 +239,7 @@ Using the `rewrite` method from the previous sub-section, the data can be
 down-converted for JSON compatibility.
 
 ```java
-    void downconvertToJSON() throws IOException {
+    void downconvertToJson() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         try (IonWriter jsonWriter = IonTextWriterBuilder.json().withPrettyPrinting().build(stringBuilder)) {
             rewrite(textIon, jsonWriter);
@@ -248,7 +248,7 @@ down-converted for JSON compatibility.
     }
 ```
 
-Calling `downconvertToJSON` prints the following:
+Calling `downconvertToJson` prints the following:
 
 ```
     {
@@ -278,7 +278,7 @@ following Ion text parsing rules should be kept in mind:
 
   1. Field names are interpreted as Ion symbols (i.e. quotes are removed when
      possible)
-  2. Numeric values with a decimal point are interpreted as Ion integers
+  2. Numeric values without a decimal point are interpreted as Ion integers
   3. Numeric values with a decimal point but without an exponent are interpreted
      as Ion decimals
   4. Numeric values with exponents are interpreted as Ion floats
@@ -481,15 +481,15 @@ Start by retrieving an object that can parse `test.csv` line-by-line, e.g. a
 [`java.io.BufferedReader`][13].
 
 ```java
-    BufferedReader getCSVReader() { /*...*/ }
+    BufferedReader getCsvReader() { /*...*/ }
 ```
 
 The code that actually performs the conversion will use this to parse each line
 of the CSV and write its components to an IonWriter.
 
 ```java
-    void convertCSVToIon(IonWriter writer) throws IOException {
-        BufferedReader reader = getCSVReader();
+    void convertCsvToIon(IonWriter writer) throws IOException {
+        BufferedReader reader = getCsvReader();
         reader.readLine(); // skip over the column labels
         String row;
         while ((row = reader.readLine()) != null) {
@@ -508,13 +508,13 @@ of the CSV and write its components to an IonWriter.
 
 Writing the CSV data as Ion using a local symbol table is as simple as using one
 of the techniques exhibited earlier in this cookbook to construct an
-`IonWriter`, passing it to the `convertCSVToIon` method, and closing
+`IonWriter`, passing it to the `convertCsvToIon` method, and closing
 it when finished.
 
 ```java
-    void convertCSVToIonUsingLocalSymbolTable(OutputStream output) throws IOException {
+    void convertCsvToIonUsingLocalSymbolTable(OutputStream output) throws IOException {
         try (IonWriter writer = SYSTEM.newBinaryWriter(output)) {
-            convertCSVToIon(writer);
+            convertCsvToIon(writer);
         }
     }
 ```
@@ -571,14 +571,14 @@ programmatically.
 ```
 
 Now, an `IonWriter` that is configured to use the symbols from the shared
-symbol table is constructed, passed to the `convertCSVToIon` method from
+symbol table is constructed, passed to the `convertCsvToIon` method from
 above, and closed when finished.
 
 ```java
-    void convertCSVToIonUsingSharedSymbolTable(OutputStream output) throws IOException {
+    void convertCsvToIonUsingSharedSymbolTable(OutputStream output) throws IOException {
         SymbolTable shared = getSharedSymbolTable();
         try (IonWriter writer = SYSTEM.newBinaryWriter(output, shared)) {
-            convertCSVToIon(writer);
+            convertCsvToIon(writer);
         }
     }
 ```
