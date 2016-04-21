@@ -2,6 +2,7 @@ name: Ion Docs
 markdown: kramdown
 kramdown:
   input: GFM
+highlighter: rouge
 defaults:
   -
     scope:
