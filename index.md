@@ -181,6 +181,56 @@ that only the table name and version are included in the payload, eliminating
 the overhead involved with repeatedly defining the same symbols across multiple
 pieces of Ion data.
 
+## Example
+
+To illustrate Ion's syntax, here is an example.
+
+```
+/* Ion supports comments. */
+// Here is a struct, which is similar to a JSON object.
+{
+  // Field names don't always have to be quoted.
+  name: "fido",
+  
+  // This is an integer with a user annotation of 'years'.
+  age: years::4,
+  
+  // Here is a list which is like a JSON array. 
+  toys: [
+    // These are symbol values, they are like strings,
+    // but get encoded as integers in binary.
+    ball,
+    rope
+  ],
+}
+```
+
+In binary the above could be represented as follows (formatted for to be readable):
+
+```
+e0 01 00 ea                 ION VERSION MARKER
+ee a0 81 83                 ANNOTATION "$ion_symbol_table"
+   de 9c                    STRUCT
+      87                    FIELD "symbols"
+      be 99                 LIST
+         83 61 67 65          STRING "age"
+         85 79 65 61 72 73    STRING "years"
+         84 74 6f 79 73       STRING "toys"
+         84 62 61 6c 6c       STRING "ball"
+         84 72 6f 70 65       STRING "rope"
+         
+de 92                       STRUCT 
+   84                         FIELD "name"
+   84 66 69 64 6f             STRING "fido"
+   8a                         FIELD "age"
+   e4 81 8b                   ANNOTATION "years"         
+      21 04                     INT 4
+   8c                         FIELD "toys"
+   b4                         LIST
+      71 0d                     SYMBOL "ball"
+      71 0e                     SYMBOL "rope"
+```
+
 ## See also
 
   * [The Amazon Ion 1.0 Specification][8]
