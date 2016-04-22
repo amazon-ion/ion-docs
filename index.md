@@ -195,6 +195,9 @@ To illustrate Ion's syntax, here is an example.
   // This is an integer with a user annotation of 'years'.
   age: years::4,
   
+  // This is a timestamp with day precision.
+  birthday: 2012-03-01T,
+  
   // Here is a list which is like a JSON array. 
   toys: [
     // These are symbol values, they are like strings,
@@ -209,26 +212,30 @@ In binary the above could be represented as follows (formatted for to be readabl
 
 ```
 e0 01 00 ea                 ION VERSION MARKER
-ee a0 81 83                 ANNOTATION "$ion_symbol_table"
-   de 9c                    STRUCT
+ee a9 81 83                 ANNOTATION "$ion_symbol_table"
+   de a5                    STRUCT
       87                    FIELD "symbols"
-      be 99                 LIST
+      be a2                 LIST
          83 61 67 65          STRING "age"
          85 79 65 61 72 73    STRING "years"
+         88 62 69 72 74 68    STRING "birthday"
+            64 61 79
          84 74 6f 79 73       STRING "toys"
          84 62 61 6c 6c       STRING "ball"
          84 72 6f 70 65       STRING "rope"
          
-de 92                       STRUCT 
+de 99                       STRUCT 
    84                         FIELD "name"
    84 66 69 64 6f             STRING "fido"
    8a                         FIELD "age"
    e4 81 8b                   ANNOTATION "years"         
       21 04                     INT 4
-   8c                         FIELD "toys"
+   8c                         FIELD "birthday"
+   65 c0 0f dc 83 81          TIMESTAMP 2012-03-01T
+   8d                         FIELD "toys"
    b4                         LIST
-      71 0d                     SYMBOL "ball"
-      71 0e                     SYMBOL "rope"
+      71 0e                     SYMBOL "ball"
+      71 0f                     SYMBOL "rope"
 ```
 
 ## See also
