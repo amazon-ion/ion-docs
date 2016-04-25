@@ -623,14 +623,14 @@ previous sub-section.
 
 <!-- References -->
 [1]: https://github.com/amznlabs/ion-java
-[2]: ion-java-api/index.html
-[3]: ion-java-api/software/amazon/ion/IonSystem.html
-[4]: ion-java-api/software/amazon/ion/IonReader.html
-[5]: ion-java-api/software/amazon/ion/IonWriter.html
-[6]: ion-java-api/software/amazon/ion/system/IonTextWriterBuilder.html
-[7]: ion-java-api/software/amazon/ion/SymbolTable.html
-[8]: ion-java-api/software/amazon/ion/IonCatalog.html
-[9]: ion-java-api/software/amazon/ion/system/SimpleCatalog.html
+[2]: https://www.javadoc.io/doc/software.amazon.ion/ion-java/1.0.0
+[3]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonSystem.html
+[4]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonReader.html
+[5]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonWriter.html
+[6]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/system/IonTextWriterBuilder.html
+[7]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/SymbolTable.html
+[8]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonCatalog.html
+[9]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/system/SimpleCatalog.html
 [10]: https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html
 [11]: https://docs.oracle.com/javase/8/docs/api/java/io/ByteArrayOutputStream.html
 [12]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html

@@ -184,7 +184,7 @@ pieces of Ion data.
 ## See also
 
   * [The Amazon Ion 1.0 Specification][8]
-  * [The Amazon Ion 1.0 Cookbook][9] <!-- TODO -->
+  * [The Amazon Ion 1.0 Cookbook][9]
   * [The Amazon Ion 1.0 Glossary][11]
 
 <!-- References -->
