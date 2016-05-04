@@ -231,7 +231,7 @@ null.timestamp                   // A null timestamp value
 2007-02-23T20:14:33.079+00:00    // The same instant, with explicit local offset
 2007-02-23T20:14:33.079-00:00    // The same instant, with unknown local offset
 
-2007-01-01T00:00-00:00           // Happy New Years... somewhere!
+2007-01-01T00:00-00:00           // Happy New Year in UTC, unknown local offset
 2007-01-01                       // The same instant, with days precision, unknown local offset
 2007-01-01T                      //    The same value, different syntax.
 2007-01T                         // The same instant, with months precision, unknown local offset
