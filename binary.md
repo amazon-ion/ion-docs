@@ -400,13 +400,21 @@ seconds of the timestamp as a decimal value. The fractional seconds' value is
 _coefficient_ * 10 ^ _exponent_, and it must be greater than or equal to zero
 and less than 1. For zero-valued coefficients all non-negative exponents are
 considered to be the same as having no fractional seconds, whereas all negative
-exponents are distinct. This means that the following encoded timestamps are
+exponents are distinct. This means that the following hex encoded timestamps are
 equivalent:
 
 ```
-0x68 80 0F D0 81 81 80 80 80          // 2000-01-01T00:00:00Z with no fractional seconds
-0x6A 80 0F D0 81 81 80 80 80 80 00    // The same instant with 0d0 fractional seconds
-0x6A 80 0F D0 81 81 80 80 80 80 01    // The same instant with 0d1 fractional seconds (one insignificant zero)
+68 80 0F D0 81 81 80 80 80          // 2000-01-01T00:00:00Z with no fractional seconds
+6A 80 0F D0 81 81 80 80 80 80 00    // The same instant with 0d0 fractional seconds
+6A 80 0F D0 81 81 80 80 80 80 01    // The same instant with 0d1 fractional seconds
+```
+
+Conversely none of the following are equivalent:
+
+```
+6A 80 0F D0 81 81 80 80 80 80 00    // 2000-01-01T00:00:00Z
+6A 80 0F D0 81 81 80 80 80 80 81    // 2000-01-01T00:00:00.0Z
+6A 80 0F D0 81 81 80 80 80 80 82    // 2000-01-01T00:00:00.00Z
 ```
 
 If a timestamp representation has a component of a certain precision, each of
