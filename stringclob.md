@@ -69,16 +69,20 @@ long          ::= long_char*
 
 short_char    ::= (<any valid Unicode code point> - ('\' | control_char | '"'))
               |   common_escape
+              |   unicode_escape
               |   nl_escape
 
 long_char     ::= (<any valid Unicode code point> - ('\' | control_char | "'''"))
               |   common_escape
+              |   unicode_escape
               |   nl_escape
               |   nl_raw
 
 nl_escape     ::= '\' nl_raw
 
-common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'U' | 'u' | 'x' )
+common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'x' )
+
+unicode_escape ::= '\' ( 'U' | 'u' )
 
 nl_raw        ::= U+000A | U+000D | U+000D U+000A
 
