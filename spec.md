@@ -256,10 +256,10 @@ instant with the same offset and precision. This means that the following
 are not equivalent:
 
 ```
-2000T                       // January 1st 2000, year precision, unknown local offset
-2000-01-01T00:00:00Z        // January 1st 2000, second precision, UTC
-2000-01-01T00:00:00.000Z    // January 1st 2000, millisecond precision, UTC
-2000-01-01T00:00:00.000     // January 1st 2000, millisecond precision, unknown local offset
+2000T                            // January 1st 2000, year precision, unknown local offset
+2000-01-01T00:00:00Z             // January 1st 2000, second precision, UTC
+2000-01-01T00:00:00.000Z         // January 1st 2000, millisecond precision, UTC
+2000-01-01T00:00:00.000-00:00    // January 1st 2000, millisecond precision, negative zero local offset
 ```
 
 In the text notation, timestamp values must be followed by one of the
