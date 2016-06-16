@@ -426,8 +426,8 @@ Symbol value |    7    |    L    |
 </pre>
 
 In the binary encoding, all Ion symbols are stored as integer _symbol IDs_
-whose text values are provided by a symbol table.  If the symbol ID is
-zero, then _L_ is zero and there are no length or symbol ID fields.
+whose text values are provided by a symbol table.  If L is zero then the
+symbol ID is zero and the length and symbol ID fields are omitted.
 
 See [Ion Symbols](symbols.html) for more details about symbol representations
 and symbol tables.
