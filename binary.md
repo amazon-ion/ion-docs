@@ -375,7 +375,7 @@ Timestamp value |    6    |    L    |
                 :      second [VarUInt]      :
                 +============================+
                 : fraction_exponent [VarInt] :
-                +====                    ====+
+                +============================+
                 : fraction_coefficient [Int] :
                 +============================+
 </pre>
@@ -391,16 +391,13 @@ The _offset_ denotes the local-offset portion of the timestamp, in minutes
 difference from UTC.
 
 The _hour and minute_ is considered as a single component, that is, it is
-illegal to have _hour_ but not _minute_ (and vice versa). The
-_fraction\_exponent_ and _fraction\_coefficient_ is also considered as a single
-component.
+illegal to have _hour_ but not _minute_ (and vice versa).
 
-The _fraction\_exponent_ and _fraction\_coefficient_ denotes the fractional
+The _fraction\_exponent_ and _fraction\_coefficient_ denote the fractional
 seconds of the timestamp as a decimal value. The fractional seconds' value is
-_coefficient_ * 10 ^ _exponent_, and it must be greater than or equal to zero
+_coefficient_ * 10 ^ _exponent_. It must be greater than or equal to zero
 and less than 1. Fractions whose coefficient is zero and exponent is non-
-negative are ignored. This means that the following hex encoded timestamps are
-equivalent:
+negative are ignored. The following hex encoded timestamps are equivalent:
 
 ```
 68 80 0F D0 81 81 80 80 80       // 2000-01-01T00:00:00Z with no fractional seconds
@@ -408,7 +405,7 @@ equivalent:
 69 80 0F D0 81 81 80 80 80 81    // The same instant with 0d1 fractional seconds
 ```
 
-Conversely none of the following are equivalent:
+Conversely, none of the following are equivalent:
 
 ```
 68 80 0F D0 81 81 80 80 80       // 2000-01-01T00:00:00Z with no fractional seconds

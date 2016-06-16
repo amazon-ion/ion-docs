@@ -251,9 +251,9 @@ Zero and negative dates are not valid, so the earliest instant in time
 that can be represented as a timestamp is Jan 01, 0001. As per the W3C
 note, leap seconds cannot be represented.
 
-Two timestamps are considered equivalent only if they represent the same
-instant with the same offset and precision. This means that the following
-are not equivalent:
+Two timestamps are only equivalent if they represent the same instant
+with the same offset and precision. This means that the following are
+not equivalent:
 
 ```
 2000T                            // January 1st 2000, year precision, unknown local offset
