@@ -57,33 +57,8 @@ Ion binary and text formats.
 
 ### Text Format
 
-The formal Ion Text encoding for the `string` type is specified by the
-following EBNF:
-
-```
-string        ::= '"' short '"' | ( "'''" long "'''" )+
-
-short         ::= short_char*
-
-long          ::= long_char*
-
-short_char    ::= (<any valid Unicode code point> - ('\' | control_char | '"'))
-              |   common_escape
-              |   nl_escape
-
-long_char     ::= (<any valid Unicode code point> - ('\' | control_char | "'''"))
-              |   common_escape
-              |   nl_escape
-              |   nl_raw
-
-nl_escape     ::= '\' nl_raw
-
-common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'U' | 'u' | 'x' )
-
-nl_raw        ::= U+000A | U+000D | U+000D U+000A
-
-control_char  ::= <U+0000 to U+001F>
-```
+See the [grammar](grammar/IonText.g4.txt) for a formal definition of the
+Ion Text encoding for the `string` type.
 
 Multiple Ion long `string` literals that are adjacent to each other by
 zero or more whitespace are concatenated automatically. For example the
@@ -128,9 +103,9 @@ CARRIAGE RETURN and LINE FEED:
 two'''
 ```
 
-The `nl_escape` is not replaced with any characters (_i.e._ the newline is
+Escaped newlines are not replaced with any characters (_i.e._ the newline is
 removed). In addition, the following table describes the `string` escape
-sequences that have direct code point replacement for both all strings.
+sequences that have direct code point replacement for all strings.
 
 <table>
 <thead>
@@ -272,29 +247,8 @@ octets and `string` is a sequence of Unicode code points.
 
 ### Text Format
 
-The formal Ion Text encoding for the `clob` type is specified by the
-following EBNF:
-
-```
-clob          ::= '{' '{' '"' short '"' | ( "'''" long "'''" )+ '}' '}'
-
-short         ::= short_char*
-
-long          ::= long_char*
-
-short_char    ::= <any printable ascii character or
-                   the new line (U+000A, U+000D, U+000D followed by U+000A)>
-              |   common_escape
-              |   nl_escape
-
-long_char     ::= <any printable ascii character>
-              |   common_escape
-              |   nl_escape
-
-nl_escape     ::= '\' U+000A | '\' U+000D | '\' U+000D U+000A
-
-common_escape ::= '\' ( 'a' | 'b' | 't' | 'n' | 'f' | 'r' | 'v' | '?' | '0' | '\' | '/' | 'x' )
-```
+See the [grammar](grammar/IonText.g4.txt) for a formal definition of the
+Ion Text encoding for the `clob` type.
 
 Similar to `string`, multiple long string literals within an Ion
 `clob`that are adjacent to each other by zero or more whitespace are
