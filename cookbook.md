@@ -152,6 +152,54 @@ given format.
     }
 ```
 
+### C
+
+The following example shows how to navigate a struct with a single field named "hello" whose value is "world":
+
+```c
+#include <ion_reader.h>
+#include <ion_string.h>
+#include <ion_types.h>
+#include <string.h>
+
+int main() {
+    char* ion_text = "{ hello:\"world\" }";
+
+    // Create reader options and initialize to defaults
+    ION_READER_OPTIONS options;
+    memset(&options, 0, sizeof(options));
+
+    // Open a reader on the C string containing Ion text
+    hREADER reader;
+    ion_reader_open_buffer(&reader, (BYTE*) ion_text, strlen(ion_text), &options);
+
+    ION_TYPE type;
+
+    // Position the reader at the first value, a struct
+    ion_reader_next(reader, &type); // type is tid_STRUCT
+
+    // Step into the struct
+    ion_reader_step_in(reader);
+
+    // Position the reader at the first value in the struct, a string
+    ion_reader_next(reader, &type); // type is tid_STRING
+
+    // Retrieve the current value's field name
+    ION_STRING field_name;
+    ion_reader_get_field_name(reader, &field_name); // field_name is "hello"
+
+    // Retrieve the current value's string value
+    ION_STRING field_value;
+    ion_reader_read_string(reader, &field_value); // field_value is "world"
+
+    // Step out of the struct
+    ion_reader_step_out(reader);
+
+    // Reach the end of the Ion text
+    ion_reader_next(reader, &type); // type is tid_EOF
+}
+```
+
 ## Formatting Ion text output
 
 ### Pretty-printing
