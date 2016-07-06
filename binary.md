@@ -567,6 +567,7 @@ finding the succeeding value requires parsing the field name prefix. However,
 VarUInts are a more compact representation than Int values.
 
 <a id="nop-pad-struct"></a>
+
 #### NOP Padding in `struct` Fields
 [NOP Padding](#nop-pad) in `struct` values requires additional consideration
 of the field name element.  If the "value" of a `struct` field is the
