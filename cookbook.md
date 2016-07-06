@@ -167,7 +167,7 @@ This data can be pretty-printed by rewriting it using a correctly configured
 `IonWriter`.
 
 ```java
-    void rewrite(String text, IonWriter writer) throws IOException {
+    void rewrite(String textIon, IonWriter writer) throws IOException {
         IonReader reader = SYSTEM.newReader(textIon);
         writer.writeValues(reader);
     }
