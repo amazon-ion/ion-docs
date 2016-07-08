@@ -636,4 +636,4 @@ previous sub-section.
 [11]: https://docs.oracle.com/javase/8/docs/api/java/io/ByteArrayOutputStream.html
 [12]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
 [13]: https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html
-[14]: http://amznlabs.github.io/ion-c/
+[14]: https://amznlabs.github.io/ion-c/
