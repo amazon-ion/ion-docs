@@ -396,12 +396,14 @@ illegal to have _hour_ but not _minute_ (and vice versa).
 The _fraction\_exponent_ and _fraction\_coefficient_ denote the fractional
 seconds of the timestamp as a decimal value. The fractional seconds' value is
 _coefficient_ * 10 ^ _exponent_. It must be greater than or equal to zero
-and less than 1. Fractions whose coefficient is zero and exponent is greater
-than -1 are ignored. The following hex encoded timestamps are equivalent:
+and less than 1. A missing coefficient defaults to zero. Fractions whose
+coefficient is zero and exponent is greater than -1 are ignored. The
+following hex encoded timestamps are equivalent:
 
 ```
 68 80 0F D0 81 81 80 80 80       // 2000-01-01T00:00:00Z with no fractional seconds
-69 80 0F D0 81 81 80 80 80 80    // The same instant with 0d0 fractional seconds
+69 80 0F D0 81 81 80 80 80 80    // The same instant with 0d0 fractional seconds and implicit zero coefficient
+6A 80 0F D0 81 81 80 80 80 80 00 // The same instant with 0d0 fractional seconds and explicit zero coefficient
 69 80 0F D0 81 81 80 80 80 C0    // The same instant with 0d-0 fractional seconds
 69 80 0F D0 81 81 80 80 80 81    // The same instant with 0d1 fractional seconds
 ```
