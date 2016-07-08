@@ -197,6 +197,8 @@ int main() {
 
     // Reach the end of the Ion text
     ion_reader_next(reader, &type); // type is tid_EOF
+
+    return 0;
 }
 ```
 
