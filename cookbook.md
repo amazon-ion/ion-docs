@@ -6,9 +6,6 @@ title: Amazon Ion Cookbook
 
 This cookbook provides code samples for some simple Amazon Ion use cases.
 
-Currently, this covers the [ion-java][1] implementation, but will be amended
-with samples from other language implementations as they become available.
-
 ## How to use this cookbook
 
 For readability, all examples of Ion data used in this cookbook will be
@@ -26,16 +23,20 @@ same signature should be considered interchangeable.
 In some cases, the examples herein depend on code external to Ion (e.g.
 constructing input streams to read files), which is out of scope for this
 cookbook. Code such as this will be replaced by a method with an empty (but
-implied) implementation. Import statements for classes internal to the Ion
-library or to `java.lang` are omitted. Other external classes will either be
-first referenced by their fully-qualified names, or will be preceded by an
-import statement. Import statements have global scope.
+implied) implementation.
+
+### Java
+
+Import statements for classes internal to the Ion library or to `java.lang`
+are omitted. Other external classes will either be first referenced by their
+fully-qualified names, or will be preceded by an import statement. Import
+statements have global scope.
 
 * * *
 
 ## Getting started
 
-### Getting an instance of IonSystem
+### Java
 
 [`IonSystem`][3] is the central interface to ion-java. Generally, a single
 `IonSystem` instance should be constructed and used throughout the
@@ -48,7 +49,9 @@ will be constructed.
     static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
 ```
 
-### Working with IonReaders and IonWriters
+## Reading and Writing Ion Data
+
+### Java
 
 Implementations of the [`IonReader`][4] and [`IonWriter`][5] interfaces are
 responsible for reading and writing Ion data in both its text and binary forms.
@@ -149,39 +152,18 @@ given format.
     }
 ```
 
-### Configuring text IonWriters
+## Formatting Ion text output
 
-Using an [`IonTextWriterBuilder`][6], applications can configure text
-`IonWriter`s to output Ion text with special formatting.
+### Pretty-printing
 
-#### Pretty-printing
+To aid human-readability, Ion text supports "pretty" output. Consider the
+following un-formatted text Ion:
 
-To aid human-readability, text IonWriters support "pretty" output. Consider the
-following un-formatted text Ion, which has been materialized into a Java String.
-
-```java 
-    String unformatted = "{ level1:{ level2:{ level3:\"foo\" }, x:2 }, y:[a,b,c] }";
+```
+    { level1:{ level2:{ level3:"foo" }, x:2 }, y:[a,b,c] }
 ```
 
-This data can be pretty-printed by rewriting it using a correctly configured
-`IonWriter`.
-
-```java
-    void rewrite(String textIon, IonWriter writer) throws IOException {
-        IonReader reader = SYSTEM.newReader(textIon);
-        writer.writeValues(reader);
-    }
-
-    void prettyPrint() throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        try (IonWriter prettyWriter = IonTextWriterBuilder.pretty().build(stringBuilder)) {
-            rewrite(unformatted, prettyWriter);
-        }
-        System.out.println(stringBuilder.toString());
-    }
-```
-
-Calling `prettyPrint` prints the following:
+Pretty-printing results in output similar to the following:
 
 ```
     {
@@ -199,7 +181,29 @@ Calling `prettyPrint` prints the following:
     }
 ```
 
-#### Down-converting to JSON
+#### Java
+
+Ion data can be pretty-printed by configuring an IonWriter via an [`IonTextWriterBuilder`][6]:
+
+```java
+
+    String unformatted = "{ level1:{ level2:{ level3:\"foo\" }, x:2 }, y:[a,b,c] }";
+
+    void rewrite(String textIon, IonWriter writer) throws IOException {
+        IonReader reader = SYSTEM.newReader(textIon);
+        writer.writeValues(reader);
+    }
+
+    void prettyPrint() throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (IonWriter prettyWriter = IonTextWriterBuilder.pretty().build(stringBuilder)) {
+            rewrite(unformatted, prettyWriter);
+        }
+        System.out.println(stringBuilder.toString());
+    }
+```
+
+### Down-converting to JSON
 
 Because Ion has a richer type system than JSON, converting Ion to JSON is lossy.
 Nevertheless, applications may have use cases that require them to
@@ -228,27 +232,14 @@ During this conversion, the following rules are applied:
   14. All struct field names are printed as JSON *string*s (i.e. they are
       quoted)
   15. Any trailing commas in container values are removed
-  
-Consider the following text Ion, which has been materialized into a Java String.
 
-```java
-    String textIon = "{ data:annot::{ foo:null.string, bar:(2 + 2) }, time:1969-07-20T20:18Z }";
+Consider the following text Ion:
+
+```
+    { data:annot::{ foo:null.string, bar:(2 + 2) }, time:1969-07-20T20:18Z }
 ```
 
-Using the `rewrite` method from the previous sub-section, the data can be
-down-converted for JSON compatibility.
-
-```java
-    void downconvertToJson() throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        try (IonWriter jsonWriter = IonTextWriterBuilder.json().withPrettyPrinting().build(stringBuilder)) {
-            rewrite(textIon, jsonWriter);
-        }
-        System.out.println(stringBuilder.toString());
-    }
-```
-
-Calling `downconvertToJson` prints the following:
+Down-converting into JSON results in output similar to the following:
 
 ```
     {
@@ -269,10 +260,28 @@ null `"foo"` field lost its type information, `"bar"` was converted into a
 JSON *list* (losing its S-expression semantics), and `"time"` was represented
 as a JSON *string*.
 
-#### Migrating JSON data to Ion
+#### Java
+
+Using the `rewrite` method from the previous example, the data can be
+down-converted for JSON compatibility.
+
+```java
+
+    String textIon = "{ data:annot::{ foo:null.string, bar:(2 + 2) }, time:1969-07-20T20:18Z }";
+
+    void downconvertToJson() throws IOException {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (IonWriter jsonWriter = IonTextWriterBuilder.json().withPrettyPrinting().build(stringBuilder)) {
+            rewrite(textIon, jsonWriter);
+        }
+        System.out.println(stringBuilder.toString());
+    }
+```
+
+### Migrating JSON data to Ion
 
 Because Ion is a superset of JSON, valid JSON data is valid Ion data. As such, 
-`IonReader`s are capable of reading JSON data without any special
+Ion readers are capable of reading JSON data without any special
 configuration. When reading data that was encoded by a JSON writer, the
 following Ion text parsing rules should be kept in mind:
 
@@ -283,8 +292,7 @@ following Ion text parsing rules should be kept in mind:
      as Ion decimals
   4. Numeric values with exponents are interpreted as Ion floats
   
-Consider the following JSON data, which was converted from Ion in the previous
-example.
+Consider the following JSON data:
 
 ```
     // TEXT
@@ -301,8 +309,8 @@ example.
     }
 ```
 
-Using a method such as `prettyPrint` from above will rewrite the data using
-Ion semantics, like the following.
+Converting this data to Ion (possibly via one of the pretty-printing examples)
+results in the following:
 
 ```
     {
@@ -317,7 +325,7 @@ Ion semantics, like the following.
       time:"1969-07-20T20:18Z"
     }
 ```
-    
+
 This is clearly valid Ion, but is no longer valid JSON (because field names
 are unquoted). And, notably, it is **not** the same as the original Ion data
 that was down-converted to JSON.
@@ -325,10 +333,14 @@ that was down-converted to JSON.
 ### Reading numeric types
 
 Because Ion has richly defined numeric types, there are often multiple possible
-representations of a numeric Ion value. For example, integer values that can fit
-into a Java `int` may be read as such using `IonReader.intValue()`, or may
-be read into a `long` using `IonReader.longValue()`, or a
-[`java.math.BigInteger`][12] using `IonReader.bigIntegerValue()`.
+representations of a numeric Ion value.
+
+#### Java
+
+Integer values that can fit into a Java `int` may be read as such using
+`IonReader.intValue()`, or may be read into a `long` using
+`IonReader.longValue()`, or a [`java.math.BigInteger`][12] using
+`IonReader.bigIntegerValue()`.
 
 Consider the following Ion list of numeric values, which has been materialized
 into a Java String.
@@ -408,10 +420,13 @@ Consider the following stream of binary Ion data.
     // the stream continues...
 ```
 
-The following example simulates an application whose only purpose is to sum the
+The following examples simulate an application whose only purpose is to sum the
 `quantity` fields of each `foo` struct in the stream. This is achieved by
 examining the type annotations of each top-level struct and comparing against
-`"foo"`.
+`"foo"`. Because binary Ion is length-prefixed, when the struct's annotation does
+not match `"foo"`, the reader can quickly skip to the start of the next value.
+
+### Java
 
 ```java
     InputStream getStream() {
@@ -440,9 +455,6 @@ examining the type annotations of each top-level struct and comparing against
         return sum;
     }
 ```
-
-Because binary Ion is length-prefixed, when the struct's annotation does not
-match `"foo"`, the reader can quickly skip to the start of the next value.
 
 * * *
 
@@ -476,6 +488,8 @@ and improves read efficiency.
 Local symbol tables are managed internally by Ion readers and writers. No
 application configuration is required to tell Ion readers or writers that local
 symbol tables should be used.
+
+#### Java
 
 Start by retrieving an object that can parse `test.csv` line-by-line, e.g. a
 [`java.io.BufferedReader`][13].
@@ -547,7 +561,9 @@ generated by hand or programmatically.
 ```
 
 This shared symbol table can be stored in a file (or in a database) to be
-resurrected into a [`SymbolTable`][7] at runtime.
+resurrected into a symbol table at runtime.
+
+##### Java
 
 ```java
     InputStream getSharedSymbolTableStream() {
@@ -588,14 +604,18 @@ this technique simply includes a symbol table at the beginning of the stream
 that imports the shared symbol table. (Note that, in addition, any symbols
 written but not included in the shared symbol table will be declared in the
 symbol table that begins the stream.)
-    
+
 #### Reading
 
 Because the value stream written using the shared symbol table does not contain
 the symbol mappings, a reader of the stream needs to access the shared symbol
-table using an [`IonCatalog`][8]. The `IonCatalog` interface may be implemented
-by applications to provide customized shared symbol table retrieval logic,
-such as retrieval from an external source.
+table using a catalog.
+
+##### Java
+
+The [`IonCatalog`][8] interface may be implemented by applications to provide
+customized shared symbol table retrieval logic, such as retrieval from an external
+source.
 
 ion-java includes an implementation of `IonCatalog` called [`SimpleCatalog`][9],
 which stores shared symbol tables in memory and will be used here for
