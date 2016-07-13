@@ -6,9 +6,6 @@ title: Amazon Ion Cookbook
 
 This cookbook provides code samples for some simple Amazon Ion use cases.
 
-Currently, this covers the [ion-java][1] implementation, but will be amended
-with samples from other language implementations as they become available.
-
 ## How to use this cookbook
 
 For readability, all examples of Ion data used in this cookbook will be
@@ -26,10 +23,7 @@ same signature should be considered interchangeable.
 In some cases, the examples herein depend on code external to Ion (e.g.
 constructing input streams to read files), which is out of scope for this
 cookbook. Code such as this will be replaced by a method with an empty (but
-implied) implementation. Import statements for classes internal to the Ion
-library or to `java.lang` are omitted. Other external classes will either be
-first referenced by their fully-qualified names, or will be preceded by an
-import statement. Import statements have global scope.
+implied) implementation.
 
 * * *
 
@@ -162,7 +156,7 @@ following un-formatted text Ion:
     { level1:{ level2:{ level3:"foo" }, x:2 }, y:[a,b,c] }
 ```
 
-Pretty-printing results in the following output:
+Pretty-printing results in output similar to the following:
 
 ```
     {
@@ -182,10 +176,12 @@ Pretty-printing results in the following output:
 
 #### Java
 
-Ion data can be pretty-printed by rewriting it using a correctly configured
-`IonWriter`.
+Ion data can be pretty-printed by configuring an IonWriter via an [`IonTextWriterBuilder`][6]:
 
 ```java
+
+    String unformatted = "{ level1:{ level2:{ level3:\"foo\" }, x:2 }, y:[a,b,c] }";
+
     void rewrite(String textIon, IonWriter writer) throws IOException {
         IonReader reader = SYSTEM.newReader(textIon);
         writer.writeValues(reader);
@@ -236,7 +232,7 @@ Consider the following text Ion:
     { data:annot::{ foo:null.string, bar:(2 + 2) }, time:1969-07-20T20:18Z }
 ```
 
-Down-converting into JSON results in the following:
+Down-converting into JSON results in output similar to the following:
 
 ```
     {
@@ -263,6 +259,9 @@ Using the `rewrite` method from the previous example, the data can be
 down-converted for JSON compatibility.
 
 ```java
+
+    String textIon = "{ data:annot::{ foo:null.string, bar:(2 + 2) }, time:1969-07-20T20:18Z }";
+
     void downconvertToJson() throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
         try (IonWriter jsonWriter = IonTextWriterBuilder.json().withPrettyPrinting().build(stringBuilder)) {
@@ -275,7 +274,7 @@ down-converted for JSON compatibility.
 ### Migrating JSON data to Ion
 
 Because Ion is a superset of JSON, valid JSON data is valid Ion data. As such, 
-`IonReader`s are capable of reading JSON data without any special
+Ion readers are capable of reading JSON data without any special
 configuration. When reading data that was encoded by a JSON writer, the
 following Ion text parsing rules should be kept in mind:
 
@@ -303,7 +302,8 @@ Consider the following JSON data:
     }
 ```
 
-Converting this data to Ion results in the following:
+Converting this data to Ion (possibly via one of the pretty-printing examples)
+results in the following:
 
 ```
     {
