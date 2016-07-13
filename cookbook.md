@@ -25,6 +25,13 @@ constructing input streams to read files), which is out of scope for this
 cookbook. Code such as this will be replaced by a method with an empty (but
 implied) implementation.
 
+### Java
+
+Import statements for classes internal to the Ion library or to `java.lang`
+are omitted. Other external classes will either be first referenced by their
+fully-qualified names, or will be preceded by an import statement. Import
+statements have global scope.
+
 * * *
 
 ## Getting started
