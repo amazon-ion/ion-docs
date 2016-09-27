@@ -429,7 +429,7 @@ fragment
 STRING_LONG_TEXT_ALLOWED
     : '\u0020'..'\u005B' // no C1 control characters and no U+005C blackslash
     | '\u005D'..'\uFFFF' // FIXME should be up to U+10FFFF
-    | NL
+    | WS
     ;
 
 fragment
