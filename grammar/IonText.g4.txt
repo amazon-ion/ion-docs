@@ -387,6 +387,7 @@ SYMBOL_TEXT_ALLOWED
     : '\u0020'..'\u0026' // no C1 control characters and no U+0027 single quote
     | '\u0028'..'\u005B' // no U+005C backslash
     | '\u005D'..'\uFFFF' // should be up to U+10FFFF
+    | WS_NOT_NL
     ;
 
 IDENTIFIER_SYMBOL
@@ -422,6 +423,7 @@ STRING_SHORT_TEXT_ALLOWED
     : '\u0020'..'\u0021' // no C1 control characters and no U+0022 double quote
     | '\u0023'..'\u005B' // no U+005C backslash
     | '\u005D'..'\uFFFF' // FIXME should be up to U+10FFFF
+    | WS_NOT_NL
     ;
 
 // non-control Unicode (newlines are OK)
@@ -429,7 +431,7 @@ fragment
 STRING_LONG_TEXT_ALLOWED
     : '\u0020'..'\u005B' // no C1 control characters and no U+005C blackslash
     | '\u005D'..'\uFFFF' // FIXME should be up to U+10FFFF
-    | NL
+    | WS
     ;
 
 fragment
@@ -472,6 +474,7 @@ CLOB_SHORT_TEXT_ALLOWED
     : '\u0020'..'\u0021' // no U+0022 double quote
     | '\u0023'..'\u005B' // no U+005C backslash
     | '\u005D'..'\u007E'
+    | WS_NOT_NL
     ;
 
 // non-control ASCII (newlines are OK)
@@ -480,7 +483,7 @@ CLOB_LONG_TEXT_ALLOWED
     : '\u0020'..'\u0026' // no U+0027 single quote
     | '\u0028'..'\u005B' // no U+005C blackslash
     | '\u005D'..'\u007E'
-    | NL
+    | WS
     ;
 
 fragment
@@ -607,12 +610,9 @@ HEX_DIGIT_QUARTET
 
 fragment
 WS
-    : '\u0009' // tab
+    : WS_NOT_NL
     | '\u000A' // line feed
-    | '\u000B' // vertical tab
-    | '\u000C' // form feed
     | '\u000D' // carriage return
-    | '\u0020' // space
     ;
 
 fragment
@@ -620,6 +620,14 @@ NL
     : '\u000D\u000A'  // carriage return + line feed
     | '\u000D'        // carriage return
     | '\u000A'        // line feed
+    ;
+
+fragment
+WS_NOT_NL
+    : '\u0009' // tab
+    | '\u000B' // vertical tab
+    | '\u000C' // form feed
+    | '\u0020' // space
     ;
 
 fragment
