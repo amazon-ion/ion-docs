@@ -473,7 +473,7 @@ fragment
 CLOB_SHORT_TEXT_ALLOWED
     : '\u0020'..'\u0021' // no U+0022 double quote
     | '\u0023'..'\u005B' // no U+005C backslash
-    | '\u005D'..'\u007E'
+    | '\u005D'..'\u007F'
     | WS_NOT_NL
     ;
 
@@ -482,7 +482,7 @@ fragment
 CLOB_LONG_TEXT_ALLOWED
     : '\u0020'..'\u0026' // no U+0027 single quote
     | '\u0028'..'\u005B' // no U+005C blackslash
-    | '\u005D'..'\u007E'
+    | '\u005D'..'\u007F'
     | WS
     ;
 
