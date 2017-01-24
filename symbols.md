@@ -525,10 +525,10 @@ hold:
     calculated from the SIDs by the allocation algorithm above.
 * SID 0 is only equivalent to itself.
 
-A processor encountering a symbol with *unknown* text other than `$0` MAY
-produce an error because this means that the context of the data is missing,
-however any implementation that chooses not to MUST conform to the above semantics
-with respect to round-tripping data.
+A processor encountering a symbol with *unknown* text *and* a valid SID other
+than `$0` MAY produce an error because this means that the context of the data is
+missing, however any implementation that chooses not to MUST conform to the above
+semantics with respect to round-tripping data.
 
 Examples
 --------
