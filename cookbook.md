@@ -643,7 +643,7 @@ previous sub-section.
   * [The ion-c Code Documentation][14]
 
 <!-- References -->
-[1]: https://github.com/amznlabs/ion-java
+[1]: https://github.com/amzn/ion-java
 [2]: https://www.javadoc.io/doc/software.amazon.ion/ion-java/1.0.0
 [3]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonSystem.html
 [4]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonReader.html
@@ -656,4 +656,4 @@ previous sub-section.
 [11]: https://docs.oracle.com/javase/8/docs/api/java/io/ByteArrayOutputStream.html
 [12]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
 [13]: https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html
-[14]: https://amznlabs.github.io/ion-c/
+[14]: https://amzn.github.io/ion-c/
