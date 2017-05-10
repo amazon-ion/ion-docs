@@ -405,7 +405,7 @@ following hex encoded timestamps are equivalent:
 69 80 0F D0 81 81 80 80 80 80    // The same instant with 0d0 fractional seconds and implicit zero coefficient
 6A 80 0F D0 81 81 80 80 80 80 00 // The same instant with 0d0 fractional seconds and explicit zero coefficient
 69 80 0F D0 81 81 80 80 80 C0    // The same instant with 0d-0 fractional seconds
-69 80 0F D0 81 81 80 80 80 81    // The same instant with 0d1 fractional seconds
+69 80 0F D0 81 81 80 80 81 80    // The same instant with 0d1 fractional seconds
 ```
 
 Conversely, none of the following are equivalent:
