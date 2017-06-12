@@ -244,7 +244,7 @@ parser.
 
 The following is a 16 byte NOP pad:
 
-    0x0E 0x90 0x00 ... <12 arbitrary octets> ... 0x00
+    0x0E 0x8E 0x00 ... <12 arbitrary octets> ... 0x00
 
 NOP padding is valid anywhere a value can be encoded, except for within an
 [annotation](#annotations) wrapper. [NOP padding in `struct`](#nop-pad-struct)
