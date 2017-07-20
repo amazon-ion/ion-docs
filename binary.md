@@ -28,7 +28,7 @@ contain the actual data. These values are generally referred to as "top-level
 values".
 
 <pre class="textdiagram">
-              31                      0 
+              31                      0
              +-------------------------+
 value stream |  binary version marker  |
              +-------------------------+
@@ -231,7 +231,8 @@ Such encodings are not considered values and are ignored by the processor.
 
 In this encoding, _L_ specifies the number of octets that should be ignored.
 
-The following is a single byte NOP pad:
+The following is a single byte NOP pad. The NOP padding typedesc bytes are
+counted as padding:
 
     0x00
 
@@ -574,6 +575,8 @@ _L_ is one. Thus:
     field exists, and the field name integers are sorted in increasing order.
   * When _L_ is 15, the value is `null.struct`, and there's no _length_ or
     nested fields.
+  * When _1 < L < 14_ then there is no _length_ field as _L_ is enough to represent
+    the struct size, and no assertion is made about field ordering.
   * Otherwise, the _length_ field exists, and no assertion is made about field
     ordering.
 
@@ -664,7 +667,7 @@ have not chosen to do that in this document.
 Furthermore, it is illegal for an annotation to wrap a [NOP Pad](#nop-pad)
 since this encoding is not an Ion value.  Thus, the following sequence is
 malformed:
-  
+
     0xE3 0x81 0x84 0x00
 
 **Note:** Because _L_ cannot be zero, the octet `0xE0` is not a valid type
