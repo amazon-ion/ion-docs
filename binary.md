@@ -1,5 +1,6 @@
 ---
-title: The Amazon Ion Binary Encoding
+title: Binary Encoding
+description: "An explanation of the Amazon Ion binary encoding."
 ---
 
 # {{ page.title }}

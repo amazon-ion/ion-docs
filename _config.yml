@@ -1,4 +1,7 @@
 name: Ion Docs
+title: Amazon Ion
+lang: en
+baseurl: /ion-docs
 markdown: kramdown
 kramdown:
   input: GFM

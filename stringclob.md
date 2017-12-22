@@ -1,5 +1,6 @@
 ---
-title: Amazon Ion Strings and Clobs
+title: Strings and Clobs
+description: "This document is a proposal to clarify the semantics of the Amazon Ion string and clob data types with respect to escapes and the Unicode standard."
 ---
 
 # {{ page.title }}

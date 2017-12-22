@@ -1,0 +1,7 @@
+main:
+  - title: "Home"
+    url: /
+  - title: "Cookbook"
+    url: /cookbook.html
+  - title: "Specification"
+    url: /spec.html

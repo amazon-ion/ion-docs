@@ -1,8 +1,9 @@
 ---
-title: Amazon Ion Symbols
+title: Symbols
+description: "Amazon Ion symbols are critical to the notation's performance and space-efficiency. This page defines the various concepts and data structures related to symbol management."
 ---
 
-# Amazon Ion Symbols
+# {{ page.title }}
 
 Amazon Ion symbols are critical to the notation's performance and
 space-efficiency. This page defines the various concepts and data
