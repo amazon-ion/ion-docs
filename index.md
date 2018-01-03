@@ -118,7 +118,7 @@ could be used to transmit Shift JIS text or an XML payload.
 #### Symbolic expressions
 
 The Ion specification defines a distinct syntax for [symbolic expression][10]s
-(*S-expression*s), but does not define how they should be processed. This allows
+(*S-expressions*), but does not define how they should be processed. This allows
 applications to use S-expressions to convey domain-specific semantics in a
 first-class Ion type.
 
@@ -131,7 +131,7 @@ tunneling domain-specific language text as opaque strings or binary payloads.
 
 The Ion specification provides a formal mechanism for applications to annotate
 any Ion value without the need to enclose the value in a container. These
-*annotation*s are not interpreted by Ion readers and may be used, for example,
+*annotations* are not interpreted by Ion readers and may be used, for example,
 to add type information to a `struct`, time units to an integer or decimal
 value, or a description of the contents of a blob value.
 

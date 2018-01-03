@@ -698,7 +698,6 @@ The following table enumerates the illegal type descriptors in Ion 1.0 data.
 </tr>
 </thead>
 <tbody>
-</tr>
 <tr class="even">
 <td align="left">1</td>
 <td align="left">[3-14]</td>
@@ -730,8 +729,9 @@ represented with <i>L</i> equal to 0 and 15, respectively.
 <td align="left">
 Annotation wrappers must have one <i>annot_length</i> field, at least one
 <i>annot</i> field, and exactly one <i>value</i> field. Null annotation wrappers
-are illegal.<p>
-*Note: Since <code>0xE0</code> signals the start of the BVM, encountering this
+are illegal.
+<br/><br/>
+*<strong>Note:</strong> Since <code>0xE0</code> signals the start of the BVM, encountering this
 octet where a type descriptor is expected should <i>only</i> cause parsing
 errors when it is not followed by the rest of the BVM octet sequence.
 </td>
