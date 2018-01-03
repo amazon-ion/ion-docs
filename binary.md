@@ -1,5 +1,5 @@
 ---
-title: Binary Encoding
+title: Ion Binary Encoding
 description: "An explanation of the Amazon Ion binary encoding."
 ---
 
