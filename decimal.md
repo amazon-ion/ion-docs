@@ -31,7 +31,12 @@ forms of positive zero, also are distinguished only by the *exponent*.
 
 ### Text Format
 
-The Hursley rules for [converting from textual notation][3] *must* be followed.
+The Hursley rules for describing a _finite value_ [converting from textual notation][3] *must* be followed. 
+The Hursley rules for describing a _special value_ are **not** followed--the rules for 
+
+* `infinity`  -- rule is **not** applicable for Ion Decimals.
+* `nan`       -- rule is **not** applicable for Ion Decimals
+
 Specifically, the rules for getting the integer *coefficient* from the
 *decimal-part* (digits preceding the exponent) of the textual representation
 are specified as follows.
