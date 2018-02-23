@@ -18,7 +18,7 @@ architectures. Ion has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well.
 
 ## Why Ion?
- 
+
   * Ion provides **dual-format interoperability**, which enables users to take
     advantage of the ease of use of the text format while capitalizing on the
     efficiency of the binary format. The text form is easy to prototype, test,
@@ -27,13 +27,13 @@ a decade, and we believe others will benefit as well.
   * Ion's **rich type system** extends JSON's, adding support for types that
     make Ion suitable for a wider variety of uses, including precision-sensitive
     applications and portability across languages and runtimes.
-    
+
   * Ion is a **self-describing** format, giving its readers and writers the
     flexibility to exchange Ion data without needing to agree on a schema in
     advance. Ion's "open-content" supports discovery, deep component chaining,
     and schema evolution.
-    
-  * Because most data is read more often than it is written, Ion defines a 
+
+  * Because most data is read more often than it is written, Ion defines a
     **read-optimized binary format**.
 
 ### Dual-format interoperability
@@ -41,7 +41,7 @@ a decade, and we believe others will benefit as well.
 Applications can seamlessly consume Ion data in either its text or binary forms
 without loss of data fidelity. While the expectation is that most Ion data is in
 binary form, the text form promotes human readability, simplifying discovery and
-diagnosis. 
+diagnosis.
 
 Notably, the text format is a superset of JSON, making all JSON data valid Ion
 data.  You probably already know how to read and author Ion.
@@ -180,6 +180,64 @@ optimization, symbol tables can be pre-shared between producer and consumer so
 that only the table name and version are included in the payload, eliminating
 the overhead involved with repeatedly defining the same symbols across multiple
 pieces of Ion data.
+
+## Example
+
+To illustrate Ion's syntax, here is an example.
+
+```
+/* Ion supports comments. */
+// Here is a struct, which is similar to a JSON object.
+{
+  // Field names don't always have to be quoted.
+  name: "fido",
+
+  // This is an integer with a user annotation of 'years'.
+  age: years::4,
+
+  // This is a timestamp with day precision.
+  birthday: 2012-03-01T,
+
+  // Here is a list, which is like a JSON array.
+  toys: [
+    // These are symbol values, which are like strings,
+    // but get encoded as integers in binary.
+    ball,
+    rope
+  ],
+}
+```
+
+In binary the above could be represented as follows (formatted to show the
+encoding itself):
+
+```
+e0 01 00 ea                 ION VERSION MARKER
+ee a9 81 83                 ANNOTATION "$ion_symbol_table"
+   de a5                    STRUCT
+      87                    FIELD "symbols"
+      be a2                 LIST
+         83 61 67 65          STRING "age"
+         85 79 65 61 72 73    STRING "years"
+         88 62 69 72 74 68    STRING "birthday"
+            64 61 79
+         84 74 6f 79 73       STRING "toys"
+         84 62 61 6c 6c       STRING "ball"
+         84 72 6f 70 65       STRING "rope"
+
+de 99                       STRUCT
+   84                         FIELD "name"
+   84 66 69 64 6f             STRING "fido"
+   8a                         FIELD "age"
+   e4 81 8b                   ANNOTATION "years"
+      21 04                     INT 4
+   8c                         FIELD "birthday"
+   65 c0 0f dc 83 81          TIMESTAMP 2012-03-01T
+   8d                         FIELD "toys"
+   b4                         LIST
+      71 0e                     SYMBOL "ball"
+      71 0f                     SYMBOL "rope"
+```
 
 ## See also
 
