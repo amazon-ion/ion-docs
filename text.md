@@ -1,5 +1,6 @@
 ---
-title: The Amazon Ion Text Encoding
+title: Ion Text Encoding
+description: "An explanation of the Amazon Ion text encoding."
 ---
 
 # {{ page.title }}

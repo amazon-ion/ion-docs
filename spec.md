@@ -1,5 +1,6 @@
 ---
-title: The Amazon Ion Specification
+title: Specification
+description: "The Amazon Ion specification has three parts. A set of data types. A textual notation for values of those types. A binary notation for values of those types."
 ---
 
 # {{ page.title }}
@@ -404,7 +405,7 @@ The following sequences are allowed:
 </tr>
 <tr class="even">
 <td align="left"><code>U+<em>HHHH</em></code></td>
-<td align="left"><code>\u</em>HHHH</em></code></td>
+<td align="left"><code>\u<em>HHHH</em></code></td>
 <td align="left">4-digit hexadecimal Unicode code point</td>
 </tr>
 <tr class="odd">

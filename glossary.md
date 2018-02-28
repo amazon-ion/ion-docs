@@ -1,5 +1,6 @@
 ---
 title: Glossary
+description: "The following terms have particular definitions as it relates to their usage within the Amazon Ion Specification documents."
 ---
 
 # {{ page.title }}

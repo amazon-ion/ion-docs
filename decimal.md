@@ -1,5 +1,6 @@
 ---
-title: Amazon Ion Decimals
+title: Decimals
+description: "Amazon Ion supports a decimal numeric type to allow accurate representation of base-10 floating point values such as currency amounts."
 ---
 
 # {{ page.title }}
@@ -24,7 +25,7 @@ which defines an [abstract decimal data model][2] represented by the following
     (<sign 0|1>, <coefficient: unsigned integer>, <exponent: integer>)
 
 Decimals should be considered equivalent if and only if their data
-model tuples are equivalent, where *exponent*s of `+0` and `-0` are
+model tuples are equivalent, where *exponents* of `+0` and `-0` are
 considered equivalent. All forms of positive zero are distinguished only
 by the *exponent*. All forms of negative zero, which are distinct from all
 forms of positive zero, also are distinguished only by the *exponent*.

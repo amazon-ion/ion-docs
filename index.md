@@ -1,8 +1,9 @@
 ---
 title: Amazon Ion
+description: "Amazon Ion is a richly-typed, self-describing, hierarchical data serialization
+format offering interchangeable binary and text representations. Ion was built to address rapid development, decoupling, and efficiency challenges faced every day while engineering large-scale, service-oriented architectures. Ion has been addressing these challenges within Amazon for nearly
+a decade, and we believe others will benefit as well."
 ---
-
-# {{ page.title }}
 
 Amazon Ion is a richly-typed, self-describing, hierarchical data serialization
 format offering interchangeable binary and text representations. The text format
@@ -12,10 +13,12 @@ skip-scan parse.  The rich type system provides unambiguous semantics for
 long-term preservation of business data which can survive multiple generations
 of software evolution.
 
-Ion was built to solve the rapid development, decoupling, and efficiency
+Ion was built to address rapid development, decoupling, and efficiency
 challenges faced every day while engineering large-scale, service-oriented
 architectures. Ion has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well.
+
+**Available Libraries:** [Java](https://github.com/amzn/ion-java), [C](https://github.com/amzn/ion-c), [Python](https://github.com/amzn/ion-python), [JavaScript](https://github.com/amzn/ion-js).
 
 ## Why Ion?
  
@@ -115,7 +118,7 @@ could be used to transmit Shift JIS text or an XML payload.
 #### Symbolic expressions
 
 The Ion specification defines a distinct syntax for [symbolic expression][10]s
-(*S-expression*s), but does not define how they should be processed. This allows
+(*S-expressions*), but does not define how they should be processed. This allows
 applications to use S-expressions to convey domain-specific semantics in a
 first-class Ion type.
 
@@ -128,7 +131,7 @@ tunneling domain-specific language text as opaque strings or binary payloads.
 
 The Ion specification provides a formal mechanism for applications to annotate
 any Ion value without the need to enclose the value in a container. These
-*annotation*s are not interpreted by Ion readers and may be used, for example,
+*annotations* are not interpreted by Ion readers and may be used, for example,
 to add type information to a `struct`, time units to an integer or decimal
 value, or a description of the contents of a blob value.
 
