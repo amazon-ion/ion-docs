@@ -206,7 +206,7 @@ Escape</p></th>
 </tr>
 <tr class="even">
 <td align="left"><code>U+<em>HHHH</em></code></td>
-<td align="left"><code>\u</em>HHHH</em></code></td>
+<td align="left"><code>\u<em>HHHH</em></code></td>
 <td align="left">4-digit hexadecimal Unicode code point; equivalent to <code>\U0000<em>HHHH</em></code></td>
 </tr>
 <tr class="odd">
