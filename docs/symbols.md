@@ -1,13 +1,17 @@
 ---
+redirect_from: "/symbols.html"
 title: Symbols
 description: "Amazon Ion symbols are critical to the notation's performance and space-efficiency. This page defines the various concepts and data structures related to symbol management."
 ---
 
-# {{ page.title }}
+# [Docs][1]/ {{ page.title }}
 
 Amazon Ion symbols are critical to the notation's performance and
 space-efficiency. This page defines the various concepts and data
 structures related to symbol management.
+
+* TOC
+{:toc}
 
 Symbol Representations
 ----------------------
@@ -427,7 +431,7 @@ use version 2, while `$ion_2_0` might use version 5.
 
 Applications and users should never have to care about these symbol
 table versions, since they are never explicit in user data: this
-specification disallows (by ignoring) imports named `"$ion"`).
+specification disallows (by ignoring) imports named `"$ion"`.
 
 Here are the system symbols for Ion 1.0.
 
@@ -612,3 +616,6 @@ annotations:
     {
       symbols:["a", "b"]
     }
+
+<!-- references -->
+[1]: {{ site.baseurl }}/docs.html

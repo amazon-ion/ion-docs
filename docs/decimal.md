@@ -1,9 +1,10 @@
 ---
+redirect_from: "/decimal.html"
 title: Decimals
 description: "Amazon Ion supports a decimal numeric type to allow accurate representation of base-10 floating point values such as currency amounts."
 ---
 
-# {{ page.title }}
+# [Docs][1]/ {{ page.title }}
 
 Amazon Ion supports a decimal numeric type to allow accurate representation
 of base-10 floating point values such as currency amounts. This
@@ -16,10 +17,13 @@ converting base-10 fractional values to base-2 fractional values. Sadly,
 base-10 is relatively prime to base-2; many commonly-used base-10 rational
 numbers are irrational in base-2.
 
+* TOC
+{:toc}
+
 ### Data Model
 
-Ion decimals follow the [IBM Hursley Lab General Decimal Arithmetic Specification][1],
-which defines an [abstract decimal data model][2] represented by the following
+Ion decimals follow the [IBM Hursley Lab General Decimal Arithmetic Specification][2],
+which defines an [abstract decimal data model][3] represented by the following
 3-tuple.
 
     (<sign 0|1>, <coefficient: unsigned integer>, <exponent: integer>)
@@ -123,7 +127,7 @@ However, the following are **not** equivalent to each other.
 ### Binary Format
 
 The encoding of Ion decimals, which follows the decimal data model
-described above, is specified in [the Ion Binary Encoding](binary.html).
+described above, is specified in [the Ion Binary Encoding][5].
 
 The following binary encodings of decimal values are all equivalent to `0d0`.
 
@@ -203,6 +207,9 @@ Explicit encoding of 42d(negative)0
 +-----------------+------------+-------------+
 </pre>
 
-[1]: http://speleotrove.com/decimal/decarith.html
-[2]: http://speleotrove.com/decimal/damodel.html
-[3]: http://speleotrove.com/decimal/daconvs.html
+<!-- References -->
+[1]: {{ site.baseurl }}/docs.html
+[2]: http://speleotrove.com/decimal/decarith.html
+[3]: http://speleotrove.com/decimal/damodel.html
+[4]: http://speleotrove.com/decimal/daconvs.html
+[5]: binary.html

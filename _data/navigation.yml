@@ -1,7 +1,13 @@
 main:
   - title: "Home"
     url: /
-  - title: "Cookbook"
-    url: /cookbook.html
-  - title: "Specification"
-    url: /spec.html
+  - title: "Guides"
+    url: /guides.html
+  - title: "Docs"
+    url: /docs.html
+  - title: "News"
+    url: /news.html
+  - title: "Libs"
+    url: /libs.html
+  - title: "Help"
+    url: /faqs.html
