@@ -5,7 +5,7 @@ format offering interchangeable binary and text representations. Ion was built t
 a decade, and we believe others will benefit as well."
 ---
 
-# [Guides][15]/  {{ page.title }}
+# [Docs][15]/  {{ page.title }}
  
   * Ion provides **[dual-format interoperability](#dual-format-interoperability)**, which enables users to take
     advantage of the ease of use of the text format while capitalizing on the
@@ -189,4 +189,4 @@ pieces of Ion data.
 [12]: {{ site.baseurl }}/docs/spec.html#timestamp
 [13]: {{ site.baseurl }}/docs/spec.html#blob
 [14]: {{ site.baseurl }}/docs/spec.html#clob
-[15]: {{ site.baseurl }}/guides.html
+[15]: {{ site.baseurl }}/docs.html

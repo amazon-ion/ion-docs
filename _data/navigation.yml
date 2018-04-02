@@ -1,13 +1,11 @@
 main:
   - title: "Home"
     url: /
-  - title: "Guides"
-    url: /guides.html
-  - title: "Docs"
-    url: /docs.html
   - title: "News"
     url: /news.html
+  - title: "Docs"
+    url: /docs.html
   - title: "Libs"
     url: /libs.html
   - title: "Help"
-    url: /faqs.html
+    url: /help.html
