@@ -1,5 +1,6 @@
 ---
-title: The Amazon Ion Specification
+title: Specification
+description: "The Amazon Ion specification has three parts. A set of data types. A textual notation for values of those types. A binary notation for values of those types."
 ---
 
 # {{ page.title }}

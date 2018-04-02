@@ -1,5 +1,6 @@
 ---
-title: Amazon Ion Decimals
+title: Decimals
+description: "Amazon Ion supports a decimal numeric type to allow accurate representation of base-10 floating point values such as currency amounts."
 ---
 
 # {{ page.title }}
