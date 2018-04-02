@@ -11,6 +11,6 @@ We have written a collection of guides that are designed to help you use Ion. If
 
 [Why Ion?][3] discusses features that differentiate Amazon Ion from other formats. Some of those features are Ion's dual-format interoperability, rich type system, self-describing format, read-optimized binary format.
 
-[1]: faqs.html#contact
+[1]: help.html#contact
 [2]: guides/cookbook.html
 [3]: guides/why.html

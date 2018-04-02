@@ -5,7 +5,7 @@ description: "This cookbook provides code samples for some simple Amazon Ion use
 ---
 
 
-# [Guides][15]/ {{ page.title }}
+# [Docs][15]/ {{ page.title }}
 
 * TOC
 {:toc}
@@ -663,4 +663,4 @@ table using a catalog.
 [12]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
 [13]: https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html
 [14]: https://amzn.github.io/ion-c/
-[15]: {{ site.baseurl }}/guides.html
+[15]: {{ site.baseurl }}/docs.html
