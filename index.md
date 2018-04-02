@@ -1,7 +1,7 @@
 ---
 title: Amazon Ion
 description: "Amazon Ion is a richly-typed, self-describing, hierarchical data serialization
-format offering interchangeable binary and text representations. Ion was built to solve the rapid development, decoupling, and efficiency challenges faced every day while engineering large-scale, service-oriented architectures. Ion has been addressing these challenges within Amazon for nearly
+format offering interchangeable binary and text representations. Ion was built to address rapid development, decoupling, and efficiency challenges faced every day while engineering large-scale, service-oriented architectures. Ion has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well."
 ---
 
@@ -13,7 +13,7 @@ skip-scan parse.  The rich type system provides unambiguous semantics for
 long-term preservation of business data which can survive multiple generations
 of software evolution.
 
-Ion was built to solve the rapid development, decoupling, and efficiency
+Ion was built to address rapid development, decoupling, and efficiency
 challenges faced every day while engineering large-scale, service-oriented
 architectures. Ion has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well.

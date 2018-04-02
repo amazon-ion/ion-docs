@@ -1,11 +1,11 @@
 ---
 title: Strings and Clobs
-description: "This document is a proposal to clarify the semantics of the Amazon Ion string and clob data types with respect to escapes and the Unicode standard."
+description: "This document clarifies the semantics of the Amazon Ion string and clob data types with respect to escapes and the Unicode standard."
 ---
 
 # {{ page.title }}
 
-This document is a proposal to clarify the semantics of the Amazon Ion
+This document clarifies the semantics of the Amazon Ion
 `string` and `clob` data types with respect to
 escapes and the [Unicode](http://www.unicode.org/) standard.
 
