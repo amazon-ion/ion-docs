@@ -1,3 +1,25 @@
-.sass-cache/*
-_site/*
-.vscode*
+# Created by https://www.gitignore.io/api/vim,jekyll,visualstudiocode
+
+### Jekyll ###
+_site/
+.sass-cache/
+.jekyll-metadata
+
+### Vim ###
+# swap
+.sw[a-p]
+.*.sw[a-p]
+# session
+Session.vim
+# temporary
+.netrwhist
+*~
+# auto-generated tag files
+tags
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history

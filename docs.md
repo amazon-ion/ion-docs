@@ -33,19 +33,19 @@ This document covers the Amazon Ion data model and the Ion text format.
 
 [ANTLR grammar][3]
 
-This grammar formally covers (most) of the text format.
+This grammar formally covers the text Ion format.
 
 ---
 
 [Binary format][2]
 
-This document covers the binary format of Ion.
+This document covers the binary Ion format.
 
 ---
 
 [Symbols][8]
 
-This document defines the various concepts and data structures related to symbol management. Amazon Ion symbols are critical to the notation’s performance and space-efficiency.
+This document defines the various concepts and data structures related to symbol management. Amazon Ion symbols are critical to the binary format performance and space-efficiency.
 
 ---
 

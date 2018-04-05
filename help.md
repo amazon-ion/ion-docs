@@ -41,8 +41,8 @@ There is a new community email list/forum that you can post questions to that th
 > Ion was designed to support easy concatenation of files or streams. There are three things to know:
 > 
 > 1. Text can be concatenated with text, and binary with binary, but you cannot mix text and binary.
-> 1. Ion binary streams can be concatenated as-is, with no special effort.
-> 1. When concatenating Ion text streams, the concatenation tool MUST inject the symbol $ion_1_0 in between each pair, ensuring appropriate whitespace. Failure to do so may lead to misinterpretation of the data. (That symbol is constant, regardless of the Ion version used by any individual file.) 
+> 1. Ion binary streams can be concatenated as-is because the binary format requires that the stream begin with the binary IVM byte sequence.
+> 1. When concatenating Ion text streams, the concatenation tool MUST inject the IVM that represents the version of the Ion format for the stream that follows, ensuring appropriate whitespace. Failure to do so may lead to misinterpretation of the data.
 
 ### Why do Ion structs support duplicate field names?
 

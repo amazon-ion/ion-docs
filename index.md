@@ -41,6 +41,15 @@ a decade, and we believe others will benefit as well.
 }
 ```
 -->
+<!-- 
+To generate:
+1. Uncomment the json-doc code block above
+2. Run Jekyll locally (jekyll serve)
+3. Navigate to the index page in a browser and inspect the code
+4. Copy the generated html over the html below
+5. Find and replace any instance of err with na
+6. Comment out the code block above
+ -->
 <div class="language-json-doc highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">/* Ion supports comments. */</span><span class="w">
 </span><span class="c1">// Here is a struct, which is similar to a JSON object.</span><span class="w">
 </span><span class="p">{</span><span class="w">
