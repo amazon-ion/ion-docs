@@ -6,7 +6,7 @@ description: "An explanation of the Amazon Ion binary encoding."
 
 # [Docs][1]/ {{ page.title }}
 
-This document covers the binary format of Ion.
+This document covers the binary Ion format.
 
 * TOC
 {:toc}

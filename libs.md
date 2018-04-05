@@ -25,7 +25,6 @@ description: "The latest news about Amazon Ion and the Amazon Ion community."
 
 ## Community Supported Tools
 
-| Name | Repository | Documentation | Release |
-|------|------|------|---------|
-| Ion support in Jackson |  [Link](https://github.com/FasterXML/jackson-dataformats-binary/tree/master/ion) | [Link](http://fasterxml.github.io/jackson-dataformats-binary/javadoc/ion/2.9/) | - |
-| Python anyconfig ion backend | [Link](https://github.com/ssato/python-anyconfig-ion-backend) | [Link](http://python-anyconfig.readthedocs.io/en/latest/#id44) | [Link](https://pypi.python.org/pypi/anyconfig-ion-backend) 
+| Name | Repository | Documentation |
+|------|------------|---------------|
+| Ion support in Jackson |  [Link](https://github.com/FasterXML/jackson-dataformats-binary/tree/master/ion) | [Link](http://fasterxml.github.io/jackson-dataformats-binary/javadoc/ion/2.9/) |
