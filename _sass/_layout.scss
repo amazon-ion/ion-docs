@@ -1,0 +1,141 @@
+/**
+ * Site header
+ */
+.site-header {
+  min-height: 56px;
+
+  // Positioning context for the mobile navigation icon
+  position: relative;
+}
+
+.site-title {
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 56px;
+  letter-spacing: -1px;
+  margin-bottom: 0;
+  float: left;
+
+  &,
+  &:visited {
+    color: $grey-color-dark;
+  }
+}
+
+.site-nav {
+  float: right;
+  line-height: 56px;
+
+  .page-link {
+    color: $text-color;
+    line-height: $base-line-height;
+
+    // Gaps between nav items, but not on the last one
+    &:not(:last-child) {
+      margin-right: 20px;
+    }
+  }
+
+  @include media-query($on-palm) {
+    .page-link {
+      padding: 20px 0;
+
+      &:not(:last-child) {
+        margin-right: 0;
+      }
+      margin-left: 20px;
+    }
+  }
+}
+
+
+/**
+ * Site footer
+ */
+.site-footer {
+  padding: $spacing-unit 0;
+  font-size: 15px;
+  color: $grey-color;
+  text-align: center;
+}
+
+
+/**
+ * Page content
+ */
+.page-content {
+  padding: $spacing-unit 0;
+
+  table {
+    border-collapse: collapse;
+    border: 1px solid rgb(234, 234, 234);
+  }
+
+  th {
+    -webkit-background-clip: border-box;
+    -webkit-background-origin: padding-box;
+    -webkit-background-size: auto;
+    -webkit-border-horizontal-spacing: 0px;
+    -webkit-border-vertical-spacing: 0px;
+    -webkit-box-shadow: rgba(255, 255, 255, 0.498039) 0 1px 0 0 inset;
+    background-attachment: scroll;
+    background-clip: border-box;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: linear-gradient(rgb(248, 248, 248), rgb(238, 238, 238));
+    background-origin: padding-box;
+    background-size: auto;
+    box-shadow: rgba(255, 255, 255, 0.498039) 0 1px 0 0 inset;
+    border: 1px solid rgb(238, 238, 238);
+    box-sizing: border-box;
+    color: rgb(17, 17, 17);
+    font-weight: bold;
+    font-size: 90%;
+    height: 33px;
+    line-height: 19px;
+    padding: .5em 1em;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  td {
+    -webkit-border-horizontal-spacing: 0px;
+    -webkit-border-vertical-spacing: 0px;
+    border-color: rgb(234, 234, 234);
+    border-style: solid;
+    border-width: 1px;
+    border-collapse: collapse;
+    box-sizing: border-box;
+    color: rgb(17, 17, 17);
+    height: 33px;
+    line-height: 1.3em;
+    padding: .5em 1em;
+    vertical-align: top;
+  }
+
+  tr:nth-child(even) {
+    background: rgb(234, 234, 234);
+  }
+
+  tr:nth-child(odd) {
+    background: white;
+  }
+
+  pre {
+    border-radius: .25em;
+    position: relative;
+    padding: 0 .5em 0 .5em;
+    border-left: 0.4em #ddd solid;
+  }
+
+  blockquote {
+    border-radius: .25em;
+    border-left: 0.4em rgb(245, 215, 142) solid;
+    background-color: rgb(249, 243, 229);
+    line-height: 1.4em;
+    font-size: 90%;
+  }
+}
+
+.page-heading {
+  font-size: 20px;
+}

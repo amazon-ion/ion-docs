@@ -9,7 +9,13 @@
 
     <main class="page-content">
       <div class="wrapper">
+        <h1><a href="{{site.baseurl}}/news.html">News</a></h1>
+        <hr/>
+        <strong>{{page.title}}</strong><br/>
+        <em>{{page.date | date_to_long_string}}</em>
+        <br/><br/>
         {{ content }}
+        <hr/>
       </div>
     </main>
 
