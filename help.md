@@ -18,12 +18,6 @@ Each [library](libs.html) repo has a contributing file that provides instruction
 
 <br/>
 
-## Contact
-
-There is a new community email list/forum that you can post questions to that the Ion Team responds to. The forum is available here: _____. As it is new, there is not a lot of content there yet. Let us know about any questions you have with Ion!
-
-<br/>
-
 ## FAQs
 
 ### What are the Ion file extensions?

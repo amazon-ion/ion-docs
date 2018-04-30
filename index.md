@@ -11,10 +11,22 @@ skip-scan parse][16].  The rich type system provides unambiguous semantics for
 long-term preservation of business data which can survive multiple generations
 of software evolution.
 
-Ion was built to address rapid development, decoupling, and efficiency
-challenges faced every day while engineering large-scale, service-oriented
-architectures. Ion has been addressing these challenges within Amazon for nearly
-a decade, and we believe others will benefit as well.
+**Available Libraries:** [Ion Java][3] -- [Ion C][4] -- [Ion Python][5] -- [Ion JavaScript][6]
+
+<br/>
+
+### Latest News
+
+---
+{% for post in site.posts limit:1 %}
+  **<a href="{{site.baseurl}}{{post.url}}">{{ post.title }}</a>**<br/>
+  *{{post.date | date_to_long_string}}*<br/>
+  {{post.content}}
+{% endfor %}
+---
+Visit the [News][7] page for more announcements about Amazon Ion.
+
+<br/>
 
 ### Ion Text Example {#example}
 <!-- commented out until we create a pygment parser for Ion
@@ -76,20 +88,12 @@ The [Specification][10] gives an overview of the full list of the core data type
 
 <br/>
 
-### Latest News
-
----
-{% for post in site.posts limit:1 %}
-  **<a href="{{site.baseurl}}{{post.url}}">{{ post.title }}</a>**<br/>
-  *{{post.date | date_to_long_string}}*<br/>
-  {{post.content}}
-{% endfor %}
----
-Visit the [News][7] page for more news.
-
-<br/>
-
 ### More Information
+
+Ion was built to address rapid development, decoupling, and efficiency
+challenges faced every day while engineering large-scale, service-oriented
+architectures. Ion has been addressing these challenges within Amazon for nearly
+a decade, and we believe others will benefit as well.
 
 To find out more about the Ion format and for guides on using it, check out the [Docs][8] page. The [Libs][12] page contains links to the officially supported libraries as well as community supported tools. The [Help][9] page contains information on how to contribute, how to contact the Ion Team, and answers to the frequently asked questions.
 
