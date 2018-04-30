@@ -1,9 +1,10 @@
 ---
+redirect_from: "/spec.html"
 title: Specification
 description: "The Amazon Ion specification has three parts. A set of data types. A textual notation for values of those types. A binary notation for values of those types."
 ---
 
-# {{ page.title }}
+# [Docs][1]/ {{ page.title }}
 
 The Amazon Ion specification has three parts:
 
@@ -20,19 +21,19 @@ between the formats with almost complete fidelity. ("Almost" because
 converting from text to binary does not preserve whitespace and
 comments.)
 
-The Ion [text encoding](text.html) is intended to be easy to read and
+The Ion [text encoding][2] is intended to be easy to read and
 write. It may be more suitable for streaming applications since sequences
 don't need to be length-prefixed. Whitespace is insignificant and is only
 required where necessary to separate tokens. C-style comments are treated
 as whitespace, and are not part of the binary encoding.
 
-The [binary encoding](binary.html) is
+The [binary encoding][3] is
 much more compact and efficient. An important feature is that parts of
 the whole can be accessed without "preparation", meaning you don't have
 to load it into another form before accessing the values.
 
 
-## The Ion Data Model
+# The Ion Data Model
 
 The semantic basis of Ion is an abstract data model, composed of a set
 of primitive types and a set of recursively-defined container types. All
@@ -60,9 +61,9 @@ Here's an overview of the core data types:
   * [`sexp`](#sexp) - Ordered collections of values with application-defined
     semantics
 
-### Primitive Types
+## Primitive Types
 
-#### Null Values {#null}
+### Null Values {#null}
 
 Ion supports distinct null values for every core type, as well as a
 separate `null` type that's distinct from all other types.
@@ -102,7 +103,7 @@ null.list   // The type is list
 (As a historical aside, the `null` type exists primarily for
 compatibility with JSON, which has only the untyped `null` value.)
 
-#### Booleans {#bool}
+### Booleans {#bool}
 
 The `bool` type is self-explanatory, but note that (as with all Ion
 types) there's a null value. Thus the set of all Boolean values consists
@@ -117,7 +118,7 @@ false
 (As with the null values, one can single-quote those tokens to force
 them to be parsed as symbols.)
 
-#### Integers {#int}
+### Integers {#int}
 
 The `int` type consists of signed integers of arbitrary size. The binary
 format uses a very compact encoding that uses "just enough" bits to hold
@@ -150,7 +151,7 @@ _1         // A symbol (ints cannot start with underscores)
 In the text notation, integer values must be followed by one of the
 thirteen numeric stop-characters: `{}[](),\"\'\ \t\n\r`.
 
-#### Real Numbers {#real-numbers}
+### Real Numbers {#real-numbers}
 
 Ion supports both binary and lossless decimal encodings of real numbers
 as, respectively, types `float` and `decimal`. In the text format,
@@ -195,15 +196,15 @@ is preserved through round-trips. Because most decimal values cannot be
 represented exactly in binary floating-point, `float` values may change
 "appearance" and precision when reading or writing Ion text.
 
-See also [Ion Float](float.html) and [Ion Decimals](decimal.html) for more notes.
+See also [Ion Float][4] and [Ion Decimals][5] for more notes.
 
-#### Timestamps {#timestamp}
+### Timestamps {#timestamp}
 
 Timestamps represent a specific moment in time, always include a local
 offset, and are capable of arbitrary precision.
 
 In the text format, timestamps follow the [W3C note on date and time
-formats](http://www.w3.org/TR/NOTE-datetime), but they must end with the
+formats][6], but they must end with the
 literal "T" if not at least whole-day precision. Fractional seconds are
 allowed, with at least one digit of precision and an unlimited maximum.
 Local-time offsets may be represented as either hour:minute offsets from
@@ -211,13 +212,13 @@ UTC, or as the literal "Z" to denote a local time of UTC. They are
 required on timestamps with time and are not allowed on date values.
 
 Ion follows the "Unknown Local Offset Convention" of
-[RFC3339](http://www.ietf.org/rfc/rfc3339.txt):
+[RFC3339][7]:
 
 > If the time in UTC is known, but the offset to local time is unknown,
 > this can be represented with an offset of "-00:00". This differs
 > semantically from an offset of "Z" or "+00:00", which imply that UTC
 > is the preferred reference point for the specified time.
-> [RFC2822](http://www.ietf.org/rfc/rfc2822.txt) describes a similar
+> [RFC2822][8] describes a similar
 > convention for email.
 
 Values that are precise only to the year, month, or date are assumed to
@@ -266,7 +267,7 @@ not equivalent:
 In the text notation, timestamp values must be followed by one of the
 thirteen numeric stop-characters: `{}[](),\"\'\ \t\n\r`.
 
-#### Strings {#string}
+### Strings {#string}
 
 Ion `string` values are Unicode character sequences of arbitrary length.
 
@@ -284,7 +285,7 @@ null.string            // A null string value
 xml::"<e a='v'>c</e>"  // String with type annotation 'xml'
 ```
 
-##### Long Strings
+#### Long Strings
 
 The text format supports an alternate syntax for "long strings",
 including those that break across lines. Sequences bounded by three
@@ -311,7 +312,7 @@ and this is the third line.
 '''
 ```
 
-##### Escape Characters {#escapes}
+#### Escape Characters {#escapes}
 
 The Ion text format supports escape sequences *only* within quoted
 strings and symbols. Ion supports most of the escape sequences defined
@@ -423,7 +424,7 @@ Note that Ion does not support the following escape sequences:
   * Java's extended Unicode markers, _e.g._, `"\uuuXXXX"`
   * General octal escape sequences, `\OOO`
 
-#### Symbols {#symbol}
+### Symbols {#symbol}
 
 Symbols are much like strings, in that they are Unicode character
 sequences. The primary difference is the intended semantics: symbols
@@ -465,24 +466,24 @@ Note that the data model does not distinguish between identifiers,
 operators, or other symbols, and that -- as always -- the binary format
 does not retain whitespace.
 
-See [Ion Symbols](symbols.html) for more details about symbol
+See [Ion Symbols][9] for more details about symbol
 representations and symbol tables.
 
-#### Blobs {#blob}
+### Blobs {#blob}
 
 The `blob` type allows embedding of arbitrary raw binary data. Ion
 treats such data as a single (though often very large) value. It does no
 processing of such data other than passing it through intact.
 
 In the text format, `blob` values are denoted as
-[RFC 4648](https://tools.ietf.org/html/rfc4648)-compliant
-[Base64](http://en.wikipedia.org/wiki/Base64) text within two
+[RFC 4648][10]-compliant
+[Base64][11] text within two
 pairs of curly braces.
 
 When parsing `blob` text, an error must be raised if the data:
 
   * Contains characters outside
-    of the [Base64 character set](https://tools.ietf.org/html/rfc4648#section-4).
+    of the [Base64 character set][12].
   * Contains a padding character (`=`) anywhere other than at the end.
   * Is terminated by an incorrect number of padding characters.
 
@@ -516,7 +517,7 @@ null.blob
 {% endraw %}
 ```
 
-#### Clobs {#clob}
+### Clobs {#clob}
 
 The `clob` type is similar to `blob` in that it holds uninterpreted
 binary data. The difference is that the content is expected to be text,
@@ -530,7 +531,7 @@ unscathed while remaining generally readable (at least for western
 language text). Like `blob`s, `clob`s disallow comments everywhere
 within the value.
 
-[Strings and Clobs](stringclob.html) gives details on the
+[Strings and Clobs][13] gives details on the
 subtle, but profound, differences between Ion strings and clobs.
 
 ```
@@ -556,13 +557,13 @@ Note that the `shift_jis` type annotation above is, like all
 [type annotations](#annot), application-defined. Ion does not interpret or
 validate that symbol; that's left to the application.
 
-### Container Types {#container}
+## Container Types {#container}
 
 Ion defines three container types: structures, lists, and S-expressions.
 These types are defined recursively and may contain values of any Ion
 type.
 
-#### Structures {#struct}
+### Structures {#struct}
 
 Structures are *unordered* collections of name/value pairs. The names
 are symbol tokens, and the values are unrestricted. Each name/value pair
@@ -602,7 +603,7 @@ then the content.
 { field_name: annotation:: value }     // Okay
 ```
 
-#### Lists {#list}
+### Lists {#list}
 
 Lists are ordered collections of values. The contents of the list are
 heterogeneous (that is, each element can have a different type).
@@ -622,9 +623,9 @@ null.list         // A null list value
 [ 1, , 2 ]        // ERROR: missing element between commas
 ```
 
-#### S-Expressions {#sexp}
+### S-Expressions {#sexp}
 
-An S-expression (or [symbolic expression](https://en.wikipedia.org/wiki/S-expression))
+An S-expression (or [symbolic expression][14])
 is much like a list in that it's an ordered collection
 of values. However, the notation aligns with Lisp syntax to connote use
 of application semantics like function calls or programming-language
@@ -650,7 +651,7 @@ Although Ion S-expressions use a syntax similar to Lisp expressions, Ion does
 not define their interpretation or any semantics at all, beyond the pure
 sequence-of-values data model indicated above.
 
-### Type Annotations {#annot}
+## Type Annotations {#annot}
 
 Any Ion value can include one or more annotation symbols denoting the
 semantics of the content. This can be used to:
@@ -692,3 +693,19 @@ particular, the text `a::c` is a single value consisting of three
 textual tokens (a symbol, a double-colon, and another symbol); the first
 symbol token is an *annotation* on the value, and the second is the
 *content* of the value.
+
+<!-- References -->
+[1]: {{ site.baseurl }}/docs.html
+[2]: text.html
+[3]: binary.html
+[4]: float.html
+[5]: decimal.html
+[6]: http://www.w3.org/TR/NOTE-datetime
+[7]: http://www.ietf.org/rfc/rfc3339.txt
+[8]: http://www.ietf.org/rfc/rfc2822.txt
+[9]: symbols.html
+[10]: https://tools.ietf.org/html/rfc4648
+[11]: http://en.wikipedia.org/wiki/Base64
+[12]: https://tools.ietf.org/html/rfc4648#section-4
+[13]: stringclob.html
+[14]: https://en.wikipedia.org/wiki/S-expression

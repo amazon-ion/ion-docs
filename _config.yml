@@ -5,6 +5,7 @@ baseurl: /ion-docs
 markdown: kramdown
 kramdown:
   input: GFM
+  toc_levels: "2,3" 
 highlighter: rouge
 defaults:
   -
@@ -12,3 +13,5 @@ defaults:
       path: ""
     values:
       layout: default
+plugins:
+  - jekyll-redirect-from
