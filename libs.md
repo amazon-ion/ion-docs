@@ -10,7 +10,7 @@ description: "The latest news about Amazon Ion and the Amazon Ion community."
 | Name | Latest Version | Repository | Documentation |
 |------|----------------|------|---------------|
 | ion-java | [1.1.2](https://github.com/amzn/ion-java/releases/latest) (April 2, 2018) | [Link](https://github.com/amzn/ion-java) | [Link](https://www.javadoc.io/doc/software.amazon.ion/ion-java/) |
-|ion-python | [0.3.0](https://github.com/amzn/ion-python/releases/latest) (May 15, 2018) | [Link](https://github.com/amzn/ion-python) | - |
+|ion-python | [0.3.1](https://github.com/amzn/ion-python/releases/latest) (May 15, 2018) | [Link](https://github.com/amzn/ion-python) | - |
 | ion-c | [1.0.0](https://github.com/amzn/ion-c/releases/latest) (April 12, 2018) | [Link](https://github.com/amzn/ion-c) | - |
 | ion-js | Currently in Alpha | [Link](https://github.com/amzn/ion-js) | [Link](https://amzn.github.io/ion-js/api/) |
 
