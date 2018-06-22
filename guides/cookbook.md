@@ -5,7 +5,7 @@ description: "This cookbook provides code samples for some simple Amazon Ion use
 ---
 
 
-# [Docs][15]/ {{ page.title }}
+# [Docs][17]/ {{ page.title }}
 
 * TOC
 {:toc}
@@ -44,9 +44,9 @@ implied) implementation.
 
 > *Java*
 > 
-> [`IonSystem`][3] is the central interface to ion-java. Generally, a single
-> `IonSystem` instance should be constructed and used throughout the
-> application.
+> The [`IonSystem`][3] interface provides many utilities in ion-java.
+> When an `IonSystem` is required, a single instance generally should be
+> constructed and used throughout the application.
 > 
 > Below, an `IonSystem` instance that will be reused throughout this cookbook 
 > will be constructed.
@@ -62,8 +62,34 @@ implied) implementation.
 > Implementations of the [`IonReader`][4] and [`IonWriter`][5] interfaces are
 > responsible for reading and writing Ion data in both its text and binary forms.
 > 
-> `IonReader`s and `IonWriter`s may be constructed through the `IonSystem`.
+> `IonReader`s and `IonWriter`s may be constructed through builders.
+>
+> An [`IonReaderBuilder`][16] with the default configuration may be constructed as
+> follows. This builder will construct `IonReader` instances which can read
+> both text and binary Ion data.
+>
+> ```java
+> IonReaderBuilder readerBuilder = IonReaderBuilder.standard();
+> ```
+>
+> An [`IonTextWriterBuilder`][6] with the default configuration may be constructed
+> as follows. This builder will construct `IonWriter` instances which output data
+> in the text Ion format.
 > 
+> ```java
+> IonTextWriterBuilder textWriterBuilder = IonTextWriterBuilder.standard();
+> ```
+>
+> To construct a builder that constructs `IonWriter` instances which output data
+> in the binary Ion format, use an [`IonBinaryWriterBuilder`][15].
+>
+> ```java
+> IonBinaryWriterBuilder binaryWriterBuilder = IonBinaryWriterBuilder.standard();
+> ```
+>
+> Each of the aforementioned builders may be used to construct multiple `IonReader`
+> or `IonWriter` instances with the same configuration.
+>
 > Consider the following text Ion data, which has been materialized as a Java
 > String.
 > 
@@ -74,7 +100,7 @@ implied) implementation.
 > An `IonReader` for this data may be constructed as follows.
 > 
 > ```java
-> IonReader reader = SYSTEM.newReader(helloWorld);
+> IonReader reader = readerBuilder.build(helloWorld);
 > ```
 > 
 > Reading the data requires leveraging the `IonReader`'s APIs.
@@ -105,16 +131,16 @@ implied) implementation.
 > The first step when creating an `IonWriter` is to decide whether it should
 > emit text Ion or binary Ion.
 > 
-> A text `IonWriter` can be constructed as follows.
+> As mentioned above, text `IonWriter`s are constructed by `IonTextWriterBuilder`s.
 > 
 > ```java
-> IonWriter writer = SYSTEM.newTextWriter(out);
+> IonWriter writer = textWriterBuilder.build(out);
 > ```
 > 
-> Similarly, a binary `IonWriter` can be constructed as follows.
+> Similarly, binary `IonWriter`s are constructed by `IonBinaryWriterBuilder`s.
 > 
 > ```java
-> IonWriter writer = SYSTEM.newBinaryWriter(out);
+> IonWriter writer = binaryWriterBuilder.build(out);
 > ```
 > 
 > Since both text and binary `IonWriter`s conform to the same interface, the
@@ -135,16 +161,14 @@ implied) implementation.
 > 
 > ```java
 > void writeHelloWorldText() throws IOException {
->     try (IonWriter textWriter = SYSTEM.newTextWriter(out)) {
+>     try (IonWriter textWriter = textWriterBuilder.build(out)) {
 >         writeHelloWorld(textWriter);
 >     }
 > }
 > ```
 > 
 > Regardless of whether `out` was written with text or binary Ion data, it may
-> now be read using an `IonReader`. `IonSystem.newReader()` will return an
-> instance of an `IonReader` implementation capable of reading Ion data in the
-> given format.
+> now be read using an `IonReader`.
 > 
 > ```java
 > import java.io.ByteArrayInputStream;
@@ -153,7 +177,7 @@ implied) implementation.
 > void readHelloWorldAgain() {
 >     byte[] data = out.toByteArray();                // may contain either text or binary Ion data
 >     InputStream in = new ByteArrayInputStream(data);
->     reader = SYSTEM.newReader(in);
+>     reader = readerBuilder.build(in);
 >     readHelloWorld();                               // prints "hello world"
 > }
 > ```
@@ -189,14 +213,15 @@ Pretty-printing results in output similar to the following:
 
 > *Java*
 > 
-> Ion data can be pretty-printed by configuring an IonWriter via an [`IonTextWriterBuilder`][6]:
+> Ion data can be pretty-printed using an `IonWriter` constructed by a specially-configured
+> `IonTextWriterBuilder`.
 > 
 > ```java
 > 
 > String unformatted = "{ level1:{ level2:{ level3:\"foo\" }, x:2 }, y:[a,b,c] }";
 > 
 > void rewrite(String textIon, IonWriter writer) throws IOException {
->     IonReader reader = SYSTEM.newReader(textIon);
+>     IonReader reader = IonReaderBuilder.standard().build(textIon);
 >     writer.writeValues(reader);
 > }
 > 
@@ -370,7 +395,7 @@ representations of a numeric Ion value.
 >     BigInteger second = new BigInteger("123456");
 >     double third = 1.2345e6;
 > 
->     IonReader reader = SYSTEM.newReader(numberList);
+>     IonReader reader = IonReaderBuilder.standard().build(numberList);
 >     reader.next();
 >     reader.stepIn();
 > 
@@ -440,7 +465,7 @@ not match `"foo"`, the reader can quickly skip to the start of the next value.
 > }
 > 
 > int sumFooQuantities() {
->     IonReader reader = SYSTEM.newReader(getStream());
+>     IonReader reader = IonReaderBuilder.standard().build(getStream());
 >     int sum = 0;
 >     IonType type;
 >     while ((type = reader.next()) != null) {
@@ -533,7 +558,7 @@ symbol tables should be used.
 > 
 > ```java
 > void convertCsvToIonUsingLocalSymbolTable(OutputStream output) throws IOException {
->     try (IonWriter writer = SYSTEM.newBinaryWriter(output)) {
+>     try (IonWriter writer = IonBinaryWriterBuilder.standard().build(output)) {
 >         convertCsvToIon(writer);
 >     }
 > }
@@ -577,7 +602,7 @@ resurrected into a symbol table at runtime.
 > }
 > 
 > SymbolTable getSharedSymbolTable() {
->     IonReader symbolTableReader = SYSTEM.newReader(getSharedSymbolTableStream());
+>     IonReader symbolTableReader = IonReaderBuilder.standard().build(getSharedSymbolTableStream());
 >     return SYSTEM.newSharedSymbolTable(symbolTableReader);
 > }
 > ```
@@ -599,7 +624,7 @@ resurrected into a symbol table at runtime.
 > ```java
 > void convertCsvToIonUsingSharedSymbolTable(OutputStream output) throws IOException {
 >     SymbolTable shared = getSharedSymbolTable();
->     try (IonWriter writer = SYSTEM.newBinaryWriter(output, shared)) {
+>     try (IonWriter writer = IonBinaryWriterBuilder.standard().withImports(shared).build(output)) {
 >         convertCsvToIon(writer);
 >     }
 > }
@@ -627,20 +652,20 @@ table using a catalog.
 > which stores shared symbol tables in memory and will be used here for
 > illustration purposes.
 > 
-> Creating `IonReaders` capable of parsing streams written with shared symbol
-> tables starts with correctly configuring an `IonSystem` instance. Reusing the
+> Creating `IonReader`s capable of parsing streams written with shared symbol
+> tables starts with correctly configuring an `IonReaderBuilder`. Reusing the
 > `getSharedSymbolTable` method from above, this can be done as follows.
 > 
 > ```java
-> IonSystem getSystemWithCatalog() {
+> IonReaderBuilder getReaderBuilderWithCatalog() {
 >     SimpleCatalog catalog = new SimpleCatalog();
 >     catalog.putTable(getSharedSymbolTable());
->     return IonSystemBuilder.standard().withCatalog(catalog).build();
+>     return IonReaderBuilder.standard().withCatalog(catalog);
 > }
 > ```
 > 
-> The resulting `IonSystem` can be used to instantiate `IonReader`s capable of
-> interpreting the shared symbols encountered in the value stream written in the
+> The resulting `IonReaderBuilder` may be used to instantiate `IonReader`s capable
+> of interpreting the shared symbols encountered in the value stream written in the
 > previous sub-section.
 
 ## See also
@@ -650,17 +675,19 @@ table using a catalog.
 
 <!-- References -->
 [1]: https://github.com/amzn/ion-java
-[2]: https://www.javadoc.io/doc/software.amazon.ion/ion-java/1.0.0
-[3]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonSystem.html
-[4]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonReader.html
-[5]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonWriter.html
-[6]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/system/IonTextWriterBuilder.html
-[7]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/SymbolTable.html
-[8]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/IonCatalog.html
-[9]: https://static.javadoc.io/software.amazon.ion/ion-java/1.0.0/software/amazon/ion/system/SimpleCatalog.html
+[2]: https://www.javadoc.io/doc/software.amazon.ion/ion-java/
+[3]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/IonSystem.html
+[4]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/IonReader.html
+[5]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/IonWriter.html
+[6]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/system/IonTextWriterBuilder.html
+[7]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/SymbolTable.html
+[8]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/IonCatalog.html
+[9]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/system/SimpleCatalog.html
 [10]: https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html
 [11]: https://docs.oracle.com/javase/8/docs/api/java/io/ByteArrayOutputStream.html
 [12]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
 [13]: https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html
 [14]: https://amzn.github.io/ion-c/
-[15]: {{ site.baseurl }}/docs.html
+[15]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/system/IonBinaryWriterBuilder.html
+[16]: https://static.javadoc.io/software.amazon.ion/ion-java/1.2.0/software/amazon/ion/system/IonReaderBuilder.html
+[17]: {{ site.baseurl }}/docs.html
