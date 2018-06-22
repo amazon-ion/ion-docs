@@ -40,21 +40,6 @@ implied) implementation.
 
 * * *
 
-## Getting started
-
-> *Java*
-> 
-> The [`IonSystem`][3] interface provides many utilities in ion-java.
-> When an `IonSystem` is required, a single instance generally should be
-> constructed and used throughout the application.
-> 
-> Below, an `IonSystem` instance that will be reused throughout this cookbook 
-> will be constructed.
-> 
-> ```java
-> static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
-> ```
-
 ## Reading and Writing Ion Data
 
 > *Java*
@@ -595,7 +580,21 @@ This shared symbol table can be stored in a file (or in a database) to be
 resurrected into a symbol table at runtime.
 
 > *Java*
-> 
+>
+> The [`IonSystem`][3] interface provides many utilities in ion-java,
+> including construction of shared `SymbolTable`s. When an `IonSystem` is
+> required, a single instance generally should be constructed and used
+> throughout the application.
+>
+> An `IonSystem` with the standard configuration may be constructed as
+> follows.
+>
+> ```java
+> static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
+> ```
+>
+> Below, this `IonSystem` instance is used to create a shared `SymbolTable`.
+>
 > ```java
 > InputStream getSharedSymbolTableStream() {
 >     // get an InputStream over the 'test.csv.columns' shared symbol table.
@@ -670,7 +669,7 @@ table using a catalog.
 
 ## See also
 
-* [The ion-java 1.0 Code Documentation][2] 
+* [The ion-java Code Documentation][2]
 * [The ion-c Code Documentation][14]
 
 <!-- References -->
