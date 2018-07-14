@@ -19,6 +19,12 @@ The cookbook contains samples for some simple Amazon Ion use cases with examples
 
 Why Ion discusses features that differentiate Amazon Ion from other formats. Some of those features are Ion’s dual-format interoperability, rich type system, self-describing format, read-optimized binary format.
 
+---
+
+[For Developers][11]
+
+The developer guides augment the specification with developer-focused tips.
+
 <br/>
 
 ## References
@@ -82,3 +88,4 @@ These terms have particular definitions as it relates to their usage within the 
 [8]: docs/symbols.html
 [9]: guides/cookbook.html
 [10]: guides/why.html
+[11]: guides/developer.html
