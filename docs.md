@@ -5,7 +5,7 @@ description: "A collection of guides and reference materials for Amazon Ion."
 
 # {{ page.title }}
 
-## Guides
+## User Guides
 
 <br/>
 
@@ -19,11 +19,15 @@ The cookbook contains samples for some simple Amazon Ion use cases with examples
 
 Why Ion discusses features that differentiate Amazon Ion from other formats. Some of those features are Ion’s dual-format interoperability, rich type system, self-describing format, read-optimized binary format.
 
----
+<br/>
 
-[For Developers][11]
+## Developer Guides
 
-The developer guides augment the specification with developer-focused tips.
+<br/>
+
+[Symbols][11]
+
+The Developers' Guide to Ion Symbols provides developer-focused commentary on the [Symbols][8] section of the [specification][1] and discusses the implementation of symbol table, symbol token, and catalog APIs.
 
 <br/>
 
@@ -88,4 +92,4 @@ These terms have particular definitions as it relates to their usage within the 
 [8]: docs/symbols.html
 [9]: guides/cookbook.html
 [10]: guides/why.html
-[11]: guides/developer.html
+[11]: guides/symbols-guide.html

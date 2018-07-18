@@ -1,12 +1,13 @@
 ---
 title: Developers' Guide to Ion Symbols
-description: "A collection of guides geared toward developers of Ion implementations."
+description: "A developer-focused discussion of symbol tables, symbol tokens, and catalogs."
 ---
 
-# {{ page.title }}
+# [Docs][3]/ {{ page.title }}
 
-This document provides commentary on the [Symbols][1] section of the
-[specification][2]. It is geared toward developers of Ion implementations.
+This document provides provides developer-focused commentary on the [Symbols][1]
+section of the [specification][2] and discusses the implementation of symbol
+table, symbol token, and catalog APIs.
 
 ## Definitions
 
@@ -178,7 +179,7 @@ complete SymbolTokens (for full fidelity). For
     -   *Single-quoted*, and is
 
         -   *The top-level unannotated, symbol value \$ion\_1\_0*,
-            treat this as a no-op; skip to the next value<sup>[1](#fn1)</sup>.
+            ignore it and skip to the next value<sup>[1](#fn1)</sup>.
         
         -   *Anything else*<sup>[8](#fn8)</sup>, for
 
@@ -268,8 +269,8 @@ valid local symbol table struct. If the implementation chooses
         resolve shared symbol table imports declared by manually-written local
         symbol tables.
     
-    -   Ascribe all relevant symbol table semantics to manually-written local
-        symbol tables, which become current symbol table as soon as the symbol
+    -   Ascribe all relevant symbol table semantics to any manually-written local
+        symbol table, which becomes the current symbol table as soon as the symbol
         table struct is complete. Subsequently, the user should be able to use
         SymbolToken writing APIs to serialize any symbol within the max\_id
         range of the new local symbol table.
@@ -301,8 +302,8 @@ For APIs that accept
     -   *Defined*, if
 
         -   *The writer is at the top level, has no pending annotations,
-            and the text is the same as the IVM (i.e. \$ion\_1\_0)*, this
-            is treated as a no-op; nothing is written.
+            and the text is the same as the IVM (i.e. \$ion\_1\_0)*, ignore
+            it; nothing is written.
 
         -   *The text does not resemble an IVM*, for
 
@@ -450,16 +451,16 @@ When using
     the unquoted and unannotated symbol value with text \$ion\_1\_0 at
     the top level. Other top-level unannotated symbol values with the same
     text as the IVM, including ‘\$ion\_1\_0’, \$2, and any Symbol
-    Identifier that refers to a local symbol with the text \$ion\_1\_0,
-    are treated a no-op; the value is skipped. When such symbol values
+    Identifiers that refer to local symbols with the text \$ion\_1\_0,
+    are ignored; the value is skipped. When such symbol values
     are annotated, or occur below the top-level, they are treated as
     user symbols.
 
 -   *Binary readers*, the ONLY byte sequence that carries IVM semantics is
     \\xE0\\x01\\x00\\xEA at the top level. No symbol value may be used
-    to represent the IVM. Any unannotated symbol ID that maps to the
-    text \$ion\_1\_0 at the top-level is treated as a no-op and skipped;
-    in all other cases, such symbol values are treated as user symbols.
+    to represent the IVM. Any unannotated symbol IDs that map to the
+    text \$ion\_1\_0 at the top-level are ignored and skipped; in all
+    other cases, such symbol values are treated as user symbols.
 
 <a name="fn2">2</a>:
 The ImportLocation can be determined by applying the symbol ID
@@ -554,5 +555,6 @@ creating a mutable local symbol table which implicitly extends the system
 symbol table. In other words, care should be taken never to mutate the
 system symbol table.
 
-[1]: ../../docs/symbols.html
-[2]: ../../docs/spec.html
+[1]: {{ site.baseurl }}/docs/symbols.html
+[2]: {{ site.baseurl }}/docs/spec.html
+[3]: {{ site.baseurl }}/docs.html
