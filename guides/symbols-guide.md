@@ -5,7 +5,7 @@ description: "A developer-focused discussion of symbol tables, symbol tokens, an
 
 # [Docs][3]/ {{ page.title }}
 
-This document provides provides developer-focused commentary on the [Symbols][1]
+This document provides developer-focused commentary on the [Symbols][1]
 section of the [specification][2] and discusses the implementation of symbol
 table, symbol token, and catalog APIs.
 
@@ -24,8 +24,9 @@ table, symbol token, and catalog APIs.
 -   **Symbol Identifier** – the text representation of a local symbol ID (e.g.
     \$10).
 
--   **ImportSID** – a static integer index into a shared symbol table’s list 
-    of symbols.
+-   **ImportSID** – an integer index into a shared symbol table’s list
+    of symbols. The first symbol in a shared symbol table always has an
+    ImportSID of 1.
 
 -   **SymbolToken** - refers both to the SymbolToken structure, as defined below,
     and to a symbol token within an Ion stream (i.e. a field name, annotation,
@@ -53,13 +54,17 @@ Where `Int` may be any integer and `String` may be any string.
 
 ## Symbol tables
 
-There are three types of symbol tables: local, shared, and system (which
-is a special shared symbol table). Implementations should be able to
-determine the type of a given symbol table, as not all fields are valid
-for all types, and not all types are valid input to all APIs. For
-example, local symbol tables do not have names, while shared symbol
-tables require them; only shared symbol tables may be added to a Catalog
-or to a writer’s list of imports.
+There are three types of symbol tables:
+
+-   Local
+-   Shared
+-   System (a special shared symbol table)
+
+Implementations should be able to determine the type of a given symbol
+table, as not all fields are valid for all types, and not all types are
+valid input to all APIs. For example, local symbol tables do not have
+names, while shared symbol tables require them; only shared symbol tables
+may be added to a Catalog or to a writer’s list of imports.
 
 Symbol tables should support being in more than one Catalog
 simultaneously. Otherwise, piping data from a reader through a writer
@@ -86,7 +91,7 @@ SymbolTokens from the current symbol table.
 
     -   From serialized Ion representations.
 
--   Allow the user to add new symbols the symbol table.
+-   Allow the user to add new symbols to the symbol table.
 
 ## Catalogs
 
@@ -99,7 +104,7 @@ provided.
 ### Fundamental Catalog APIs
 
 -   Allow the user to look up the best match (as defined by
-    the specification) to a shared symbol table given an
+    the [specification][2]) to a shared symbol table given an
     ImportDescriptor. The source of the shared symbol tables may
     be user-defined. Failure to find a match should be conveyed,
     but should not raise an error.
@@ -131,9 +136,13 @@ tables encountered in the stream. If a declared import is not found in
 the Catalog, all of the symbol IDs in its max\_id range will have unknown
 text.
 
-Generally, Ion readers provide two kinds of SymbolToken reading APIs:
-those that return raw text (for convenience), and those that return
-complete SymbolTokens (for full fidelity). For
+Generally, Ion readers provide two kinds of SymbolToken reading APIs,
+those that return:
+
+-   Raw text (for convenience), and
+-   Complete SymbolTokens (for full fidelity).
+
+For
 
 -   *Binary readers*, note that IVM semantics will never be applied to
     SymbolTokens encountered along this path<sup>[1](#fn1)</sup>. If the
@@ -224,8 +233,8 @@ complete SymbolTokens (for full fidelity). For
 
 -   Allow the user to get the reader’s current symbol table.
 
--   Allow the user to register to be notified by the reader when the
-    current symbol table changes. This notification needs to include all
+-   Allow the user to register for notifications by the reader when the
+    current symbol table changes. These notifications need to include all
     necessary information required to correctly roundtrip any symbols
     with unknown text that occur within the new symbol table's max\_id
     range; namely, the list of shared symbol tables imported by the new
@@ -248,8 +257,8 @@ For
 
 -   *Text writers*, serializing the local symbol table is only required
     when the stream contains symbols with unknown text from one of the
-    shared symbol tables<sup>[4](#fn4)</sup>. In other cases, the text writer MAY
-    serialize the local symbol table; doing so provides no benefit to
+    shared symbol tables<sup>[4](#fn4)</sup>. In other cases, the text writer
+    **may** serialize the local symbol table; doing so provides no benefit to
     encoding size or future read performance.
 
 -   *Binary writers*, serializing the local symbol table is always
@@ -257,10 +266,10 @@ For
     the last occurrence of the IVM. In this case, the current symbol table
     is, implicitly, the system symbol table.
 
-Ion writers MAY allow users to use writer APIs to manually construct a
+Ion writers **may** allow users to use writer APIs to manually construct a
 valid local symbol table struct. If the implementation chooses
 
--   *Not to support this*, it MUST raise an error when trying to write a
+-   *Not to support this*, it **must** raise an error when trying to write a
     top-level struct annotated with \$ion\_symbol\_table<sup>[5](#fn5)</sup>.
 
 -   *To support this*, its writers must
@@ -290,8 +299,12 @@ valid local symbol table struct. If the implementation chooses
 
 ## Writing SymbolTokens
 
-Generally, Ion writers provide two kinds of SymbolToken-writing APIs:
-those that accept raw text, and those that accept a complete SymbolToken.
+Generally, Ion writers provide two kinds of SymbolToken-writing APIs,
+those that accept:
+
+-   Raw text, and
+-   Complete SymbolTokens.
+
 For APIs that accept
 
 -   *Raw text*, and the text is
@@ -311,9 +324,9 @@ For APIs that accept
                 symbol ID, and the current local symbol table’s max\_id is
                 never increased. If the text
 
-                -   *Is an identifier (but NOT a Symbol Identifier) or
+                -   *Is an identifier (but **not** a Symbol Identifier) or
                     an operator within an S-expression*, it should be
-                    written as-is. These SymbolTokens MAY be surrounded
+                    written as-is. These SymbolTokens **may** be surrounded
                     with single-quote characters.
 
                 -   *Has the same form as a Symbol Identifier*, it must be
@@ -447,7 +460,7 @@ For APIs that accept
 <a name="fn1">1</a>:
 When using
 
--   *Text readers*, the ONLY SymbolToken that carries IVM semantics is
+-   *Text readers*, the **only** SymbolToken that carries IVM semantics is
     the unquoted and unannotated symbol value with text \$ion\_1\_0 at
     the top level. Other top-level unannotated symbol values with the same
     text as the IVM, including ‘\$ion\_1\_0’, \$2, and any Symbol
@@ -456,7 +469,7 @@ When using
     are annotated, or occur below the top-level, they are treated as
     user symbols.
 
--   *Binary readers*, the ONLY byte sequence that carries IVM semantics is
+-   *Binary readers*, the **only** byte sequence that carries IVM semantics is
     \\xE0\\x01\\x00\\xEA at the top level. No symbol value may be used
     to represent the IVM. Any unannotated symbol IDs that map to the
     text \$ion\_1\_0 at the top-level are ignored and skipped; in all
@@ -470,7 +483,7 @@ symbol table starts at symbol ID 1.
 <a name="fn3">3</a>:
 Unlike symbols with unknown text resolved from shared symbol
 tables, symbols with with unknown text resolved from local symbol
-tables can NEVER have defined text because the local symbol table is
+tables can **never** have defined text because the local symbol table is
 included in the encoding and its symbol ID mappings are immutable.
 Therefore, there is no need to preserve the local symbol IDs of
 SymbolTokens representing such symbols. Treating them equivalently
@@ -482,14 +495,14 @@ tables.
 This case requires that the text writer serialize a local symbol
 table containing the imports mapped to by Symbol Identifier tokens
 within the stream. Note that imports that have no unknown mappings in
-the stream do NOT need to be included (nor do any local symbols), but if
+the stream **do not** need to be included (nor do any local symbols), but if
 only a subset of the imports are included, the Symbol Identifiers need
 to refer to the same slot in the same import as before any shared
 symbol tables were excluded (this can be computed by translating the
 SymbolToken’s importLocation to a local symbol ID in the new symbol
 table using the algorithm defined by the specification).
 
-Although this is the only case that REQUIRES a text writer to serialize
+Although this is the only case that **requires** a text writer to serialize
 a local symbol table, it should be noted that serializing a local symbol
 table in other cases is only wasteful, never harmful. Accordingly, it
 is simpler to serialize a local symbol table which includes all shared
