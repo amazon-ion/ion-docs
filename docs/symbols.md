@@ -342,7 +342,9 @@ missing or has any other type, it is treated as if it were an empty list.
 
 Null elements in the symbols list declare unknown symbol text ("gaps")
 for its SID within the sequence. Any element of the list that is
-not a string must be interpreted as if it were null.
+not a string must be interpreted as if it were null. Any SIDs that
+refer to null slots in a local symbol table are equivalent to symbol
+zero.
 
 Any other field (including, for example, `name` or `version`) is ignored.
 
@@ -495,14 +497,15 @@ Equivalently:
 
 Symbol Zero
 -----------
-A special SID zero (i.e. `$0`) is also valid in Ion, it is a special symbol that is not
-defined by any symbol table, even the system symbol table.  It is a symbol
-with no text defined for it, and can be useful in synthesizing symbol
-identifiers where the text image of the symbol is not known in a particular
-operating context.  It is important to note that `$0` is not semantically
-equivalent to other symbols with no text associated with them (e.g. imported
-symbols where the shared symbol table is unavailable), so replacing such
-SIDs with `$0` is a destructive operation to the semantics of the data.
+The special SID zero (i.e. `$0`) represents special symbol that is not defined by
+any symbol table, even the system symbol table.  Symbol zero always has undefined
+text, and can be useful in synthesizing symbol identifiers where the text image of the
+symbol is not known in a particular operating context.
+
+It is important to note that `$0` is only semantically equivalent to itself and to SIDs
+with unknown text from *local* symbol tables. It is not semantically equivalent to SIDs
+with unknown text from *shared* symbol tables, so replacing such SIDs with `$0` is a
+destructive operation to the semantics of the data.
 
 Data Model
 ----------
