@@ -180,6 +180,8 @@ of IVMs mixed with these NOP encodings:
     '$ion_1_0'
     // also not the IVM
     $2
+    // maps to "a"
+    $10
 
 The above is equivalent to the following, more concise Ion:
 
