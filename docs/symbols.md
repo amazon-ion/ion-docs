@@ -502,9 +502,9 @@ any symbol table, even the system symbol table.  Symbol zero always has undefine
 text, and can be useful in synthesizing symbol identifiers where the text image of the
 symbol is not known in a particular operating context.
 
-It is important to note that `$0` is only semantically equivalent to itself and to SIDs
-with unknown text from *local* symbol tables. It is not semantically equivalent to SIDs
-with unknown text from *shared* symbol tables, so replacing such SIDs with `$0` is a
+It is important to note that `$0` is only semantically equivalent to itself and to
+locally-declared SIDs with unknown text. It is not semantically equivalent to SIDs
+with unknown text from shared symbol tables, so replacing such SIDs with `$0` is a
 destructive operation to the semantics of the data.
 
 Data Model
@@ -524,14 +524,13 @@ it is important to not treat them as equivalent unless any of the following
 hold:
 
 * Symbols with *unknown* text declared in a local symbol table are all
-  equivalent to one another.
+  equivalent to one another and to SID 0.
 * For symbols defined from shared symbol table imports, symbols are
   equivalent only if *all* of the following hold:
   * The name of the table that the symbols were imported from is the same string.
   * The position in the table that the symbols were imported from is the same
     spot.  Note that this is not the same as the local SID value, but can be
     calculated from the SIDs by the allocation algorithm above.
-* SID 0 is only equivalent to itself.
 
 A processor encountering a symbol with *unknown* text *and* a valid SID other
 than `$0` MAY produce an error because this means that the context of the data is
