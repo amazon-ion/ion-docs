@@ -468,7 +468,7 @@ When using
     user symbols.
 
 -   *Binary readers*, the **only** byte sequence that carries IVM semantics is
-    \\xE0\\x01\\x00\\xEA at the top level. No symbol value may be used
+    `0xE0 0x01 0x00 0xEA` at the top level. No symbol value may be used
     to represent the IVM. Any unannotated symbol IDs that map to the
     text \$ion\_1\_0 at the top-level are ignored and skipped; in all
     other cases, such symbol values are treated as user symbols.
