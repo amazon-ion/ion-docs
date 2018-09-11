@@ -149,7 +149,7 @@ _1         // A symbol (ints cannot start with underscores)
 ```
 
 In the text notation, integer values must be followed by one of the
-thirteen numeric stop-characters: `{}[](),\"\'\ \t\n\r`.
+fifteen numeric stop-characters: `{}[](),\"\'\ \t\n\r\v\f`.
 
 ### Real Numbers {#real-numbers}
 
@@ -189,7 +189,7 @@ The `float` type denotes either 32-bit or 64-bit IEEE-754 floating-point values;
 sizes may be supported in future versions of this specification.
 
 In the text notation, real values must be followed by one of the
-thirteen numeric stop-characters: `{}[](),\"\'\ \t\n\r`.
+fifteen numeric stop-characters: `{}[](),\"\'\ \t\n\r\v\f`.
 
 The precision of `decimal` values, including trailing zeros, is significant and
 is preserved through round-trips. Because most decimal values cannot be
@@ -265,7 +265,7 @@ not equivalent:
 ```
 
 In the text notation, timestamp values must be followed by one of the
-thirteen numeric stop-characters: `{}[](),\"\'\ \t\n\r`.
+fifteen numeric stop-characters: `{}[](),\"\'\ \t\n\r\v\f`.
 
 ### Strings {#string}
 
