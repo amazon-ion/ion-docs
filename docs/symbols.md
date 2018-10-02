@@ -497,10 +497,10 @@ Equivalently:
 
 Symbol Zero
 -----------
-The special SID zero (i.e. `$0`) represents special symbol that is not defined by
-any symbol table, even the system symbol table.  Symbol zero always has undefined
-text, and can be useful in synthesizing symbol identifiers where the text image of the
-symbol is not known in a particular operating context.
+SID zero (i.e. `$0`) is a special symbol that is not assigned text by any symbol
+table, even the system symbol table. Symbol zero always has unknown text, and can
+be useful in synthesizing symbol identifiers where the text image of the symbol is
+not known in a particular operating context.
 
 It is important to note that `$0` is only semantically equivalent to itself and to
 locally-declared SIDs with unknown text. It is not semantically equivalent to SIDs
