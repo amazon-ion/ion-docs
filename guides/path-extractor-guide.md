@@ -45,7 +45,9 @@ Phases
 ------
 
 Interacting with a path extraction API typically occurs in three phases:
-configuration, path registration, and notification.
+1. configuration,
+2. path registration, and
+3. notification.
 
 ### Configuration
 
@@ -61,22 +63,31 @@ to be stateless, immutable, long-lived, and reusable.
 -   *Maximum path depth* - The maximum depth of any search path. May
     be used to limit the amount of memory used by the path extractor. If
     the reader places its own limits on maximum depth, it should be
-    treated as an error to exceed that number.
+    treated as an error to exceed that number. Recommended default:
+    unlimited.
 -   *Maximum number of paths* - The maximum number of search paths that
     may be registered to a single extractor. May be used to limit the
-    amount of memory used by the path extractor.
+    amount of memory used by the path extractor. Recommended default:
+    unlimited.
 -   *Match relative paths* - If disabled, it is an error to provide the
     extractor with an Ion reader positioned at a depth other than zero.
     If enabled, the extractor will accept a reader positioned at any
     valid depth within the data and will match paths relative to the
-    initial depth of the reader. For example, if a reader positioned at
-    depth 2 at the field 'foo' in the data `{abc:{foo:{bar:baz}}}` is
-    provided to an extractor with this option enabled and the search
+    initial depth of the reader. For example, if a reader is positioned
+    at depth 2 at the field 'foo' in the data `{abc:{foo:{bar:baz}}}` and
+    is provided to an extractor with this option enabled and the search
     path `(bar)`, the extractor would match on the value `baz`. This
     extractor would finish matching once it exhausted all sibling values
-    (none in this case) at depth 2.
+    (none in this case) at depth 2. Recommended default: `false`.
 -   *Case-insensitive matching* - If enabled, the extractor will treat
-    paths as case-insensitive.
+    paths as case-insensitive. Recommended default: `false`.
+
+#### Public API Example
+
+```python
+# Do not bind a reader to the extractor at construction.
+extractor = Extractor(max_path_depth=10, max_num_paths=100, match_relative_paths=false, case_insensitive=true)
+```
 
 ### Registration
 
@@ -126,7 +137,7 @@ An alternative is to avoid exposing the Ion reader to the user, and
 instead provide a DOM-like representation of the matching value to the
 user through the callback. This may be more convenient for the user
 (especially those already comfortable with the DOM), but is potentially
-less flexible and performant.
+less flexible and less performant.
 
 #### Programmatic Registration
 
@@ -155,6 +166,18 @@ top-level values when the extractor's initial depth is zero, while
 `(abc * 2 $ion_extractor_field::*)` represents a path of length 4
 consisting of a field named `abc`, a wildcard, an index of 2, and a
 field named `*`.
+
+#### Public API Example
+
+```python
+def pathCallback(reader, userContext):
+    ... # Retrieve the matching value from the reader and do something.
+    return 0
+
+path = Path("(foo * bar 0)")
+pathContext = ... # Create some user context to pass to the callback when matched, if desired.
+extractor.register(path, pathContext, pathCallback)
+```
 
 ### Notification
 
@@ -220,5 +243,14 @@ opportunities to design for performance.
     depth in contiguous memory may be beneficial (ion-c does this).
     Another option is to use an associative data structure for efficient
     lookups by depth.
+
+#### Public API Example
+
+```python
+reader1 = ... # Create an Ion reader in the typical way.
+extractor.match(reader1)
+reader2 = ...
+extractor.match(reader2)
+```
 
 [0]: {{ site.baseurl }}/docs.html
