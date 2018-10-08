@@ -23,7 +23,7 @@ a few lines of code and receive callbacks during stream processing when
 any of those paths is matched. This allows the Ion reader to plan the
 most efficient traversal over the data without requiring further manual
 interaction from the user. For example, there is no reason to step in to
-containers which could not possibly match one of the registered paths.
+containers which could not possibly match one of the search paths.
 When encoded in binary Ion, the resulting skip is a seek forward in the
 input stream, which is inexpensive relative to the cost of parsing (and
 in the case of a DOM, materializing) the skipped value.
@@ -31,14 +31,14 @@ in the case of a DOM, materializing) the skipped value.
 Terms
 -----
 
+**Search path** - a path which is provided to the extractor for matching.
+
 **Partial match** - a value whose path matches the first N elements in a
-registered path (where N is less than the registered path's total
-length).
+search path (where N is less than the search path's total length).
 
-**Terminal match** - a value whose path exactly matches a registered
-path.
+**Terminal match** - a value whose path exactly matches a search path.
 
-**Active path** - a registered path that has at least one partial match
+**Active path** - a search path that has at least one partial match
 at depth N, where N is the extractor's current depth minus one.
 
 Phases
@@ -58,20 +58,20 @@ to be stateless, immutable, long-lived, and reusable.
 
 #### Common Options
 
--   *Maximum path depth* - The maximum depth of any registered path. May
+-   *Maximum path depth* - The maximum depth of any search path. May
     be used to limit the amount of memory used by the path extractor. If
     the reader places its own limits on maximum depth, it should be
     treated as an error to exceed that number.
--   *Maximum number of paths* - The maximum number of paths that may be
-    registered to a single extractor. May be used to limit the amount of
-    memory used by the path extractor.
+-   *Maximum number of paths* - The maximum number of search paths that
+    may be registered to a single extractor. May be used to limit the
+    amount of memory used by the path extractor.
 -   *Match relative paths* - If disabled, it is an error to provide the
     extractor with an Ion reader positioned at a depth other than zero.
     If enabled, the extractor will accept a reader positioned at any
     valid depth within the data and will match paths relative to the
     initial depth of the reader. For example, if a reader positioned at
     depth 2 at the field 'foo' in the data `{abc:{foo:{bar:baz}}}` is
-    provided to an extractor with this option enabled and the registered
+    provided to an extractor with this option enabled and the search
     path `(bar)`, the extractor would match on the value `baz`. This
     extractor would finish matching once it exhausted all sibling values
     (none in this case) at depth 2.
@@ -82,12 +82,12 @@ to be stateless, immutable, long-lived, and reusable.
 
 The registration phase begins once the user has a path extractor
 instance configured with the desired options. The user may now register
-paths. Path registration APIs may be entirely programmatic, and/or may
-parse path information from a string. Both techniques require the
+search paths. Path registration APIs may be entirely programmatic, and/or
+may parse path information from a string. Both techniques require the
 following information to register a path:
 
 -   the path's elements, which may be wildcards, indices, or text;
--   the callback to be invoked when the path is matched; and
+-   the callback to be invoked when the search path is matched; and
 -   optional untyped user context to be provided to the callback when it
     is invoked.
 
@@ -171,11 +171,11 @@ the active paths at the current depth.
 
 If the value is a
 
--   *terminal match*, then the callback registered to the matching path
-    must be invoked. If a non-zero value N is returned by the callback,
-    the extractor must step out N (or throw if that is impossible, which
-    occurs when N is greater than the Ion reader's initial depth). When
-    a value is both a terminal match and a partial match, the callback
+-   *terminal match*, then the callback registered to the matching search
+    path must be invoked. If a non-zero value N is returned by the
+    callback, the extractor must step out N (or throw if that is impossible,
+    which occurs when N is greater than the Ion reader's initial depth).
+    When a value is both a terminal match and a partial match, the callback
     for the terminal match should be invoked before processing the value
     as a partial match as described below.
 -   *partial match* then if it is a
@@ -192,7 +192,7 @@ resume processing with the active paths at the stepped-out depth.
 
 #### Determining a match
 
-Registered path elements which are
+Search path elements which are
 
 -   *wildcards* match all values
 -   *indices* match the value at that index
@@ -206,8 +206,8 @@ at the element's depth.
 Observing a few characteristics of the matching algorithm may reveal
 opportunities to design for performance.
 
--   The extractor needs to keep track of which paths are active at a
-    particular depth. Paths which are inactive at that depth need not be
+-   The extractor needs to keep track of which search paths are active at
+    a particular depth. Paths which are inactive at that depth need not be
     evaluated for matches. This can be conceptualized as a stack of
     collections of active depths, but need not necessarily be
     implemented that way. ion-c, for example, uses a stack of bit maps
