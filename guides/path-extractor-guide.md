@@ -45,6 +45,7 @@ Phases
 ------
 
 Interacting with a path extraction API typically occurs in three phases:
+
 1. configuration,
 2. path registration, and
 3. notification.
