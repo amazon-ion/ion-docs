@@ -31,6 +31,12 @@ The Developers' Guide to Ion Symbols provides developer-focused commentary on th
 
 <br/>
 
+[Path Extraction][12]
+
+The Developers' Guide to Path Extraction APIs discusses how to implement an API which aims to combine the convenience of a DOM API with the speed of a streaming API.
+
+<br/>
+
 ## References
 
 <br/>
@@ -93,3 +99,4 @@ These terms have particular definitions as it relates to their usage within the 
 [9]: guides/cookbook.html
 [10]: guides/why.html
 [11]: guides/symbols-guide.html
+[12]: guides/path-extractor-guide.html
