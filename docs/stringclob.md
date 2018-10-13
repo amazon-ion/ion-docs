@@ -106,7 +106,8 @@ two'''
 
 Escaped newlines are not replaced with any characters (_i.e._ the newline is
 removed). In addition, the following table describes the `string` escape
-sequences that have direct code point replacement for all strings.
+sequences that have direct code point replacement for all quoted string and
+symbol forms.
 
 <table>
 <thead>
@@ -251,9 +252,8 @@ octets and `string` is a sequence of Unicode code points.
 See the [grammar][6] for a formal definition of the
 Ion Text encoding for the `clob` type.
 
-Similar to `string`, multiple long string literals within an Ion
-`clob`that are adjacent to each other by zero or more whitespace are
-concatenated automatically. Within a `clob`, only one short string
+Similar to `string`, adjoining long string literals within an Ion `clob`
+are concatenated automatically. Within a `clob`, only one short string
 literal or multiple long string literals are allowed. For example, the
 following two blocks of Ion text syntax are semantically equivalent.
 
@@ -264,7 +264,7 @@ following two blocks of Ion text syntax are semantically equivalent.
 ```
 
 The rules for the quoted strings within a `clob` follow the similarly to
-the `string` type, except for the following exceptions. Unicode newline
+the `string` type, with the following exceptions. Unicode newline
 characters in long strings and all verbatim ASCII characters are
 interpreted as their ASCII octet values. Non-printable ASCII and
 non-ASCII Unicode code points are not allowed un-escaped in the string
@@ -349,10 +349,9 @@ strings.
 </tbody>
 </table>
 
-The for the ordinal `clob` escape, `\x`, the escape must be followed by
-must be followed by a number of hexadecimal digits as described below.
-Note that `clob` does not support the `\u` and `\U` escape as a `clob`
-is raw binary and **not** a Unicode encoding.
+The `clob` escape `\x` must be followed by two hexadecimal digits.
+Note that `clob` does not support the `\u` and `\U` escapes since it
+represents an octet sequence and **not** a Unicode encoding.
 
 <table>
 <thead>
