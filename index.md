@@ -13,6 +13,8 @@ of software evolution.
 
 **Available Libraries:** [Ion Java][3] -- [Ion C][4] -- [Ion Python][5] -- [Ion JavaScript][6]
 
+**Related Projects:** [Ion Schema][17]
+
 <br/>
 
 ### Latest News
@@ -114,3 +116,5 @@ To find out more about the Ion format and for guides on using it, check out the 
 [14]: guides/why.html#dual-format-interoperability
 [15]: guides/why.html#self-describing
 [16]: guides/why.html#read-optimized-binary-format
+[17]: https://amzn.github.io/ion-schema
+
