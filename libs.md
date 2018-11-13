@@ -22,6 +22,7 @@ description: "The latest news about Amazon Ion and the Amazon Ion community."
 | ion-intellij-plugin | [Link](https://github.com/amzn/ion-intellij-plugin) | [Link](https://plugins.jetbrains.com/plugin/8409-amazon-ion-intellij-idea-plugin) |
 | ion-test-driver | [Link](https://github.com/amzn/ion-test-driver) | - |
 | ion-tests | [Link](https://github.com/amzn/ion-tests) | - |
+| ion-java-path-extraction | [Link](https://github.com/amzn/ion-java-path-extraction) | [1.0.0](https://github.com/amzn/ion-java-path-extraction/releases/tag/v1.0.0) (November 12th, 2018) |
 
 
 ## Community Supported Tools

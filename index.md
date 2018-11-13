@@ -13,7 +13,7 @@ of software evolution.
 
 **Available Libraries:** [Ion Java][3] -- [Ion C][4] -- [Ion Python][5] -- [Ion JavaScript][6]
 
-**Related Projects:** [Ion Schema][17] -- [Ion Java Path Extraction][18]
+**Related Projects:** [Ion Schema][17]
 
 <br/>
 
@@ -117,4 +117,3 @@ To find out more about the Ion format and for guides on using it, check out the 
 [15]: guides/why.html#self-describing
 [16]: guides/why.html#read-optimized-binary-format
 [17]: https://amzn.github.io/ion-schema
-[18]: https://github.com/amzn/ion-java-path-extraction
