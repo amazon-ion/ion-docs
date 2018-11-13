@@ -12,7 +12,8 @@ implementation exists in ion-c (see
 [2](https://github.com/amzn/ion-c/blob/master/ionc/ion_extractor_impl.h),
 and
 [3](https://github.com/amzn/ion-c/blob/master/ionc/ion_extractor.c)) and
-it's also available as a [separate package](https://github.com/amzn/ion-java-path-extraction) for ion-java
+it's also available as an
+[extension to ion-java](https://github.com/amzn/ion-java-path-extraction).
 
 Motivation
 ----------
