@@ -8,6 +8,6 @@ Ion Path Extraction API aims to combine the convenience of a DOM API with the sp
 
 The user can register search paths and callbacks with the extractor that will read the Ion document in
 the most efficient way looking for the registered paths. When it matches a search path it will invoke
-the correspondent callback
+the correspondent callback.
 
 | [GitHub Repository](https://github.com/amzn/ion-java-path-extraction) |
