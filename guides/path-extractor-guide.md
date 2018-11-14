@@ -150,7 +150,7 @@ in a language-idiomatic way.
 
 Users may find it simpler to create a path in one line by using a string
 representation. It is possible to accept a wide variety of different
-syntaxes (e.g. JSONPath, etc.), but the following stripped-down
+syntaxes (e.g. XPath, JSONPath, etc.), but the following stripped-down
 Ion-based syntax should be supported by all implementations.
 
 This syntax calls for a string of text Ion data which must contain
