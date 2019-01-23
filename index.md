@@ -15,6 +15,8 @@ of software evolution.
 
 **Related Projects:** [Ion Schema][17]
 
+**Tools:** [Hive SerDe][18]
+
 <br/>
 
 ### Latest News
@@ -55,7 +57,7 @@ Visit the [News][7] page for more announcements about Amazon Ion.
 }
 ```
 -->
-<!-- 
+<!--
 To generate:
 1. Uncomment the json-doc code block above
 2. Run Jekyll locally (jekyll serve)
@@ -86,7 +88,7 @@ To generate:
 </span><span class="p">}</span><span class="w">
 </span></code></pre></div></div>
 
-The [Specification][10] gives an overview of the full list of the core data types. 
+The [Specification][10] gives an overview of the full list of the core data types.
 
 <br/>
 
@@ -108,7 +110,7 @@ To find out more about the Ion format and for guides on using it, check out the 
 [6]: https://github.com/amzn/ion-js
 [7]: news.html
 [8]: docs.html
-[9]: help.html 
+[9]: help.html
 [10]: docs/spec.html
 [11]: docs/binary.html
 [12]: libs.html
@@ -117,4 +119,4 @@ To find out more about the Ion format and for guides on using it, check out the 
 [15]: guides/why.html#self-describing
 [16]: guides/why.html#read-optimized-binary-format
 [17]: https://amzn.github.io/ion-schema
-
+[18]: https://github.com/amzn/ion-hive-serde
