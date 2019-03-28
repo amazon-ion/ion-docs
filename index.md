@@ -32,9 +32,8 @@ Visit the [News][7] page for more announcements about Amazon Ion.
 
 <br/>
 
-### Ion Text Example {#example}
-<!-- commented out until we create a pygment parser for Ion
-```json-doc
+### Example {#example}
+<div class="ion-source">
 /* Ion supports comments. */
 // Here is a struct, which is similar to a JSON object.
 {
@@ -55,38 +54,8 @@ Visit the [News][7] page for more announcements about Amazon Ion.
     rope
   ],
 }
-```
--->
-<!--
-To generate:
-1. Uncomment the json-doc code block above
-2. Run Jekyll locally (jekyll serve)
-3. Navigate to the index page in a browser and inspect the code
-4. Copy the generated html over the html below
-5. Find and replace any instance of err with na
-6. Comment out the code block above
- -->
-<div class="language-json-doc highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c">/* Ion supports comments. */</span><span class="w">
-</span><span class="c1">// Here is a struct, which is similar to a JSON object.</span><span class="w">
-</span><span class="p">{</span><span class="w">
-  </span><span class="c1">// Field names don't always have to be quoted.</span><span class="w">
-  </span><span class="na">name</span><span class="p">:</span><span class="w"> </span><span class="s2">"fido"</span><span class="p">,</span><span class="w">
-
-  </span><span class="c1">// This is an integer with a user annotation of 'years'.</span><span class="w">
-  </span><span class="na">age</span><span class="p">:</span><span class="w"> </span><span class="na">years</span><span class="p">::</span><span class="mi">4</span><span class="p">,</span><span class="w">
-
-  </span><span class="c1">// This is a timestamp with day precision.</span><span class="w">
-  </span><span class="na">birthday</span><span class="p">:</span><span class="w"> </span><span class="mi">2012-03-01</span><span class="mi">T</span><span class="p">,</span><span class="w">
-
-  </span><span class="c1">// Here is a list, which is like a JSON array.</span><span class="w">
-  </span><span class="na">toys</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="w">
-    </span><span class="c1">// These are symbol values, which are like strings,</span><span class="w">
-    </span><span class="c1">// but get encoded as integers in binary.</span><span class="w">
-    </span><span class="na">ball</span><span class="p">,</span><span class="w">
-    </span><span class="na">rope</span><span class="w">
-  </span><span class="p">],</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div>
+</div>
+<script async src="assets/ion-widget.js"></script>
 
 The [Specification][10] gives an overview of the full list of the core data types.
 
