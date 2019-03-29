@@ -8,7 +8,7 @@
 //
 (function () {
   var script = document.createElement("script");
-  script.src = "assets/ion-bundle.js";
+  script.src = "assets/ion-bundle.min.js";
   document.head.appendChild(script);
 
   var ionSource = document.currentScript.previousSibling.previousSibling;
