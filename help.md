@@ -26,9 +26,9 @@ Each [library](libs.html) repo has a contributing file that provides instruction
 > 
 > Ion implementations should generally auto-detect the format, so applications shouldn't have to worry about the difference.
 
-### Does Ion have schemas?
+### Do I have to create a schema in order to use Ion?
 
-> The Ion notation itself does not support schema validation; we intend for that to be supported by higher-level standards and tools.
+> No.  Working with Ion does not require the use of schemas.  However, use cases for which constraining the universe of Ion values is helpful may utilize [Ion Schema](https://amzn.github.io/ion-schema/).
 
 ### How can I concatenate streams of Ion data?
 
