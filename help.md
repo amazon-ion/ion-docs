@@ -83,3 +83,8 @@ Each [library](libs.html) repo has a contributing file that provides instruction
 > See the glossary items for [symbol token](docs/glossary.html#symbol-token) and [symbol value](docs/glossary.html#symbol-value).
 >
 > At the data model level a symbol token is a triple: <symbol_text, symbol_id, symbol_table> meaning it's a mapping between the symbol's text, its numeric encoding, and the symbol table doing the mapping. Note that there are situations in which one or two parts of the triple are undefined; for example when parsing text there's usually no symbol ID or symbol table.
+
+### Why does Ion support typed `null`?
+
+> Typed `null`, e.g. `null.int`, provides applications the ability to infer schema from example data even if the data contains null values. A null value's type is unimportant to Ion readers and writers; any interpretation is left to the application. As such, applications may choose to emit and accept typed `null` as desired, use annotations instead (e.g. `int::null`), or use untyped `null` for all null values.
+
