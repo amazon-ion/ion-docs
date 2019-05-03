@@ -3,72 +3,134 @@ title: Amazon Ion
 description: "Amazon Ion is a richly-typed, self-describing, hierarchical data serialization format offering interchangeable binary and text representations. Ion was built to address rapid development, decoupling, and efficiency challenges faced every day while engineering large-scale, service-oriented architectures. Ion has been addressing these challenges within Amazon for nearly a decade, and we believe others will benefit as well."
 ---
 
-Amazon Ion is a [richly-typed][13], [self-describing][15], hierarchical data serialization
+<div style="float:right; width:200px" markdown="block">
+
+| [News][7] |
+|------|{% for post in site.posts limit:5 %}
+|<a href="{{site.baseurl}}{{post.url}}">{{ post.title }}</a>|{% endfor %}
+
+</div>
+
+**<font size="+1">Amazon Ion</font>** is a [richly-typed][13], [self-describing][15], hierarchical data serialization
 format offering [interchangeable binary and text][14] representations. The [text format][10]
 (a superset of [JSON][1]) is easy to read and author, supporting rapid
 prototyping. The [binary representation][11] is [efficient to store, transmit, and
 skip-scan parse][16].  The rich type system provides unambiguous semantics for
-long-term preservation of business data which can survive multiple generations
+long-term preservation of data which can survive multiple generations
 of software evolution.
 
-**Available Libraries:** [Ion Java][3] -- [Ion C][4] -- [Ion Python][5] -- [Ion JavaScript][6]
+Ion was built to address rapid development, decoupling, and efficiency
+challenges faced every day while engineering large-scale, service-oriented
+architectures. It has been addressing these challenges within Amazon for nearly
+a decade, and we believe others will benefit as well.
 
-**Related Projects:** [Ion Schema][17]
+**Available Libraries:** [Ion Java][3] -- [Ion C][4] -- [Ion Python][5] -- [Ion JavaScript][6]<br>
+**Related Projects:** [Ion Schema][17]<br>
+**Tools:** [Hive SerDe][18]<br>
 
-**Tools:** [Hive SerDe][18]
+<br>
 
-<br/>
+### Getting Started {#gettingstarted}
 
-### Latest News
+All JSON values are valid Ion values, and while any value can be encoded in JSON (e.g., a timestamp value can be converted to a string), such approaches require extra effort, obscure the actual type of the data, and tend to be error-prone.
 
----
-{% for post in site.posts limit:2 %}
-  **<a href="{{site.baseurl}}{{post.url}}">{{ post.title }}</a>**<br/>
-  *{{post.date | date_to_long_string}}*<br/>
-  {{post.content}}
-{% endfor %}
----
-Visit the [News][7] page for more announcements about Amazon Ion.
+In contrast, Ion's rich type system enables unambiguous semantics for data (e.g., a timestamp value can be encoded using the timestamp type).  The following illustrates some of the features of the Ion type system:
 
-<br/>
+* **timestamp:**  arbitrary precision date / timestamps
+```
+2003-12-01T
+2010-03-22T18:00:00Z
+2019-05-01T18:12:53.472-0800
+```
 
-### Example {#example}
+* **int:**  arbitrary size integers
+```
+0
+-1
+12345678901234567890...
+```
+
+* **decimal:**  arbitrary precision, base-10 encoded real numbers
+```
+0.
+-1.2
+3.141592653589793238...
+6.62607015d-34
+```
+
+* **float:**  32-/64-bit IEEE-754 floating-point values
+```
+0e0
+-1.2e0
+6.02e23
+-inf
+```
+
+* **symbol:**  provides efficient encoding for frequently occurring strings
+```
+inches
+dollars
+'high-priority'    // symbols with special characters are enclosed in single-quotes
+```
+
+* **blob:**  binary data
+```
+{{"{{"}} aGVsbG8= {{}}}}
+```
+
+* **annotation:**  metadata associated with a value
+```
+dollars::100.0
+height::inches::72
+lotto_numbers::[7, 9, 19, 40, 42, 44]
+```
+
+The [Specification][10] provides an overview of the full set of Ion types.
+
+### Binary Encoding
+
+Ion provides two encodings for the type system:  human-readable text (as shown above), and a space- and read-efficient binary encoding.  When binary-encoded, every Ion value is prefixed with the value's type and length.  The following illustrates a few of the efficiences provied by Ion's binary encoding:
+
+* The following timestamp encoded as a JSON string requires 26 bytes:  "2017-07-26T16:30:04.076Z".  This timestamp requires just 11 bytes when encoded in Ion binary:
+```
+6a 80 0f e1 87 9a 90 9e 84 c3 4c
+```
+That first byte `6a` indicates the value is a timestamp (type 6) represented by the subsequent 10 bytes (that's what the `a` represents).  If this particular timestamp value is not of interest, a reader can simply skip 10 bytes.  While this may seem trivial, the efficiencies can be substantial if some or all of the bytes for large container values can be skipped!
+
+* Binary encoding of a symbol replaces the text of a symbol with an integer that can be resolved to the original text via a symbol table.  This can result in substantial space savings for symbols that occur frequently!
+
+* While blob data is base-64 encoded in text (which produces 4 bytes for every 3 bytes of the original data), a blob encoded as Ion binary is simply encoded as is&mdash;no base-64 expansion required!
+
+Similar space efficiencies are found in other aspects of Ion's binary encoding, but rather than being exhaustive here, perhaps you'd like to . . .
+
+### . . . Try It! {#tryit}
 <div class="ion-source">
 /* Ion supports comments. */
-// Here is a struct, which is similar to a JSON object.
+// Here is a struct, which is similar to a JSON object
 {
-  // Field names don't always have to be quoted.
+  // Field names don't always have to be quoted
   name: "fido",
 
-  // This is an integer with a user annotation of 'years'.
+  // This is an integer with a 'years' annotation
   age: years::4,
 
-  // This is a timestamp with day precision.
+  // This is a timestamp with day precision
   birthday: 2012-03-01T,
 
-  // Here is a list, which is like a JSON array.
+  // Here is a list, which is like a JSON array
   toys: [
     // These are symbol values, which are like strings,
-    // but get encoded as integers in binary.
+    // but get encoded as integers in binary
     ball,
-    rope
+    rope,
   ],
 }
 </div>
 <script async src="assets/ion-widget.js"></script>
 
-The [Specification][10] gives an overview of the full list of the core data types.
-
-<br/>
-
 ### More Information
 
-Ion was built to address rapid development, decoupling, and efficiency
-challenges faced every day while engineering large-scale, service-oriented
-architectures. Ion has been addressing these challenges within Amazon for nearly
-a decade, and we believe others will benefit as well.
-
-To find out more about the Ion format and for guides on using it, check out the [Docs][8] page. The [Libs][12] page contains links to the officially supported libraries as well as community supported tools. The [Help][9] page contains information on how to contribute, how to contact the Ion Team, and answers to the frequently asked questions.
+To learn more, check out the [Docs][8] page, or see [Libs][12] for the officially supported libraries as well as community supported tools.  For information on how to contribute, how to contact the Ion Team, and answers to the frequently asked questions, see [Help][9].
 
 <!-- References -->
 [1]: http://json.org
