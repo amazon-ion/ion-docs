@@ -7,7 +7,7 @@ categories: news
 
 From version 1.4.0 forward ion-java has moved to a new maven group id and java package name: `com.amazon.ion`. This move was necessary to keep the publishing of Amazon libraries in maven consistent.
 
-We'll keep supporting `software.amazon.ion` for the foreseeable future by publishing mirrored releases but users are strongly encouraged to migrate. The migration is trivial as the only differences are the group id and package names.
+We'll keep supporting `software.amazon.ion` by publishing mirrored releases but users are strongly encouraged to migrate. The migration is trivial, the only differences are the maven group id and Java package names.
 
 1.4.0 release notes:
 
