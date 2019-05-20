@@ -70,7 +70,8 @@ In contrast, Ion's rich type system enables unambiguous semantics for data (e.g.
 ```
 inches
 dollars
-'high-priority'    // symbols with special characters (`-` in this example) are enclosed in single-quotes
+'high-priority'    // symbols with special characters ('-' in this example)
+                     // are enclosed in single-quotes
 ```
 
 * **blob:**  binary data
