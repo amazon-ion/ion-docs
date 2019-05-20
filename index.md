@@ -70,7 +70,7 @@ In contrast, Ion's rich type system enables unambiguous semantics for data (e.g.
 ```
 inches
 dollars
-'high-priority'    // symbols with special characters are enclosed in single-quotes
+'high-priority'    // symbols with special characters (`-` in this example) are enclosed in single-quotes
 ```
 
 * **blob:**  binary data
@@ -89,21 +89,22 @@ The [Specification][10] provides an overview of the full set of Ion types.
 
 ### Binary Encoding
 
-Ion provides two encodings for the type system:  human-readable text (as shown above), and a space- and read-efficient binary encoding.  When binary-encoded, every Ion value is prefixed with the value's type and length.  The following illustrates a few of the efficiences provied by Ion's binary encoding:
+Ion provides two encodings:  human-readable text (as shown above), and a space- and read-efficient binary encoding.  When binary-encoded, every Ion value is prefixed with the value's type and length.  The following illustrates a few of the efficiences provied by Ion's binary encoding:
 
 * The following timestamp encoded as a JSON string requires 26 bytes:  "2017-07-26T16:30:04.076Z".  This timestamp requires just 11 bytes when encoded in Ion binary:
 ```
 6a 80 0f e1 87 9a 90 9e 84 c3 4c
 ```
-That first byte `6a` indicates the value is a timestamp (type 6) represented by the subsequent 10 bytes (that's what the `a` represents).  If this particular timestamp value is not of interest, a reader can simply skip 10 bytes.  While this may seem trivial, the efficiencies can be substantial if some or all of the bytes for large container values can be skipped!
+That first byte `6a` indicates the value is a timestamp (type `6`) represented by the subsequent 10 bytes (that's what the `a` represents).  If this particular timestamp value is not of interest, a reader can jump over the value by skipping 10 bytes.  This ability to skip over a value enables faster navigation over Ion data.
 
 * Binary encoding of a symbol replaces the text of a symbol with an integer that can be resolved to the original text via a symbol table.  This can result in substantial space savings for symbols that occur frequently!
 
 * While blob data is base-64 encoded in text (which produces 4 bytes for every 3 bytes of the original data), a blob encoded as Ion binary is simply encoded as is&mdash;no base-64 expansion required!
 
-Similar space efficiencies are found in other aspects of Ion's binary encoding, but rather than being exhaustive here, perhaps you'd like to . . .
+Similar space efficiencies are found in other aspects of Ion's binary encoding.
 
-### . . . Try It! {#tryit}
+### Give Ion a Try!
+
 <div class="ion-source">
 /* Ion supports comments. */
 // Here is a struct, which is similar to a JSON object
