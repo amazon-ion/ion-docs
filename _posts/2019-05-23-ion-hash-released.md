@@ -4,7 +4,7 @@ title: "Ion Hash Specification 1.0 Released"
 date: 2019-05-23
 categories: news
 ---
-This new specification defines a hash algorithm for Ion values.  It is useful when determining whether two Ion values represent the same value, or determining whether an Ion value has changed.  For example, a storage system might use Ion hashes to assert the integrity of its data.
+This new specification defines a hash algorithm for Ion values, independent of whether a value is encoded in text or binary.  It is useful when determining whether two Ion values represent the same value, or determining whether an Ion value has changed.  For example, a storage system might use Ion hashes to assert the integrity of its data.
 
 Additionally, a reference implementation of Ion Hash written in Java is available as open source software.
 
