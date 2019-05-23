@@ -25,7 +25,7 @@ architectures. It has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well.
 
 **Available Libraries:** [Ion Java][3] -- [Ion C][4] -- [Ion Python][5] -- [Ion JavaScript][6]<br>
-**Related Projects:** [Ion Schema][17]<br>
+**Related Projects:** [Ion Hash][19] -- [Ion Schema][17]<br>
 **Tools:** [Hive SerDe][18]<br>
 
 <br>
@@ -153,3 +153,4 @@ To learn more, check out the [Docs][8] page, or see [Libs][12] for the officiall
 [16]: guides/why.html#read-optimized-binary-format
 [17]: https://amzn.github.io/ion-schema
 [18]: https://github.com/amzn/ion-hive-serde
+[19]: https://amzn.github.io/ion-hash
