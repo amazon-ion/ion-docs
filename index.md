@@ -90,7 +90,7 @@ The [Specification][10] provides an overview of the full set of Ion types.
 
 ### Binary Encoding
 
-Ion provides two encodings:  human-readable text (as shown above), and a space- and read-efficient binary encoding.  When binary-encoded, every Ion value is prefixed with the value's type and length.  The following illustrates a few of the efficiences provied by Ion's binary encoding:
+Ion provides two encodings:  human-readable text (as shown above), and a space- and read-efficient binary encoding.  When binary-encoded, every Ion value is prefixed with the value's type and length.  The following illustrates a few of the efficiences provided by Ion's binary encoding:
 
 * The following timestamp encoded as a JSON string requires 26 bytes:  "2017-07-26T16:30:04.076Z".  This timestamp requires just 11 bytes when encoded in Ion binary:
 ```
