@@ -67,7 +67,7 @@
         if (type.name != "null") {
           out.append("." + type.name);
         }
-      } else if (type.container) {
+      } else if (type.isContainer) {
         reader.stepIn();
         out.append(containerMarkers[type.name][0] + "\n");
         traverse(reader, depth + 1, out, type.name === "sexp");
@@ -77,8 +77,6 @@
       } else {
         switch (type.name) {
           case "blob":
-            out.append("{{ /* blobs not currently supported */ }}");
-            break;
           case "clob":
             out.append("{{ \"" + reader.value() + "\" }}");
             break;
