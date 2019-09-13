@@ -21,7 +21,7 @@
       + '<textarea rows="20" cols="60" id="ion-source-' + id + '" style="border: 1px solid lightgrey; background: white; color: black; padding: 5px; line-height: 1.3em">' + ionSource.innerHTML + '</textarea></td>'
       + '<td width="50%" style="padding: 0px"><code id="ion-text-' + id + '" style="display: block; white-space: pre-wrap"></code></td>'
       + '</tr>'
-      + '<tr><td align="center"><button id="btn-ion-parse-' + id + '">parse</button></td><td align="right"><font size="-1">made with <a href="https://github.com/amzn/ion-js">ion-js</a> (beta)</font></td></tr>'
+      + '<tr><td align="center"><button id="btn-ion-parse-' + id + '">parse</button></td><td align="right"><font size="-1">made with <a href="https://github.com/amzn/ion-js">ion-js</a></font></td></tr>'
       + '</table>';
   ionSource.parentNode.replaceChild(widget, ionSource);
 
@@ -67,7 +67,7 @@
         if (type.name != "null") {
           out.append("." + type.name);
         }
-      } else if (type.container) {
+      } else if (type.isContainer) {
         reader.stepIn();
         out.append(containerMarkers[type.name][0] + "\n");
         traverse(reader, depth + 1, out, type.name === "sexp");
@@ -77,8 +77,6 @@
       } else {
         switch (type.name) {
           case "blob":
-            out.append("{{ /* blobs not currently supported */ }}");
-            break;
           case "clob":
             out.append("{{ \"" + reader.value() + "\" }}");
             break;
