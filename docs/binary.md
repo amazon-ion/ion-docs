@@ -449,7 +449,7 @@ Symbol value |    7    |    L    |
 </pre>
 
 In the binary encoding, all Ion symbols are stored as integer _symbol IDs_
-whose text values are provided by a symbol table.  If L is zero then the
+whose text values are provided by a symbol table.  If _L_ is zero then the
 symbol ID is zero and the length and symbol ID fields are omitted.
 
 See [Ion Symbols][4] for more details about symbol representations
@@ -470,7 +470,8 @@ String value |    8    |    L    |
 </pre>
 
 These are always sequences of Unicode characters, encoded as a sequence of
-UTF-8 octets.
+UTF-8 octets. If _L_ is zero then the string is the empty string "" and the 
+length and representation fields are omitted.
 
 
 ### 9: clob
@@ -706,7 +707,7 @@ The following table enumerates the illegal type descriptors in Ion 1.0 data.
 <tbody>
 <tr class="even">
 <td align="left">1</td>
-<td align="left">[3-14]</td>
+<td align="left">[2-14]</td>
 <td align="left">
 For <code>bool</code> values, <i>L</i> is used to encode the value, and may be
 0 (<code>false</code>), 1 (<code>true</code>), or 15 (<code>null.bool</code>).
@@ -730,6 +731,14 @@ represented with <i>L</i> equal to 0 and 15, respectively.
 </td>
 </tr>
 <tr class="odd">
+<td align="left">5</td>
+<td align="left">[0-1]</td>
+<td align="left">
+For <code>timestamp</code> values, a VarInt offset and VarUInt year are required.
+Thus, type code 5 with <i>L</i> equal to zero or one is illegal.
+</td>
+</tr>
+<tr class="even">
 <td align="left">14</td>
 <td align="left">[0]*,[1-2],[15]</td>
 <td align="left">
@@ -742,7 +751,7 @@ octet where a type descriptor is expected should <i>only</i> cause parsing
 errors when it is not followed by the rest of the BVM octet sequence.
 </td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">15</td>
 <td align="left">[0-15]</td>
 <td align="left">
