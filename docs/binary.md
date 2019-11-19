@@ -731,11 +731,11 @@ represented with <i>L</i> equal to 0 and 15, respectively.
 </td>
 </tr>
 <tr class="odd">
-<td align="left">5</td>
+<td align="left">6</td>
 <td align="left">[0-1]</td>
 <td align="left">
 For <code>timestamp</code> values, a VarInt offset and VarUInt year are required.
-Thus, type code 5 with <i>L</i> equal to zero or one is illegal.
+Thus, type code 6 with <i>L</i> equal to zero or one is illegal.
 </td>
 </tr>
 <tr class="even">
