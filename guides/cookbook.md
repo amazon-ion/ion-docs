@@ -873,9 +873,9 @@ Not currently supported.
 
 ## See also
 
-* [The ion-c Code Documentation][14]
-* [The ion-java Code Documentation][2]
-* [The ion-js Code Documentation][18]
+* [The ion-c API Documentation][14]
+* [The ion-java API Documentation][2]
+* [The ion-js API Documentation][18]
 
 <script language="JavaScript">
 <!--
