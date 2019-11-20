@@ -2,13 +2,6 @@
 redirect_from: "/cookbook.html"
 title: Cookbook
 description: "This cookbook provides code samples for some simple Amazon Ion use cases."
-tabs:
-  - name: Java
-    content: hello!
-    source: https://www.amazon.com
-  - name: JavaScript
-    content: howdy!
-    source: https://www.ibm.com
 ---
 <style>
 /* Style the tab */
