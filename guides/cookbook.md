@@ -71,9 +71,8 @@ snippet will begin with a comment that denotes either `TEXT` or `BINARY`.
 For brevity, this cookbook will make use of methods and global variables.
 Variables declared inside methods are in scope only within that method.
 Variables declared outside of methods, and methods themselves, are in scope
-until the next horizontal rule (such as the one that follows this section).
-Within the same scope, variables with the same name and type or methods with the
-same signature should be considered interchangeable.
+until the next section.  Within the same scope, variables with the same name
+and type or methods with the same signature should be considered interchangeable.
 
 In some cases, the examples herein depend on code external to Ion (e.g.
 constructing input streams to read files), which is out of scope for this
@@ -132,13 +131,13 @@ Reading the data requires leveraging the `IonReader`'s APIs.
 
 ```java
 void readHelloWorld() {
-    reader.next();                            // position the reader at the first value, a struct
-    reader.stepIn();                          // step into the struct
-    reader.next();                            // position the reader at the first value in the struct
-    String hello = reader.getFieldName();     // retrieve the current value's field name
-    String world = reader.stringValue();      // retrieve the current value's String value
-    reader.stepOut();                         // step out of the struct
-    System.out.println(hello + " " + world);  // prints "hello world"
+    reader.next();                                // position the reader at the first value, a struct
+    reader.stepIn();                              // step into the struct
+    reader.next();                                // position the reader at the first value in the struct
+    String fieldName = reader.getFieldName();     // retrieve the current value's field name
+    String value = reader.stringValue();          // retrieve the current value's String value
+    reader.stepOut();                             // step out of the struct
+    System.out.println(fieldName + " " + value);  // prints "hello world"
 }
 ```
 
@@ -218,18 +217,18 @@ The following example shows how text Ion data can be read from a string:
 let ion = require('ion-js');
 
 let reader = ion.makeReader('{hello: "world"}');
-reader.next();                      // position the reader at the first value, a struct
-reader.stepIn();                    // step into the struct
-reader.next();                      // position the reader at the first value in the struct
-let hello = reader.fieldName();     // retrieve the current value's field name
-let world = reader.stringValue();   // retrieve the current value's string value
-reader.stepOut();                   // step out of the struct
-console.log(hello + ' ' + world);   // prints:  hello world
+reader.next();                         // position the reader at the first value, a struct
+reader.stepIn();                       // step into the struct
+reader.next();                         // position the reader at the first value in the struct
+let fieldName = reader.fieldName();    // retrieve the current value's field name
+let value = reader.stringValue();      // retrieve the current value's string value
+reader.stepOut();                      // step out of the struct
+console.log(fieldName + ' ' + value);  // prints:  hello world
 ```
 
 In the above example, the text Ion `{hello: "world"}` was probably typed by a human
 using a text editor. The following example will illustrate how it could have
-been generated using an `Writer`.
+been generated using a `Writer`.
 
 The following example shows how Ion data can be written:
 
