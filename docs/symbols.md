@@ -59,9 +59,8 @@ binary data, extracting the text of frequently used symbols (field
 names, enumerations, keywords, *etc.*) out of individual documents and
 into a common data structure.
 
-A *system symbol table* is a shared table with the name `"$ion"`. Every version
-of the Ion notation maps to a specific version of the system symbol
-table.
+A *system symbol table* is an implicit shared symbol table. Every version
+of the Ion notation maps to a specific system symbol table.
 
 A *local symbol table* is for the sole use of a well-defined scope of
 Ion data. Since it does not need to be referenced from other contexts,
@@ -74,9 +73,10 @@ Ion text into binary.
 At any point during processing, there is a *current symbol table*, which
 is either a local symbol table or a system symbol table. At the start of
 input, the current symbol table is initialized to be the system symbol
-table for Ion 1.0. The current symbol table is only changed in two
-circumstances: (1) encountering a system identifier at the top-level, or
-(2) encountering a local symbol table at the top-level.
+table for the Ion version denoted by the Ion version marker. The current
+symbol table is only changed in two circumstances: (1) encountering a
+system identifier at the top-level, or (2) encountering a local symbol table
+at the top-level.
 
 ### The Catalog
 
@@ -403,6 +403,8 @@ as the *local min\_id*.
 with the same name, perhaps even the same version. Such a situation provides
 redundant data and allocates unnecessary symbol IDs but is otherwise harmless.
 
+**Note:** This specification disallows (by ignoring) imports named `"$ion"`.
+
 ### Semantics
 
 When mapping from symbol ID to string, there is no ambiguity. However,
@@ -426,16 +428,9 @@ Put another way, string-to-SID mappings have the following precedence:
 System Symbols
 --------------
 
-The version included in the system identifier is independent of the
-version of the implied system symbol table (named `"$ion"`). Each version of
-the Ion specification defines the corresponding system symbol table version.
-Ion 1.0 uses the `"$ion"` symbol table, version 1, and future versions of Ion
-will use larger versions of the `"$ion"` symbol table. `$ion_1_1` will probably
-use version 2, while `$ion_2_0` might use version 5.
-
-Applications and users should never have to care about these symbol
-table versions, since they are never explicit in user data: this
-specification disallows (by ignoring) imports named `"$ion"`.
+Each version of the Ion specification defines a corresponding system symbol
+table. Applications and users should never have to care about these system
+symbol tables, since they are never explicit in user data.
 
 Here are the system symbols for Ion 1.0.
 
@@ -485,17 +480,6 @@ Here are the system symbols for Ion 1.0.
 </tr>
 </tbody>
 </table>
-
-Equivalently:
-
-    $ion_shared_symbol_table::
-    {
-      name: "$ion", version: 1,
-      symbols:
-      [ "$ion", "$ion_1_0", "$ion_symbol_table", "name", "version",
-        "imports", "symbols", "max_id", "$ion_shared_symbol_table"
-      ]
-    }
 
 Symbol Zero
 -----------
