@@ -111,7 +111,7 @@ Similar space efficiencies are found in other aspects of Ion's binary encoding.
 // Here is a struct, which is similar to a JSON object
 {
   // Field names don't always have to be quoted
-  name: "fido",
+  name: "Fido",
 
   // This is an integer with a 'years' annotation
   age: years::4,
@@ -126,6 +126,13 @@ Similar space efficiencies are found in other aspects of Ion's binary encoding.
     ball,
     rope,
   ],
+
+  // This is a decimal -- a base-10 floating point value
+  weight: pounds::41.2,
+
+  // Here is a blob -- binary data, which is
+  // base64-encoded in Ion text encoding
+  buzz: {{'{{'}}VG8gaW5maW5pdHkuLi4gYW5kIGJleW9uZCE=}},
 }
 </div>
 <script async src="assets/ion-widget.js"></script>
