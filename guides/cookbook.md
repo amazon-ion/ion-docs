@@ -46,7 +46,7 @@ description: "This cookbook provides code samples for some simple Amazon Ion use
 <!--
 function writeTabs() {
   document.write('<div class="tabs">');
-  ['Java', 'JavaScript'].forEach(lang =>
+  ['C', 'Java', 'JavaScript'].forEach(lang =>
     document.write('<button class="tab ' + lang + '"' + ' onclick="openTab(\'' + lang + '\')">' + lang + '</button>')
   );
   document.write('</div>');
@@ -82,6 +82,94 @@ implied) implementation.
 ## Reading and Writing Ion Data
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+The following example shows how text Ion data can be read from a string:
+```c
+#include <cstdlib>
+#include "ionc/ion.h"
+
+#define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+int main(int argc, char **argv) {
+    const char* ion_text = "{hello: \"world\"}";
+
+    hREADER reader;
+    ION_READER_OPTIONS options;
+
+    memset(&options, 0, sizeof(ION_READER_OPTIONS));
+
+    ION_OK(ion_reader_open_buffer(&reader,
+                                  (BYTE *)ion_text,
+                                  (SIZE)strlen(ion_text),
+                                  &options));
+
+    ION_TYPE ion_type;
+    ION_OK(ion_reader_next(reader, &ion_type));     // position the reader at the first value, a struct
+    ION_OK(ion_reader_step_in(reader));             // step into the struct
+    ION_OK(ion_reader_next(reader, &ion_type));     // position the reader at the first value in the struct
+
+    ION_STRING ion_string;
+    ION_OK(ion_reader_get_field_name(reader, &ion_string));  // retrieve the current value's field name
+    char *field_name = ion_string_strdup(&ion_string);
+
+    ION_OK(ion_reader_read_string(reader, &ion_string));     // retrieve the current value's string value
+    char *value = ion_string_strdup(&ion_string);
+
+    ION_OK(ion_reader_step_out(reader));            // step out of the struct
+    ION_OK(ion_reader_close(reader));               // close the reader
+
+    printf("%s %s\n", field_name, value);           // prints:  hello world
+
+    free(field_name);
+    free(value);
+}
+```
+
+The following example shows how data can be written to a buffer as Ion text:
+```c
+#include <cstdlib>
+#include "ionc/ion.h"
+
+#define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+void ion_string_from_cstr(const char *cstr, ION_STRING *out) {
+    out->value = (BYTE *)cstr;
+    out->length = (SIZE)strlen(cstr);
+}
+
+int main(int argc, char **argv) {
+    const char *ion_text = (char *)malloc(200);
+
+    hWRITER writer;
+    ION_WRITER_OPTIONS options;
+
+    memset(&options, 0, sizeof(ION_WRITER_OPTIONS));
+
+    ION_OK(ion_writer_open_buffer(&writer,
+                                  (BYTE *)ion_text,
+                                  (SIZE)200,
+                                  &options));
+
+    ION_OK(ion_writer_start_container(writer, tid_STRUCT));           // step into a struct
+
+    ION_STRING field_name_string;
+    ion_string_from_cstr("hello", &field_name_string);
+    ION_OK(ion_writer_write_field_name(writer, &field_name_string));  // set the field name for the next value to be written
+
+    ION_STRING value_string;
+    ion_string_from_cstr("world", &value_string);
+    ION_OK(ion_writer_write_string(writer, &value_string));           // write the next value
+
+    ION_OK(ion_writer_finish_container(writer));                      // step out of the struct
+
+    ION_OK(ion_writer_close(writer));                                 // close the writer
+
+    printf("%s\n", ion_text);                                         // prints {hello:"world"}
+}
+```
+</div>
+
+
 <div class="tabpane Java" markdown="1">
 Implementations of the [`IonReader`][4] and [`IonWriter`][5] interfaces are
 responsible for reading and writing Ion data in both text and binary forms.
@@ -251,6 +339,7 @@ The result of `getBytes()` from a text, pretty, or binary writer can subsequentl
 be passed as the parameter to `makeReader()` in order to read the Ion data.
 </div>
 
+
 ## Formatting Ion text output
 
 ### Pretty-printing
@@ -281,6 +370,54 @@ Pretty-printing results in output similar to the following:
 ```
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+Ion data can be pretty-printed by setting `ION_WRITER_OPTIONS.pretty_print` to `true` as follows:
+
+```c
+#include <cstdlib>
+#include "ionc/ion.h"
+
+#define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+int main(int argc, char **argv) {
+    const char* ion_text = "{level1: {level2: {level3: \"foo\"}, x: 2}, y: [a,b,c]}";
+
+    hREADER reader;
+    ION_READER_OPTIONS reader_options;
+
+    memset(&reader_options, 0, sizeof(ION_READER_OPTIONS));
+
+    ION_OK(ion_reader_open_buffer(&reader,
+                                  (BYTE *)ion_text,
+                                  (SIZE)strlen(ion_text),
+                                  &reader_options));
+
+
+    char *pretty_text = (char *)malloc(200);
+
+    hWRITER writer;
+    ION_WRITER_OPTIONS writer_options;
+
+    memset(&writer_options, 0, sizeof(ION_WRITER_OPTIONS));
+    writer_options.pretty_print = true;                      // turns on pretty-printing
+
+    ION_OK(ion_writer_open_buffer(&writer,
+                                  (BYTE *)pretty_text,
+                                  (SIZE)200,
+                                  &writer_options));
+    ION_OK(ion_writer_write_all_values(writer, reader));
+    ION_OK(ion_writer_close(writer));
+
+    ION_OK(ion_reader_close(reader));
+
+    printf("%s\n", pretty_text);
+
+    free(pretty_text);
+}
+```
+</div>
+
+
 <div class="tabpane Java" markdown="1">
 Ion data can be pretty-printed using an `IonWriter` constructed by a specially-configured
 `IonTextWriterBuilder`.
@@ -319,6 +456,7 @@ writer.close();
 console.log(String.fromCharCode.apply(null, writer.getBytes()));
 ```
 </div>
+
 
 ### Down-converting to JSON
 
@@ -378,6 +516,10 @@ JSON *list* (losing its S-expression semantics), and `"time"` was represented
 as a JSON *string*.
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+Not currently supported.
+</div>
+
 <div class="tabpane Java" markdown="1">
 Using the `rewrite` method from the previous example, the data can be
 down-converted for JSON compatibility.
@@ -398,6 +540,7 @@ void downconvertToJson() throws IOException {
 <div class="tabpane JavaScript" markdown="1">
 Not currently supported.
 </div>
+
 
 ### Migrating JSON data to Ion
 
@@ -457,6 +600,64 @@ Because Ion has richly defined numeric types, there are often multiple possible
 representations of a numeric Ion value.
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+```c
+#include <cstdlib>
+#include "ionc/ion.h"
+
+#define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+int main(int argc, char **argv) {
+    const char* ion_text = "1.23456 1.2345e6 123456 12345678901234567890";
+
+    hREADER reader;
+    ION_READER_OPTIONS options;
+
+    memset(&options, 0, sizeof(ION_READER_OPTIONS));
+
+    ION_OK(ion_reader_open_buffer(&reader,
+                                  (BYTE *)ion_text,
+                                  (SIZE)strlen(ion_text),
+                                  &options));
+
+    ION_TYPE ion_type;
+
+    ION_OK(ion_reader_next(reader, &ion_type));
+    ION_DECIMAL value_ion_decimal;
+    ION_OK(ion_reader_read_ion_decimal(reader, &value_ion_decimal));
+    char string[50];
+    ION_OK(ion_decimal_to_string(&value_ion_decimal, string));
+    printf("ion_decimal: %s\n", string);
+
+    ION_OK(ion_reader_next(reader, &ion_type));
+    double value_double;
+    ION_OK(ion_reader_read_double(reader, &value_double));
+    printf("     double: %f\n", value_double);
+
+    ION_OK(ion_reader_next(reader, &ion_type));
+    int value_int;
+    ION_OK(ion_reader_read_int(reader, &value_int));
+    printf("        int: %d\n", value_int);
+
+    ION_OK(ion_reader_next(reader, &ion_type));
+    ION_INT *value_ion_int;
+    ION_OK(ion_int_alloc(NULL, &value_ion_int));
+    ION_OK(ion_reader_read_ion_int(reader, value_ion_int));
+    ION_STRING istring;
+    ION_OK(ion_int_to_string(value_ion_int, NULL, &istring));
+    printf("    ion_int: %s\n", ion_string_strdup(&istring));
+}
+```
+
+When executed, the code above outputs:
+```
+ion_decimal: 1.23456
+     double: 1234500.000000
+        int: 123456
+    ion_int: 12345678901234567890
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 Integer values that can fit into a Java `int` may be read as such using
 `IonReader.intValue()`, or may be read into a `long` using
@@ -579,6 +780,78 @@ examining the type annotations of each top-level struct and comparing against
 not match `"foo"`, the reader can quickly skip to the start of the next value.
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+```c
+#include <cstdlib>
+#include "ionc/ion.h"
+
+#define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+void ion_string_from_cstr(const char *cstr, ION_STRING *out) {
+    out->value = (BYTE *)cstr;
+    out->length = (SIZE)strlen(cstr);
+}
+
+int main(int argc, char **argv) {
+    const char ion_binary[] = { ... };    // bytes representing the Ion binary encoding of the above data
+    const int ion_binary_length = ...;    // the number of bytes in ion_binary
+
+    hREADER reader;
+    ION_READER_OPTIONS options;
+
+    memset(&options, 0, sizeof(ION_READER_OPTIONS));
+
+    ION_OK(ion_reader_open_buffer(&reader,
+                                  (BYTE *)ion_binary,
+                                  ion_binary_length,
+                                  &options));
+
+    ION_STRING foo;
+    ion_string_from_cstr("foo", &foo);
+
+    int sum = 0;
+
+    ION_TYPE ion_type;
+    ION_OK(ion_reader_next(reader, &ion_type));
+
+    while (ion_type != tid_EOF) {
+        if (ion_type == tid_STRUCT) {
+            BOOL annotation_found;
+            ION_OK(ion_reader_has_annotation(reader, &foo, &annotation_found));
+            if (annotation_found) {
+                ION_OK(ion_reader_step_in(reader));
+
+                ION_TYPE ion_type2;
+                ION_OK(ion_reader_next(reader, &ion_type2));
+
+                while (ion_type2 != tid_EOF) {
+                    ION_STRING ion_string;
+                    ION_OK(ion_reader_get_field_name(reader, &ion_string));
+                    char *field_name = ion_string_strdup(&ion_string);
+                    if (strcmp(field_name, "quantity") == 0) {
+                        int quantity;
+                        ION_OK(ion_reader_read_int(reader, &quantity));
+                        sum += quantity;
+                    }
+                    free(field_name);
+
+                    ION_OK(ion_reader_next(reader, &ion_type2));
+                }
+
+                ION_OK(ion_reader_step_out(reader));
+            }
+        }
+
+        ION_OK(ion_reader_next(reader, &ion_type));
+    }
+
+    ION_OK(ion_reader_close(reader));
+
+    return sum;
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 ```java
 InputStream getStream() {
@@ -668,6 +941,71 @@ application configuration is required to tell Ion readers or writers that local
 symbol tables should be used.
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+```c
+#include <cstdlib>
+#include "ionc/ion.h"
+
+#define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+void ion_string_from_cstr(const char *cstr, ION_STRING *out) {
+    out->value = (BYTE *)cstr;
+    out->length = (SIZE)strlen(cstr);
+}
+
+int main(int argc, char **argv) {
+    char *out = (char *)malloc(200);
+
+    hWRITER writer;
+    ION_WRITER_OPTIONS writer_options;
+
+    memset(&writer_options, 0, sizeof(ION_WRITER_OPTIONS));
+
+    ION_OK(ion_writer_open_buffer(&writer,
+                                  (BYTE *)out,
+                                  (SIZE)200,
+                                  &writer_options));
+
+    FILE *fp = fopen("test.csv", "r");
+
+    char line[1024];
+    fgets(line, 1024, fp);            // skip the header row
+    while (fgets(line, 1024, fp)) {
+        ION_OK(ion_writer_start_container(writer, tid_STRUCT));
+
+        ION_STRING field_name;
+        const char *value;
+
+        ion_string_from_cstr("id", &field_name);
+        ION_OK(ion_writer_write_field_name(writer, &field_name));
+        value = strtok(line, ",");
+        ION_OK(ion_writer_write_int(writer, atoi(value)));
+
+        ion_string_from_cstr("type", &field_name);
+        ION_OK(ion_writer_write_field_name(writer, &field_name));
+        value = strtok(NULL, ",");
+        ION_STRING type_string;
+        ion_string_from_cstr(value, &type_string);
+        ION_OK(ion_writer_write_string(writer, &type_string));
+
+        ion_string_from_cstr("state", &field_name);
+        ION_OK(ion_writer_write_field_name(writer, &field_name));
+        value = strtok(NULL, "\n");
+        ION_OK(ion_writer_write_bool(writer, strcmp(value, "true") == 0));
+
+        ION_OK(ion_writer_finish_container(writer));
+    }
+
+    ION_OK(ion_writer_close(writer));
+
+    printf("%s", out);
+
+    free(out);
+    fclose(fp);
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 Start by retrieving an object that can parse `test.csv` line-by-line, e.g. a
 [`java.io.BufferedReader`][13].
@@ -771,6 +1109,10 @@ This shared symbol table can be stored in a file (or in a database) to be
 resurrected into a symbol table at runtime.
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+To be determined.
+</div>
+
 <div class="tabpane Java" markdown="1">
 The [`IonSystem`][3] interface provides many utilities in ion-java,
 including construction of shared `SymbolTable`s. When an `IonSystem` is
@@ -839,6 +1181,10 @@ the symbol mappings, a reader of the stream needs to access the shared symbol
 table using a catalog.
 
 <script>writeTabs()</script>
+<div class="tabpane C" markdown="1">
+To be determined.
+</div>
+
 <div class="tabpane Java" markdown="1">
 The [`IonCatalog`][8] interface may be implemented by applications to provide
 customized shared symbol table retrieval logic, such as retrieval from an external
