@@ -291,9 +291,8 @@ Int value |  2 or 3 |    L    |
 
 Zero is always stored as positive; negative zero is illegal.
 
-If the value is zero then _T_ must be 2, _L_ is zero, and there are no length or
-magnitude subfields. As a result, when _T_ is 3, both _L_ and the magnitude
-subfield must be non-zero.
+If _L_ is 0 the value is zero, and there are no length or magnitude subfields.
+As a result, when _T_ is 3, both _L_ and the magnitude subfield must be non-zero.
 
 With either type code 2 or 3, if _L_ is 15, then the value is `null.int` and
 the magnitude is empty. Note that this implies there are two equivalent
