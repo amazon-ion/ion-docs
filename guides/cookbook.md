@@ -85,7 +85,7 @@ implied) implementation.
 <div class="tabpane C" markdown="1">
 The following example shows how text Ion data can be read from a string:
 ```c
-#include <cstdlib>
+#include <stdlib.h>
 #include "ionc/ion.h"
 
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
@@ -122,20 +122,17 @@ int main(int argc, char **argv) {
 
     free(field_name);
     free(value);
+
+    return 0;
 }
 ```
 
 The following example shows how data can be written to a buffer as Ion text:
 ```c
-#include <cstdlib>
+#include <stdlib.h>
 #include "ionc/ion.h"
 
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
-
-void ion_string_from_cstr(const char *cstr, ION_STRING *out) {
-    out->value = (BYTE *)cstr;
-    out->length = (SIZE)strlen(cstr);
-}
 
 int main(int argc, char **argv) {
     const char *ion_text = (char *)malloc(200);
@@ -144,6 +141,8 @@ int main(int argc, char **argv) {
     ION_WRITER_OPTIONS options;
 
     memset(&options, 0, sizeof(ION_WRITER_OPTIONS));
+    options.output_as_binary = false;                                 // text output is the default behavior;
+                                                                      // set to true if binary output is desired
 
     ION_OK(ion_writer_open_buffer(&writer,
                                   (BYTE *)ion_text,
@@ -153,11 +152,11 @@ int main(int argc, char **argv) {
     ION_OK(ion_writer_start_container(writer, tid_STRUCT));           // step into a struct
 
     ION_STRING field_name_string;
-    ion_string_from_cstr("hello", &field_name_string);
+    ion_string_assign_cstr(&field_name_string, "hello", strlen("hello"));
     ION_OK(ion_writer_write_field_name(writer, &field_name_string));  // set the field name for the next value to be written
 
     ION_STRING value_string;
-    ion_string_from_cstr("world", &value_string);
+    ion_string_assign_cstr(&value_string, "world", strlen("world"));
     ION_OK(ion_writer_write_string(writer, &value_string));           // write the next value
 
     ION_OK(ion_writer_finish_container(writer));                      // step out of the struct
@@ -165,6 +164,8 @@ int main(int argc, char **argv) {
     ION_OK(ion_writer_close(writer));                                 // close the writer
 
     printf("%s\n", ion_text);                                         // prints {hello:"world"}
+
+    return 0;
 }
 ```
 </div>
@@ -374,7 +375,7 @@ Pretty-printing results in output similar to the following:
 Ion data can be pretty-printed by setting `ION_WRITER_OPTIONS.pretty_print` to `true` as follows:
 
 ```c
-#include <cstdlib>
+#include <stdlib.h>
 #include "ionc/ion.h"
 
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
@@ -413,6 +414,8 @@ int main(int argc, char **argv) {
     printf("%s\n", pretty_text);
 
     free(pretty_text);
+
+    return 0;
 }
 ```
 </div>
@@ -602,10 +605,12 @@ representations of a numeric Ion value.
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
 ```c
-#include <cstdlib>
+#include <stdlib.h>
 #include "ionc/ion.h"
 
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
+
+#define ION_ASSERT_TYPE(type, x) if ((x) != (type)) { ION_OK(IERR_INVALID_STATE); }
 
 int main(int argc, char **argv) {
     const char* ion_text = "1.23456 1.2345e6 123456 12345678901234567890";
@@ -623,29 +628,39 @@ int main(int argc, char **argv) {
     ION_TYPE ion_type;
 
     ION_OK(ion_reader_next(reader, &ion_type));
+    ION_ASSERT_TYPE(ion_type, tid_DECIMAL);
     ION_DECIMAL value_ion_decimal;
     ION_OK(ion_reader_read_ion_decimal(reader, &value_ion_decimal));
     char string[50];
     ION_OK(ion_decimal_to_string(&value_ion_decimal, string));
     printf("ion_decimal: %s\n", string);
+    ION_OK(ion_decimal_free(&value_ion_decimal));
 
     ION_OK(ion_reader_next(reader, &ion_type));
+    ION_ASSERT_TYPE(ion_type, tid_FLOAT);
     double value_double;
     ION_OK(ion_reader_read_double(reader, &value_double));
     printf("     double: %f\n", value_double);
 
     ION_OK(ion_reader_next(reader, &ion_type));
+    ION_ASSERT_TYPE(ion_type, tid_INT);
     int value_int;
     ION_OK(ion_reader_read_int(reader, &value_int));
     printf("        int: %d\n", value_int);
 
     ION_OK(ion_reader_next(reader, &ion_type));
+    ION_ASSERT_TYPE(ion_type, tid_INT);
     ION_INT *value_ion_int;
     ION_OK(ion_int_alloc(NULL, &value_ion_int));
     ION_OK(ion_reader_read_ion_int(reader, value_ion_int));
     ION_STRING istring;
     ION_OK(ion_int_to_string(value_ion_int, NULL, &istring));
-    printf("    ion_int: %s\n", ion_string_strdup(&istring));
+    char *string_int = ion_string_strdup(&istring);
+    printf("    ion_int: %s\n", string_int);
+    free(string_int);
+    ion_int_free(value_ion_int);
+
+    return 0;
 }
 ```
 
@@ -782,19 +797,23 @@ not match `"foo"`, the reader can quickly skip to the start of the next value.
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
 ```c
-#include <cstdlib>
+#include <stdlib.h>
 #include "ionc/ion.h"
 
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
 
-void ion_string_from_cstr(const char *cstr, ION_STRING *out) {
-    out->value = (BYTE *)cstr;
-    out->length = (SIZE)strlen(cstr);
-}
-
 int main(int argc, char **argv) {
-    const char ion_binary[] = { ... };    // bytes representing the Ion binary encoding of the above data
-    const int ion_binary_length = ...;    // the number of bytes in ion_binary
+    const BYTE ion_binary[] = {
+            0xe0, 0x01, 0x00, 0xea,
+            0xee, 0xa5, 0x81, 0x83, 0xde, 0xa1, 0x87, 0xbe, 0x9e, 0x83, 0x66, 0x6f, 0x6f, 0x88,
+            0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x83, 0x62, 0x61, 0x72, 0x82, 0x69,
+            0x64, 0x83, 0x62, 0x61, 0x7a, 0x85, 0x69, 0x74, 0x65, 0x6d, 0x73, 0xe6, 0x81, 0x8a,
+            0xd3, 0x8b, 0x21, 0x01, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x78, 0x8d, 0x21, 0x07,
+            0xee, 0x95, 0x81, 0x8e, 0xde, 0x91, 0x8f, 0xbe, 0x8e, 0x86, 0x74, 0x68, 0x69, 0x6e,
+            0x67, 0x31, 0x86, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x32, 0xe6, 0x81, 0x8a, 0xd3, 0x8b,
+            0x21, 0x13, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x79, 0x8d, 0x21, 0x08 };
+
+    const int ion_binary_length = 100;
 
     hREADER reader;
     ION_READER_OPTIONS options;
@@ -807,7 +826,9 @@ int main(int argc, char **argv) {
                                   &options));
 
     ION_STRING foo;
-    ion_string_from_cstr("foo", &foo);
+    ion_string_assign_cstr(&foo, "foo", strlen("foo"));
+    ION_STRING quantity;
+    ion_string_assign_cstr(&quantity, "quantity", strlen("quantity"));
 
     int sum = 0;
 
@@ -820,28 +841,20 @@ int main(int argc, char **argv) {
             ION_OK(ion_reader_has_annotation(reader, &foo, &annotation_found));
             if (annotation_found) {
                 ION_OK(ion_reader_step_in(reader));
-
-                ION_TYPE ion_type2;
-                ION_OK(ion_reader_next(reader, &ion_type2));
-
-                while (ion_type2 != tid_EOF) {
-                    ION_STRING ion_string;
-                    ION_OK(ion_reader_get_field_name(reader, &ion_string));
-                    char *field_name = ion_string_strdup(&ion_string);
-                    if (strcmp(field_name, "quantity") == 0) {
+                ION_OK(ion_reader_next(reader, &ion_type));
+                while (ion_type != tid_EOF) {
+                    ION_STRING field_name;
+                    ION_OK(ion_reader_get_field_name(reader, &field_name));
+                    if (ION_STRING_EQUALS(&field_name, &quantity)) {
                         int quantity;
                         ION_OK(ion_reader_read_int(reader, &quantity));
                         sum += quantity;
                     }
-                    free(field_name);
-
-                    ION_OK(ion_reader_next(reader, &ion_type2));
+                    ION_OK(ion_reader_next(reader, &ion_type));
                 }
-
                 ION_OK(ion_reader_step_out(reader));
             }
         }
-
         ION_OK(ion_reader_next(reader, &ion_type));
     }
 
@@ -943,15 +956,10 @@ symbol tables should be used.
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
 ```c
-#include <cstdlib>
+#include <stdlib.h>
 #include "ionc/ion.h"
 
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
-
-void ion_string_from_cstr(const char *cstr, ION_STRING *out) {
-    out->value = (BYTE *)cstr;
-    out->length = (SIZE)strlen(cstr);
-}
 
 int main(int argc, char **argv) {
     char *out = (char *)malloc(200);
@@ -974,21 +982,21 @@ int main(int argc, char **argv) {
         ION_OK(ion_writer_start_container(writer, tid_STRUCT));
 
         ION_STRING field_name;
-        const char *value;
+        char *value;
 
-        ion_string_from_cstr("id", &field_name);
+        ion_string_assign_cstr(&field_name, "id", strlen("id"));
         ION_OK(ion_writer_write_field_name(writer, &field_name));
         value = strtok(line, ",");
         ION_OK(ion_writer_write_int(writer, atoi(value)));
 
-        ion_string_from_cstr("type", &field_name);
+        ion_string_assign_cstr(&field_name, "type", strlen("type"));
         ION_OK(ion_writer_write_field_name(writer, &field_name));
         value = strtok(NULL, ",");
         ION_STRING type_string;
-        ion_string_from_cstr(value, &type_string);
+        ion_string_assign_cstr(&type_string, value, strlen(value));
         ION_OK(ion_writer_write_string(writer, &type_string));
 
-        ion_string_from_cstr("state", &field_name);
+        ion_string_assign_cstr(&field_name, "state", strlen("state"));
         ION_OK(ion_writer_write_field_name(writer, &field_name));
         value = strtok(NULL, "\n");
         ION_OK(ion_writer_write_bool(writer, strcmp(value, "true") == 0));
@@ -998,10 +1006,12 @@ int main(int argc, char **argv) {
 
     ION_OK(ion_writer_close(writer));
 
-    printf("%s", out);
+    printf("output: %s", out);
 
     free(out);
     fclose(fp);
+
+    return 0;
 }
 ```
 </div>
@@ -1110,7 +1120,7 @@ resurrected into a symbol table at runtime.
 
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
-To be determined.
+Example not yet implemented.
 </div>
 
 <div class="tabpane Java" markdown="1">
@@ -1182,7 +1192,7 @@ table using a catalog.
 
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
-To be determined.
+Example not yet implemented.
 </div>
 
 <div class="tabpane Java" markdown="1">
