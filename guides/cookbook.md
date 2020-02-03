@@ -135,8 +135,7 @@ The following example shows how data can be written to a buffer as Ion text:
 #define ION_OK(x) if (x) { printf("Error: %s\n", ion_error_to_str(x)); return x; }
 
 int main(int argc, char **argv) {
-    const char *ion_text = (char *)malloc(200);
-
+    char ion_text[200];
     hWRITER writer;
     ION_WRITER_OPTIONS options;
 
