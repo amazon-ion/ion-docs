@@ -46,9 +46,10 @@ description: "This cookbook provides code samples for some simple Amazon Ion use
 <!--
 function writeTabs() {
   document.write('<div class="tabs">');
-  ['C', 'Java', 'JavaScript'].forEach(lang =>
-    document.write('<button class="tab ' + lang + '"' + ' onclick="openTab(\'' + lang + '\')">' + lang + '</button>')
-  );
+  ['C', 'C#', 'Java', 'JavaScript'].forEach(lang => {
+    var tabName = lang == 'C#' ? 'C-sharp' : lang;
+    document.write('<button class="tab ' + tabName + '"' + ' onclick="openTab(\'' + tabName + '\')">' + lang + '</button>')
+  });
   document.write('</div>');
 }
 // -->
@@ -169,6 +170,59 @@ int main(int argc, char **argv) {
 ```
 </div>
 
+<div class="tabpane C-sharp" markdown="1">
+Implementations of the IIonReader and IIonWriter interfaces are responsible for reading and writing
+Ion data in both text and binary forms.
+
+The following example shows how text Ion data can be read from a string:
+```c#
+using IonDotnet;
+using IonDotnet.Builders;
+using System;
+
+class ReadIonData
+{
+    static void Main(string[] args)
+    {
+        IIonReader reader = IonReaderBuilder.Build("{hello: \"world\"}");
+        reader.MoveNext();                           // position the reader at the first value, a struct
+        reader.StepIn();                             // step into the struct
+        reader.MoveNext();                           // position the reader at the first value in the struct
+        string fieldName = reader.CurrentFieldName;  // retrieve the current value's field name
+        string value = reader.StringValue();         // retrieve the current value's string value
+        reader.StepOut();                            // step out of the struct
+        Console.WriteLine(fieldName + " " + value);  // prints:  hello world
+    }
+}
+```
+
+In the above example, the text Ion `{hello: "world"}` was probably typed by a human using a text
+editor. The following example illustrates how it could have been generated using an IIonWriter:
+
+```c#
+using IonDotnet;
+using IonDotnet.Builders;
+using System;
+using System.IO;
+
+class WriteIonText
+{
+    static void Main(string[] args)
+    {
+        TextWriter tw = new StringWriter();
+        IIonWriter writer = IonTextWriterBuilder.Build(tw);
+        writer.StepIn(IonType.Struct);     // step into a struct
+        writer.SetFieldName("hello");      // set the field name for the next value to be written
+        writer.WriteString("world");       // write the next value
+        writer.StepOut();                  // step out of the struct
+        writer.Finish();
+        Console.WriteLine(tw.ToString());  // prints:  {hello:"world"}
+    }
+}
+```
+
+If the desired output is pretty text, pass an instance of `IonTextOptions` with `PrettyPrint` set to `true` to `IonTextWriterBuilder.Build()`.    If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `IonTextWriterBuilder`).
+</div>
 
 <div class="tabpane Java" markdown="1">
 Implementations of the [`IonReader`][4] and [`IonWriter`][5] interfaces are
@@ -295,7 +349,6 @@ void readHelloWorldAgain() {
 ```
 </div>
 
-
 <div class="tabpane JavaScript" markdown="1">
 Implementations of the [`Reader`][19] and [`Writer`][20] interfaces are
 responsible for reading and writing Ion data in both text and binary forms.
@@ -419,6 +472,29 @@ int main(int argc, char **argv) {
 ```
 </div>
 
+<div class="tabpane C-sharp" markdown="1">
+Ion data can be pretty-printed using an `IIonWriter` constructed by an `IonTextWriterBuilder` configured as follows:
+```c#
+using IonDotnet;
+using IonDotnet.Builders;
+using System;
+using System.IO;
+
+class PrettyPrint
+{
+    static void Main(string[] args)
+    {
+        IIonReader reader = IonReaderBuilder.Build("{level1: {level2: {level3: \"foo\"}, x: 2}, y: [a,b,c]}");
+
+        TextWriter tw = new StringWriter();
+        IIonWriter writer = IonTextWriterBuilder.Build(tw, new IonTextOptions {PrettyPrint = true});
+        writer.WriteValues(reader);
+        writer.Finish();
+        Console.WriteLine(tw.ToString());
+    }
+}
+```
+</div>
 
 <div class="tabpane Java" markdown="1">
 Ion data can be pretty-printed using an `IonWriter` constructed by a specially-configured
@@ -441,7 +517,6 @@ void prettyPrint() throws IOException {
 }
 ```
 </div>
-
 
 <div class="tabpane JavaScript" markdown="1">
 Ion data can be pretty-printed using a `Writer` returned by `makePrettyWriter()`.  For example:
@@ -519,6 +594,10 @@ as a JSON *string*.
 
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
+Not currently supported.
+</div>
+
+<div class="tabpane C-sharp" markdown="1">
 Not currently supported.
 </div>
 
@@ -672,6 +751,46 @@ ion_decimal: 1.23456
 ```
 </div>
 
+<div class="tabpane C-sharp" markdown="1">
+The following example illustrates the use of `IIonReader` with numeric values:
+```c#
+using IonDotnet;
+using IonDotnet.Builders;
+using System;
+using System.Diagnostics;
+using System.Numerics;
+
+class ReadNumericValues
+{
+    static void Main(string[] args)
+    {
+        string numberList = "1.23456 1.2345e6 123456 12345678901234567890";
+
+        BigDecimal first = BigDecimal.Parse("1.23456");
+        double second = 1.2345e6;
+        BigInteger third = BigInteger.Parse("123456");
+        BigInteger fourth = BigInteger.Parse("12345678901234567890");
+
+        IIonReader reader = IonReaderBuilder.Build(numberList);
+        Debug.Assert(reader.MoveNext() == IonType.Decimal);
+        Debug.Assert(first == reader.DecimalValue());
+        Debug.Assert(first.ToDecimal() == reader.DecimalValue().ToDecimal());
+
+        Debug.Assert(reader.MoveNext() == IonType.Float);
+        Debug.Assert(Math.Abs(second - reader.DoubleValue()) <= 1e-9);
+
+        Debug.Assert(reader.MoveNext() == IonType.Int);
+        Debug.Assert(third.Equals(reader.BigIntegerValue()));
+        Debug.Assert(123456 == reader.LongValue());
+        Debug.Assert(123456 == reader.IntValue());
+
+        Debug.Assert(reader.MoveNext() == IonType.Int);
+        Debug.Assert(fourth.Equals(reader.BigIntegerValue()));
+    }
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 Integer values that can fit into a Java `int` may be read as such using
 `IonReader.intValue()`, or may be read into a `long` using
@@ -687,12 +806,13 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 void readNumericTypes() throws IOException {
-    String numberList = "1.23456 1.2345e6 123456";
+    String numberList = "1.23456 1.2345e6 123456 12345678901234567890";
 
     // expected values
     BigDecimal first = new BigDecimal("1.23456");
-    BigInteger second = new BigInteger("123456");
-    double third = 1.2345e6;
+    double second = 1.2345e6;
+    BigInteger third = new BigInteger("123456");
+    BigInteger fourth = new BigInteger("12345678901234567890");
 
     IonReader reader = IonReaderBuilder.standard().build(numberList);
 
@@ -701,12 +821,15 @@ void readNumericTypes() throws IOException {
     assertEquals(first.doubleValue(), reader.doubleValue(), 1e-9);
 
     assertEquals(IonType.FLOAT, reader.next());
-    assertEquals(third, reader.doubleValue(), 1e-9);
+    assertEquals(second, reader.doubleValue(), 1e-9);
 
     assertEquals(IonType.INT, reader.next());
-    assertEquals(second, reader.bigIntegerValue());
-    assertEquals(second.longValue(), reader.longValue());
-    assertEquals(second.intValue(), reader.intValue());
+    assertEquals(third, reader.bigIntegerValue());
+    assertEquals(third.longValue(), reader.longValue());
+    assertEquals(third.intValue(), reader.intValue());
+
+    assertEquals(IonType.INT, reader.next());
+    assertEquals(fourth, reader.bigIntegerValue());
 }
 ```
 
@@ -864,6 +987,66 @@ int main(int argc, char **argv) {
 ```
 </div>
 
+<div class="tabpane C-sharp" markdown="1">
+```c#
+using IonDotnet;
+using IonDotnet.Builders;
+using System;
+using System.Collections.Generic;
+
+class SparseReads
+{
+    static void Main(string[] args)
+    {
+        byte[] bytes = {
+            0xe0, 0x01, 0x00, 0xea,
+            0xee, 0xa5, 0x81, 0x83, 0xde, 0xa1, 0x87, 0xbe, 0x9e, 0x83, 0x66, 0x6f, 0x6f, 0x88,
+            0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x83, 0x62, 0x61, 0x72, 0x82, 0x69,
+            0x64, 0x83, 0x62, 0x61, 0x7a, 0x85, 0x69, 0x74, 0x65, 0x6d, 0x73, 0xe6, 0x81, 0x8a,
+            0xd3, 0x8b, 0x21, 0x01, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x78, 0x8d, 0x21, 0x07,
+            0xee, 0x95, 0x81, 0x8e, 0xde, 0x91, 0x8f, 0xbe, 0x8e, 0x86, 0x74, 0x68, 0x69, 0x6e,
+            0x67, 0x31, 0x86, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x32, 0xe6, 0x81, 0x8a, 0xd3, 0x8b,
+            0x21, 0x13, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x79, 0x8d, 0x21, 0x08 };
+
+        IIonReader reader = IonReaderBuilder.Build(bytes);
+        int sum = 0;
+        IonType type;
+        while ((type = reader.MoveNext()) != IonType.None)
+        {
+            if (type == IonType.Struct && HasAnnotation(reader, "foo"))
+            {
+                reader.StepIn();
+                while ((type = reader.MoveNext()) != IonType.None)
+                {
+                    if (reader.CurrentFieldName.Equals("quantity"))
+                    {
+                        sum += reader.IntValue();
+                        break;
+                    }
+                }
+                reader.StepOut();
+            }
+        }
+
+        Console.WriteLine("sum: " + sum);
+    }
+
+    static bool HasAnnotation(IIonReader reader, string annotation)
+    {
+        IEnumerable<SymbolToken> annotations = reader.GetTypeAnnotations();
+        foreach (SymbolToken token in annotations)
+        {
+            if (token.Text.Equals(annotation))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 ```java
 InputStream getStream() {
@@ -946,12 +1129,6 @@ An application that wishes to convert this data into the Ion format can
 generate a symbol table containing the column names. This reduces encoding size
 and improves read efficiency.
 
-### Using a local symbol table
-
-Local symbol tables are managed internally by Ion readers and writers. No
-application configuration is required to tell Ion readers or writers that local
-symbol tables should be used.
-
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
 ```c
@@ -1011,6 +1188,43 @@ int main(int argc, char **argv) {
     fclose(fp);
 
     return 0;
+}
+```
+</div>
+
+<div class="tabpane C-sharp" markdown="1">
+```c#
+using IonDotnet;
+using IonDotnet.Builders;
+using System;
+using System.IO;
+
+class CsvToIon
+{
+    public static void Main(string[] args)
+    {
+        TextWriter tw = new StringWriter();
+        IIonWriter writer = IonTextWriterBuilder.Build(tw);
+
+        using (var reader = new StreamReader("test.csv"))
+        {
+            reader.ReadLine();    // skip the header row
+            while (!reader.EndOfStream)
+            {
+                string[] values = reader.ReadLine().Split(",");
+                writer.StepIn(IonType.Struct);
+                writer.SetFieldName("id");
+                writer.WriteInt(long.Parse(values[0]));
+                writer.SetFieldName("type");
+                writer.WriteString(values[1]);
+                writer.SetFieldName("state");
+                writer.WriteBool(bool.Parse(values[2]));
+                writer.StepOut();
+            }
+        }
+        writer.Finish();
+        Console.WriteLine(tw.ToString());
+    }
 }
 ```
 </div>
@@ -1087,6 +1301,13 @@ writer.close();
 </div>
 
 
+### Using a local symbol table
+
+Local symbol tables are managed internally by Ion readers and writers. No
+application configuration is required to tell Ion readers or writers that local
+symbol tables should be used.
+
+
 ### Using a shared symbol table
 
 Using local symbol tables requires the local symbol table (including all of its
@@ -1120,6 +1341,10 @@ resurrected into a symbol table at runtime.
 <script>writeTabs()</script>
 <div class="tabpane C" markdown="1">
 Example not yet implemented.
+</div>
+
+<div class="tabpane C-sharp" markdown="1">
+Not currently supported.
 </div>
 
 <div class="tabpane Java" markdown="1">
@@ -1194,6 +1419,10 @@ table using a catalog.
 Example not yet implemented.
 </div>
 
+<div class="tabpane C-sharp" markdown="1">
+Not currently supported.
+</div>
+
 <div class="tabpane Java" markdown="1">
 The [`IonCatalog`][8] interface may be implemented by applications to provide
 customized shared symbol table retrieval logic, such as retrieval from an external
@@ -1228,6 +1457,7 @@ Not currently supported.
 ## See also
 
 * [The ion-c API Documentation][14]
+* The ion-dotnet API Documentation
 * [The ion-java API Documentation][2]
 * [The ion-js API Documentation][18]
 
