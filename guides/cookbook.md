@@ -197,7 +197,7 @@ class ReadIonData
 ```
 
 In the above example, the text Ion `{hello: "world"}` was probably typed by a human using a text
-editor. The following example illustrates how it could have been generated using an IIonWriter:
+editor. The following example illustrates how it could have been generated using an `IIonWriter`:
 
 ```c#
 using IonDotnet;
@@ -209,8 +209,8 @@ class WriteIonText
 {
     static void Main(string[] args)
     {
-        TextWriter tw = new StringWriter();
-        IIonWriter writer = IonTextWriterBuilder.Build(tw);
+        using TextWriter tw = new StringWriter();
+        using IIonWriter writer = IonTextWriterBuilder.Build(tw);
         writer.StepIn(IonType.Struct);     // step into a struct
         writer.SetFieldName("hello");      // set the field name for the next value to be written
         writer.WriteString("world");       // write the next value
@@ -221,7 +221,7 @@ class WriteIonText
 }
 ```
 
-If the desired output is pretty text, pass an instance of `IonTextOptions` with `PrettyPrint` set to `true` to `IonTextWriterBuilder.Build()`.    If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `IonTextWriterBuilder`).
+If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `IonTextWriterBuilder`).
 </div>
 
 <div class="tabpane Java" markdown="1">
@@ -386,9 +386,8 @@ writer.close();                      // close the writer
 console.log(String.fromCharCode.apply(null, writer.getBytes()));  // prints:  {hello:"world"}
 ```
 
-If the desired output is pretty text or binary, `ion.makeBinaryWriter()`
-or `ion.makePrettyWriter()` should be used instead of `ion.makeTextWriter()`.
-The result of `getBytes()` from a text, pretty, or binary writer can subsequently
+If Ion binary encoding is desired, use `ion.makeBinaryWriter()` instead of `ion.makeTextWriter()`.
+The result of `getBytes()` from a text or binary writer can subsequently
 be passed as the parameter to `makeReader()` in order to read the Ion data.
 </div>
 
@@ -486,8 +485,8 @@ class PrettyPrint
     {
         IIonReader reader = IonReaderBuilder.Build("{level1: {level2: {level3: \"foo\"}, x: 2}, y: [a,b,c]}");
 
-        TextWriter tw = new StringWriter();
-        IIonWriter writer = IonTextWriterBuilder.Build(tw, new IonTextOptions {PrettyPrint = true});
+        using TextWriter tw = new StringWriter();
+        using IIonWriter writer = IonTextWriterBuilder.Build(tw, new IonTextOptions {PrettyPrint = true});
         writer.WriteValues(reader);
         writer.Finish();
         Console.WriteLine(tw.ToString());
@@ -1203,24 +1202,22 @@ class CsvToIon
 {
     public static void Main(string[] args)
     {
-        TextWriter tw = new StringWriter();
-        IIonWriter writer = IonTextWriterBuilder.Build(tw);
+        using TextWriter tw = new StringWriter();
+        using IIonWriter writer = IonTextWriterBuilder.Build(tw);
 
-        using (var reader = new StreamReader("test.csv"))
+        using StreamReader reader = new StreamReader("test.csv");
+        reader.ReadLine();    // skip the header row
+        while (!reader.EndOfStream)
         {
-            reader.ReadLine();    // skip the header row
-            while (!reader.EndOfStream)
-            {
-                string[] values = reader.ReadLine().Split(",");
-                writer.StepIn(IonType.Struct);
-                writer.SetFieldName("id");
-                writer.WriteInt(long.Parse(values[0]));
-                writer.SetFieldName("type");
-                writer.WriteString(values[1]);
-                writer.SetFieldName("state");
-                writer.WriteBool(bool.Parse(values[2]));
-                writer.StepOut();
-            }
+            string[] values = reader.ReadLine().Split(",");
+            writer.StepIn(IonType.Struct);
+            writer.SetFieldName("id");
+            writer.WriteInt(long.Parse(values[0]));
+            writer.SetFieldName("type");
+            writer.WriteString(values[1]);
+            writer.SetFieldName("state");
+            writer.WriteBool(bool.Parse(values[2]));
+            writer.StepOut();
         }
         writer.Finish();
         Console.WriteLine(tw.ToString());
