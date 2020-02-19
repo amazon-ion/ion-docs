@@ -30,6 +30,7 @@ description: "The latest news about Amazon Ion and the Amazon Ion community."
 | ion-intellij-plugin | [Link](https://github.com/amzn/ion-intellij-plugin) | [Link](https://plugins.jetbrains.com/plugin/8409-amazon-ion-intellij-idea-plugin) |
 | ion-test-driver | [Link](https://github.com/amzn/ion-test-driver) | - |
 | ion-tests | [Link](https://github.com/amzn/ion-tests) | - |
+| ion-hive-serde | [Link](https://github.com/amzn/ion-hive-serde) | - |
 
 ## Community Supported Tools
 
