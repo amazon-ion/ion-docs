@@ -184,7 +184,7 @@ class ReadIonData
 {
     static void Main(string[] args)
     {
-        IIonReader reader = IonReaderBuilder.Build("{hello: \"world\"}");
+        using IIonReader reader = IonReaderBuilder.Build("{hello: \"world\"}");
         reader.MoveNext();                           // position the reader at the first value, a struct
         reader.StepIn();                             // step into the struct
         reader.MoveNext();                           // position the reader at the first value in the struct
@@ -483,7 +483,7 @@ class PrettyPrint
 {
     static void Main(string[] args)
     {
-        IIonReader reader = IonReaderBuilder.Build("{level1: {level2: {level3: \"foo\"}, x: 2}, y: [a,b,c]}");
+        using IIonReader reader = IonReaderBuilder.Build("{level1: {level2: {level3: \"foo\"}, x: 2}, y: [a,b,c]}");
 
         using TextWriter tw = new StringWriter();
         using IIonWriter writer = IonTextWriterBuilder.Build(tw, new IonTextOptions {PrettyPrint = true});
@@ -770,7 +770,7 @@ class ReadNumericValues
         BigInteger third = BigInteger.Parse("123456");
         BigInteger fourth = BigInteger.Parse("12345678901234567890");
 
-        IIonReader reader = IonReaderBuilder.Build(numberList);
+        using IIonReader reader = IonReaderBuilder.Build(numberList);
         Debug.Assert(reader.MoveNext() == IonType.Decimal);
         Debug.Assert(first == reader.DecimalValue());
         Debug.Assert(first.ToDecimal() == reader.DecimalValue().ToDecimal());
@@ -1007,7 +1007,7 @@ class SparseReads
             0x67, 0x31, 0x86, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x32, 0xe6, 0x81, 0x8a, 0xd3, 0x8b,
             0x21, 0x13, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x79, 0x8d, 0x21, 0x08 };
 
-        IIonReader reader = IonReaderBuilder.Build(bytes);
+        using IIonReader reader = IonReaderBuilder.Build(bytes);
         int sum = 0;
         IonType type;
         while ((type = reader.MoveNext()) != IonType.None)
