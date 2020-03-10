@@ -1,7 +1,7 @@
 ---
 layout: news_item
 title: "Ion Java 1.6.0 Released"
-date: 2019-02-26
+date: 2020-02-26
 categories: news ion-java
 ---
 This release includes:
