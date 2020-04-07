@@ -1012,7 +1012,7 @@ class SparseReads
         IonType type;
         while ((type = reader.MoveNext()) != IonType.None)
         {
-            if (type == IonType.Struct && HasAnnotation(reader, "foo"))
+            if (type == IonType.Struct && reader.HasAnnotation("foo"))
             {
                 reader.StepIn();
                 while ((type = reader.MoveNext()) != IonType.None)
@@ -1026,21 +1026,7 @@ class SparseReads
                 reader.StepOut();
             }
         }
-
         Console.WriteLine("sum: " + sum);
-    }
-
-    static bool HasAnnotation(IIonReader reader, string annotation)
-    {
-        IEnumerable<SymbolToken> annotations = reader.GetTypeAnnotations();
-        foreach (SymbolToken token in annotations)
-        {
-            if (token.Text.Equals(annotation))
-            {
-                return true;
-            }
-        }
-        return false;
     }
 }
 ```
