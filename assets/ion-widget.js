@@ -37,68 +37,14 @@
   var parse = function (source, out) {
     try {
       var reader = ion.makeReader(source);
-      traverse(reader, 0, out, false);
+      var writer = ion.makePrettyWriter();
+      writer.writeValues(reader);
+      out.append(String.fromCharCode.apply(null, writer.getBytes()));
+      writer.close();
     } catch (e) {
       var errorSpan = document.createElement("span");
       errorSpan.innerHTML = '<font color="red"><b>Error:  ' + e.message + '</b></font>';
       out.append(errorSpan);
-    }
-  };
-
-  var containerMarkers = {
-    list: "[]",
-    sexp: "()",
-    struct: "{}"
-  };
-
-  var traverse = function (reader, depth, out, inSexp) {
-    for (var type; type = reader.next(); ) {
-      indent(out, depth);
-      if (reader.fieldName()) {
-        out.append(reader.fieldName() + ": ");
-      }
-
-      for (let annotation of reader.annotations()) {
-        out.append(annotation + "::");
-      }
-
-      if (reader.isNull()) {
-        out.append("null");
-        if (type.name != "null") {
-          out.append("." + type.name);
-        }
-      } else if (type.isContainer) {
-        reader.stepIn();
-        out.append(containerMarkers[type.name][0] + "\n");
-        traverse(reader, depth + 1, out, type.name === "sexp");
-        reader.stepOut();
-        indent(out, depth);
-        out.append(containerMarkers[type.name][1]);
-      } else {
-        switch (type.name) {
-          case "blob":
-            out.append("{{" + window.btoa(String.fromCharCode.apply(null, reader.value())) + "}}");
-            break;
-          case "clob":
-            out.append("{{\"" + String.fromCharCode.apply(null, reader.value()) + "\"}}");
-            break;
-          case "string":
-            out.append("\"" + reader.value() + "\"");
-            break;
-          default:
-            out.append(reader.value());
-        }
-      }
-      if (depth > 0 && !inSexp) {
-        out.append(",");
-      }
-      out.append("\n");
-    }
-  };
-
-  var indent = function (out, depth) {
-    for (var i = 0; i < depth; i++) {
-      out.append("  ");
     }
   };
 })()
