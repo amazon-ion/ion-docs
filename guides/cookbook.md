@@ -46,7 +46,7 @@ description: "This cookbook provides code samples for some simple Amazon Ion use
 <!--
 function writeTabs() {
   document.write('<div class="tabs">');
-  ['C', 'C#', 'Java', 'JavaScript'].forEach(lang => {
+  ['C', 'C#', 'Java', 'JavaScript', 'Python'].forEach(lang => {
     var tabName = lang == 'C#' ? 'C-sharp' : lang;
     document.write('<button class="tab ' + tabName + '"' + ' onclick="openTab(\'' + tabName + '\')">' + lang + '</button>')
   });
@@ -391,6 +391,236 @@ The result of `getBytes()` from a text or binary writer can subsequently
 be passed as the parameter to `makeReader()` in order to read the Ion data.
 </div>
 
+<div class="tabpane Python" markdown="1">
+Two distict APIs for reading and writing Ion are available in Python: a non-blocking event-based API
+and a blocking `dump/load` API called `simpleion`, which is reminiscent of the popular `simplejson`
+JSON processing API. This cookbook will illustrate how to implement the examples using both APIs.
+
+The following examples show how Ion data can be read and written.
+
+#### Using simpleion
+
+```python
+from amazon.ion import simpleion
+
+data = u'{hello: "world"}'
+value = simpleion.loads(data)
+print(u'hello %s' % value[u'hello'])
+```
+
+Result: `hello world`.
+
+To read data from a file-like object instead of a string or unicode object, use `load` instead.
+
+```python
+from io import BytesIO
+from amazon.ion import simpleion
+
+data = BytesIO(b'{hello: "world"}')
+value = simpleion.load(data)
+print(u'hello %s' % value[u'hello'])
+```
+
+To re-write `value` from above, use `dump` or `dumps`.
+
+```python
+from amazon.ion import simpleion
+
+print(simpleion.dumps(value, binary=False))
+```
+
+Result: `$ion_1_0 {hello:"world"}`
+
+To write binary Ion instead of text, use the `binary=True` option.
+
+```python
+from io import BytesIO
+from amazon.ion import simpleion
+
+ion = BytesIO()
+simpleion.dump(value, ion, binary=True)
+print(ion.getvalue())
+```
+
+Result: `b'\xe0\x01\x00\xea\xec\x81\x83\xde\x88\x87\xb6\x85hello\xde\x87\x8a\x85world'`
+
+When reading Ion streams that contain multiple top-level values, provide the `single_value=False`
+option to `load/loads` to receive all of the values within a Python `list`.
+
+```python
+from amazon.ion import simpleion
+
+data = u'1 2 3'
+value = simpleion.loads(data, single_value=False)
+print(value)
+```
+
+Result: `[1, 2, 3]`
+
+To write a sequence type as a stream of top-level values, provide the `sequence_as_stream=True`
+option to `dump/dumps`.
+
+```python
+from amazon.ion import simpleion
+
+print(simpleion.dumps(value, sequence_as_stream=True, binary=False))
+```
+
+Result: `$ion_1_0 1 2 3`
+
+The `simpleion` [API documentation](https://ion-python.readthedocs.io/en/latest/amazon.ion.html#module-amazon.ion.simpleion)
+enumerates the complete set of options available.
+
+#### Using events
+
+The non-blocking event-based APIs are useful for streaming reading and writing of Ion data. This
+enables use cases where data becomes available incrementally or only needs to be sparsely parsed.
+
+```python
+from amazon.ion.core import IonEventType, IonType
+from amazon.ion.reader import NEXT_EVENT, read_data_event
+from amazon.ion.reader_managed import managed_reader
+from amazon.ion.reader_text import text_reader
+
+# Create a text reader coroutine that manages symbol tables
+# automatically.
+reader = managed_reader(text_reader())
+event = reader.send(NEXT_EVENT)
+# No data has been provided, so the reader is at STREAM_END
+# and will wait for data.
+assert event.event_type == IonEventType.STREAM_END
+# Send an incomplete Ion value.
+event = reader.send(read_data_event(b'{hello:'))
+# Enough data was available for the reader to determine that
+# the start of a struct value has been encountered.
+assert event.event_type == IonEventType.CONTAINER_START
+assert event.ion_type == IonType.STRUCT
+# Advancing the reader causes it to step into the struct.
+event = reader.send(NEXT_EVENT)
+# The reader reached the end of the data before completing
+# a value. Therefore, an INCOMPLETE event is returned.
+assert event.event_type == IonEventType.INCOMPLETE
+# Send the rest of the value.
+event = reader.send(read_data_event(b'"world"}'))
+# The reader now finishes parsing the value within the struct.
+assert event.event_type == IonEventType.SCALAR
+assert event.ion_type == IonType.STRING
+hello = event.field_name.text
+world = event.value
+# Advance the reader past the string value.
+event = reader.send(NEXT_EVENT)
+# The reader has reached the end of the struct.
+assert event.event_type == IonEventType.CONTAINER_END
+# Advancing the reader causes it to step out of the struct.
+event = reader.send(NEXT_EVENT)
+# There is no more data and a value has been completed.
+# Therefore, the reader conveys STREAM_END.
+assert event.event_type == IonEventType.STREAM_END
+print(u'%s %s' % (hello, world))
+```
+
+Result: `hello world`
+
+To read binary Ion data instead, provide the `binary_reader` coroutine to `managed_reader`.
+
+To write this value using binary Ion, use the `binary_writer` coroutine.
+
+```python
+from amazon.ion.core import IonEventType, IonType, IonEvent, ION_STREAM_END_EVENT
+from amazon.ion.writer import WriteEventType
+from amazon.ion.writer_binary import binary_writer
+
+def drain_data(incremental_event):
+    incremental_data = b''
+    while incremental_event.type == WriteEventType.HAS_PENDING:
+        # The writer has data available. Retrieve it.
+        incremental_data += incremental_event.data
+        # Send `None` to signal that the data has been retrieved. Continue
+        # retrieving data until no more data is pending.
+        incremental_event = writer.send(None)
+    return incremental_data
+
+writer = binary_writer()
+event = writer.send(IonEvent(IonEventType.CONTAINER_START, IonType.STRUCT))
+data = drain_data(event)
+event = writer.send(IonEvent(IonEventType.SCALAR, IonType.STRING, field_name=u'hello', value=u'world'))
+data += drain_data(event)
+event = writer.send(IonEvent(IonEventType.CONTAINER_END))
+data += drain_data(event)
+event = writer.send(ION_STREAM_END_EVENT)
+data += drain_data(event)
+print(data)
+```
+
+Result: `b'\xe0\x01\x00\xea\xec\x81\x83\xde\x88\x87\xb6\x85hello\xde\x87\x8a\x85world'`
+
+To write text Ion data instead, create a `text_writer` coroutine.
+
+It is often desirable, and easier, to use blocking file-like objects with the event-based APIs.
+Ion-Python provides the `blocking_reader` and `blocking_writer` helper coroutines for this purpose.
+
+For blocking reads:
+
+```python
+from io import BytesIO
+from amazon.ion.core import IonEventType, IonType
+from amazon.ion.reader import blocking_reader, NEXT_EVENT
+from amazon.ion.reader_managed import managed_reader
+from amazon.ion.reader_text import text_reader
+
+data = BytesIO(b'{hello: "world"}')
+reader = blocking_reader(managed_reader(text_reader()), data)
+event = reader.send(NEXT_EVENT)
+assert event.event_type == IonEventType.CONTAINER_START
+assert event.ion_type == IonType.STRUCT
+# Advancing the reader causes it to step into the struct.
+event = reader.send(NEXT_EVENT)
+assert event.event_type == IonEventType.SCALAR
+assert event.ion_type == IonType.STRING
+hello = event.field_name.text
+world = event.value
+# Advance the reader past the string value.
+event = reader.send(NEXT_EVENT)
+# The reader has reached the end of the struct.
+assert event.event_type == IonEventType.CONTAINER_END
+# Advancing the reader causes it to step out of the struct.
+event = reader.send(NEXT_EVENT)
+# There is no more data and a value has been completed.
+# Therefore, the reader conveys STREAM_END.
+assert event.event_type == IonEventType.STREAM_END
+print(u'%s %s' % (hello, world))
+```
+
+Result: `hello world`
+
+For blocking writes:
+
+```python
+from io import BytesIO
+from amazon.ion.core import IonEventType, IonType, IonEvent, ION_STREAM_END_EVENT
+from amazon.ion.writer import blocking_writer, WriteEventType
+from amazon.ion.writer_binary import binary_writer
+
+data = BytesIO()
+writer = blocking_writer(binary_writer(), data)
+event_type = writer.send(IonEvent(IonEventType.CONTAINER_START, IonType.STRUCT))
+# The value is not complete, so more events are required.
+assert event_type == WriteEventType.NEEDS_INPUT
+event_type = writer.send(IonEvent(IonEventType.SCALAR, IonType.STRING, field_name=u'hello', value=u'world'))
+# The value is not complete, so more events are required.
+assert event_type == WriteEventType.NEEDS_INPUT
+event_type = writer.send(IonEvent(IonEventType.CONTAINER_END))
+# The value is not complete, so more events are required.
+assert event_type == WriteEventType.NEEDS_INPUT
+event_type = writer.send(ION_STREAM_END_EVENT)
+# The end of the stream was signaled, so the data has been flushed.
+assert event_type == WriteEventType.COMPLETE
+print(data.getvalue())
+```
+
+Result: `b'\xe0\x01\x00\xea\xec\x81\x83\xde\x88\x87\xb6\x85hello\xde\x87\x8a\x85world'`
+</div>
+
 
 ## Formatting Ion text output
 
@@ -533,6 +763,36 @@ console.log(String.fromCharCode.apply(null, writer.getBytes()));
 ```
 </div>
 
+<div class="tabpane Python" markdown="1">
+#### Using simpleion
+`dump/dumps` allow the user to provide the whitespace that will make up each
+indentation level via the `indent` parameter. Providing any amount of
+whitespace will cause text Ion to be pretty-printed.
+
+```python
+from amazon.ion import simpleion
+
+unformatted = u'{level1: {level2: {level3: "foo"}, x: 2}, y: [a,b,c]}'
+value = simpleion.loads(unformatted)
+pretty = simpleion.dumps(value, binary=False, indent=u'  ')
+```
+
+#### Using events
+The `text_writer` coroutine allows the user to provide the whitespace that will
+make up each indentation level via the `indent` parameter. Providing any amount
+of whitespace will cause text Ion to be pretty-printed.
+
+```python
+from io import BytesIO
+from amazon.ion.writer import blocking_writer
+from amazon.ion.writer_text import text_writer
+
+pretty = BytesIO()
+writer = blocking_writer(text_writer(indent=u'  '), pretty)
+... # Send events to the writer.
+```
+</div>
+
 
 ### Down-converting to JSON
 
@@ -619,6 +879,10 @@ void downconvertToJson() throws IOException {
 
 <div class="tabpane JavaScript" markdown="1">
 Not currently supported.
+</div>
+
+<div class="tabpane Python" markdown="1">
+Not currently supported. See [ion-python#107](https://github.com/amzn/ion-python/issues/107).
 </div>
 
 
@@ -879,6 +1143,90 @@ be used to determine whether an Ion `int` can be fully represented as a `number`
 if not, call `Reader.bigIntValue()` to avoid loss of precision.
 </div>
 
+<div class="tabpane Python" markdown="1">
+Use of separate APIs to read different numeric types is not necessary in Python. Via both
+simpleion and the event-based API, Ion int will be read as Python `int`, Ion decimal will be
+read as Python `Decimal`, and Ion float will be read as Python `float`. When necessary, these
+values can be differentiated via introspection.
+
+#### Using simpleion
+
+```python
+from decimal import Decimal
+from amazon.ion import simpleion
+
+data = u'1.23456 1.2345e6 123456 12345678901234567890'
+values = simpleion.loads(data, single_value=False)
+assert isinstance(values[0], Decimal)
+assert isinstance(values[1], float)
+assert isinstance(values[2], int)
+assert isinstance(values[3], int)
+```
+
+When re-written using `dump/dumps`, these values will retain their original Ion types. To
+force a particular type to be written, or to add annotation(s), use the `from_value` method
+provided by all [simple_types](https://ion-python.readthedocs.io/en/latest/amazon.ion.html#module-amazon.ion.simple_types)
+implementations. For example:
+
+```python
+from amazon.ion import simpleion
+from amazon.ion.core import IonType
+from amazon.ion.simple_types import IonPyFloat
+
+value = IonPyFloat.from_value(IonType.FLOAT, 123, (u'abc',))
+data = simpleion.dumps(value, binary=False)
+print(data)
+```
+
+Result: `$ion_1_0 abc::123.0e0`
+
+#### Using events
+
+```python
+from decimal import Decimal
+from io import BytesIO
+from amazon.ion.core import IonType
+from amazon.ion.reader import blocking_reader, NEXT_EVENT
+from amazon.ion.reader_managed import managed_reader
+from amazon.ion.reader_text import text_reader
+
+data = BytesIO(b'1.23456 1.2345e6 123456 12345678901234567890')
+reader = blocking_reader(managed_reader(text_reader()), data)
+event = reader.send(NEXT_EVENT)
+assert event.ion_type == IonType.DECIMAL
+assert isinstance(event.value, Decimal)
+event = reader.send(NEXT_EVENT)
+assert event.ion_type == IonType.FLOAT
+assert isinstance(event.value, float)
+event = reader.send(NEXT_EVENT)
+assert event.ion_type == IonType.INT
+assert isinstance(event.value, int)
+event = reader.send(NEXT_EVENT)
+assert event.ion_type == IonType.INT
+assert isinstance(event.value, int)
+```
+
+When re-written, these values will retain their original Ion types. To add annotation(s), construct
+an [IonEvent](https://ion-python.readthedocs.io/en/latest/amazon.ion.html#amazon.ion.core.IonEvent)
+accordingly.
+
+```python
+from io import BytesIO
+from amazon.ion.core import IonEvent, IonEventType, IonType, ION_STREAM_END_EVENT
+from amazon.ion.writer import blocking_writer
+from amazon.ion.writer_text import text_writer
+
+event = IonEvent(IonEventType.SCALAR, IonType.FLOAT, annotations=(u'abc',), value=123.0)
+data = BytesIO()
+writer = blocking_writer(text_writer(), data)
+writer.send(event)
+writer.send(ION_STREAM_END_EVENT)
+print(data.getvalue().decode(u'utf-8'))
+```
+
+Result: `abc::123.0e0`
+</div>
+
 ## Performing sparse reads
 
 One of the major benefits of binary Ion is the ability to efficiently perform
@@ -1102,6 +1450,71 @@ while (type = reader.next()) {
 ```
 </div>
 
+<div class="tabpane Python" markdown="1">
+#### Using simpleion
+`load/loads` always fully materializes the entire stream. Hence, a sparse read that leverages the
+efficiencies of binary Ion is not possible via this API. With that in mind, it is possible to
+sparsely access the fully-materialized values.
+
+```python
+from amazon.ion import simpleion
+
+# The binary Ion equivalent of the above data:
+data = b'\xe0\x01\x00\xea' \
+    b'\xee\xa5\x81\x83\xde\xa1\x87\xbe\x9e\x83foo\x88quantity\x83' \
+    b'bar\x82id\x83baz\x85items\xe7\x81\x8a\xde\x83\x8b!\x01\xea' \
+    b'\x81\x8c\xde\x86\x84\x81x\x8d!\x07\xee\x95\x81\x8e\xde\x91' \
+    b'\x8f\xbe\x8e\x86thing1\x86thing2\xe7\x81\x8a\xde\x83\x8b!' \
+    b'\x13\xea\x81\x8c\xde\x86\x84\x81y\x8d!\x08'
+values = simpleion.loads(data, single_value=False)
+sum = 0
+for value in values:
+    if u'foo' == value.ion_annotations[0].text:
+        sum += value[u'quantity']
+```
+
+#### Using events
+Unlike `load/loads`, the event-based API does not fully materialize the entire stream and therefore
+may be used for efficient sparse reads over binary Ion data.
+
+```python
+from io import BytesIO
+from amazon.ion.core import IonEventType, IonType, ION_STREAM_END_EVENT
+from amazon.ion.reader import blocking_reader, NEXT_EVENT, SKIP_EVENT
+from amazon.ion.reader_binary import binary_reader
+from amazon.ion.reader_managed import managed_reader
+
+# The binary Ion equivalent of the above data:
+data = BytesIO(b'\xe0\x01\x00\xea' \
+    b'\xee\xa5\x81\x83\xde\xa1\x87\xbe\x9e\x83foo\x88quantity\x83' \
+    b'bar\x82id\x83baz\x85items\xe7\x81\x8a\xde\x83\x8b!\x01\xea' \
+    b'\x81\x8c\xde\x86\x84\x81x\x8d!\x07\xee\x95\x81\x8e\xde\x91' \
+    b'\x8f\xbe\x8e\x86thing1\x86thing2\xe7\x81\x8a\xde\x83\x8b!' \
+    b'\x13\xea\x81\x8c\xde\x86\x84\x81y\x8d!\x08')
+reader = blocking_reader(managed_reader(binary_reader()), data)
+sum = 0
+event = reader.send(NEXT_EVENT)
+while event != ION_STREAM_END_EVENT:
+    assert event.event_type == IonEventType.CONTAINER_START
+    assert event.ion_type == IonType.STRUCT
+    if u'foo' == event.annotations[0].text:
+        # Step into the struct.
+        event = reader.send(NEXT_EVENT)
+        while event.event_type != IonEventType.CONTAINER_END:
+            if u'quantity' == event.field_name.text:
+                sum += event.value
+            event = reader.send(NEXT_EVENT)
+        # Step out of the struct.
+        event = reader.send(NEXT_EVENT)
+    else:
+        # Skip over the struct without parsing its values.
+        event = reader.send(SKIP_EVENT)
+        assert event.event_type == IonEventType.CONTAINER_END
+        # Position the reader at the start of the next value.
+        event = reader.send(NEXT_EVENT)
+```
+
+</div>
 
 ## Converting non-hierarchical data to Ion
 
@@ -1297,6 +1710,59 @@ writer.close();
 ```
 </div>
 
+<div class="tabpane Python" markdown="1">
+The CSV conversion method below is used for both APIs.
+
+```python
+from io import StringIO
+
+data = StringIO(
+    u'''id,type,state
+    1,foo,false
+    2,bar,true
+    3,baz,true'''
+)
+lines = data.readlines()[1:]
+
+def split_line(line):
+    tokens = line.split(u',')
+    mapping = (
+        (u'id', int(tokens[0])),
+        (u'type', tokens[1]),
+        (u'state', u'true' == tokens[2].strip())
+    )
+    return dict(mapping)
+
+structs = [split_line(line) for line in lines]
+```
+
+#### Using simpleion
+```python
+from amazon.ion import simpleion
+
+ion = simpleion.dumps(structs, sequence_as_stream=True)
+```
+
+#### Using events
+```python
+from io import BytesIO
+from amazon.ion.core import IonEventType, IonType, IonEvent, ION_STREAM_END_EVENT
+from amazon.ion.writer import blocking_writer
+from amazon.ion.writer_binary import binary_writer
+
+ion = BytesIO()
+writer = blocking_writer(binary_writer(), ion)
+for struct in structs:
+    writer.send(IonEvent(IonEventType.CONTAINER_START, IonType.STRUCT))
+    writer.send(IonEvent(IonEventType.SCALAR, IonType.INT, field_name=u'id', value=struct[u'id']))
+    writer.send(IonEvent(IonEventType.SCALAR, IonType.STRING, field_name=u'type', value=struct[u'type']))
+    writer.send(IonEvent(IonEventType.SCALAR, IonType.BOOL, field_name=u'state', value=struct[u'state']))
+    writer.send(IonEvent(IonEventType.CONTAINER_END))
+
+writer.send(ION_STREAM_END_EVENT)
+```
+</div>
+
 
 ### Using a local symbol table
 
@@ -1404,6 +1870,69 @@ symbol table that begins the stream.)
 Not currently supported.
 </div>
 
+<div class="tabpane Python" markdown="1">
+Shared symbol tables may be constructed via the
+[shared_symbol_table](https://ion-python.readthedocs.io/en/latest/amazon.ion.html#amazon.ion.symbols.shared_symbol_table)
+function.
+
+```python
+from amazon.ion.symbols import shared_symbol_table
+
+table = shared_symbol_table(u'test.csv.columns', 1, (u'id', u'type', u'state'))
+```
+
+Recall the `structs` sequence from the previous Python example:
+
+```python
+from io import StringIO
+
+data = StringIO(
+    u'''id,type,state
+    1,foo,false
+    2,bar,true
+    3,baz,true'''
+)
+lines = data.readlines()[1:]
+
+def split_line(line):
+    tokens = line.split(u',')
+    mapping = (
+        (u'id', int(tokens[0])),
+        (u'type', tokens[1]),
+        (u'state', u'true' == tokens[2].strip())
+    )
+    return dict(mapping)
+
+structs = [split_line(line) for line in lines]
+```
+
+This sequence may be written with a shared symbol table as follows.
+
+#### Using simpleion
+
+`dump/dumps` accept a sequence of shared symbol tables via the `imports` parameter.
+
+```python
+from amazon.ion import simpleion
+
+data = simpleion.dumps(structs, imports=(table,), sequence_as_stream=True)
+```
+
+#### Using events
+The `binary_writer` coroutine accepts a sequence of shared symbol tables via the `imports`
+parameter. Once the writer coroutine is constructed, the events are written in the same
+way as in the example in the previous section.
+
+```python
+from io import BytesIO
+from amazon.ion.writer import blocking_writer
+from amazon.ion.writer_binary import binary_writer
+
+data = BytesIO()
+writer = blocking_writer(binary_writer(imports=(table,)), data)
+```
+</div>
+
 
 #### Reading
 
@@ -1450,6 +1979,71 @@ previous sub-section.
 Not currently supported.
 </div>
 
+<div class="tabpane Python" markdown="1">
+Instances of [SymbolTableCatalog](https://ion-python.readthedocs.io/en/latest/amazon.ion.html#amazon.ion.symbols.SymbolTableCatalog)
+are used by readers to resolve shared symbol table imports encountered in Ion data. Any
+shared symbol tables that are expected to be encountered in the stream should be registered
+with the `SymbolTableCatalog` that is provided to the reader.
+
+```python
+from amazon.ion.symbols import shared_symbol_table, SymbolTableCatalog
+
+table = shared_symbol_table(u'test.csv.columns', 1, (u'id', u'type', u'state'))
+catalog = SymbolTableCatalog()
+catalog.register(table)
+```
+
+#### Using simpleion
+`load/loads` accept a catalog via the `catalog` parameter.
+
+```python
+from amazon.ion import simpleion
+
+# The Ion representation of the CSV data containing a shared symbol table import:
+data = b'\xe0\x01\x00\xea' \
+    b'\xee\xa4\x81\x83\xde\xa0\x86\xbe\x9b\xde\x99\x84\x8e\x90' \
+    b'test.csv.columns\x85!\x01\x88!\x03\x87\xb0\xde\x8a\x8a!' \
+    b'\x01\x8b\x83foo\x8c\x10\xde\x8a\x8a!\x02\x8b\x83bar\x8c' \
+    b'\x11\xde\x8a\x8a!\x03\x8b\x83baz\x8c\x11'
+values = simpleion.loads(data, catalog=catalog, single_value=False)
+assert values[2][u'id'] == 3
+```
+
+#### Using events
+The `managed_reader` coroutine accepts a catalog via the `catalog` parameter.
+
+```python
+from io import BytesIO
+from amazon.ion.core import IonEventType, IonType, ION_STREAM_END_EVENT
+from amazon.ion.reader import blocking_reader, NEXT_EVENT, SKIP_EVENT
+from amazon.ion.reader_binary import binary_reader
+from amazon.ion.reader_managed import managed_reader
+
+# The Ion representation of the CSV data containing a shared symbol table import:
+data = BytesIO(b'\xe0\x01\x00\xea' \
+    b'\xee\xa4\x81\x83\xde\xa0\x86\xbe\x9b\xde\x99\x84\x8e\x90' \
+    b'test.csv.columns\x85!\x01\x88!\x03\x87\xb0\xde\x8a\x8a!' \
+    b'\x01\x8b\x83foo\x8c\x10\xde\x8a\x8a!\x02\x8b\x83bar\x8c' \
+    b'\x11\xde\x8a\x8a!\x03\x8b\x83baz\x8c\x11')
+reader = blocking_reader(managed_reader(binary_reader(), catalog=catalog), data)
+# Position the reader at the first struct.
+reader.send(NEXT_EVENT)
+# Skip over the struct.
+reader.send(SKIP_EVENT)
+# Position the reader at the second struct.
+reader.send(NEXT_EVENT)
+# Skip over the struct.
+reader.send(SKIP_EVENT)
+# Position the reader at the third struct.
+event = reader.send(NEXT_EVENT)
+assert event.ion_type == IonType.STRUCT
+# Step into the struct
+event = reader.send(NEXT_EVENT)
+assert u'id' == event.field_name.text
+assert 3 == event.value
+```
+</div>
+
 
 ## See also
 
@@ -1457,6 +2051,7 @@ Not currently supported.
 * The ion-dotnet API Documentation
 * [The ion-java API Documentation][2]
 * [The ion-js API Documentation][18]
+* [The ion-python API Documentation][21]
 
 <script language="JavaScript">
 <!--
@@ -1493,4 +2088,5 @@ openTab('Java');  // default tab
 [18]: https://amzn.github.io/ion-js/api/
 [19]: https://amzn.github.io/ion-js/api/interfaces/_ionreader_.reader.html
 [20]: https://amzn.github.io/ion-js/api/interfaces/_ionwriter_.writer.html
+[21]: https://ion-python.readthedocs.io/en/latest/index.html
 
