@@ -878,7 +878,14 @@ void downconvertToJson() throws IOException {
 </div>
 
 <div class="tabpane JavaScript" markdown="1">
-Not currently supported.
+Any `Value` object returned by `load()` may be converted by a JSON string by passing it to `JSON.stringify()`:
+
+```javascript
+let ion = require('ion-js');
+
+let value = ion.load('{data: annot::{foo: null.string, bar: (2 + 2)}, time: 1969-07-20T20:18Z}');
+console.log(JSON.stringify(value));
+```
 </div>
 
 <div class="tabpane Python" markdown="1">
