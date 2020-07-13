@@ -22,6 +22,9 @@
 * [Importing templates](#importing-templates)
 * [Templates' relationship to symbols](#templates-relationship-to-symbols)
 * [Binary encoding](#binary-encoding)
+* [Alternative encodings considered](#alternative-encodings-considered)
+    * [Alternative text encodings](#alternative-text-encodings)
+    * [Alternative binary encodings](#alternative-binary-encodings)
 
 ## Summary
 
@@ -915,3 +918,9 @@ $ion_symbol_table::{
 ```
 
 -----
+## Alternative encodings considered
+
+(This section is in progress and will be added shortly.)
+
+### Alternative text encodings
+### Alternative binary encodings
