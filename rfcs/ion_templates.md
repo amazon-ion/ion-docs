@@ -10,7 +10,7 @@
     * [Templates of templates](#templates-of-templates)
 * [Legal template invocation sites](#legal-template-invocation-sites)
 * [Template invocation parameters](#template-invocation-parameters)
-    * [Suppressing template values with `{#0}`](#suppressing-template-values-with)
+    * [Suppressing template values with `{#0}`](#suppressing-template-values-with-0)
     * [Suppressing trailing template values](#suppressing-trailing-template-values)
     *  [Support for extending containers](#support-for-extending-containers)
         * [Extending a struct](#extending-a-struct)
@@ -20,7 +20,7 @@
     * [At the invocation site](#at-the-invocation-site)
     * [In both the definition and the invocation](#in-both-the-definition-and-the-invocation)
 * [Importing templates](#importing-templates)
-* [Templates-relationship-to-symbols](#templates-relationship-to-symbols)
+* [Templates' relationship to symbols](#templates-relationship-to-symbols)
 * [Binary encoding](#binary-encoding)
 
 ## Summary
