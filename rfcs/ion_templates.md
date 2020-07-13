@@ -1,5 +1,28 @@
 # RFC: Ion Templates
 
+* [Summary](#summary)
+* [Motivation](#motivation)
+* [Changes to the system symbol table](#changes-to-the-system-symbol-table)
+* [Ion templates](#ion-templates)
+    * [Text encoding](#text-encoding)
+    * [Template definitions](#template-definitions)
+    * [Template blanks](#template-blanks)
+    * [Templates of templates](#templates-of-templates)
+* [Legal template invocation sites](#legal-template-invocation-sites)
+* [Template invocation parameters](#template-invocation-parameters)
+    * [Suppressing template values with `{#0}`](#suppressing-template-values-with)
+    * [Suppressing trailing template values](#suppressing-trailing-template-values)
+    *  [Support for extending containers](#support-for-extending-containers)
+        * [Extending a struct](#extending-a-struct)
+        * [Extending a list](#extending-a-list)
+* [Annotation expansion](#annotation-expansion)
+    * [In the template definition](#in-the-template-definition)
+    * [At the invocation site](#at-the-invocation-site)
+    * [In both the definition and the invocation](#in-both-the-definition-and-the-invocation)
+* [Importing templates](#importing-templates)
+* [Templates-relationship-to-symbols](#templates-relationship-to-symbols)
+* [Binary encoding](#binary-encoding)
+
 ## Summary
 
 This RFC introduces a new encoding mechanism called _Ion templates_ which generalize Ion 1.0’s concept of 
@@ -151,11 +174,15 @@ The complete Ion v1.1 system symbol table is:
 
 ### Text encoding
 
+The text syntax for template definitions and invocations is described in the following sections.
+
 While this RFC includes a proposed syntax for defining and invoking templates in Ion text, templates are primarily intended to
 benefit the more performance-oriented binary format. As with the text encoding syntax for symbols (e.g. `$ion_symbol_table`, `$14`, etc), 
 a text encoding syntax for templates is specified to allow for human-readable illustrations of system behavior and to maintain
 isomorphism between the binary and text encodings. It is expected that applications writing Ion text will write out the expanded
 form of any templates because the Ion text format prioritizes readability over compactness.
+
+To read about the binary representation, see the [Binary encoding](#binary-encoding) section.
 
 ### Template definitions
 
@@ -565,7 +592,7 @@ expands to
 
 This feature, paired with [support for extending containers](#support-for-extending-containers) below, allows users to leverage existing template definitions to encode similar composite values rather than having to define a collection of nearly identical templates.
 
-## Support for extending containers
+### Support for extending containers
 
 If a template is a container type (i.e. `struct`, `list`, or `sexp`), invocations can provide enough values to fill in the template's blanks and then an extra parameter: a container of the same type as the template container. Values from this extra container will be appended to the end of the expanded container. We will refer to this extra parameter as an "extension parameter".
 
@@ -573,7 +600,7 @@ The extension parameter _must_ be the same Ion type as the template definition i
 
 Passing additional parameters beyond the optional extension parameter is illegal.
 
-### Extending a struct
+#### Extending a struct
 
 ```js
 $ion_1_0
@@ -611,7 +638,7 @@ expands to
 }
 ```
 
-### Extending a list
+#### Extending a list
 
 ```js
 $ion_1_0
