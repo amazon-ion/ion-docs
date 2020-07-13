@@ -842,8 +842,9 @@ $ion_symbol_table::{
 
 Note that `{#0}` itself is a no-parameters template invocation, and would be encoded as: 
 ```js
-0xF0 0x80
-//     ^--- 0b1000_0000, the VarUInt encoding of a zero.
+    0xF0 0x80
+//    ^    ^--- The VarUInt encoding of a zero: 0b1000_0000
+//    +-------- A no-parameters template invocation
 ```
 
 In the common case, no-parameters template invocations will require 2 to 3 bytes to encode.
@@ -929,9 +930,9 @@ The invocation's binary encoding would be:
 ```js
 //                         G    a    r    y        46         B    r    o    w    n    i    e    s
     0xF2 0x91 0x81 0x84 0x47 0x61 0x72 0x79 0x21 0x2e 0x88 0x42 0x72 0x6f 0x77 0x6e 0x69 0x65 0x73
-//    ^    ^     ^     ^                      ^         ^----- 8-byte string: "Brownies"
-//    |    |     |     |                      +--------------- 1-byte positive integer: 46
-//    |    |     |     +-------------------------------------- 4-byte string: "Gary"
+//    ^    ^     ^        ^                   ^         ^----- 8-byte string: "Brownies"
+//    |    |     |        |                   +--------------- 1-byte positive integer: 46
+//    |    |     |        +----------------------------------- 4-byte string: "Gary"
 //    |    |     +-------------------------------------------- VarUInt encoding of the template ID: 1
 //    |    +-------------------------------------------------- VarUInt encoding of the length: 17 bytes
 //    +------------------------------------------------------- Multi-parameter template invocation
