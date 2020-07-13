@@ -37,7 +37,7 @@ This RFC introduces a new encoding mechanism called _Ion templates_ which genera
 This will allow applications to elide not only the structure of encoded values (as a traditional schema might), but also the
 values themselves.
 
-The changes proposed in this RFC would constitute a new minor version of Ion: v1.1
+The changes proposed in this RFC would constitute a new minor version of Ion: v1.1.
 
 -----
 
@@ -876,6 +876,14 @@ $ion_symbol_table::{
 {#1 2020-07-09T15:30:00.000-11:00} // Single-parameter invocation
 ```
 
+The invocation's binary encoding would be:
+```js
+    0xF1 0x81 0x6a 0x45 0x94 0x0f 0xe4 0x87 0x8a 0x82 0x9e 0x80 0xc3
+//    ^    ^    ^------- 10 byte encoding of the timestamp value: 2020-07-09T15:30:00.000-11:00
+//    |    +------------ VarUInt encoding of the template ID: 1
+//    +----------------- Single-parameter template invocation
+```
+
 ### `0xF2` Multi-parameter invocations
 
 ```
@@ -915,6 +923,18 @@ $ion_symbol_table::{
   ]
 }
 {#1 "Gary" 46 "Brownies"} // Single-parameter invocation
+```
+
+The invocation's binary encoding would be:
+```js
+//                         G    a    r    y        46         B    r    o    w    n    i    e    s
+    0xF2 0x91 0x81 0x84 0x47 0x61 0x72 0x79 0x21 0x2e 0x88 0x42 0x72 0x6f 0x77 0x6e 0x69 0x65 0x73
+//    ^    ^     ^     ^                      ^         ^----- 8-byte string: "Brownies"
+//    |    |     |     |                      +--------------- 1-byte positive integer: 46
+//    |    |     |     +-------------------------------------- 4-byte string: "Gary"
+//    |    |     +-------------------------------------------- VarUInt encoding of the template ID: 1
+//    |    +-------------------------------------------------- VarUInt encoding of the length: 17 bytes
+//    +------------------------------------------------------- Multi-parameter template invocation
 ```
 
 -----
