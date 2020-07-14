@@ -438,6 +438,9 @@ Now invocations only need to specify the model and year:
 // TS: continue reading the Ion Values in the stream.
 // TS: Is the order of expansion (like in this example) the same as the order of evaluation of nested template invocations, i.e. `{#3 {#2 "a"} 12}`
 // TS: Can I define a template that has a template invocation, is this definition valid `{#4 {#3 "Camry" 2017} {#0} {#0}}`?
+// TS: If so what does this do? `{#4 {#3 "Camry" {#0}} {#0} {#0}}` is the first `{#0}` a skip? Also for this example the choice of expanding template invocations
+// TS: first and then replace vs the reverse will cause 2 different results.
+// TS: I assume the extensions apply to template definitions  `{#4 {#3 "Camry" 2017 {seller: "Jim"}} {#0} {#0}}`
 
 When interpreting the stream, the reader must recursively expand any template invocations encountered. In this example,
 that means that expanding `{#3}` will involve expanding `{#2}`, which will in turn involve expanding `{#1}`.
@@ -640,6 +643,9 @@ $ion_symbol_table::{
 {#1 "Zack" 12345 "Software Engineer"}
 {#1 "Jon" 67890 "Manager" {number_of_reports: 6}} // Passes an extra struct
 ```
+
+// TS: and it is still valid to have template invocations inside the extenind part, e.g.
+// TS: `{#1 "Jon" 67890 "Manager" {manager: {#1 "Zack" 12345 {#0}}} }`
 
 expands to
 
