@@ -25,6 +25,7 @@
     * [`0xF0`: No-parameter invocations](#0xf0-no-parameter-invocations)
     * [`0xF1`: Single-parameter invocations](#0xf1-single-parameter-invocations)
     * [`0xF2`: Multi-parameter invocations](#0xf2-multi-parameter-invocations)
+* [Skip-scanning over templates](#skip-scanning-over-templates)
 * [Alternative encodings considered](#alternative-encodings-considered)
     * [Alternative text encodings](#alternative-text-encodings)
     * [Alternative binary encodings](#alternative-binary-encodings)
@@ -809,11 +810,9 @@ values to represent template invocations:
 * `0xF1`: an invocation with a single parameter
 * `0xF2`: an invocation with two or more a parameters
 
-Unlike Ion's user-level types, not all Ion template invocation encodings contain a length prefix. In particular, no-parameter
-invocations (`0xF0`) are small enough to be scanned past and single-parameter invocations (`0xF1`) can benefit from the length 
-prefix that is already in the provided parameter. Only multiple-parameter invocations (`0xF2`) provide a length prefix of their
-own. This trade-off keeps the invocation representation compact while preserving the majority of type code `15` for future 
-use cases.
+Not all template invocation encodings include a length prefix, but all of them can be skip-scanned. (See
+[Skip-scanning over templates](#skip-scanning-over-templates) for more information.) This approach keeps
+the invocation representation compact while preserving the majority of type code 15 for future use cases.
 
 ### `0xF0`: No-parameter invocations
 
@@ -895,9 +894,9 @@ The invocation's binary encoding would be:
            +---------+---------+
 Template   |   15    |    2    |
            +---------+---------+======+
-           |     Length [VarUInt]     |
-           +--------------------------+
            |     template ID [VarUInt]|
+           +--------------------------+
+           |     Length [VarUInt]     |
            +--------------------------+
            |     Parameter 1          |
            +--------------------------+
@@ -932,19 +931,74 @@ $ion_symbol_table::{
 The invocation's binary encoding would be:
 ```js
 //                         G    a    r    y        46         B    r    o    w    n    i    e    s
-    0xF2 0x91 0x81 0x84 0x47 0x61 0x72 0x79 0x21 0x2e 0x88 0x42 0x72 0x6f 0x77 0x6e 0x69 0x65 0x73
+    0xF2 0x81 0x90 0x84 0x47 0x61 0x72 0x79 0x21 0x2e 0x88 0x42 0x72 0x6f 0x77 0x6e 0x69 0x65 0x73
 //    ^    ^     ^        ^                   ^         ^----- 8-byte string: "Brownies"
 //    |    |     |        |                   +--------------- 1-byte positive integer: 46
 //    |    |     |        +----------------------------------- 4-byte string: "Gary"
-//    |    |     +-------------------------------------------- VarUInt encoding of the template ID: 1
-//    |    +-------------------------------------------------- VarUInt encoding of the length: 17 bytes
+//    |    |     +-------------------------------------------- VarUInt encoding of the length: 16 bytes
+//    |    +-------------------------------------------------- VarUInt encoding of the template ID: 1
 //    +------------------------------------------------------- Multi-parameter template invocation
 ```
+
+## Skip-scanning over templates
+
+In order to be able to report the Ion type of the next value in the stream, readers must read the
+template ID that follows the type descriptor byte to look up the corresponding template definition.
+
+Each invocation encoding type makes it possible to skip over the remaining bytes:
+
+* `0xF0`: There are no further bytes after the template ID.
+* `0xF1`: The single parameter that follows the template ID has a length prefix of its own.
+* `0xF1`: A `VarUInt` length encoding follows the template ID, allowing the entire parameter list to be skipped.
 
 -----
 ## Alternative encodings considered
 
-(This section is in progress and will be added shortly.)
-
 ### Alternative text encodings
+
+#### `@`-based
+
+Earlier versions of this proposal used an `@`-based syntax for templates to parallel the system-level
+syntax `$`-based syntax for symbols:
+
+```js
+@_              // A template blank
+@1              // Invoke template #1 without parameters
+@2(foo bar baz) // Invoke template #2 with multiple parameters 
+```
+
+However, the [Ion 1.0 specification `Symbols` section](https://amzn.github.io/ion-docs/docs/spec.html#symbol) 
+states that:
+
+> Within S-expressions, the rules for unquoted symbols include another set of tokens: operators. An operator is an unquoted sequence of one or more of the following nineteen ASCII characters: !#%&*+-./;<=>?@^`|~ Operators and identifiers can be juxtaposed without whitespace ....
+
+This broad parsing rule meant that the `@` in a template invocation like `@1` would be interpreted as an operator. An alternative syntax would be necessary for invoking templates or using template blanks (`@0`) inside of an s-expression. Unfortunately, several other syntax options were eliminated by the same rule.
+
+`{#ID}` works because curly braces are not an operator and it can be unambiguously parsed because
+the contents of a struct cannot begin with `#` in Ion 1.0.
+
+#### Annotation-based
+
+To sidestep the operator problem described above, a more verbose syntax was considered that relied on
+a system annotation called `$ion_template` that would be used to mark s-expressions as template invocations
+or blanks.
+
+```js
+$ion_template::(0) // A template blanks
+$ion_template::(1) // Invoke template #1 without parameters
+$ion_template::(2 foo bar baz) // Invoke template #2 with multiple parameters.
+```
+
+This ended up touching a larger surface area of the existing spec than simply introducing new syntax. Any usage
+of s-expressions would require logic to detect whether it was actually a template invocation. Parameters being
+passed to the template would be subject to s-expression parsing rules, meaning that careful escaping would be
+required. Corner cases in the spec would need to be carefully considered; for example: if a user creates a new
+annotation with the text `$ion_template` but which uses a different symbol ID, is the annotated s-expression a
+template invocation or not?
+
 ### Alternative binary encodings
+
+The initial draft of this spec modeled templates' encoding after 
+[that of the user-level types](http://amzn.github.io/ion-docs/docs/binary.html#typed-value-formats).
+Templates had a type descriptor byte with a type code of `15` and a lower nibble that would encode the 
+length of the invocation, using `14` to indicate a `VarUInt` length was necessary. The primary drawback of this approach was that it consumed the entire `typecode=15` space, which was reserved in Ion 1.0 for future functionality.
