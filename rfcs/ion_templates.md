@@ -32,7 +32,7 @@
 
 ## Summary
 
-This RFC introduces a new encoding mechanism called _Ion templates_ which generalize Ion 1.0’s concept of 
+This RFC introduces a new encoding mechanism called _Ion templates_ which generalize Ion 1.0’s concept of
 [symbols](http://amzn.github.io/ion-docs/docs/symbols.html) by:
 
 1. Allowing any valid Ion value to be added to the symbol table, not just strings.
@@ -47,8 +47,8 @@ The changes proposed in this RFC would constitute a new minor version of Ion: v1
 
 ## Motivation
 
-As a self-describing format, Ion is able to encode streams of arbitrary, heterogeneous values with no 
-formal schema. Readers of these streams can parse the values therein without relying on any external 
+As a self-describing format, Ion is able to encode streams of arbitrary, heterogeneous values with no
+formal schema. Readers of these streams can parse the values therein without relying on any external
 resources (modulo shared symbol tables, where used), inspecting each value as it's encountered to discover its structure.
 
 **Example stream of heterogeneous values**
@@ -124,7 +124,7 @@ requiring additional computation during serialization and deserialization.
   index: {
     class: "nonfiction",
     keywords: ["politics", "conquer", "Medici", "princedom"],
-  },  
+  },
   publication: {
     isbn: "0872203166"
     publisher: "Hackett Classics",
@@ -142,7 +142,7 @@ requiring additional computation during serialization and deserialization.
 }
 ```
 
-Each of the books described in the above stream is an Ion struct with a nearly identical structure, but significant portions of the encoded output are dedicated to redefining that structure in full for each value. Not only does this inflate the size of the encoded data, it imposes additional overhead to both reading and writing. 
+Each of the books described in the above stream is an Ion struct with a nearly identical structure, but significant portions of the encoded output are dedicated to redefining that structure in full for each value. Not only does this inflate the size of the encoded data, it imposes additional overhead to both reading and writing.
 
 When writing each value in binary Ion, the application must perform symbol table lookups to map the field name to the appropriate symbol ID. Containers nested inside the top level value (like `index` and `publication`, for example) require additional buffering to be performed so their encoded size can be included in their representation's prefix.
 
@@ -175,7 +175,7 @@ The complete Ion v1.1 system symbol table is:
 | 9 |	$ion_shared_symbol_table |
 | **10** | **$ion_1_1** |
 | **11** | **templates** |
-| **12** | **max_template_id** |
+| **12** | **template_max_id** |
 
 ## Ion Templates
 
@@ -184,7 +184,7 @@ The complete Ion v1.1 system symbol table is:
 The text syntax for template definitions and invocations is described in the following sections.
 
 While this RFC includes a proposed syntax for defining and invoking templates in Ion text, templates are primarily intended to
-benefit the more performance-oriented binary format. As with the text encoding syntax for symbols (e.g. `$ion_symbol_table`, `$14`, etc), 
+benefit the more performance-oriented binary format. As with the text encoding syntax for symbols (e.g. `$ion_symbol_table`, `$14`, etc),
 a text encoding syntax for templates is specified to allow for human-readable illustrations of system behavior and to maintain
 isomorphism between the binary and text encodings. It is expected that applications writing Ion text will write out the expanded
 form of any templates because the Ion text format prioritizes readability over compactness.
@@ -193,17 +193,18 @@ To read about the binary representation, see the [Binary encoding](#binary-encod
 
 ### Template definitions
 
-Templates are defined using a new `templates` field in 
+Templates are defined using a new `templates` field in
 [Ion 1.0's existing symbol table construct](http://amzn.github.io/ion-docs/docs/symbols.html#processing-of-symbol-tables). (This is
 explored in greater detail in the section [Importing Templates](#importing-templates).)
 
 The `templates` field is a list of template definitions. A template definition is comprised of a single Ion value of any type
 and that value's annotations, if any.
 
-In this example, the local symbol table  defines a template whose value is a highly-precise decimal approximation of the mathematical 
+In this example, the local symbol table  defines a template whose value is a highly-precise decimal approximation of the mathematical
 constant Pi:
 
 ```js
+$ion_1_1
 $ion_symbol_table::{
   templates: [
     3.1415926535897932384626433832795028842 // Template #1: Pi
@@ -211,10 +212,10 @@ $ion_symbol_table::{
 }
 ```
 
-Defining a template assigns it an identifier starting with 1. Template ID 0 is reserved, as explained in the section
+Defining a template assigns it a template identifier (TID) starting with 1. TID 0 is reserved, as explained in the section
 [Template Blanks](#template-blanks) below.
 
-With this template defined, we may now refer to it downstream by its template ID. The text notation for invoking a template is:
+With this template defined, we may now refer to it downstream by its TID. The text notation for invoking a template is:
 ```js
 {#ID}
 ```
@@ -222,7 +223,7 @@ where `ID` is the identifier of the desired template.
 
 Here is a complete example, which shows both the template definition and several invocations:
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   templates: [
     3.1415926535897932384626433832795028842
@@ -237,7 +238,7 @@ $ion_symbol_table::{
 
 This is equivalent to the following stream that does not use templates:
 ```js
-$ion_1_0
+$ion_1_1
 3.1415926535897932384626433832795028842
 3.1415926535897932384626433832795028842
 3.1415926535897932384626433832795028842
@@ -245,13 +246,13 @@ $ion_1_0
 3.1415926535897932384626433832795028842
 ```
 
-As this illustrates, templates are convenient for cheaply referring to large, frequently repeated values. In binary Ion, the 
-non-templated stream is 99 bytes long and requires readers to parse and validate PI five times. In contrast, the templated 
+As this illustrates, templates are convenient for cheaply referring to large, frequently repeated values. In binary Ion, the
+non-templated stream is 99 bytes long and requires readers to parse and validate PI five times. In contrast, the templated
 stream is only 37 bytes (a savings of 62.62%), and a reader would only have to parse and validate PI once.
 
 ### Template blanks
 
-Definitions may partially specify composite values by leaving 'blanks' in the provided template. The text notation for a template 
+Definitions may partially specify composite values by leaving 'blanks' in the provided template. The text notation for a template
 blank is an invocation of template ID `0`, which is reserved for this purpose:
 
 ```js
@@ -261,7 +262,7 @@ blank is an invocation of template ID `0`, which is reserved for this purpose:
 In this example, we want define a template that expands to a struct holding vehicle information, like this:
 
 ```js
-{ 
+{
   make: "Toyota",
   model: "Camry",
   year: 2017,
@@ -278,12 +279,12 @@ To achieve this, we need to do two things:
 2. Define a new template that uses those field names and which leaves the associated field values blank (`{#0}`).
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   // Symbol IDs $0-$9 are defined in the Ion 1.0 spec:
   //     http://amzn.github.io/ion-docs/docs/symbols.html#system-symbols
   // Symbol ID $11 is the string "templates", and is added by this RFC.
-  
+
   // Define symbols for each of the field names:
 
   symbols : [
@@ -337,11 +338,11 @@ During expansion, the reader will apply each invocation parameter to the blanks 
 //     |        |     +------------------------------ year
 //     |        +------------------------------------ model
 //     +--------------------------------------------- make
-``` 
+```
 
 A reader processing the above stream would interpret it as:
 ```js
-{ 
+{
   make: "Toyota",
   model: "Camry",
   year: 2017,
@@ -350,7 +351,7 @@ A reader processing the above stream would interpret it as:
   transmission: "automatic",
   hasAirbags: true
 }
-{ 
+{
   make: "Toyota",
   model: "Corolla",
   year: 2011,
@@ -359,7 +360,7 @@ A reader processing the above stream would interpret it as:
   transmission: "automatic",
   hasAirbags: true
 }
-{ 
+{
   make: "Toyota",
   model: "Avalon",
   year: 2018,
@@ -388,7 +389,7 @@ We can leverage templates again to go a step further, by defining a new template
 Template definitions can only include invocations of templates with a *lower* ID. That is, templates that have already
 been defined.
 
-Templates *cannot* include invocations for their own ID or higher (not-yet-defined) IDs. This eliminates the need for 
+Templates *cannot* include invocations for their own ID or higher (not-yet-defined) IDs. This eliminates the need for
 cycle detection and guarantees that template expansion will always terminate.
 
 ```js
@@ -410,7 +411,7 @@ Downstream, we can now represent most modern 4-door sedans using invocations of 
 {#2 "Toyota" "Avalon" 2018}
 ```
 
-Since there are likely to be relatively few car companies in the data, you could choose to 
+Since there are likely to be relatively few car companies in the data, you could choose to
 define a template for Toyota sedans:
 
 ```js
@@ -431,12 +432,19 @@ Now invocations only need to specify the model and year:
 {#3 "Avalon" 2018}
 ```
 
+// TS: We should specify the order the reader follows to expand. Is it expand nested template calls and then replace?
+// TS: placeholders with parameters passed at template invocation or the reverse?
+// TS: Put differently, my implementation can decide to read the symbol table first, expand all template definitions that depend on other templates and then
+// TS: continue reading the Ion Values in the stream.
+// TS: Is the order of expansion (like in this example) the same as the order of evaluation of nested template invocations, i.e. `{#3 {#2 "a"} 12}`
+// TS: Can I define a template that has a template invocation, is this definition valid `{#4 {#3 "Camry" 2017} {#0} {#0}}`?
+
 When interpreting the stream, the reader must recursively expand any template invocations encountered. In this example,
 that means that expanding `{#3}` will involve expanding `{#2}`, which will in turn involve expanding `{#1}`.
 
  Thus, a reader processing the above stream would interpret it as:
 ```js
-{ 
+{
   make: "Toyota",
   model: "Camry",
   year: 2017,
@@ -445,7 +453,7 @@ that means that expanding `{#3}` will involve expanding `{#2}`, which will in tu
   transmission: "automatic",
   hasAirbags: true
 }
-{ 
+{
   make: "Toyota",
   model: "Corolla",
   year: 2011,
@@ -454,7 +462,7 @@ that means that expanding `{#3}` will involve expanding `{#2}`, which will in tu
   transmission: "automatic",
   hasAirbags: true
 }
-{ 
+{
   make: "Toyota",
   model: "Avalon",
   year: 2018,
@@ -471,7 +479,7 @@ Vehicles that don't conform to template #2 or #3 can still be encoded using temp
 {#1 "Ford" "F150" 2006 "pickup" 2 "manual" true}
 ```
 
-and new templates can be defined dynamically mid-stream using the symbol table append syntax shown 
+and new templates can be defined dynamically mid-stream using the symbol table append syntax shown
 in examples above.
 
 -----
@@ -510,6 +518,7 @@ $ion_symbol_table::{
 }
 {#3 {#4} 2018} // Equivalent to {#3 "Camry" 2018}
 ```
+// TS: This example implies order of evalution of nested template invocations. We should state it as well.
 
 You *cannot* use template invocations in the place of a struct field name or annotation.
 ```js
@@ -534,7 +543,7 @@ When `{#0}` appears as a parameter in a template invocation, the corresponding v
 For example, in this stream we define a template to encode employee information:
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "name",       // $13
@@ -571,10 +580,13 @@ would expand to:
   occupation: SDE
 }
 ```
+// TS: So, cunningly?, we cannot skip when we are defining a template that depends on another template, right?
+// TS: At template definition time `{#0}` has a different meaning than when used as a param to an invocation not inside a `$ion_symbol_table`,
+// TS: or am I reading this incorrectly?
 
 ### Suppressing trailing template values
 
-Trailing values in the template definition can be suppressed by not passing enough parameters to define them at the 
+Trailing values in the template definition can be suppressed by not passing enough parameters to define them at the
 invocation site:
 
 ```js
@@ -603,14 +615,14 @@ This feature, paired with [support for extending containers](#support-for-extend
 
 If a template is a container type (i.e. `struct`, `list`, or `sexp`), invocations can provide enough values to fill in the template's blanks and then an extra parameter: a container of the same type as the template container. Values from this extra container will be appended to the end of the expanded container. We will refer to this extra parameter as an "extension parameter".
 
-The extension parameter _must_ be the same Ion type as the template definition itself. This allows structs to specify field names for the values being added to the expanded value (`number_of_reports` in the example above). Passing any other type of value is illegal.
+The extension parameter _must_ be the same Ion type as the template definition's outermost Ion value. This allows structs to specify field names for the values being added to the expanded value (`number_of_reports` in the example above). Passing any other type of value is illegal.
 
 Passing additional parameters beyond the optional extension parameter is illegal.
 
 #### Extending a struct
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "name",       // $13
@@ -747,12 +759,12 @@ US::dollars::99.95
 Ion templates piggy-back on [the Ion 1.0 spec's existing symbol table import process](http://amzn.github.io/ion-docs/docs/symbols.html#processing-of-symbol-tables).
 
 Templates can be defined by:
-1. Adding them to a [local symbol table](http://amzn.github.io/ion-docs/docs/symbols.html#local-symbol-tables), 
+1. Adding them to a [local symbol table](http://amzn.github.io/ion-docs/docs/symbols.html#local-symbol-tables),
    as demonstrated in the [Template Definitions](#template-definitions) section.
 2. Importing them from a [shared symbol table](http://amzn.github.io/ion-docs/docs/symbols.html#shared-symbol-tables).
 
-Symbol tables can include a `symbols` field, a `templates` field, neither, or both. If both are present, the `templates` field
-must always be processed *after* the `symbols` field. This allows templates to be defined which leverage symbols defined in 
+Symbol tables can include a `symbols` field or a `templates` field, neither, or both. If both are present, the `templates` field
+must always be processed *after* the `symbols` field. This allows templates to be defined which leverage symbols defined in
 the same table. For example:
 ```js
 $ion_template_table::{
@@ -770,7 +782,7 @@ $ion_template_table::{
 ```
 
 When importing a shared symbol table, the number of definitions being imported from the `templates` list is capped by
-the `max_template_id` field. (This is analagous to `max_id` limiting the number of symbols imported from the `symbols` list.)
+the `template_max_id` field. (This is analagous to `max_id` limiting the number of symbols imported from the `symbols` list.)
 
 ```js
 $ion_template_table::{
@@ -779,7 +791,7 @@ $ion_template_table::{
       name: "my_table",
       version: 1,
       max_id: 16, // Only 16 symbols will be imported from `my_table` v1
-      max_template_id: 32 // but 32 template definitions will be imported.
+      template_max_id: 32 // but 32 template definitions will be imported.
     }
   ]
 }
@@ -793,13 +805,13 @@ alongside symbols to preserve backwards compatibility and simplify implementatin
 Unlike symbols, templates are a system-level encoding detail, not a user-level type.
 
 If a symbol ID cannot be resolved, readers can still report that the value is of type `symbol` and provide its symbol ID.
-In contrast, if a template invocation refers to a template ID that cannot be resolved (e.g. due to a missing shared symbol table), 
+In contrast, if a template invocation refers to a template ID that cannot be resolved (e.g. due to a missing shared symbol table),
 no type information is available to the user. Reader implementations should raise an error.
 
 Templates and template invocations *cannot* be used in places where one would expect to find a symbol token, including struct
 field names and annotations.
 
-## Binary encoding 
+## Binary encoding
 
 See the [Ion 1.0 binary encoding spec](http://amzn.github.io/ion-docs/docs/binary.html#typed-value-formats) for a detailed explanation of the terms used in the diagrams below.
 
@@ -842,7 +854,7 @@ $ion_symbol_table::{
 {#1} // Invoking this requires no parameters
 ```
 
-Note that `{#0}` itself is a no-parameters template invocation, and would be encoded as: 
+Note that `{#0}` itself is a no-parameters template invocation, and would be encoded as:
 ```js
     0xF0 0x80
 //    ^    ^--- The VarUInt encoding of a zero: 0b1000_0000
@@ -949,7 +961,7 @@ Each invocation encoding type makes it possible to skip over the remaining bytes
 
 * `0xF0`: There are no further bytes after the template ID.
 * `0xF1`: The single parameter that follows the template ID has a length prefix of its own.
-* `0xF1`: A `VarUInt` length encoding follows the template ID, allowing the entire parameter list to be skipped.
+* `0xF2`: A `VarUInt` length encoding follows the template ID, allowing the entire parameter list to be skipped.
 
 -----
 ## Alternative encodings considered
@@ -964,10 +976,10 @@ syntax `$`-based syntax for symbols:
 ```js
 @_              // A template blank
 @1              // Invoke template #1 without parameters
-@2(foo bar baz) // Invoke template #2 with multiple parameters 
+@2(foo bar baz) // Invoke template #2 with multiple parameters
 ```
 
-However, the [Ion 1.0 specification `Symbols` section](https://amzn.github.io/ion-docs/docs/spec.html#symbol) 
+However, the [Ion 1.0 specification `Symbols` section](https://amzn.github.io/ion-docs/docs/spec.html#symbol)
 states that:
 
 > Within S-expressions, the rules for unquoted symbols include another set of tokens: operators. An operator is an unquoted sequence of one or more of the following nineteen ASCII characters: !#%&*+-./;<=>?@^`|~ Operators and identifiers can be juxtaposed without whitespace ....
@@ -998,7 +1010,7 @@ template invocation or not?
 
 ### Alternative binary encodings
 
-The initial draft of this spec modeled templates' encoding after 
+The initial draft of this spec modeled templates' encoding after
 [that of the user-level types](http://amzn.github.io/ion-docs/docs/binary.html#typed-value-formats).
-Templates had a type descriptor byte with a type code of `15` and a lower nibble that would encode the 
+Templates had a type descriptor byte with a type code of `15` and a lower nibble that would encode the
 length of the invocation, using `14` to indicate a `VarUInt` length was necessary. The primary drawback of this approach was that it consumed the entire `typecode=15` space, which was reserved in Ion 1.0 for future functionality.
