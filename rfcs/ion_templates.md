@@ -211,10 +211,10 @@ $ion_symbol_table::{
 }
 ```
 
-Defining a template assigns it an identifier starting with 1. Template ID 0 is reserved, as explained in the section
-[Template Blanks](#template-blanks) below.
+Defining a template assigns it a template identifier (TID) starting with 1. Template ID 0 is reserved, 
+as explained in the section [Template Blanks](#template-blanks) below.
 
-With this template defined, we may now refer to it downstream by its template ID. The text notation for invoking a template is:
+With this template defined, we may now refer to it downstream by its TID. The text notation for invoking a template is:
 ```js
 {#ID}
 ```
@@ -222,7 +222,7 @@ where `ID` is the identifier of the desired template.
 
 Here is a complete example, which shows both the template definition and several invocations:
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   templates: [
     3.1415926535897932384626433832795028842
@@ -237,7 +237,7 @@ $ion_symbol_table::{
 
 This is equivalent to the following stream that does not use templates:
 ```js
-$ion_1_0
+$ion_1_1
 3.1415926535897932384626433832795028842
 3.1415926535897932384626433832795028842
 3.1415926535897932384626433832795028842
@@ -278,7 +278,7 @@ To achieve this, we need to do two things:
 2. Define a new template that uses those field names and which leaves the associated field values blank (`{#0}`).
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   // Symbol IDs $0-$9 are defined in the Ion 1.0 spec:
   //     http://amzn.github.io/ion-docs/docs/symbols.html#system-symbols
@@ -534,7 +534,7 @@ When `{#0}` appears as a parameter in a template invocation, the corresponding v
 For example, in this stream we define a template to encode employee information:
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "name",       // $13
@@ -572,6 +572,33 @@ would expand to:
 }
 ```
 
+When `{#0}` is used as a template invocation parameter in the context of a template definition, it is 
+*always* considered a template blank.
+
+```js
+$ion_1_1
+$ion_symbol_table::{
+  symbols: [
+    "name",       // $13
+    "employeeId", // $14
+    "occupation", // $15
+  ],
+  templates: [
+    { // Template #1
+      $13: {#0}, // name
+      $14: {#0}, // employeeId
+      $15: {#0}, // occupation
+    }
+    // The definition of template #2 invokes template #1, so the {#0} passed as the second parameter
+    // is considered a template blank, not a field suppression.
+    {#1 "Bernard" {#0} "Accountant"}
+  ]
+}
+```
+
+As the [Binary encoding](#binary-encoding) notes, `{#0}` takes two bytes to encode, making it more expensive
+than a single-byte `null` of any type.
+
 ### Suppressing trailing template values
 
 Trailing values in the template definition can be suppressed by not passing enough parameters to define them at the 
@@ -603,14 +630,32 @@ This feature, paired with [support for extending containers](#support-for-extend
 
 If a template is a container type (i.e. `struct`, `list`, or `sexp`), invocations can provide enough values to fill in the template's blanks and then an extra parameter: a container of the same type as the template container. Values from this extra container will be appended to the end of the expanded container. We will refer to this extra parameter as an "extension parameter".
 
-The extension parameter _must_ be the same Ion type as the template definition itself. This allows structs to specify field names for the values being added to the expanded value (`number_of_reports` in the example above). Passing any other type of value is illegal.
+The extension parameter _must_ be the same Ion type as the template definition's outermost Ion value. This allows structs to specify field names for the values being added to the expanded value (`number_of_reports` in the example above). Passing any other type of value is illegal.
 
 Passing additional parameters beyond the optional extension parameter is illegal.
+
+#### Extending a list
+
+```js
+$ion_1_1
+$ion_symbol_table::{
+  templates: [
+    ["Vanilla", "Chocolate Chip"] // Template 1
+  ]
+}
+{#1 ["Rocky Road", "Cookie Dough"]}
+```
+
+expands to
+
+```js
+["Vanilla", "Chocolate Chip", "Rocky Road", "Cookie Dough"]
+```
 
 #### Extending a struct
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "name",       // $13
@@ -645,20 +690,44 @@ expands to
 }
 ```
 
-#### Extending a list
+Extension parameters can be used in template invocations inside of template definitions. They can also contain template invocations. This stream:
 
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
+  symbols: [
+    "name",       // $13
+    "employeeId", // $14
+    "occupation", // $15
+  ],
   templates: [
-    ["Vanilla", "Chocolate Chip"] // Template 1
+    { // Template #1
+      $13: {#0}, // name
+      $14: {#0}, // employeeId
+      $15: {#0}, // occupation
+    },
+    // Template #2 invokes template #1 and passes an extension parameter
+    {#1 "Jon" 67890 "Manager" {number_of_reports: 6}}
   ]
 }
-{#1 ["Rocky Road", "Cookie Dough"]}
+ // Passes an extension parameter that invokes template #2
+{#1 "Zack" 12345 "Software Engineer" {manager: {#2}}}
 ```
 
+expands to
+
 ```js
-["Vanilla", "Chocolate Chip", "Rocky Road", "Cookie Dough"]
+{
+  name: "Zack",
+  employeeId: 12345,
+  occupation: SDE,
+  manager: {
+    name: "Jon",
+    employeeId: 67890,
+    occupation: SDM,
+    number_of_reports: 6
+  }
+}
 ```
 
 ## Annotation Expansion
@@ -829,7 +898,7 @@ Template   |   15    |    0    |
 
 #### Example of a no-parameters template
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "last_modified" // $13
@@ -866,7 +935,7 @@ Template   |   15    |    1    |
 
 #### Example of a single-parameter template
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "last_modified" // $13
@@ -910,7 +979,7 @@ Template   |   15    |    2    |
 
 #### Example of a multi-parameter template
 ```js
-$ion_1_0
+$ion_1_1
 $ion_symbol_table::{
   symbols: [
     "name", // $13
@@ -949,7 +1018,7 @@ Each invocation encoding type makes it possible to skip over the remaining bytes
 
 * `0xF0`: There are no further bytes after the template ID.
 * `0xF1`: The single parameter that follows the template ID has a length prefix of its own.
-* `0xF1`: A `VarUInt` length encoding follows the template ID, allowing the entire parameter list to be skipped.
+* `0xF2`: A `VarUInt` length encoding follows the template ID, allowing the entire parameter list to be skipped.
 
 -----
 ## Alternative encodings considered
