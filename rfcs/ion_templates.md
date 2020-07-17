@@ -632,6 +632,8 @@ If a template is a container type (i.e. `struct`, `list`, or `sexp`), invocation
 
 The extension parameter _must_ be the same Ion type as the template definition's outermost Ion value. This allows structs to specify field names for the values being added to the expanded value (`number_of_reports` in the example above). Passing any other type of value is illegal.
 
+Extension parameters can only be used with template definitions whose outermost Ion value is a container type. It is always illegal to pass a scalar value (int, string, etc) as an extension parameter.
+
 Passing additional parameters beyond the optional extension parameter is illegal.
 
 #### Extending a list
@@ -643,7 +645,7 @@ $ion_symbol_table::{
     ["Vanilla", "Chocolate Chip"] // Template 1
   ]
 }
-{#1 ["Rocky Road", "Cookie Dough"]}
+{#1 ["Rocky Road", "Cookie Dough"]} // Passes a list as an extension paramameter
 ```
 
 expands to
@@ -671,7 +673,7 @@ $ion_symbol_table::{
   ]
 }
 {#1 "Zack" 12345 "Software Engineer"}
-{#1 "Jon" 67890 "Manager" {number_of_reports: 6}} // Passes an extra struct
+{#1 "Jon" 67890 "Manager" {number_of_reports: 6}} // Passes a struct as an extension parameter
 ```
 
 expands to
