@@ -46,7 +46,7 @@ description: "This cookbook provides code samples for some simple Amazon Ion use
 <!--
 function writeTabs() {
   document.write('<div class="tabs">');
-  ['C', 'C#', 'Java', 'JavaScript', 'Python'].forEach(lang => {
+  ['C', 'C#', 'Go', 'Java', 'JavaScript', 'Python'].forEach(lang => {
     var tabName = lang == 'C#' ? 'C-sharp' : lang;
     document.write('<button class="tab ' + tabName + '"' + ' onclick="openTab(\'' + tabName + '\')">' + lang + '</button>')
   });
@@ -222,6 +222,85 @@ class WriteIonText
 ```
 
 If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `IonTextWriterBuilder`).
+</div>
+
+<div class="tabpane Go" markdown="1">
+Implementations of the [`Reader`][22] and [`Writer`][23] interfaces are responsible for reading and writing Ion data in both text and binary forms.
+
+In order to make and use a text reader, we can use `NewReaderString()`. The following example demonstrates how to read an Ion data from a string:
+```Go
+package main
+
+import (
+	"fmt"
+	"github.com/amzn/ion-go/ion"
+)
+
+func main() {
+	reader := ion.NewReaderString("{hello:\"world\"}")
+	if reader.Next() { 											 // position the reader at the first value
+		currentType := reader.Type()                             // the first value in the reader is struct
+		fmt.Println("Current type is:\t" + currentType.String()) // Current type is:   struct
+		reader.StepIn()                                          // step into struct
+		reader.Next()                                            // position the reader at the first value in the struct
+		currentType = reader.Type()                              // the first value in the struct is of type string
+		fmt.Println("Current type, after stepping in the struct:\t" +
+			currentType.String())          // Current type, after stepping in the struct:   string
+		fieldName := reader.FieldName()    // retrieve the current value's field name
+		value, err := reader.StringValue() // retrieve the current value's string value
+		if err != nil {
+			panic("Reading string value failed.")
+		}
+		reader.StepOut()                    // step out of the struct
+		fmt.Println(*fieldName, " ", value) // hello   world
+	}
+}
+```
+Should we have a binary Ion, `NewReaderBytes()` can be used in the same fashion.
+
+To write the the same struct as above, `{hello:"world"}`, we can use `NewTextWriter()` as shown below:
+```Go
+package main
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/amzn/ion-go/ion"
+)
+
+func main() {
+	str := strings.Builder{}
+	writer := ion.NewTextWriter(&str)
+	err := writer.BeginStruct() // start and step into a struct
+	if err != nil {
+		panic(err)
+	}
+	err = writer.FieldName("hello") // set the field name for the next value to be written
+	if err != nil {
+		panic(err)
+	}
+	err = writer.WriteString("world") // write the next value
+	if err != nil {
+		panic(err)
+	}
+	err = writer.EndStruct() // step out of the struct
+	if err != nil {
+		panic(err)
+	}
+	err = writer.Finish()
+	if err != nil {
+		panic(err) 
+	}
+	fmt.Println(str.String()) // {hello:"world"}
+}
+```
+To write binary Ion, we can use `NewBinaryWriter()` and pass an instance of an `io.Writer` to it: 
+```Go
+	buf := bytes.Buffer{}
+	writer := NewBinaryWriter(&buf)
+```
+
 </div>
 
 <div class="tabpane Java" markdown="1">
@@ -725,6 +804,52 @@ class PrettyPrint
 ```
 </div>
 
+<div class="tabpane Go" markdown="1">
+Ion data can be pretty-printed using `NewTextWriterOpts` and pass `TextWriterPretty` option to it:
+```Go
+package main
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/amzn/ion-go/ion"
+)
+
+type l3 struct {
+	Level3 string `ion:"level3"`
+}
+type l2 struct {
+	Level2 l3 `ion:"level2"`
+	X      int `ion:"x"`
+}
+type l1 struct {
+	Level1 l2 `ion:"level1"`
+	Y      []string `ion:"y"`
+}
+
+func main() {
+	l3Val := l3{"foo"}
+	l2Val := l2{l3Val, 2}
+	l1Val := l1{l2Val, []string{"a", "b", "c"}}
+
+	buf := strings.Builder{}
+	writer := ion.NewTextWriterOpts(&buf, ion.TextWriterPretty)
+
+	err := ion.MarshalTo(writer, l1Val)
+	if err != nil {
+		panic(err)
+	}
+
+	if err := writer.Finish(); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(buf.String())
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 Ion data can be pretty-printed using an `IonWriter` constructed by a specially-configured
 `IonTextWriterBuilder`.
@@ -1061,6 +1186,101 @@ class ReadNumericValues
 ```
 </div>
 
+<div class="tabpane Go" markdown="1">
+
+A reader can have various types of numeric values:
+  - Int32
+  - Int64
+  - Uint64
+  - BigInt
+  - Float
+  - Decimal
+
+The following example illustrates how to read different numeric values in a reader:
+```Go
+package main
+
+import (
+	"fmt"
+	"math/big"
+
+	"github.com/amzn/ion-go/ion"
+)
+
+func main() {
+	int32Value := 2147483646
+	var int64Value int64 = 9223372036854775807
+	floatValue := 123.4
+	bigIntValue := new(big.Int).Neg(new(big.Int).SetUint64(18446744073709551615))
+	decimalValue := ion.MustParseDecimal("123.4d-2")
+
+	reader := ion.NewReaderString("[2147483646, 9223372036854775807,  1.234e2, -18446744073709551615, 1.234]")
+	reader.Next()
+	if err := reader.StepIn(); err != nil {
+		panic(err)
+	}
+
+	for reader.Next() {
+		switch reader.Type() {
+		case ion.IntType:
+			intSize, err := reader.IntSize()
+			if err != nil {
+				panic(err)
+			}
+
+			switch intSize {
+			case ion.Int32:
+				val, err := reader.IntValue()
+				if err != nil {
+					panic(err)
+				}
+				if int32Value != val {
+					fmt.Println("Problem with Int32 value equivalency")
+				}
+			case ion.Int64:
+				val, err := reader.Int64Value()
+				if err != nil {
+					panic(err)
+				}
+				if int64Value != val {
+					fmt.Println("Problem with Int64 value equivalency")
+				}
+			case ion.BigInt:
+				val, err := reader.BigIntValue()
+				if err != nil {
+					panic(err)
+				}
+				if bigIntValue.Cmp(val) != 0 {
+					fmt.Println("Problem with big.Int value equivalency")
+				}
+			}
+
+		case ion.FloatType:
+			val, err := reader.FloatValue()
+			if err != nil {
+				panic(err)
+			}
+			if floatValue != val {
+				fmt.Println("Problem with float value equivalency")
+			}
+
+		case ion.DecimalType:
+			val, err := reader.DecimalValue()
+			if err != nil {
+				panic(err)
+			}
+			if !decimalValue.Equal(val) {
+				fmt.Println("Problem with decimal value equivalency")
+			}
+		}
+	}
+	if err := reader.StepOut(); err != nil {
+		panic(err)
+	}
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 Integer values that can fit into a Java `int` may be read as such using
 `IonReader.intValue()`, or may be read into a `long` using
@@ -1387,6 +1607,60 @@ class SparseReads
 ```
 </div>
 
+<div class="tabpane Go" markdown="1">
+
+```Go
+package main
+
+import (
+	"fmt"
+	"github.com/amzn/ion-go/ion"
+)
+
+func main() {
+	bytes := []byte{0xe0, 0x01, 0x00, 0xea,
+		0xee, 0xa5, 0x81, 0x83, 0xde, 0xa1, 0x87, 0xbe, 0x9e, 0x83, 0x66, 0x6f, 0x6f, 0x88,
+		0x71, 0x75, 0x61, 0x6e, 0x74, 0x69, 0x74, 0x79, 0x83, 0x62, 0x61, 0x72, 0x82, 0x69,
+		0x64, 0x83, 0x62, 0x61, 0x7a, 0x85, 0x69, 0x74, 0x65, 0x6d, 0x73, 0xe6, 0x81, 0x8a,
+		0xd3, 0x8b, 0x21, 0x01, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x78, 0x8d, 0x21, 0x07,
+		0xee, 0x95, 0x81, 0x8e, 0xde, 0x91, 0x8f, 0xbe, 0x8e, 0x86, 0x74, 0x68, 0x69, 0x6e,
+		0x67, 0x31, 0x86, 0x74, 0x68, 0x69, 0x6e, 0x67, 0x32, 0xe6, 0x81, 0x8a, 0xd3, 0x8b,
+		0x21, 0x13, 0xe9, 0x81, 0x8c, 0xd6, 0x84, 0x81, 0x79, 0x8d, 0x21, 0x08}
+	reader := ion.NewReaderBytes(bytes)
+	sum := 0
+
+	for reader.Next() {
+		if reader.Type() == ion.StructType && hasFooAnnotation(reader.Annotations()) {
+			if err := reader.StepIn(); err != nil {
+				panic(err)
+			}
+			for reader.Next() {
+				if *reader.FieldName() == "quantity" {
+					quantity, _ := reader.IntValue()
+					sum += quantity
+					break
+				}
+			}
+			if err := reader.StepOut(); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	fmt.Println(sum)
+}
+
+func hasFooAnnotation(annotations []string) bool {
+	for _, an := range annotations {
+		if an == "foo" {
+			return true
+		}
+	}
+	return false
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 ```java
 InputStream getStream() {
@@ -1632,6 +1906,55 @@ class CsvToIon
 ```
 </div>
 
+<div class="tabpane Go" markdown="1">
+
+```Go
+package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	
+	"github.com/amzn/ion-go/ion"
+)
+
+func main() {
+	file, er := os.Open("c://values.cvs")
+	if er != nil {
+		panic(er)
+	}
+	defer file.Close()
+
+	buf := strings.Builder{}
+	writer := ion.NewTextWriter(&buf)
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan() // to skip the first row (header line)
+	for scanner.Scan() {
+		data := strings.Split(scanner.Text(), ",")
+		writer.BeginStruct()
+		writer.FieldName("id")
+		val, _ := strconv.Atoi(data[0])
+		writer.WriteInt(int64(val))
+
+		writer.FieldName("type")
+		writer.WriteString(data[1])
+		b1, _ := strconv.ParseBool(data[2])
+
+		writer.FieldName("state")
+		writer.WriteBool(b1)
+		writer.EndStruct()
+	}
+	writer.Finish()
+
+	fmt.Println(buf.String())
+}
+```
+</div>
+
 <div class="tabpane Java" markdown="1">
 Start by retrieving an object that can parse `test.csv` line-by-line, e.g. a
 [`java.io.BufferedReader`][13].
@@ -1803,6 +2126,10 @@ Example not yet implemented.
 Not currently supported.
 </div>
 
+<div class="tabpane Go" markdown="1">
+Not currently supported.
+</div>
+
 <div class="tabpane Java" markdown="1">
 The [`IonSystem`][3] interface provides many utilities in ion-java,
 including construction of shared `SymbolTable`s. When an `IonSystem` is
@@ -1942,6 +2269,10 @@ Example not yet implemented.
 Not currently supported.
 </div>
 
+<div class="tabpane Go" markdown="1">
+Not currently supported.
+</div>
+
 <div class="tabpane Java" markdown="1">
 The [`IonCatalog`][8] interface may be implemented by applications to provide
 customized shared symbol table retrieval logic, such as retrieval from an external
@@ -2042,6 +2373,7 @@ assert 3 == event.value
 
 * [The ion-c API Documentation][14]
 * The ion-dotnet API Documentation
+* [The ion-go API Documentation][24]
 * [The ion-java API Documentation][2]
 * [The ion-js API Documentation][18]
 * [The ion-python API Documentation][21]
@@ -2082,4 +2414,7 @@ openTab('Java');  // default tab
 [19]: https://amzn.github.io/ion-js/api/interfaces/_ionreader_.reader.html
 [20]: https://amzn.github.io/ion-js/api/interfaces/_ionwriter_.writer.html
 [21]: https://ion-python.readthedocs.io/en/latest/index.html
+[22]: https://github.com/amzn/ion-go/blob/master/ion/reader.go
+[23]: https://github.com/amzn/ion-go/blob/master/ion/writer.go
+[24]: https://pkg.go.dev/github.com/amzn/ion-go/ion
 
