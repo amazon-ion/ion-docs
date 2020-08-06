@@ -238,7 +238,7 @@ import (
 
 func main() {
 	reader := ion.NewReaderString("{hello:\"world\"}")
-	if reader.Next() { 											 // position the reader at the first value
+	if reader.Next() {                                           // position the reader at the first value
 		currentType := reader.Type()                             // the first value in the reader is struct
 		fmt.Println("Current type is:\t" + currentType.String()) // Current type is:   struct
 		reader.StepIn()                                          // step into struct
