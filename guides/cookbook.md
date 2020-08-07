@@ -1614,6 +1614,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/amzn/ion-go/ion"
 )
 
