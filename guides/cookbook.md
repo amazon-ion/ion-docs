@@ -227,7 +227,7 @@ If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `Ion
 <div class="tabpane Go" markdown="1">
 Implementations of the [`Reader`][22] and [`Writer`][23] interfaces are responsible for reading and writing Ion data in both text and binary forms.
 
-In order to make and use a text reader, we can use `NewReaderString()`. The following example demonstrates how to read an Ion data from a string:
+In order to make and use a text reader, we can use `NewReaderString()`. The following example demonstrates how to read Ion data from a string:
 ```Go
 package main
 
@@ -239,9 +239,9 @@ import (
 func main() {
 	reader := ion.NewReaderString("{hello:\"world\"}")
 	if reader.Next() {                                           // position the reader at the first value
-		currentType := reader.Type()                             // the first value in the reader is struct
+		currentType := reader.Type()                             // the first value in the reader is a struct
 		fmt.Println("Current type is:\t" + currentType.String()) // Current type is:   struct
-		reader.StepIn()                                          // step into struct
+		reader.StepIn()                                          // step into the struct
 		reader.Next()                                            // position the reader at the first value in the struct
 		currentType = reader.Type()                              // the first value in the struct is of type string
 		fmt.Println("Current type, after stepping in the struct:\t" +
@@ -252,11 +252,11 @@ func main() {
 			panic("Reading string value failed.")
 		}
 		reader.StepOut()                    // step out of the struct
-		fmt.Println(*fieldName, " ", value) // hello   world
+		fmt.Println(*fieldName, " ", value) // hello world
 	}
 }
 ```
-Should we have a binary Ion, `NewReaderBytes()` can be used in the same fashion.
+If we have a binary Ion, `NewReaderBytes()` can be used in the same fashion.
 
 To write the the same struct as above, `{hello:"world"}`, we can use `NewTextWriter()` as shown below:
 ```Go
@@ -805,7 +805,7 @@ class PrettyPrint
 </div>
 
 <div class="tabpane Go" markdown="1">
-Ion data can be pretty-printed using `NewTextWriterOpts` and pass `TextWriterPretty` option to it:
+Ion data can be pretty-printed using `NewTextWriterOpts` and by passing the `TextWriterPretty` option to it:
 ```Go
 package main
 
@@ -2418,4 +2418,3 @@ openTab('Java');  // default tab
 [22]: https://github.com/amzn/ion-go/blob/master/ion/reader.go
 [23]: https://github.com/amzn/ion-go/blob/master/ion/writer.go
 [24]: https://pkg.go.dev/github.com/amzn/ion-go/ion
-
