@@ -1923,7 +1923,7 @@ import (
 )
 
 func main() {
-	file, er := os.Open("c://values.cvs")
+	file, er := os.Open("test.csv")
 	if er != nil {
 		panic(er)
 	}
