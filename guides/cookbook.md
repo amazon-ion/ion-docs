@@ -227,7 +227,7 @@ If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `Ion
 <div class="tabpane Go" markdown="1">
 Implementations of the [`Reader`][22] and [`Writer`][23] interfaces are responsible for reading and writing Ion data in both text and binary forms.
 
-In order to make and use a text reader, we can use `NewReaderString()`. The following example demonstrates how to read Ion data from a string:
+In order to create and then use a text reader, we can use `NewReaderString()`. The following example demonstrates how to read Ion data from a string:
 ```Go
 package main
 
