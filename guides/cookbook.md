@@ -258,7 +258,7 @@ func main() {
 ```
 If we have a binary Ion, `NewReaderBytes()` can be used in the same fashion.
 
-To write the the same struct as above, `{hello:"world"}`, we can use `NewTextWriter()` as shown below:
+To write the same struct as above, `{hello:"world"}`, we can use `NewTextWriter()` as shown below:
 ```Go
 package main
 
@@ -1209,7 +1209,7 @@ import (
 
 func main() {
 	int32Value := 2147483646
-	var int64Value int64 = 9223372036854775807
+	int64Value := 9223372036854775807
 	floatValue := 123.4
 	bigIntValue := new(big.Int).Neg(new(big.Int).SetUint64(18446744073709551615))
 	decimalValue := ion.MustParseDecimal("123.4d-2")
@@ -1242,7 +1242,7 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-				if int64Value != val {
+				if int64(int64Value) != val {
 					fmt.Println("Problem with Int64 value equivalency")
 				}
 			case ion.BigInt:
