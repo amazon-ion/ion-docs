@@ -1196,7 +1196,7 @@ A reader can have various types of numeric values:
   - Float
   - Decimal
 
-The following example illustrates how to read different numeric values in a reader:
+The following example illustrates how to read different numeric values:
 ```Go
 package main
 
