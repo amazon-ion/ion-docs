@@ -228,7 +228,8 @@ If Ion binary encoding is desired, use `IonBinaryWriterBuilder` (instead of `Ion
 Implementations of the [`Reader`][22] and [`Writer`][23] interfaces are responsible for reading and writing Ion data in both text and binary forms.
 
 In order to create and then use a text reader, we can use `NewReaderString()`. The following example demonstrates how to read Ion data from a string:
-```Go
+
+```go
 package main
 
 import (
@@ -256,10 +257,12 @@ func main() {
 	}
 }
 ```
+
 If we have a binary Ion, `NewReaderBytes()` can be used in the same fashion.
 
 To write the same struct as above, `{hello:"world"}`, we can use `NewTextWriter()` as shown below:
-```Go
+
+```go
 package main
 
 import (
@@ -290,13 +293,14 @@ func main() {
 	}
 	err = writer.Finish()
 	if err != nil {
-		panic(err) 
+		panic(err)
 	}
 	fmt.Println(str.String()) // {hello:"world"}
 }
 ```
-To write binary Ion, we can use `NewBinaryWriter()` and pass an instance of an `io.Writer` to it: 
-```Go
+To write binary Ion, we can use `NewBinaryWriter()` and pass an instance of an `io.Writer` to it:
+
+```go
 	buf := bytes.Buffer{}
 	writer := NewBinaryWriter(&buf)
 ```
@@ -806,7 +810,7 @@ class PrettyPrint
 
 <div class="tabpane Go" markdown="1">
 Ion data can be pretty-printed using `NewTextWriterOpts` and by passing the `TextWriterPretty` option to it:
-```Go
+```go
 package main
 
 import (
@@ -1017,10 +1021,15 @@ console.log(JSON.stringify(value));
 Not currently supported. See [ion-python#107](https://github.com/amzn/ion-python/issues/107).
 </div>
 
+<div class="tabpane Go" markdown="1">
+Not currently supported.
+</div>
+
+
 
 ### Migrating JSON data to Ion
 
-Because Ion is a superset of JSON, valid JSON data is valid Ion data. As such, 
+Because Ion is a superset of JSON, valid JSON data is valid Ion data. As such,
 Ion readers are capable of reading JSON data without any special
 configuration. When reading data that was encoded by a JSON writer, the
 following Ion text parsing rules should be kept in mind:
@@ -1031,7 +1040,7 @@ following Ion text parsing rules should be kept in mind:
   3. Numeric values with a decimal point but without an exponent are interpreted
      as Ion decimals
   4. Numeric values with exponents are interpreted as Ion floats
-  
+
 Consider the following JSON data:
 
 ```json-doc
@@ -1197,7 +1206,7 @@ A reader can have various types of numeric values:
   - Decimal
 
 The following example illustrates how to read different numeric values:
-```Go
+```go
 package main
 
 import (
@@ -1609,7 +1618,7 @@ class SparseReads
 
 <div class="tabpane Go" markdown="1">
 
-```Go
+```go
 package main
 
 import (
@@ -1804,7 +1813,7 @@ Consider the following CSV in a file called `test.csv`.
  3,baz,true
  ...
 ```
-    
+
 An application that wishes to convert this data into the Ion format can
 generate a symbol table containing the column names. This reduces encoding size
 and improves read efficiency.
@@ -1909,7 +1918,7 @@ class CsvToIon
 
 <div class="tabpane Go" markdown="1">
 
-```Go
+```go
 package main
 
 import (
@@ -1918,7 +1927,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	
+
 	"github.com/amzn/ion-go/ion"
 )
 
