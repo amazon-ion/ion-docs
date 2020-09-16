@@ -2324,7 +2324,9 @@ source.
 ion-go includes an implementation of `Catalog` called [`NewCatalog`](https://godoc.org/github.com/amzn/ion-go/ion#NewCatalog),
 which stores shared symbol tables in memory and will be used here for illustration purposes.
 
-To create a `IonReader` capable of parsing streams written with shared symbol tables, you would first create a `Catalog` by calling `NewCatalog` which reuses the `shared` variable from above. Afterwards you would call `NewReaderCat` which takes in the catalog and the `buf` variable containing the value stream written in the previous sub-section.
+To create a `IonReader` capable of parsing streams written with shared symbol tables, you would first create a `Catalog` by calling `NewCatalog`
+ which reuses the `shared` variable from above. Afterwards you would call `NewReaderCat` which takes in the catalog and the `buf` variable containing the value stream written in the previous sub-section.
+
 ```go
 catalog := NewCatalog(shared)
 reader := ion.NewReaderCat(bytes.NewReader(buf.Bytes()), catalog)
