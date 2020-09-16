@@ -2169,8 +2169,8 @@ import (
 func main() {
   buf := bytes.Buffer{}
   writer := ion.NewBinaryWriter(&buf, shared)
-    convertCsvToIon(writer)
-    writer.Finish()
+  convertCsvToIon(writer)
+  writer.Finish()
 
   fmt.Println(buf.String())
 }
@@ -2327,7 +2327,7 @@ which stores shared symbol tables in memory and will be used here for illustrati
 To create a `IonReader` capable of parsing streams written with shared symbol tables, you would first create a `Catalog` by calling `NewCatalog` which reuses the `shared` variable from above. Afterwards you would call `NewReaderCat` which takes in the catalog and the `buf` variable containing the value stream written in the previous sub-section.
 ```go
 catalog := NewCatalog(shared)
-r := ion.NewReaderCat(bytes.NewReader(buf.Bytes()), catalog)
+reader := ion.NewReaderCat(bytes.NewReader(buf.Bytes()), catalog)
 ```
 </div>
 
