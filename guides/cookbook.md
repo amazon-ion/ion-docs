@@ -1931,36 +1931,41 @@ import (
 	"github.com/amzn/ion-go/ion"
 )
 
+func convertCsvToIon(writer ion.Writer) {
+  file, er := os.Open("test.csv")
+  if er != nil {
+    panic(er)
+  }
+  defer file.Close()
+
+  scanner := bufio.NewScanner(file)
+  scanner.Scan() // to skip the first row (header line)
+  for scanner.Scan() {
+    data := strings.Split(scanner.Text(), ",")
+    writer.BeginStruct()
+    writer.FieldName("id")
+    val, _ := strconv.Atoi(data[0])
+    writer.WriteInt(int64(val))
+
+    writer.FieldName("type")
+    writer.WriteString(data[1])
+    b1, _ := strconv.ParseBool(data[2])
+
+    writer.FieldName("state")
+    writer.WriteBool(b1)
+    writer.EndStruct()
+  }
+}
+
 func main() {
-	file, er := os.Open("test.csv")
-	if er != nil {
-		panic(er)
-	}
-	defer file.Close()
+  buf := strings.Builder{}
+  writer := ion.NewTextWriter(&buf)
 
-	buf := strings.Builder{}
-	writer := ion.NewTextWriter(&buf)
+  convertCsvToIon(writer)
+  writer.Finish()
 
-	scanner := bufio.NewScanner(file)
-	scanner.Scan() // to skip the first row (header line)
-	for scanner.Scan() {
-		data := strings.Split(scanner.Text(), ",")
-		writer.BeginStruct()
-		writer.FieldName("id")
-		val, _ := strconv.Atoi(data[0])
-		writer.WriteInt(int64(val))
 
-		writer.FieldName("type")
-		writer.WriteString(data[1])
-		b1, _ := strconv.ParseBool(data[2])
-
-		writer.FieldName("state")
-		writer.WriteBool(b1)
-		writer.EndStruct()
-	}
-	writer.Finish()
-
-	fmt.Println(buf.String())
+  fmt.Println(buf.String())
 }
 ```
 </div>
@@ -2137,7 +2142,39 @@ Not currently supported.
 </div>
 
 <div class="tabpane Go" markdown="1">
-Not currently supported.
+Shared symbol tables may be constructed via the [NewSharedSymbolTable](https://godoc.org/github.com/amzn/ion-go/ion#NewSharedSymbolTable) function.
+
+``` go
+  shared := ion.NewSharedSymbolTable("test.csv.columns", 1, []string{ "id", "type", "state"})
+```
+
+Now, an `IonWriter` that is configured to use the symbols from the shared
+symbol table is constructed, passed to the `convertCsvToIon` function from
+above, and closed when finished.
+
+``` go
+package main
+
+import (
+  "bufio"
+  "bytes"
+  "fmt"
+  "os"
+  "strconv"
+  "strings"
+
+  "github.com/amzn/ion-go/ion"
+)
+
+func main() {
+  buf := bytes.Buffer{}
+  writer := ion.NewBinaryWriter(&buf, shared)
+  convertCsvToIon(writer)
+  writer.Finish()
+
+  fmt.Println(buf.String())
+}
+```
 </div>
 
 <div class="tabpane Java" markdown="1">
@@ -2280,7 +2317,20 @@ Not currently supported.
 </div>
 
 <div class="tabpane Go" markdown="1">
-Not currently supported.
+The [`Catalog`](https://godoc.org/github.com/amzn/ion-go/ion#Catalog) interface may be implemented by applications to provide
+customized shared symbol table retrieval logic, such as retrieval from an external
+source.
+
+ion-go includes an implementation of `Catalog` called [`NewCatalog`](https://godoc.org/github.com/amzn/ion-go/ion#NewCatalog),
+which stores shared symbol tables in memory and will be used here for illustration purposes.
+
+To create a `IonReader` capable of parsing streams written with shared symbol tables, you would first create a `Catalog` by calling `NewCatalog`
+ which reuses the `shared` variable from above. Afterwards you would call `NewReaderCat` which takes in the catalog and the `buf` variable containing the value stream written in the previous sub-section.
+
+```go
+catalog := NewCatalog(shared)
+reader := ion.NewReaderCat(bytes.NewReader(buf.Bytes()), catalog)
+```
 </div>
 
 <div class="tabpane Java" markdown="1">
