@@ -247,13 +247,16 @@ func main() {
 		currentType = reader.Type()                              // the first value in the struct is of type string
 		fmt.Println("Current type, after stepping in the struct:\t" +
 			currentType.String())          // Current type, after stepping in the struct:   string
-		fieldName := reader.FieldName()    // retrieve the current value's field name
+		fieldName, err := reader.FieldName()    // retrieve the current value's field name
+		if err != nil {
+			panic("Reading field name failed.")
+		}
 		value, err := reader.StringValue() // retrieve the current value's string value
 		if err != nil {
 			panic("Reading string value failed.")
 		}
+		fmt.Println(*fieldName.Text, " ", value) // hello world
 		reader.StepOut()                    // step out of the struct
-		fmt.Println(*fieldName, " ", value) // hello world
 	}
 }
 ```
