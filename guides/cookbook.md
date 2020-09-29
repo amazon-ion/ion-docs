@@ -240,26 +240,26 @@ import (
 func main() {
 	reader := ion.NewReaderString("{hello:\"world\"}")
     if reader.Next() { // position the reader at the first value
-        currentType := reader.Type()                             // the first value in the reader is a struct
-        fmt.Println("Current type is:\t" + currentType.String()) // Current type is:   struct
-        reader.StepIn()                                          // step into the struct
-        reader.Next()                                            // position the reader at the first value in the struct
-        currentType = reader.Type()                              // the first value in the struct is of type string
-        fmt.Println("Current type, after stepping in the struct:\t" +
-            currentType.String()) // Current type, after stepping in the struct:   string
-        fieldName, err := reader.FieldName() // retrieve the current value's field name
-        fieldName2 := fieldName.Text
-        if err != nil {
-            panic("Reading field name value failed.")
-        }
-
-        value, err := reader.StringValue() // retrieve the current value's string value
-        if err != nil {
-            panic("Reading string value failed.")
-        }
-
-        fmt.Println(*fieldName2, " ", *value) // hello world
-        err = reader.StepOut()                // step out of the struct
+                currentType := reader.Type()                             // the first value in the reader is a struct
+                fmt.Println("Current type is:\t" + currentType.String()) // Current type is:   struct
+                reader.StepIn()                                          // step into the struct
+                reader.Next()                                            // position the reader at the first value in the struct
+                currentType = reader.Type()                              // the first value in the struct is of type string
+                fmt.Println("Current type, after stepping in the struct:\t" +
+                    currentType.String()) // Current type, after stepping in the struct:   string
+                fieldName, err := reader.FieldName() // retrieve the current value's field name
+                fieldName2 := fieldName.Text
+                if err != nil {
+                    panic("Reading field name value failed.")
+                }
+        
+                value, err := reader.StringValue() // retrieve the current value's string value
+                if err != nil {
+                    panic("Reading string value failed.")
+                }
+        
+                fmt.Println(*fieldName2, " ", *value) // hello world
+                err = reader.StepOut()                // step out of the struct
     }
 }
 ```
