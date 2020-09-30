@@ -247,13 +247,16 @@ func main() {
 		currentType = reader.Type()                              // the first value in the struct is of type string
 		fmt.Println("Current type, after stepping in the struct:\t" +
 			currentType.String())          // Current type, after stepping in the struct:   string
-		fieldName := reader.FieldName()    // retrieve the current value's field name
+		fieldName, err := reader.FieldName()    // retrieve the current value's field name
+		if err != nil {
+			panic("Reading field name failed.")
+		}
 		value, err := reader.StringValue() // retrieve the current value's string value
 		if err != nil {
 			panic("Reading string value failed.")
 		}
+		fmt.Println(*fieldName.Text, " ", value) // hello world
 		reader.StepOut()                    // step out of the struct
-		fmt.Println(*fieldName, " ", value) // hello world
 	}
 }
 ```
@@ -1243,7 +1246,7 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-				if int32Value != val {
+				if int32Value != *val {
 					fmt.Println("Problem with Int32 value equivalency")
 				}
 			case ion.Int64:
@@ -1251,7 +1254,7 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-				if int64(int64Value) != val {
+				if int64(int64Value) != *val {
 					fmt.Println("Problem with Int64 value equivalency")
 				}
 			case ion.BigInt:
@@ -1269,7 +1272,7 @@ func main() {
 			if err != nil {
 				panic(err)
 			}
-			if floatValue != val {
+			if floatValue != *val {
 				fmt.Println("Problem with float value equivalency")
 			}
 
@@ -1640,14 +1643,24 @@ func main() {
 	sum := 0
 
 	for reader.Next() {
-		if reader.Type() == ion.StructType && hasFooAnnotation(reader.Annotations()) {
+		annotations, err := reader.Annotations()
+		if err != nil {
+			panic(err)
+		}
+
+		if reader.Type() == ion.StructType && hasFooAnnotation(annotations) {
 			if err := reader.StepIn(); err != nil {
 				panic(err)
 			}
 			for reader.Next() {
-				if *reader.FieldName() == "quantity" {
+				fieldName, err := reader.FieldName()
+				if err != nil {
+					panic(err)
+				}
+
+				if *fieldName.Text == "quantity" {
 					quantity, _ := reader.IntValue()
-					sum += quantity
+					sum += *quantity
 					break
 				}
 			}
@@ -1660,9 +1673,9 @@ func main() {
 	fmt.Println(sum)
 }
 
-func hasFooAnnotation(annotations []string) bool {
+func hasFooAnnotation(annotations []SymbolToken) bool {
 	for _, an := range annotations {
-		if an == "foo" {
+		if an.Text != nil && *an.Text == "foo" {
 			return true
 		}
 	}
