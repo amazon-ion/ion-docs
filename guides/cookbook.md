@@ -282,7 +282,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = writer.FieldName("hello") // set the field name for the next value to be written
+	err = writer.FieldName(ion.NewSimpleSymbolToken("hello")) // set the field name for the next value to be written
 	if err != nil {
 		panic(err)
 	}
@@ -1673,7 +1673,7 @@ func main() {
 	fmt.Println(sum)
 }
 
-func hasFooAnnotation(annotations []SymbolToken) bool {
+func hasFooAnnotation(annotations []ion.SymbolToken) bool {
 	for _, an := range annotations {
 		if an.Text != nil && *an.Text == "foo" {
 			return true
@@ -1945,40 +1945,39 @@ import (
 )
 
 func convertCsvToIon(writer ion.Writer) {
-  file, er := os.Open("test.csv")
-  if er != nil {
-    panic(er)
-  }
-  defer file.Close()
+	file, er := os.Open("test.csv")
+	if er != nil {
+		panic(er)
+	}
+	defer file.Close()
 
-  scanner := bufio.NewScanner(file)
-  scanner.Scan() // to skip the first row (header line)
-  for scanner.Scan() {
-    data := strings.Split(scanner.Text(), ",")
-    writer.BeginStruct()
-    writer.FieldName("id")
-    val, _ := strconv.Atoi(data[0])
-    writer.WriteInt(int64(val))
+	scanner := bufio.NewScanner(file)
+	scanner.Scan() // to skip the first row (header line)
+	for scanner.Scan() {
+		data := strings.Split(scanner.Text(), ",")
+		writer.BeginStruct()
+		writer.FieldName(ion.NewSimpleSymbolToken("id"))
+		val, _ := strconv.Atoi(data[0])
+		writer.WriteInt(int64(val))
 
-    writer.FieldName("type")
-    writer.WriteString(data[1])
-    b1, _ := strconv.ParseBool(data[2])
+		writer.FieldName(ion.NewSimpleSymbolToken("type"))
+		writer.WriteString(data[1])
+		b1, _ := strconv.ParseBool(data[2])
 
-    writer.FieldName("state")
-    writer.WriteBool(b1)
-    writer.EndStruct()
-  }
+		writer.FieldName(ion.NewSimpleSymbolToken("state"))
+		writer.WriteBool(b1)
+		writer.EndStruct()
+	}
 }
 
 func main() {
-  buf := strings.Builder{}
-  writer := ion.NewTextWriter(&buf)
+	buf := strings.Builder{}
+	writer := ion.NewTextWriter(&buf)
 
-  convertCsvToIon(writer)
-  writer.Finish()
+	convertCsvToIon(writer)
+	writer.Finish()
 
-
-  fmt.Println(buf.String())
+	fmt.Println(buf.String())
 }
 ```
 </div>
