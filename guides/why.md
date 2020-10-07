@@ -36,7 +36,7 @@ data.  You probably already know how to read and author Ion.
 
 ### Ease of use
 
-Like JSON, Ion’s text format is concise and clearly legible. It is intelligible
+Like JSON, Ion's text format is concise and clearly legible. It is intelligible
 to humans and may be edited using familiar tools like a text editor. This makes
 Ion well-suited to rapid prototyping: developers can quickly mock up the their
 data in text Ion, knowing that their application will ultimately seamlessly
