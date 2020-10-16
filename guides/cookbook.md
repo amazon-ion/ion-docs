@@ -282,7 +282,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	err = writer.FieldName(ion.NewSimpleSymbolToken("hello")) // set the field name for the next value to be written
+	err = writer.FieldName(ion.NewSymbolTokenFromString("hello")) // set the field name for the next value to be written
 	if err != nil {
 		panic(err)
 	}
@@ -1956,15 +1956,15 @@ func convertCsvToIon(writer ion.Writer) {
 	for scanner.Scan() {
 		data := strings.Split(scanner.Text(), ",")
 		writer.BeginStruct()
-		writer.FieldName(ion.NewSimpleSymbolToken("id"))
+		writer.FieldName(ion.NewSymbolTokenFromString("id"))
 		val, _ := strconv.Atoi(data[0])
 		writer.WriteInt(int64(val))
 
-		writer.FieldName(ion.NewSimpleSymbolToken("type"))
+		writer.FieldName(ion.NewSymbolTokenFromString("type"))
 		writer.WriteString(data[1])
 		b1, _ := strconv.ParseBool(data[2])
 
-		writer.FieldName(ion.NewSimpleSymbolToken("state"))
+		writer.FieldName(ion.NewSymbolTokenFromString("state"))
 		writer.WriteBool(b1)
 		writer.EndStruct()
 	}
