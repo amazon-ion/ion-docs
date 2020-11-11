@@ -1,9 +1,23 @@
 # RFC: Inline Symbols
 
-* [Summary](#summary)
-* [Motivation](#motivation)
-* [Inline symbols](#inline-symbols)
-* [Usage with templates](#usage-with-templates)
+- [RFC: Inline Symbols](#rfc-inline-symbols)
+  - [Summary](#summary)
+  - [Motivation](#motivation)
+    - [Short-lived streams](#short-lived-streams)
+    - [Long-lived streams](#long-lived-streams)
+    - [Serializing maps, dictionaries, and associative arrays](#serializing-maps-dictionaries-and-associative-arrays)
+  - [Inline symbols](#inline-symbols)
+    - [Text encoding](#text-encoding)
+    - [Binary encoding](#binary-encoding)
+      - [`0xF3`: Inline symbol values](#0xf3-inline-symbol-values)
+      - [`0xF4`: Inline symbol structs](#0xf4-inline-symbol-structs)
+      - [Inline annotations](#inline-annotations)
+        - [`0xE1`: Singleton inline symbol annotation](#0xe1-singleton-inline-symbol-annotation)
+        - [`0xE2`: Multiple inline symbol annotations](#0xe2-multiple-inline-symbol-annotations)
+    - [Combining inline symbols with Ion templates](#combining-inline-symbols-with-ion-templates)
+  - [Alternatives considered](#alternatives-considered)
+    - [Add some new encodings, but not others](#add-some-new-encodings-but-not-others)
+    - [Encode maps, dicts, etc as something other than a struct](#encode-maps-dicts-etc-as-something-other-than-a-struct)
 
 ## Summary
 
@@ -201,8 +215,8 @@ cases:
 1. Symbol values
 2. Struct field names
 3. Annotations
-  1. Singleton annotation on a value
-  2. Collections of annotations on a value
+   1. Singleton annotation on a value
+   2. Collections of annotations on a value
 
 #### `0xF3`: Inline symbol values
 
@@ -232,14 +246,14 @@ ensures that a symbol value can be written as cheaply as a string value in any u
 #### `0xF4`: Inline symbol structs
 
 Inline symbol structs are structs whose field names can be encoded as either symbol IDs or
-inline symbols. The encoding need not be homogenous; some fields can use symbol IDs while
-others use inline symbols.
+inline text. The encoding need not be homogenous; some fields can use symbol IDs while
+others use inline text.
 
 Inline symbol structs have a type descriptor byte of `0xF4`. A `Length` field containing the number
 of bytes in the struct's representation must always follow the type descriptor byte.
 
 Inline symbol structs' field names are encoded as a `VarInt` (not a `VarUInt`). The sign bit is used
-to indicate whether the field name has been encoded as an inline symbol or as a symbol ID. 
+to indicate whether the field name has been encoded as a symbol ID or as inline text.
 
 
 ```
@@ -273,7 +287,7 @@ could be encoded as:
 F4 89 A5 21 05 C3 66 6f 6f 21 09
  ^  ^  ^  ^  ^  ^           ^  ^---- Value for "foo": 9
  |  |  |  |  |  |           +------- 1-byte positive integer
- |  |  |  |  |  +------------------- 0b1100_0011 / VarInt -3 / a 3-byte inline symbol field name ("foo")
+ |  |  |  |  |  +------------------- 0b1100_0011 / VarInt -3 / a 3-byte inline text field name ("foo")
  |  |  |  |  +---------------------- Value for $37: 5
  |  |  |  +------------------------- 1-byte positive integer
  |  |  +---------------------------- 0b1010_0101 / VarInt 37 / symbol ID field name ($37)
@@ -359,14 +373,14 @@ Returning to our earlier example, this value:
 Author::"Ernest Hemingway"
 ```
 
-would be encoded either using inline symbol text:
+would be encoded either using inline text:
 
 ```
        A  u  t  h  o  r        E  r  n  e  s  t     H  e  m  i  n  g  w  a  y
 E1 C6 41 75 74 68 6f 72 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79 
  |  |                    |  +--- VarUInt Length: 16 bytes
  |  |                    +------ String w/VarUInt Length
- |  +--------------------------- VarInt -6: a 6-byte inline symbol
+ |  +--------------------------- VarInt -6: 6 bytes of inline text
  +------------------------------ Singleton annotation	
 ```
 
