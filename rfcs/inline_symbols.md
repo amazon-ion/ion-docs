@@ -474,12 +474,12 @@ For example, add inline symbol structs but not inline symbol values. This would 
 descriptor values and reduce the scope of the changes needed for Ion 1.1. However, it would
 eliminate a key feature for writers.
 
-Inline symbol definitions make it possible for writers to serialize a nunmber of values without
+Inline symbol definitions make it possible for writers to serialize a number of values without
 having to modify the active symbol table. This makes it possible to:
 1. Enforce restrictions on the size of the active symbol table (either by number of entries or data
 size) without having to resort to resetting it.
 2. Batch changes to the symbol table to avoid frequent LST appends.
-3. Guarantee that all changes to the symbol table happen on at particular offsets. (For example,
+3. Guarantee that all changes to the symbol table happen at particular offsets. (For example,
 symbol table appends only appear every 8MB in a stream.) This makes it possible to skip-scan
 over huge streams while only checking at each 8MB offset to see if there are symbol table changes
 that need to be processed.
@@ -500,8 +500,8 @@ values:
 ```
 
 Such solutions are implemented as a layer on top of the Ion data model itself, which presents
-additional challenges. All applications relying on representation of a map must perform their
-own validation to guarantee that every key has an associated value and that each key is a
-string or symbol value. Tools such as [PartiQL](https://partiql.org/) that are designed to work
-with Ion will not recognize custom representations as maps, meaning that convenient syntax meant
-to work with key/value data will not function as expected.
+additional challenges. All applications relying on a custom representation of a map must perform
+their own validation to guarantee that every key has an associated value and that each key is a
+string or symbol value. Tools such as [PartiQL](https://partiql.org/) that are designed to work with
+Ion will not recognize custom representations as maps, meaning that convenient syntax meant to work
+with key/value data will not function as expected.
