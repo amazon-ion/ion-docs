@@ -344,7 +344,7 @@ This RFC adds two new encodings for annotations:
 2. An encoding that is optimized for the case in which a value has multiple annotations.
 
 Both encodings support inline symbol definitions using the `VarInt` encoding scheme described in
-[Inline symbol structs](#inline-symbol-structs).
+[Inline symbol structs](#0xf4-inline-symbol-structs).
 
 Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, type descriptor bytes `0xE1` and
 `0xE2` were not legal type descriptor bytes. We use them in Ion 1.1 to represent our new encodings.
@@ -365,7 +365,7 @@ annotation  :     annotation [VarInt + optional UTF8 representation]    :
 Unlike most encodings, singleton annotation encodings do not include an `L` or `Length` field. When
 a `0xE1` type descriptor byte is encountered, it is always followed by a `VarInt`-based encoding of
 the necessary annotation symbol, either as an ID or as inline UTF-8 text. (See [Inline symbol
-structs](#inline-symbol-structs) for more detail.)
+structs](#0xf4-inline-symbol-structs) for more detail.)
 
 Returning to our earlier example, this value:
 
@@ -421,7 +421,7 @@ which provides a length encoding of its own.
 
 Annotations in the sequence do not need to be encoded homogenously; writers can write some
 annotations as symbol IDs and others as inline text. (See [Inline symbol
-structs](#inline-symbol-structs) for more detail.)
+structs](#0xf4-inline-symbol-structs) for more detail.)
 
 To skip an annotation sequence, the reader must read the `VarUInt` `length` and skip that number of
 bytes. The reader will then be positioned over the annotated value, which it can read or skip as
