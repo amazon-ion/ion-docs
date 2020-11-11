@@ -337,7 +337,7 @@ Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, type descript
 
 ##### `0xE1`: Singleton inline symbol annotation
 
-```js
+```
             7       4 3       0
             +---------+---------+
 Value with  |   14    |    1    |
@@ -361,7 +361,7 @@ Author::"Ernest Hemingway"
 
 would be encoded either using inline symbol text:
 
-```js
+```
        A  u  t  h  o  r        E  r  n  e  s  t     H  e  m  i  n  g  w  a  y
 E1 C6 41 75 74 68 6f 72 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79 
  |  |                    |  +--- VarUInt Length: 16 bytes
@@ -372,7 +372,7 @@ E1 C6 41 75 74 68 6f 72 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79
 
 or using a symbol ID:
 
-```js
+```
              E  r  n  e  s  t     H  e  m  i  n  g  w  a  y
 E1 CA 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79 
  |  |  |  +---- VarUInt Length: 16 bytes
@@ -387,7 +387,7 @@ be positioned over the annotated value, which it can read or skip as needed.
 
 ##### `0xE2`: Multiple inline symbol annotations
 
-```js
+```
             7       4 3       0
             +---------+---------+
 Value with  |   14    |    2    |
