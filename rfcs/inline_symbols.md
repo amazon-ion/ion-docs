@@ -312,9 +312,9 @@ would be encoded in binary Ion as:
 EE 94 81 8A 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79 
  ^  ^  ^  ^  ^  +---- Length: 16 bytes
  |  |  |  |  +------- String w/VarUInt Length
- |	|  |  +---------- Annotation symbol ID $10
- |	|  +------------- Annotations Length: 1 byte
- |	+---------------- Annotations+Value Length: 20 bytes 
+ |  |  |  +---------- Annotation symbol ID $10
+ |  |  +------------- Annotations Length: 1 byte
+ |  +---------------- Annotations+Value Length: 20 bytes 
  +------------------- Annotation wrapper w/VarUInt Length
 ```
 *(The above assumes that 'Author' is already in the active symbol table as `$10`.)*
