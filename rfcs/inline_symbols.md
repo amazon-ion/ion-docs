@@ -1,4 +1,4 @@
- RFC: Inline Symbols
+# RFC: Inline Symbols
 
 * [Summary](#summary)
 * [Motivation](#motivation)
@@ -59,7 +59,7 @@ Consider this short-lived Ion text stream representing data collected from a wea
   type: sensorData,
   reading: {
     temperature: celsius::12.5,
-	time: 2020-10-22T16:00:00Z
+    time: 2020-10-22T16:00:00Z
   }
 }
 ```
@@ -113,7 +113,8 @@ This causes two problems:
 The only way to remove entries from the active symbol table is to reset it or import a different one.
 In either case, we are likely to discard very valuable symbols along with those that are infrequently
 referenced. Re-adding the valuable symbols later wastes processing time and adds to the size of the
-stream.
+stream. Being more selective about which symbols are added to the symbol table would mitigate these
+issues.
 
 ### Serializing maps, dictionaries, and associative arrays
 
@@ -137,9 +138,9 @@ In Ion streams that contain several serialized instances of this class, we are g
 the data size cost of adding `foo`, `bar`, and `baz` to the symbol table. The class's fields are a
 fixed set, so every serialized instance will need to reference each field.
 
-Ion's `struct` data type also act as a mapping from text keys to values of any data type. This
+Ion's `struct` data type also acts as a mapping from text keys to values of any data type. This
 closely (though often imperfectly) aligns with common data types available in a variety of
-programming languages, including Java's `Map<String, Object>`, Javascript's `Object`, and so on.
+programming languages, including Java's `Map<String, Object>`, JavaScript's `Object`, and so on.
 
 Consider this example of a Python dictionary:
 
@@ -157,9 +158,9 @@ keys will have keys that never repeat at all.
 
 In these cases, creating symbol IDs for these keys pollutes the symbol table; it creates additional
 entries that readers and writers must store in memory but which do not provide any data size
-psavings. Once added, the only way to remove these values from the symbol table is to reset it
-altogether. This discards valuable symbols in the process, requiring them to be detected again.
-
+savings. Once added, the only way to remove these values from the symbol table is to reset it
+altogether. This discards valuable symbols in the process, requiring them to be detected again
+downstream.
 
 ## Inline symbols
 
@@ -200,8 +201,8 @@ cases:
 1. Symbol values
 2. Struct field names
 3. Annotations
-  a. Singular annotation on a value
-  b. Collections of annotations on a value
+  1. Singleton annotation on a value
+  2. Collections of annotations on a value
 
 #### `0xF3`: Inline symbol values
 
@@ -280,9 +281,9 @@ F4 89 A5 21 05 C3 66 6f 6f 21 09
  +---------------------------------- Type descriptor: inline symbol struct
 ```
 
-If the sign bit is positive and the magnitude is zero, the field name is the empty string.
+If the sign bit is positive and the magnitude is zero, the field name is symbol ID `0`.
 
-If the sign bit is negative and the magnitude is zero, the field name is symbol ID `0`.
+If the sign bit is negative and the magnitude is zero, the field name is the empty string.
 
 The [existing rules for NOP padding in struct
 fields](http://amzn.github.io/ion-docs/docs/binary.html#nop-padding-in-struct-fields) also apply to
@@ -328,13 +329,13 @@ This RFC adds two new encodings for annotations:
 1. An encoding that is optimized for the most common case, in which there is a single annotation.
 2. An encoding that is optimized for the case in which a value has multiple annotations.
 
-Both encodings support inline symbol definitions using the `VarInt` encoding scheeme described in
+Both encodings support inline symbol definitions using the `VarInt` encoding scheme described in
 [Inline symbol structs](#inline-symbol-structs).
 
 Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, type descriptor bytes `0xE1` and
 `0xE2` were not legal type descriptor bytes. We use them in Ion 1.1 to represent our new encodings.
 
-##### `0xE1`: Single inline symbol annotation
+##### `0xE1`: Singleton inline symbol annotation
 
 ```js
             7       4 3       0
@@ -364,8 +365,8 @@ would be encoded either using inline symbol text:
        A  u  t  h  o  r        E  r  n  e  s  t     H  e  m  i  n  g  w  a  y
 E1 C6 41 75 74 68 6f 72 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79 
  |  |                    |  +--- VarUInt Length: 16 bytes
- |	|					 +------ String w/VarUInt Length
- |	+--------------------------- VarInt -6: a 6-byte inline symbol
+ |  |                    +------ String w/VarUInt Length
+ |  +--------------------------- VarInt -6: a 6-byte inline symbol
  +------------------------------ Singleton annotation	
 ```
 
@@ -414,10 +415,9 @@ needed.
 
 ### Combining inline symbols with Ion templates
 
-When combined with 
-[Ion Templates](https://github.com/amzn/ion-docs/blob/ion-templates-rfc/rfcs/ion_templates.md#rfc-ion-templates),
-	inline symbols can further reduce the number of symbol IDs that must be added to the symbol
-	table.
+When combined with [Ion
+Templates](https://github.com/amzn/ion-docs/blob/ion-templates-rfc/rfcs/ion_templates.md#rfc-ion-templates),
+inline symbols can further reduce the number of symbol IDs that must be added to the symbol table.
 	
 Consider a template representing a class called `com.example.project.Quux`:
 
@@ -459,7 +459,6 @@ com.example.project.Quux::{
   bar: 8,
   baz: 9,
 }
-
 ```
 
 If we use inline symbol definitions for `foo`, `bar`, `baz`, and `com.example.project.Quux` in our
