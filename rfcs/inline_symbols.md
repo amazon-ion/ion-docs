@@ -172,9 +172,8 @@ keys will have keys that never repeat.
 
 In these cases, creating symbol IDs for these keys pollutes the symbol table; it creates additional
 entries that readers and writers must store in memory but which do not provide any data size
-savings. Once added, the only way to remove these values from the symbol table is to reset it
-altogether. This discards valuable symbols in the process, requiring them to be detected again
-downstream.
+savings. Once added, the only way to remove these values from the symbol table is to reset it. This
+discards valuable symbols in the process, requiring them to be detected again downstream.
 
 ## Inline symbols
 
