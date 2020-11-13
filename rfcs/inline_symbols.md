@@ -31,11 +31,11 @@ already supported in Ion text, which has the option of either indexing into the 
 This capability streamlines the writing process, reduces the memory footprint of both readers and
 writers, and can shrink the overall size of the stream.
 
-The changes described in this document are part of the larger Ion 1.1 RFC. TODO(add link)
+The changes described in this document are part of the larger Ion 1.1 RFC.
 
 ## Motivation
 
-All Ion streams have a *symbol table*. A symbol table is a list of known strings which can
+All Ion streams have a *symbol table*. A symbol table is a list of known strings which can be
 referenced by their offset into the list--their *symbol ID*--instead of writing out their complete
 text each time.
 
@@ -116,8 +116,8 @@ the overall size of the data.
 
 ### Long-lived streams
 
-In long Ion streams, the symbol ID encoding mandate can cause the symbol table to become quite large.
-This causes two problems:
+In long-lived Ion streams, the symbol ID encoding mandate can cause the symbol table to become quite
+large.  This causes two problems:
 
 1. Both Readers and Writers are required to hold the entire symbol table in memory. The larger it
    becomes, the more memory this consumes.
@@ -149,8 +149,8 @@ public class Quux {
 ```
 
 In Ion streams that contain several serialized instances of this class, we are guaranteed to recoup
-the data size cost of adding `foo`, `bar`, and `baz` to the symbol table. The class's fields are a
-fixed set, so every serialized instance will need to reference each field.
+the data size cost of adding `foo`, `bar`, and `baz` to the symbol table. The fields in the class
+are a fixed set, so every serialized instance will need to reference each field.
 
 Ion's `struct` data type also acts as a mapping from text keys to values of any data type. This
 closely (though often imperfectly) aligns with common data types available in a variety of
@@ -168,7 +168,7 @@ logins_by_user_id = {
 
 Unlike classes and their analogs, the keys used in a series of maps written to an Ion stream are not
 guaranteed to be the same over time. Maps using high-cardinality values like UUIDs and datetimes as
-keys will have keys that never repeat at all.
+keys will have keys that never repeat.
 
 In these cases, creating symbol IDs for these keys pollutes the symbol table; it creates additional
 entries that readers and writers must store in memory but which do not provide any data size
@@ -252,7 +252,7 @@ others use inline text.
 Inline symbol structs have a type descriptor byte of `0xF4`. A `Length` field containing the number
 of bytes in the struct's representation must always follow the type descriptor byte.
 
-Inline symbol structs' field names are encoded as a `VarInt` (not a `VarUInt`). The sign bit is used
+Inline symbol struct field names are encoded as a `VarInt` (not a `VarUInt`). The sign bit is used
 to indicate whether the field name has been encoded as a symbol ID or as inline text.
 
 
@@ -478,7 +478,7 @@ com.example.project.Quux::{
 If we use inline symbol definitions for `foo`, `bar`, `baz`, and `com.example.project.Quux` in our
 template definition, we do not need to add them to the symbol table. By allocating a single template
 ID, we can produce a compact representation of a struct composed of several symbols without growing
-the symbol table at all.
+the symbol table.
 
 ## Alternatives considered
 
