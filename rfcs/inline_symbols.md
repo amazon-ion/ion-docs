@@ -116,8 +116,8 @@ the overall size of the data.
 | Binary | 100 |
 
 In some cases, this can be partially addressed by using a Shared Symbol Table at the cost of
-complexity. See the section [Inline symbols' relationship to Shared Symbol
-Tables](#inline-symbols-relationship-to-shared-symbol-tables) for more information.
+complexity. See the section [*Inline symbols' relationship to Shared Symbol
+Tables*](#inline-symbols-relationship-to-shared-symbol-tables) for more information.
 
 ### Long-lived streams
 
@@ -368,8 +368,8 @@ annotation  :     annotation [VarInt + optional UTF8 representation]    :
 
 Unlike most encodings, singleton annotation encodings do not include an `L` or `Length` field. When
 a `0xE1` type descriptor byte is encountered, it is always followed by a `VarInt`-based encoding of
-the necessary annotation symbol, either as an ID or as inline UTF-8 text. (See [Inline symbol
-structs](#0xf4-inline-symbol-structs) for more detail.)
+the necessary annotation symbol, either as an ID or as inline UTF-8 text. (See the section [*Inline symbol
+structs*](#0xf4-inline-symbol-structs) for more detail.)
 
 Returning to our earlier example, this value:
 
@@ -424,8 +424,8 @@ the sequence of annotations that follow. It does not include the length of the v
 which provides a length encoding of its own.
 
 Annotations in the sequence do not need to be encoded homogenously; writers can write some
-annotations as symbol IDs and others as inline text. (See [Inline symbol
-structs](#0xf4-inline-symbol-structs) for more detail.)
+annotations as symbol IDs and others as inline text. (See the section [*Inline symbol
+structs*](#0xf4-inline-symbol-structs) for more detail.)
 
 To skip an annotation sequence, the reader must read the `VarUInt` `length` and skip that number of
 bytes. The reader will then be positioned over the annotated value, which it can read or skip as
