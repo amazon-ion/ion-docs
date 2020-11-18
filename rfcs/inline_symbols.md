@@ -14,6 +14,7 @@
       - [Inline annotations](#inline-annotations)
         - [`0xE1`: Singleton inline symbol annotation](#0xe1-singleton-inline-symbol-annotation)
         - [`0xE2`: Multiple inline symbol annotations](#0xe2-multiple-inline-symbol-annotations)
+	- [Inline symbols' relationship to Shared Symbol Tables](#inline-symbols-relationship-to-shared-symbol-tables)
     - [Combining inline symbols with Ion templates](#combining-inline-symbols-with-ion-templates)
   - [Alternatives considered](#alternatives-considered)
     - [Add some new encodings, but not others](#add-some-new-encodings-but-not-others)
@@ -113,6 +114,10 @@ the overall size of the data.
 |:--|:--:|
 | Text | 94 |
 | Binary | 100 |
+
+In some cases, this can be partially addressed by using a Shared Symbol Table at the cost of
+complexity. See the section [Inline symbols' relationship to Shared Symbol
+Tables](#inline-symbols-relationship-to-shared-symbol-tables) for more information.
 
 ### Long-lived streams
 
@@ -426,6 +431,103 @@ To skip an annotation sequence, the reader must read the `VarUInt` `length` and 
 bytes. The reader will then be positioned over the annotated value, which it can read or skip as
 needed.
 
+### Inline symbols' relationship to Shared Symbol Tables
+
+Ion 1.0 provides [Shared Symbol
+Tables](http://amzn.github.io/ion-docs/docs/symbols.html#shared-symbol-tables) (SSTs)
+as a mechanism for reducing the overhead of defining a set of symbols in a stream.
+
+Here we revisit our example weather station data from the [Short-lived
+streams](#short-lived-streams) section, which used a Local Symbol Table to define all of the symbols
+it needed at the beginning of the stream:
+
+```js
+$ion_1_0
+$ion_symbol_table::{ // Add all of our symbols, field names, and annotations to the symbol table
+  sensorId,   // $10
+  type,       // $11
+  sensorData, // $12
+  reading,    // $13
+  temperature,// $14
+  celsius,    // $15
+  time,       // $16
+}
+{
+  $10: 12345, // Then encode our symbols, field names, and annotations as symbol IDs
+  $11: $12,
+  $13: {
+    $14: $15::12.5,
+	$16: 2020-10-22T16:00:00Z
+  }
+}
+```
+
+Because this struct layout is going to be reused frequently, the weather service could have instead
+created an SST with all of the necessary symbols:
+
+```js
+$ion_1_0
+$ion_shared_symbol_table::{
+  name: "com.example.weather.symbols",
+  version: 1,
+  symbols: [ // Create a Shared Symbol Table with the necessary symbols
+    sensorId,
+	type,
+	sensorData,
+	reading,
+	temperature,
+	celsius,
+	time,
+  ]
+}
+```
+
+and then imported it at the head of each datagram:
+
+```js
+$ion_1_0
+$ion_symbol_table::{ // Import the SST that we defined above
+  imports: [{name: "com.example.weather.symbols", version: 1}]
+}
+{
+  $10: 12345, // Encode the weather data using the imported symbols
+  $11: $12,
+  $13: {
+    $14: $15::12.5,
+	$16: 2020-10-22T16:00:00Z
+  }
+}
+```
+
+This eliminates the need to write the UTF8 bytes of each expected symbol's text in the datagram
+itself, shrinking the total size of the data. This benefit comes at the cost of complexity; the
+stream is no longer self-contained. Readers and writers must coordinate to ensure that they both
+have access to the same SSTs. If the set of symbols changes, the writer will need to
+ensure that a new version of the SST is made available.
+
+In the case of *expected symbols*--symbols which a writer is likely to reference in a given stream--
+SSTs and inline symbols can offer similar benefits. Both allow the writer to avoid writing a Local
+Symbol Table definition at the beginning of an Ion stream. Streams that repeatedly reference the
+same symbols and systems that reuse symbols across many streams will both benefit more from an SST
+than from inline symbols if the complexity cost is acceptable.
+
+In the case of *unexpected symbols*--symbols which a writer did not anticipate referencing but must
+emit anyway--SSTs offer no benefit. Common sources of unexpected symbols might include timestamps,
+generated identifiers like UUIDs, or content authored by a third party over which a writer has no
+authority. Such values cannot be enumerated in advance and so cannot be added to an SST; in Ion 1.0,
+writing them to the stream requires a Local Symbol Table definition. Using inline symbols, however,
+writers can avoid emitting a symbol table definition no matter what symbols, field names, and
+annotations they encounter in the stream.
+
+Writers have no way of knowing in advance whether the active symbol table contains *all* of the
+symbols, field names, and annotations that they will be asked to write. As such, the full symbol
+discovery phase of writing still has to happen for every value, even if no new symbols will ever be
+found. Inline symbols make it possible to eliminate some of this processing overhead. For example, a
+writer leveraging inline symbols may opt to perform lookups to see if a value is already in the
+symbol table, but avoid the work of adding it to the table if it is not. Alternatively, a writer
+could avoid *all* symbol table lookups for portions of a stream by always writing the text of any
+symbols, field names, and annotations inline.
+
 ### Combining inline symbols with Ion templates
 
 When combined with [Ion
@@ -478,6 +580,8 @@ If we use inline symbol definitions for `foo`, `bar`, `baz`, and `com.example.pr
 template definition, we do not need to add them to the symbol table. By allocating a single template
 ID, we can produce a compact representation of a struct composed of several symbols without growing
 the symbol table.
+
+If the template is frequently used, it can be placed in a Shared Symbol Table.
 
 ## Alternatives considered
 
