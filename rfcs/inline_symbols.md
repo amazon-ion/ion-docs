@@ -53,7 +53,7 @@ This constraint incurs a number of expenses:
   to the stream establishing a new symbol ID for each of those elements.
 * Writing the top-level value itself must be deferred until the new symbols are added to the table, 
   necessitating additional buffering of encoded output.
-* Both Readers and Writers must hold the complete symbol table in memory. The more entries there
+* Both readers and writers must hold the complete symbol table in memory. The more entries there
   are in the symbol table, the more memory it will consume.
 * Symbol IDs are encoded as variable-length unsigned integers. The more symbol IDs there are, the
   more bytes it will take to encode the newest symbol IDs.
