@@ -348,7 +348,7 @@ This RFC adds two new encodings for annotations:
 2. An encoding that is optimized for the case in which a value has multiple annotations.
 
 Both encodings support inline symbol definitions using the `VarInt` encoding scheme described in
-[Inline symbol structs](#0xf4-inline-symbol-structs).
+the section [*Inline symbol structs*](#0xf4-inline-symbol-structs).
 
 Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, type descriptor bytes `0xE1` and
 `0xE2` were not legal type descriptor bytes. We use them in Ion 1.1 to represent our new encodings.
