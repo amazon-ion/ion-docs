@@ -10,15 +10,17 @@
     - [Text encoding](#text-encoding)
     - [Binary encoding](#binary-encoding)
       - [`0xF3`: Inline symbol values](#0xf3-inline-symbol-values)
-      - [`0xF4`: Inline symbol structs](#0xf4-inline-symbol-structs)
-      - [Inline annotations](#inline-annotations)
-        - [`0xE1`: Singleton inline symbol annotation](#0xe1-singleton-inline-symbol-annotation)
-        - [`0xE2`: Multiple inline symbol annotations](#0xe2-multiple-inline-symbol-annotations)
+      - [`0xF4`: Structs with inlineable field names](#0xf4-structs-with-inlineable-field-names)
+      - [Inlineable annotations](#inlineable-annotations)
+        - [`0xE1`: Single inlineable annotation](#0xe1-single-inlineable-annotation)
+        - [`0xE2`: Multiple inlineable annotations](#0xe2-multiple-inlineable-annotations)
 	- [Inline symbols' relationship to Shared Symbol Tables](#inline-symbols-relationship-to-shared-symbol-tables)
     - [Combining inline symbols with Ion templates](#combining-inline-symbols-with-ion-templates)
   - [Alternatives considered](#alternatives-considered)
     - [Add some new encodings, but not others](#add-some-new-encodings-but-not-others)
-    - [Encode maps, dicts, etc as something other than a struct](#encode-maps-dicts-etc-as-something-other-than-a-struct)
+    - [Encode maps, dicts, etc as something other than a
+      struct](#encode-maps-dicts-etc-as-something-other-than-a-struct)
+	  
 
 ## Summary
 
@@ -249,16 +251,16 @@ While many applications simply treat strings and symbols as different encoding o
 others rely on the distinction between the types for their business logic. Providing this encoding
 ensures that a symbol value can be written as cheaply as a string value in any use case.
 
-#### `0xF4`: Inline symbol structs
+#### `0xF4`: Structs with inlineable field names
 
-Inline symbol structs are structs whose field names can be encoded as either symbol IDs or
+Structs with inlineable field names can encode their field names as either symbol IDs or
 inline text. The encoding need not be homogenous; some fields can use symbol IDs while
 others use inline text.
 
 Inline symbol structs have a type descriptor byte of `0xF4`. A `Length` field containing the number
 of bytes in the struct's representation must always follow the type descriptor byte.
 
-Inline symbol struct field names are encoded as a `VarInt` (not a `VarUInt`). The sign bit is used
+Inlineable field names are encoded as a `VarInt` (not a `VarUInt`). The sign bit is used
 to indicate whether the field name has been encoded as a symbol ID or as inline text.
 
 
@@ -309,7 +311,7 @@ The [existing rules for NOP padding in struct
 fields](http://amzn.github.io/ion-docs/docs/binary.html#nop-padding-in-struct-fields) also apply to
 this representation.
 
-#### Inline annotations
+#### Inlineable annotations
 
 Ion 1.0's [existing encoding for
 annotations](http://amzn.github.io/ion-docs/docs/binary.html#annotations) uses a 'wrapper' to
@@ -350,12 +352,12 @@ This RFC adds two new encodings for annotations:
 2. An encoding that is optimized for the case in which a value has multiple annotations.
 
 Both encodings support inline symbol definitions using the `VarInt` encoding scheme described in
-the section [*Inline symbol structs*](#0xf4-inline-symbol-structs).
+the section [*Structs with inlineable field names*](#0xf4-structs-with-inlineable-field-names).
 
 Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, type descriptor bytes `0xE1` and
 `0xE2` were not legal type descriptor bytes. We use them in Ion 1.1 to represent our new encodings.
 
-##### `0xE1`: Singleton inline symbol annotation
+##### `0xE1`: Single inlineable annotation
 
 ```
             7       4 3       0
@@ -371,7 +373,7 @@ annotation  :     annotation [VarInt + optional UTF8 representation]    :
 Unlike most encodings, singleton annotation encodings do not include an `L` or `Length` field. When
 a `0xE1` type descriptor byte is encountered, it is always followed by a `VarInt`-based encoding of
 the necessary annotation symbol, either as an ID or as inline UTF-8 text. (See the section [*Inline symbol
-structs*](#0xf4-inline-symbol-structs) for more detail.)
+structs*](#0xf4-structs-with-inlineable-field-names) for more detail.)
 
 Returning to our earlier example, this value:
 
@@ -405,7 +407,7 @@ To skip a singleton annotation, the reader must read the `VarInt`. If it is nega
 must skip that number of bytes to move beyond the UTF8 bytes that follow it. The reader will then
 be positioned over the annotated value, which it can read or skip as needed.
 
-##### `0xE2`: Multiple inline symbol annotations
+##### `0xE2`: Multiple inlineable annotations
 
 ```
             7       4 3       0
@@ -426,8 +428,8 @@ the sequence of annotations that follow. It does not include the length of the v
 which provides a length encoding of its own.
 
 Annotations in the sequence do not need to be encoded homogenously; writers can write some
-annotations as symbol IDs and others as inline text. (See the section [*Inline symbol
-structs*](#0xf4-inline-symbol-structs) for more detail.)
+annotations as symbol IDs and others as inline text. (See the section [*Structs with inlineable
+field names*](#0xf4-structs-with-inlineable-field-names) for more detail.)
 
 To skip an annotation sequence, the reader must read the `VarUInt` `length` and skip that number of
 bytes. The reader will then be positioned over the annotated value, which it can read or skip as
