@@ -472,12 +472,12 @@ $ion_shared_symbol_table::{
   version: 1,
   symbols: [ // Create a Shared Symbol Table with the necessary symbols
     sensorId,
-	type,
-	sensorData,
-	reading,
-	temperature,
-	celsius,
-	time,
+    type,
+    sensorData,
+    reading,
+    temperature,
+    celsius,
+    time,
   ]
 }
 ```
@@ -505,11 +505,11 @@ stream is no longer self-contained. Readers and writers must coordinate to ensur
 have access to the same SSTs. If the set of symbols changes, the writer will need to
 ensure that a new version of the SST is made available.
 
-In the case of *expected symbols*--symbols which a writer is likely to reference in a given stream--
-SSTs and inline symbols can offer similar benefits. Both allow the writer to avoid writing a Local
-Symbol Table definition at the beginning of an Ion stream. Streams that repeatedly reference the
-same symbols and systems that reuse symbols across many streams will both benefit more from an SST
-than from inline symbols if the complexity cost is acceptable.
+In the case of *expected symbols*--symbols which a writer is likely to reference in a given
+stream--SSTs and inline symbols can offer similar benefits. Both allow the writer to avoid writing a
+Local Symbol Table definition at the beginning of an Ion stream. Streams that repeatedly reference
+the same symbols and systems that reuse symbols across many streams will both benefit more from an
+SST than from inline symbols if the complexity cost is acceptable.
 
 In the case of *unexpected symbols*--symbols which a writer did not anticipate referencing but must
 emit anyway--SSTs offer no benefit. Common sources of unexpected symbols might include timestamps,
