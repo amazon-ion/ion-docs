@@ -85,13 +85,15 @@ must be added to a local symbol table definition that appears at the beginning o
 ```js
 $ion_1_0
 $ion_symbol_table::{ // Add all of our symbols, field names, and annotations to the symbol table
-  sensorId,   // $10
-  type,       // $11
-  sensorData, // $12
-  reading,    // $13
-  temperature,// $14
-  celsius,    // $15
-  time,       // $16
+  symbols: [
+    "sensorId",   // $10
+    "type",       // $11
+    "sensorData", // $12
+    "reading",    // $13
+    "temperature",// $14
+    "celsius",    // $15
+    "time",       // $16
+  ]
 }
 {
   $10: 12345, // Then encode our symbols, field names, and annotations as symbol IDs
@@ -444,13 +446,15 @@ it needed at the beginning of the stream:
 ```js
 $ion_1_0
 $ion_symbol_table::{ // Add all of our symbols, field names, and annotations to the symbol table
-  sensorId,   // $10
-  type,       // $11
-  sensorData, // $12
-  reading,    // $13
-  temperature,// $14
-  celsius,    // $15
-  time,       // $16
+  symbols: [
+    "sensorId",   // $10
+    "type",       // $11
+    "sensorData", // $12
+    "reading",    // $13
+    "temperature",// $14
+    "celsius",    // $15
+    "time",       // $16
+  ]
 }
 {
   $10: 12345, // Then encode our symbols, field names, and annotations as symbol IDs
@@ -471,13 +475,13 @@ $ion_shared_symbol_table::{
   name: "com.example.weather.symbols",
   version: 1,
   symbols: [ // Create a Shared Symbol Table with the necessary symbols
-    sensorId,
-    type,
-    sensorData,
-    reading,
-    temperature,
-    celsius,
-    time,
+    "sensorId"",
+    "type",
+    "sensorData",
+    "reading",
+    "temperature",
+    "celsius",
+    "time",
   ]
 }
 ```
