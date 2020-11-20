@@ -20,6 +20,7 @@
     - [Add some new encodings, but not others](#add-some-new-encodings-but-not-others)
     - [Encode maps, dicts, etc as something other than a
       struct](#encode-maps-dicts-etc-as-something-other-than-a-struct)
+    - [Structs with ordered fields](#structs-with-ordered-fields)
 	  
 
 ## Summary
@@ -260,7 +261,10 @@ inline text. The encoding need not be homogenous; some fields can use symbol IDs
 others use inline text.
 
 Inline symbol structs have a type descriptor byte of `0xF4`. A `Length` field containing the number
-of bytes in the struct's representation must always follow the type descriptor byte.
+of bytes in the struct's representation must always follow the type descriptor byte. Because
+non-empty structs must have at least one field and one value, a `Length` of 1 is illegal. (This
+constrasts with Ion 1.0's `0xC1` struct encoding, which guarantees that fields are ordered by symbol
+ID. For more details, see the section [*Structs with ordered fields*](#structs-with-ordered-fields).
 
 Inlineable field names are encoded as a `VarInt` (not a `VarUInt`). The sign bit is used
 to indicate whether the field name has been encoded as a symbol ID or as inline text.
@@ -630,3 +634,21 @@ their own validation to guarantee that every key has an associated value and tha
 string or symbol value. Tools such as [PartiQL](https://partiql.org/) that are designed to work with
 Ion will not recognize custom representations as maps, meaning that convenient syntax meant to work
 with key/value data will not function as expected.
+
+### Structs with ordered fields
+
+Structs cannot have a length of one byte. An empty struct will occupy zero bytes while a struct with
+a single field will have a minimum of two bytes (one for the field name and one for the value). Ion
+1.0 uses a length code of 1 to instead indicate that the struct's fields appear in ascending order
+by symbol ID. The Ion 1.0 [struct encoding spec](amzn.github.io/ion-docs/docs/binary.html#13-struct)
+states:
+
+> Binary-encoded structs support a special case where the fields are known to be sorted such that
+> the field-name integers are increasing. This state exists when L is one.
+
+We cannot trivially offer the same special case for [structs with inlineable field
+names](#0xf4-structs-with-inlineable-field-names). Field names which are defined as inline text will
+not have a symbol ID by which they can be ordered. While other encodings could be substituted (for
+example: "fields appear ordered lexicographically by their text"), the value proposition of such
+alternatives is unknown. As such, Ion 1.1 reserves the `Length=1` encoding for a future version of
+Ion to leverage.
