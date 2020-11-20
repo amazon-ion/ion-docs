@@ -129,9 +129,11 @@ In long-lived Ion streams, the symbol ID encoding mandate can cause the symbol t
 large.  This causes two problems:
 
 1. Both Readers and Writers are required to hold the entire symbol table in memory. The larger it
-   becomes, the more memory this consumes.
+   becomes, the more memory it consumes. Left unchecked, this can lead to program crashes, making it
+   a potential denial-of-service vector.
 2. Symbol IDs are encoded as variable-length unsigned integers; higher ID numbers require more bytes
-   to encode.
+   to encode. Adding infrequently referenced text to the symbol table means that more valuable
+   symbols will be costlier to write out.
    
 The only way to remove entries from the active symbol table is to reset it or import a different one.
 In either case, we are likely to discard very valuable symbols along with those that are infrequently
