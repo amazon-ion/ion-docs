@@ -989,7 +989,22 @@ Not currently supported.
 </div>
 
 <div class="tabpane C-sharp" markdown="1">
-Not currently supported.
+For C#, only down-conversion of SEXP is not currently supported.
+
+
+```c#
+string textIon = "{data: annot::{foo: null.string, bar: [2,\"+\", 2]}, time: 1969-07-20T20:18Z}";
+
+void DownconvertToJson()
+{          
+    IIonReader reader = IonReaderBuilder.Build(textIon);
+
+    StringWriter stringWriter = new StringWriter();
+    IIonWriter jsonWriter = IonTextWriterBuilder.Build(stringWriter, IonTextOptions.Json);
+    jsonWriter.WriteValues(reader);
+    Console.WriteLine(stringWriter.ToString());
+}
+```
 </div>
 
 <div class="tabpane Java" markdown="1">
@@ -1010,7 +1025,7 @@ void downconvertToJson() throws IOException {
 </div>
 
 <div class="tabpane JavaScript" markdown="1">
-Any `Value` object returned by `load()` may be converted by a JSON string by passing it to `JSON.stringify()`:
+Any `Value` object returned by `load()` may be converted to a JSON string by passing it to `JSON.stringify()`:
 
 ```javascript
 let ion = require('ion-js');
@@ -1021,7 +1036,18 @@ console.log(JSON.stringify(value));
 </div>
 
 <div class="tabpane Python" markdown="1">
-Not currently supported. See [ion-python#107](https://github.com/amzn/ion-python/issues/107).
+Any object returned by `load()`, `loads()`, or any other library functions that return a Ion Value Python object can be 
+converted to a JSON string by using `json.dumps(obj, cls=IonToJSONEncoder)`:
+
+```python
+from amazon.ion.json_encoder import IonToJSONEncoder
+from amazon.ion.simpleion import loads
+import json
+
+value = loads('{data: annot::{foo: null.string, bar: (2 + 2)}, time: 1969-07-20T20:18Z}')
+json_string = json.dumps(value, cls=IonToJSONEncoder)
+print(json_string)
+```
 </div>
 
 <div class="tabpane Go" markdown="1">
