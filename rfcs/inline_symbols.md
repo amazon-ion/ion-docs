@@ -21,7 +21,10 @@
     - [Encode maps, dicts, etc as something other than a
       struct](#encode-maps-dicts-etc-as-something-other-than-a-struct)
     - [Structs with ordered fields](#structs-with-ordered-fields)
-	  
+    - [Disallow inline symbols in symbol tables](#disallow-inline-symbols-in-symbol-tables)
+      - [The symbol table is treated as user-level data instead.](#invalid-symbol-table-encodings-are-treated-as-user-data)
+      - [The symbol table is ignored.](#the-symbol-table-is-ignored)
+      - [An error is raised by the reader.](#an-error-is-raised-by-the-reader)
 
 ## Summary
 
@@ -652,3 +655,93 @@ not have a symbol ID by which they can be ordered. While other encodings could b
 example: "fields appear ordered lexicographically by their text"), the value proposition of such
 alternatives is unknown. As such, Ion 1.1 reserves the `Length=1` encoding for a future version of
 Ion to leverage.
+
+### Disallow inline symbols in symbol tables
+
+The Ion 1.0 spec describes system-level values like symbol tables in terms of high-level constructs.
+For example: a local symbol table is a top-level struct whose first annotation is
+`$ion_symbol_table`. If present, the `imports` and `symbols` fields of such structs have special
+meaning.
+
+Because binary Ion 1.0 only had one way to encode these constructs, reader implementations would
+often hardcode low-level, encoding-specific checks for symbol table processing. For example:
+
+* Checking for type code `13` to test for a struct.
+* Checking whether the annotations list started with symbol ID `3` (`$ion_symbol_table`).
+* Looking for a struct field with symbol ID `6` (`imports`) or `7` (`symbols`).
+
+Allowing inlineable encodings to be used in symbol tables requires that readers check for higher-level
+constructs in the stream, which can involve multiple low-level checks:
+
+* Checking for type code `13` (a struct) OR type descriptor byte `0xF4` (struct with inlineable field names).
+* Checking whether the annotations list started with a symbol with text `$ion_symbol_table`,
+  regardless of its encoding.
+* Looking for struct fields with the name `imports` or `symbols` regardless of their encoding.
+
+This adds a modest amount of flexibility at the expense of implementation complexity. It may be
+tempting to instead forbid the use of the new inlineable encodings within system-level values.
+However, doing so would present complexities of its own.
+
+Mandating a single encoding for system-level constructs requires usages of the disallowed encodings
+lead to one of the following behaviors:
+
+1. [The symbol table is treated as user-level data
+   instead.](#invalid-symbol-table-encodings-are-treated-as-user-data)
+2. [The symbol table is ignored.](#the-symbol-table-is-ignored)
+3. [An error is raised by the reader.](#an-error-is-raised-by-the-reader)
+
+None of these alternatives are particularly appealing. Given the costs involved, the format symmetry
+offered by allowing lineeable encodings everywhere seems like a worthwhile benefit.
+
+#### Invalid symbol table encodings are treated as user data
+
+Data written in binary Ion must be able to survive 'round-tripping' (re-writing it in text, then
+once again in binary) without data loss. If some encodings can cause symbol tables to be treated as
+user-level data instead, an analogous encoding must exist in text that allows this distinction to be
+maintained during round-tripping. However, Ion text writers can already opt to use inline encodings
+when writing out a symbol table. We would need to invent a new text syntax to support this low-value
+special case, allowing text writers to represent it losslessly.
+
+#### The symbol table is ignored
+
+Consider as precedent: the [Ion 1.0
+specification](http://amzn.github.io/ion-docs/docs/symbols.html#ion-version-markers) states that at
+the top level, any encoding of the Ion Version Marker other than the unquoted, unannotated literal
+`$ion_1_0` is "a system value that has no processing semantics (a NOP)."
+
+This behavior exists because it is not possible to distinguish between an Ion Version Marker and a
+symbol with the same text during round-tripping. It is a special case that was codified to resolve
+an ambiguity that arose after the initial 1.0 spec was published.
+
+Disallowing inlineable encodings in system values would create a similar problem, which might make
+re-using this solution attractive. However, ignoring values in the stream offers substantial
+downsides. Writing data that will be ignored by all parties is worse than writing nothing at all; it
+takes resources to write, resources to read, and bloats the size of the data stream for no benefit.
+It also risks confusing the writer, who was able to go through the motions of writing a symbol table
+without an error being raised only to see no benefit.
+
+#### An error is raised by the reader
+
+In this scenario, writers are prevented from writing symbol tables that leverage structs with
+inlineable field names, annotations with inlineable text, or inline symbols.
+
+This is the most pragmatic of the available options. Unfortunately, it conflicts with one of the
+primary benefits of inline symbols: defining templates without first defining symbols that will
+appear in the template. For example:
+
+```js
+$ion_1_1
+$ion_symbol_table::{
+  templates: [
+    {
+      foo: {#0}, // Using a struct with inlineable field names allows us to avoid defining 
+      bar: {#0}, // foo, bar, and baz as distinct symbol IDs.
+      baz: {#0},
+    }
+  ]
+}
+```
+
+Supporting this use case means carving out an exception for the `templates` field in our ban on
+inlineable encodings. Similar exceptions might be needed for open content as well as future Ion
+version features.
