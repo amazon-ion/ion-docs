@@ -322,11 +322,24 @@ this representation.
 
 #### Inlineable annotations
 
-Ion 1.0's [existing encoding for
-annotations](http://amzn.github.io/ion-docs/docs/binary.html#annotations) uses a 'wrapper' to
-associate a set of annotations with a given value. The wrapper contains a sequence of annotation
-symbol IDs followed by the value being annotated. The wrapper's header provides separate length
-fields for both:
+This RFC adds two new encodings for annotations:
+1. An encoding that (like [Ion 1.0's
+   encoding](http://amzn.github.io/ion-docs/docs/binary.html#annotations)) supports annotation
+   sequences of arbitrary size.
+2. An encoding that is optimized for the most common case, in which there is a single annotation.
+
+Both encodings support inline symbol definitions using the `VarInt` encoding scheme described in
+the section [*Structs with inlineable field names*](#0xf4-structs-with-inlineable-field-names).
+
+Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, `0xE1` and `0xE2` were not legal
+type descriptor bytes. We use them in Ion 1.1 to represent our new encodings.
+
+##### `0xE2`: Multiple inlineable annotations
+
+[Ion 1.0's annotations encoding](http://amzn.github.io/ion-docs/docs/binary.html#annotations) uses a
+'wrapper' to associate a set of annotations with a given value. The wrapper contains a sequence of
+annotation symbol IDs followed by the value being annotated. The wrapper's header provides separate
+length fields for both:
 
 1. **The total size of the encoded symbol ID sequence and the encoded value.** This allows the
    reader to skip over the entire wrapper if needed, moving to the next value in the Ion stream.
@@ -350,23 +363,42 @@ EE 94 81 8A 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79
 ```
 *(The above assumes that 'Author' is already in the active symbol table as `$10`.)*
 
+In practice, few readers leverage the ability to skip the entire wrapper due in part to their need
+to read the wrapped value's type descriptor byte before deciding whether the value can be skipped.
+Additionally, the wrapped values themselves already specify their encoded size. This means that two
+of the four annotation header bytes in the above example are of dubious value.
 
-In practice, few readers leverage this capability due in part to their need to read the wrapped
-value's type descriptor byte before deciding whether the value can be skipped. Additionally, the
-wrapped values themselves already specify their encoded size. This means that two of the four
-Annotation header bytes in the above example are of dubious value.
+In contrast, Ion 1.1's `0xE2` encoding includes a single `length` field containing the number of
+bytes used to encode the annotation sequence. This field not include the length of the value itself,
+which provides a length encoding of its own.
 
-This RFC adds two new encodings for annotations:
-1. An encoding that is optimized for the most common case, in which there is a single annotation.
-2. An encoding that is optimized for the case in which a value has multiple annotations.
+```
+            7       4 3       0
+            +---------+---------+
+Value with  |   14    |    2    |
+multiple    +---------+---------+=======================================+
+annotations :     length [VarUInt]                                      :
+            +-----------------------------------------------------------+
+            :     annotation [VarInt + optional UTF8 representation]    : ...
+            +-----------------------------------------------------------+
+            :     value                                                 :
+            +-----------------------------------------------------------+
+```
 
-Both encodings support inline symbol definitions using the `VarInt` encoding scheme described in
-the section [*Structs with inlineable field names*](#0xf4-structs-with-inlineable-field-names).
+To skip an annotation sequence, the reader must read the `VarUInt` `length` and skip that number of
+bytes. The reader will then be positioned over the annotated value, which it can read or skip as
+needed.
 
-Because Ion 1.0's wrapper encoding cannot be shorter than 3 bytes, type descriptor bytes `0xE1` and
-`0xE2` were not legal type descriptor bytes. We use them in Ion 1.1 to represent our new encodings.
+Annotations are written using the `VarInt`-based encoding described in the section [*Structs with
+inlineable field names*](#0xf4-structs-with-inlineable-field-names). They do not need to be encoded
+homogenously; writers can write some annotations in the sequence as symbol IDs and others as inline
+text.
 
 ##### `0xE1`: Single inlineable annotation
+
+An unscientific review of sample Ion 1.0 data found that values that have annotations at all most
+commonly have a single annotation. Our `0xE1` encoding is optimized for this use case by not
+requiring a `Length` field at all.
 
 ```
             7       4 3       0
@@ -379,10 +411,9 @@ annotation  :     annotation [VarInt + optional UTF8 representation]    :
             +-----------------------------------------------------------+
 ```
 
-Unlike most encodings, singleton annotation encodings do not include an `L` or `Length` field. When
-a `0xE1` type descriptor byte is encountered, it is always followed by a `VarInt`-based encoding of
-the necessary annotation symbol, either as an ID or as inline UTF-8 text. (See the section [*Inline symbol
-structs*](#0xf4-structs-with-inlineable-field-names) for more detail.)
+When a `0xE1` type descriptor byte is encountered, it is always followed by a single `VarInt`-based
+encoding of the necessary annotation symbol, either as an ID or as inline UTF-8 text. (See the
+section [*Inline symbol structs*](#0xf4-structs-with-inlineable-field-names) for more detail.)
 
 Returning to our earlier example, this value:
 
@@ -390,7 +421,7 @@ Returning to our earlier example, this value:
 Author::"Ernest Hemingway"
 ```
 
-would be encoded either using inline text:
+could be encoded either using inline text:
 
 ```
        A  u  t  h  o  r        E  r  n  e  s  t     H  e  m  i  n  g  w  a  y
@@ -412,37 +443,9 @@ E1 CA 8E 90 45 72 6E 65 73 74 20 48 65 6D 69 6E 67 77 61 79
  +------- Singleton annotation
 ```
 
-To skip a singleton annotation, the reader must read the `VarInt`. If it is negative, the reader
-must skip that number of bytes to move beyond the UTF8 bytes that follow it. The reader will then
-be positioned over the annotated value, which it can read or skip as needed.
-
-##### `0xE2`: Multiple inlineable annotations
-
-```
-            7       4 3       0
-            +---------+---------+
-Value with  |   14    |    2    |
-multiple    +---------+---------+=======================================+
-annotations :     length [VarUInt]                                      :
-            +-----------------------------------------------------------+
-            :     annotation [VarInt + optional UTF8 representation]    : ...
-            +-----------------------------------------------------------+
-            :     value                                                 :
-            +-----------------------------------------------------------+
-```
-
-Unlike the singleton annotation encoding, the encoding for a value with multiple annotations
-includes a `length` field that indicates the number of bytes that will be used to represent
-the sequence of annotations that follow. It does not include the length of the value itself,
-which provides a length encoding of its own.
-
-Annotations in the sequence do not need to be encoded homogenously; writers can write some
-annotations as symbol IDs and others as inline text. (See the section [*Structs with inlineable
-field names*](#0xf4-structs-with-inlineable-field-names) for more detail.)
-
-To skip an annotation sequence, the reader must read the `VarUInt` `length` and skip that number of
-bytes. The reader will then be positioned over the annotated value, which it can read or skip as
-needed.
+To skip a `0xE1`-encoded annotation, the reader must read the annotation's `VarInt`. If it is negative, the
+reader must skip that number of bytes to move beyond the UTF8 bytes that follow it. The reader will
+then be positioned over the annotated value, which it can read or skip as needed.
 
 ### Inline symbols' relationship to Shared Symbol Tables
 
