@@ -196,6 +196,10 @@ Inline symbols are an optional encoding which allow the text of a symbol, annota
 be specified within the value itself rather than as an entry in the active symbol table. Conceptually,
 they are analogous to the way symbols are encoded in text Ion.
 
+Inline symbols give writers the flexibility to decide for themselves whether and when to add a given
+string to the symbol table, allowing them to make trade-offs in data size, throughput, and memory
+requirements.
+
 ### Text encoding
 
 *This RFC does not propose any syntax changes for Ion text. This description of Ion text is provided
