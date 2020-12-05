@@ -233,8 +233,8 @@ cases:
 1. Symbol values
 2. Struct field names
 3. Annotations
-   1. Singleton annotation on a value
-   2. Collections of annotations on a value
+   1. Sequences of annotations on a value
+   2. A single annotation on a value
 
 #### `0xF3`: Inline symbol values
 
