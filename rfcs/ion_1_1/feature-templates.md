@@ -41,7 +41,7 @@ This RFC introduces a new encoding mechanism called _Ion templates_ which genera
 This will allow applications to elide not only the structure of encoded values (as a traditional schema might), but also the
 values themselves.
 
-The changes proposed in this RFC would constitute a new minor version of Ion: v1.1.
+The changes proposed in this document are part of the larger [Ion 1.1 RFC](ion_1_1.md#rfc-ion-11).
 
 -----
 
@@ -154,28 +154,12 @@ In both reading and writing, repetition in the data leads to larger data sizes, 
 
 ## Changes to the system symbol table
 
-The changes in this RFC require 3 new symbols to be added to the system symbol table:
+The changes in this RFC require 2 new symbols to be added to the system symbol table:
 
-1. `$ion_1_1` (a new Ion version marker)
-2. `templates` (used in symbol tables to define a list of templates)
-3. `max_template_id` (used in shared symbol tables to cap the number of templates imported from a given table)
+1. `templates` (used in symbol tables to define a list of templates)
+2. `max_template_id` (used in shared symbol tables to cap the number of templates imported from a given table)
 
-The complete Ion v1.1 system symbol table is:
-
-| Symbol ID |	Symbol Name |
-|:----:|------|
-| 1 |	$ion |
-| 2 |	$ion_1_0 |
-| 3 |	$ion_symbol_table |
-| 4 |	name |
-| 5 |	version |
-| 6 |	imports |
-| 7 |	symbols |
-| 8 |	max_id |
-| 9 |	$ion_shared_symbol_table |
-| **10** | **$ion_1_1** |
-| **11** | **templates** |
-| **12** | **max_template_id** |
+The complete system symbol table for Ion 1.1 can be found [here](ion_1_1.md#system-symbol-table).
 
 ## Ion Templates
 
@@ -282,31 +266,32 @@ $ion_1_1
 $ion_symbol_table::{
   // Symbol IDs $0-$9 are defined in the Ion 1.0 spec:
   //     http://amzn.github.io/ion-docs/docs/symbols.html#system-symbols
-  // Symbol ID $11 is the string "templates", and is added by this RFC.
+  // Symbol ID $10 is the string "templates", and is added by this RFC.
+  // Symbol ID $11 is the string "max_template_id" and is added by this RFC.
   
   // Define symbols for each of the field names:
 
   symbols : [
-    "make",           // $13
-    "model",          // $14
-    "year",           // $15
-    "frame",          // $16
-    "numberOfWheels", // $17
-    "transmission",   // $18
-    "airbags",        // $19
+    "make",           // $12
+    "model",          // $13
+    "year",           // $14
+    "frame",          // $15
+    "numberOfWheels", // $16
+    "transmission",   // $17
+    "airbags",        // $18
   ],
 
   // Define a template for our vehicle information struct:
 
   templates : [
     { // This struct and its contents comprise template ID 1
-      $13: {#0}, // make
-      $14: {#0}, // model
-      $15: {#0}, // year
-      $16: {#0}, // frame
-      $17: {#0}, // numberOfWheels
-      $18: {#0}, // transmission
-      $19: {#0}, // airbags
+      $12: {#0}, // make
+      $13: {#0}, // model
+      $14: {#0}, // year
+      $15: {#0}, // frame
+      $16: {#0}, // numberOfWheels
+      $17: {#0}, // transmission
+      $18: {#0}, // airbags
     }
   ]
 }
@@ -537,15 +522,15 @@ For example, in this stream we define a template to encode employee information:
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "name",       // $13
-    "employeeId", // $14
-    "occupation", // $15
+    "name",       // $12
+    "employeeId", // $13
+    "occupation", // $14
   ],
   templates: [
     { // Template #1
-      $13: {#0}, // name
-      $14: {#0}, // employeeId
-      $15: {#0}, // occupation
+      $12: {#0}, // name
+      $13: {#0}, // employeeId
+      $14: {#0}, // occupation
     }
   ]
 }
@@ -579,15 +564,15 @@ When `{#0}` is used as a template invocation parameter in the context of a templ
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "name",       // $13
-    "employeeId", // $14
-    "occupation", // $15
+    "name",       // $12
+    "employeeId", // $13
+    "occupation", // $14
   ],
   templates: [
     { // Template #1
-      $13: {#0}, // name
-      $14: {#0}, // employeeId
-      $15: {#0}, // occupation
+      $12: {#0}, // name
+      $13: {#0}, // employeeId
+      $14: {#0}, // occupation
     }
     // The definition of template #2 invokes template #1, so the {#0} passed as the second parameter
     // is considered a template blank, not a field suppression.
@@ -660,15 +645,15 @@ expands to
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "name",       // $13
-    "employeeId", // $14
-    "occupation", // $15
+    "name",       // $12
+    "employeeId", // $13
+    "occupation", // $14
   ],
   templates: [
     { // Template #1
-      $13: {#0}, // name
-      $14: {#0}, // employeeId
-      $15: {#0}, // occupation
+      $12: {#0}, // name
+      $13: {#0}, // employeeId
+      $14: {#0}, // occupation
     }
   ]
 }
@@ -698,15 +683,15 @@ Extension parameters can be used in template invocations inside of template defi
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "name",       // $13
-    "employeeId", // $14
-    "occupation", // $15
+    "name",       // $12
+    "employeeId", // $13
+    "occupation", // $14
   ],
   templates: [
     { // Template #1
-      $13: {#0}, // name
-      $14: {#0}, // employeeId
-      $15: {#0}, // occupation
+      $12: {#0}, // name
+      $13: {#0}, // employeeId
+      $14: {#0}, // occupation
     },
     // Template #2 invokes template #1 and passes an extension parameter
     {#1 "Jon" 67890 "Manager" {number_of_reports: 6}}
@@ -828,13 +813,13 @@ the same table. For example:
 ```js
 $ion_template_table::{
   symbols: [
-    "name", // $13
-    "age",  // $14
+    "name", // $12
+    "age",  // $13
   ],
   templates: [
     { // Template #1 uses symbols 13 and 14, defined above.
+      $12: {#0},
       $13: {#0},
-      $14: {#0},
     }
   ]
 }
@@ -903,11 +888,11 @@ Template   |   15    |    0    |
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "last_modified" // $13
-    "ntp-server-3a" // $14
+    "last_modified" // $12
+    "ntp-server-3a" // $13
   ],
   templates: [
-    $13::$14::2020-07-09T15:30:00.000-11:00 // Template #1 has no blanks
+    $12::$13::2020-07-09T15:30:00.000-11:00 // Template #1 has no blanks
   ]
 }
 {#1} // Invoking this requires no parameters
@@ -936,15 +921,16 @@ Template   |   15    |    1    |
 ```
 
 #### Example of a single-parameter template
+
 ```js
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "last_modified" // $13
-    "ntp-server-3a" // $14
+    "last_modified" // $12
+    "ntp-server-3a" // $13
   ],
   templates: [
-    $13::$14::{#0} // Template #1 has a single blank
+    $12::$13::{#0} // Template #1 has a single blank
   ]
 }
 {#1 2020-07-09T15:30:00.000-11:00} // Single-parameter invocation
@@ -980,19 +966,20 @@ Template   |   15    |    2    |
 ```
 
 #### Example of a multi-parameter template
+
 ```js
 $ion_1_1
 $ion_symbol_table::{
   symbols: [
-    "name", // $13
-    "age", // $14
-    "favoriteDessert",
+    "name",            // $12
+    "age",             // $13
+    "favoriteDessert", // $14
   ],
   templates: [
     { // Template #1 has multiple blanks
+      $12: {#0},
       $13: {#0},
       $14: {#0},
-      $15: {#0},
     }
   ]
 }
