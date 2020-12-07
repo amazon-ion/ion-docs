@@ -38,7 +38,9 @@ already supported in Ion text, which has the option of either indexing into the 
 This capability streamlines the writing process, reduces the memory footprint of both readers and
 writers, and can shrink the overall size of the stream.
 
-The changes described in this document are part of the larger Ion 1.1 RFC.
+The changes described in this document are part of the larger [Ion 1.1 RFC](ion_1_1.md#rfc-ion-11).
+
+-----
 
 ## Motivation
 
@@ -196,9 +198,8 @@ Inline symbols are an optional encoding which allow the text of a symbol, annota
 be specified within the value itself rather than as an entry in the active symbol table. Conceptually,
 they are analogous to the way symbols are encoded in text Ion.
 
-Inline symbols give writers the flexibility to decide for themselves whether and when to add a given
-string to the symbol table, allowing them to make trade-offs in data size, throughput, and memory
-requirements.
+Inline symbols give writers the flexibility to decide whether and when to add a given string to the
+symbol table, allowing them to make trade-offs in data size, throughput, and memory consumption.
 
 ### Text encoding
 
@@ -698,7 +699,7 @@ lead to one of the following behaviors:
 3. [An error is raised by the reader.](#an-error-is-raised-by-the-reader)
 
 None of these alternatives are particularly appealing. Given the costs involved, the format symmetry
-offered by allowing lineeable encodings everywhere seems like a worthwhile benefit.
+offered by allowing inlineable encodings everywhere seems like a worthwhile benefit.
 
 #### Invalid symbol table encodings are treated as user data
 
