@@ -12,14 +12,17 @@
 
 ## Summary
 
-This RFC proposes a new minor version of the Ion data format: **Ion 1.1****.
+This RFC proposes a new minor version of the Ion data format: **Ion 1.1**.
 
 Ion 1.1 adds two features: [inline symbols](#inline-symbols) and [templates](#templates). These
 features are optional encodings for existing constructs; they do not modify the Ion type system.
 
 ## Status
 
-This RFC is in development.
+This RFC is in development. Once it reaches maturity, a final comment period will be announced.
+
+Please subscribe to the [pull request](https://github.com/amzn/ion-docs/pull/137) or check the [Ion
+news page](http://amzn.github.io/ion-docs/news.html) periodically for updates.
 
 ## Inline Symbols
 
@@ -55,9 +58,9 @@ For the complete details of this feature, see the document [*Templates*](feature
 ## System Symbol Table
 
 Ion 1.1 carries over the Ion 1.0 symbol table and appends two new symbols of its own: `templates`
-and `max_template_id`. Their usage is detailed in the document [*Templates*](ion_templates.md).
+and `max_template_id`. Their usage is detailed in the document [*Templates*](feature-templates.md).
 
-| ID | text |
+| ID | Text |
 |:--:|:-----|
 |  1 | $ion |
 |  2 | $ion_1_0 |
