@@ -36,7 +36,7 @@ string to the symbol table, allowing them to make trade-offs in data size, throu
 consumption.
 
 For the complete details of this feature, see the document [*Inline
-symbols*](feature-inline_symbols.md).
+symbols*](feature-inline_symbols.md#rfc-inline-symbols).
 
 ## Templates
 
@@ -53,12 +53,14 @@ Although templates offer a superset of symbols’ functionality and could replac
 document proposes adding them alongside symbols to preserve backwards compatibility and simplify
 implementating the new functionality.
 
-For the complete details of this feature, see the document [*Templates*](feature-templates.md).
+For the complete details of this feature, see the document
+[*Templates*](feature-templates.md#rfc-ion-templates).
 
 ## System Symbol Table
 
 Ion 1.1 carries over the Ion 1.0 symbol table and appends two new symbols of its own: `templates`
-and `max_template_id`. Their usage is detailed in the document [*Templates*](feature-templates.md).
+and `max_template_id`. Their usage is detailed in the document
+[*Templates*](feature-templates.md#rfc-ion-templates).
 
 | ID | Text |
 |:--:|:-----|
