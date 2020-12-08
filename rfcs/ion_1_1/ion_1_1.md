@@ -21,12 +21,12 @@ features are optional encodings for existing constructs; they do not modify the 
 
 This RFC is in development. Once it reaches maturity, a final comment period will be announced.
 
-Please subscribe to the [pull request](https://github.com/amzn/ion-docs/pull/137) or check the [Ion
+Please subscribe to the [pull request](https://github.com/amzn/ion-docs/pull/104) or check the [Ion
 news page](http://amzn.github.io/ion-docs/news.html) periodically for updates.
 
 ## Inline Symbols
 
-*Inline symbols** make it possible to write new struct field names, annotations, and symbols to a
+*Inline symbols* make it possible to write new struct field names, annotations, and symbols to a
 binary Ion stream without first having to modify the active symbol table. This functionality is
 already supported in Ion text, which has the option of either indexing into the symbol table (e.g.
 `$10`) or defining the symbol inline (e.g. `foo` or `'foo'`).
