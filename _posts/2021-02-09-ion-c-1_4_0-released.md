@@ -30,4 +30,4 @@ Tweaks:
 * Various CLI fixes and improvements.
 * Integrated [ion-test-driver](https://github.com/amzn/ion-test-driver) support into GitHub Actions.
 
-| [Release Notes v1.4.0](https://github.com/amzn/ion-c/releases/tag/v1.4.0) | 
+| [Release Notes v1.4.0](https://github.com/amzn/ion-c/releases/tag/v1.4.0) | [Ion C](https://github.com/amzn/ion-c) |
