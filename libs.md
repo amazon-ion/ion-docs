@@ -11,10 +11,10 @@ description: "The latest news about Amazon Ion and the Amazon Ion community."
 
 | Name | Latest Version | Repository | Documentation |
 |------|----------------|------|---------------|
-| ion-c | [1.0.3](https://github.com/amzn/ion-c/releases/latest) (December 11, 2019) | [Link](https://github.com/amzn/ion-c) | [Link](https://amzn.github.io/ion-c/) |
+| ion-c | [1.4.0](https://github.com/amzn/ion-c/releases/latest) (February 9, 2021) | [Link](https://github.com/amzn/ion-c) | [Link](https://amzn.github.io/ion-c/) |
 | ion-dotnet | [1.1.0](https://github.com/amzn/ion-dotnet/releases/latest) (November 24, 2020) | [Link](https://github.com/amzn/ion-dotnet) | - |
-| ion-go | [1.0.1](https://giithub.com/amzn/ion-go/releases/latest) (October 16, 2020) | [Link](https://github.com/amzn/ion-go) | - |
-| ion-java | [1.8.0](https://github.com/amzn/ion-java/releases/latest) (November 9, 2020) | [Link](https://github.com/amzn/ion-java) | [Link](https://www.javadoc.io/doc/com.amazon.ion/ion-java/) |
+| ion-go | [1.1.0](https://github.com/amzn/ion-go/releases/latest) (December 8, 2020) | [Link](https://github.com/amzn/ion-go) | - |
+| ion-java | [1.8.1](https://github.com/amzn/ion-java/releases/latest) (April 7th, 2021) | [Link](https://github.com/amzn/ion-java) | [Link](https://www.javadoc.io/doc/com.amazon.ion/ion-java/) |
 | ion-js | [4.2.1](https://github.com/amzn/ion-js/releases/latest) (May 6, 2021) | [Link](https://github.com/amzn/ion-js) | [Link](https://amzn.github.io/ion-js/api/) |
 | ion-python | [0.7.0](https://github.com/amzn/ion-python/releases/latest) (December 2, 2020) | [Link](https://github.com/amzn/ion-python) | [Link](https://ion-python.readthedocs.io/en/latest/amazon.ion.html) |
 | ion-rust | in development | [Link](https://github.com/amzn/ion-rust) | - |
