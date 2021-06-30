@@ -580,12 +580,12 @@ _L_ is one. Thus:
     nested fields.
   * When _L_ is 1, the struct has at least one symbol/value pair, the _length_
     field exists, and the field name integers are sorted in increasing order.
+  * When _L_ is 14, the _length_ field exists, and no assertion is made about field
+    ordering.
   * When _L_ is 15, the value is `null.struct`, and there's no _length_ or
     nested fields.
-  * When _1 < L < 14_ then there is no _length_ field as _L_ is enough to represent
+  * Otherwise _1 < L < 14_ then there is no _length_ field as _L_ is enough to represent
     the struct size, and no assertion is made about field ordering.
-  * Otherwise _L_ is 14, the _length_ field exists, and no assertion is made about field
-    ordering.
 
 **Note:** Because VarUInts depend on end tags to indicate their lengths,
 finding the succeeding value requires parsing the field name prefix. However,
