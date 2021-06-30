@@ -584,8 +584,8 @@ _L_ is one. Thus:
     ordering.
   * When _L_ is 15, the value is `null.struct`, and there's no _length_ or
     nested fields.
-  * Otherwise _1 < L < 14_ then there is no _length_ field as _L_ is enough to represent
-    the struct size, and no assertion is made about field ordering.
+  * Otherwise, _1 < L < 14_  and there is no _length_ field as _L_ is enough to represent
+    the struct size. No assertion is made about field ordering.
 
 **Note:** Because VarUInts depend on end tags to indicate their lengths,
 finding the succeeding value requires parsing the field name prefix. However,
