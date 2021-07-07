@@ -352,9 +352,8 @@ The length of the coefficient subfield is the total length of the representation
 minus the length of _exponent_. The subfield should not be present (that is, it
 has zero length) when the coefficient's value is (positive) zero.
 
-If the value is `0.` (_aka_ `0d0`) then _L_ is zero, there are no length or
-representation fields, and the entire value is encoded as the single byte
-`0x50`.
+If _L_ is 0 the value is `0.` (_aka_ `0d0`), and there are no length, exponent, 
+or coefficient subfields.
 
 
 ### 6: timestamp
