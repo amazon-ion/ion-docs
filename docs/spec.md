@@ -170,10 +170,10 @@ null.float        // A null float value
 
 0E0               // Zero as float
 0D0               // Zero as decimal
-0.                //   ...the same value with different notation
+0.                //   ...the same decimal value with different notation
 -0e0              // Negative zero float   (distinct from positive zero)
 -0d0              // Negative zero decimal (distinct from positive zero)
--0.               //   ...the same value with different notation
+-0.               //   ...the same decimal value with different notation
 -0d-1             // Decimal maintains precision: -0. != -0.0
 
 123_456.789_012   // Decimal with underscores
