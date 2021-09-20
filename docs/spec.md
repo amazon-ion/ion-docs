@@ -667,7 +667,8 @@ When multiple annotations are present, the Ion processor will maintain
 their order. Duplicate annotation symbols are allowed but discouraged.
 
 In the text format, type annotations are denoted by a non-null symbol
-token and double-colons preceding any content:
+token and double-colons preceding any value. Multiple annotations on the same
+value are separated by double-colons:
 
 ```
 {% raw %}
