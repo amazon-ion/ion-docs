@@ -355,19 +355,19 @@ The following sequences are allowed:
 <td align="left">linefeed LF</td>
 </tr>
 <tr class="even">
+<td align="left"><code>U+000B</code></td>
+<td align="left"><code>\v</code></td>
+<td align="left">vertical tab VT</td>
+</tr>
+<tr class="odd">
 <td align="left"><code>U+000C</code></td>
 <td align="left"><code>\f</code></td>
 <td align="left">form feed FF</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left"><code>U+000D</code></td>
 <td align="left"><code>\r</code></td>
 <td align="left">carriage return CR</td>
-</tr>
-<tr class="even">
-<td align="left"><code>U+000B</code></td>
-<td align="left"><code>\v</code></td>
-<td align="left">vertical tab VT</td>
 </tr>
 <tr class="odd">
 <td align="left"><code>U+0022</code></td>
@@ -380,19 +380,19 @@ The following sequences are allowed:
 <td align="left">single quote</td>
 </tr>
 <tr class="odd">
+<td align="left"><code>U+002F</code></td>
+<td align="left"><code>\/</code></td>
+<td align="left">forward slash</td>
+</tr>
+<tr class="even">
 <td align="left"><code>U+003F</code></td>
 <td align="left"><code>\?</code></td>
 <td align="left">question mark</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left"><code>U+005C</code></td>
 <td align="left"><code>\\</code></td>
 <td align="left">backslash</td>
-</tr>
-<tr class="odd">
-<td align="left"><code>U+002F</code></td>
-<td align="left"><code>\/</code></td>
-<td align="left">forward slash</td>
 </tr>
 <tr class="even">
 <td align="left"><em>nothing</em></td>
