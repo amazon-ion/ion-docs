@@ -666,9 +666,7 @@ fields.
 
 It is illegal for an annotation to wrap another annotation atomically, _i.e._,
 _annotation(annotation(value))_. However, it is legal to have an annotation on
-a container that holds annotated values. Note that it is possible to enforce
-the illegality of _annotation(annotation(value))_ directly in a grammar, but we
-have not chosen to do that in this document.
+a container that holds annotated values.
 
 Furthermore, it is illegal for an annotation to wrap a [NOP Pad](#nop-pad)
 since this encoding is not an Ion value.  Thus, the following sequence is
