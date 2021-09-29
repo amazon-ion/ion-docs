@@ -4,7 +4,7 @@ title: Decimals
 description: "Amazon Ion supports a decimal numeric type to allow accurate representation of base-10 floating point values such as currency amounts."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 
 Amazon Ion supports a decimal numeric type to allow accurate representation
 of base-10 floating point values such as currency amounts. This
@@ -22,8 +22,8 @@ numbers are irrational in base-2.
 
 ### Data Model
 
-Ion decimals follow the [IBM Hursley Lab General Decimal Arithmetic Specification][2],
-which defines an [abstract decimal data model][3] represented by the following
+Ion decimals follow the [IBM Hursley Lab General Decimal Arithmetic Specification][decarith],
+which defines an [abstract decimal data model][damodel] represented by the following
 3-tuple.
 
     (<sign 0|1>, <coefficient: unsigned integer>, <exponent: integer>)
@@ -36,7 +36,7 @@ forms of positive zero, also are distinguished only by the *exponent*.
 
 ### Text Format
 
-The Hursley rules for describing a _finite value_ [converting from textual notation][3] *must* be followed. 
+The Hursley rules for describing a _finite value_ [converting from textual notation][damodel] *must* be followed. 
 The Hursley rules for describing a _special value_ are **not** followed--the rules for 
 
 * `infinity`  -- rule is **not** applicable for Ion Decimals.
@@ -127,7 +127,7 @@ However, the following are **not** equivalent to each other.
 ### Binary Format
 
 The encoding of Ion decimals, which follows the decimal data model
-described above, is specified in [the Ion Binary Encoding][5].
+described above, is specified in [the Ion Binary Encoding][binary].
 
 The following binary encodings of decimal values are all equivalent to `0d0`.
 
@@ -208,8 +208,8 @@ Explicit encoding of 42d(negative)0
 </pre>
 
 <!-- References -->
-[1]: {{ site.baseurl }}/docs.html
-[2]: http://speleotrove.com/decimal/decarith.html
-[3]: http://speleotrove.com/decimal/damodel.html
-[4]: http://speleotrove.com/decimal/daconvs.html
-[5]: binary.html
+[docs]: {{ site.baseurl }}/docs.html
+[decarith]: http://speleotrove.com/decimal/decarith.html
+[damodel]: http://speleotrove.com/decimal/damodel.html
+[daconvs]: http://speleotrove.com/decimal/daconvs.html
+[binary]: binary.html

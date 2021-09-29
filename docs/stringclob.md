@@ -4,14 +4,14 @@ title: Strings and Clobs
 description: "This document clarifies the semantics of the Amazon Ion string and clob data types with respect to escapes and the Unicode standard."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 
 This document clarifies the semantics of the Amazon Ion
 `string` and `clob` data types with respect to
-escapes and the [Unicode][2] standard.
+escapes and the [Unicode][unicode] standard.
 
 As of the date of this writing, the Unicode Standard is on [version
-10.0][3]. This specification is to that standard.
+10.0][unicode-10]. This specification is to that standard.
 
 ## Unicode Primer
 
@@ -26,7 +26,7 @@ Traditionally, from a programmer's perspective, a code point can be
 thought of as a *character*, but there is sometimes a subtle
 distinction. For example, in Java, the `char` type is an unsigned,
 16-bit integer, which is normally used to hold UTF-16 *code units* (_e.g._
-[`java.lang.CharSequence`][4]).
+[`java.lang.CharSequence`][java-charsequence]).
 For the Unicode code point, **Mathematical Bold Capital "A"** (code point
 U+0001D400), this encoded in a UTF-16 string as two units: 0xD835 followed by
 0xDC00. So in this case, Java's UTF-16 representation actually utilizes two
@@ -37,7 +37,7 @@ referring to Unicode code points. The reasoning for this is partly
 stated above, but also has to do with the overloaded nature of the term
 (_e.g._ a user character or *grapheme*). For more details, consult section
 [3.4 of the Unicode
-Standard][5].
+Standard][unicode-10-ch3].
 
 Another interesting aspect of the UCS, is a block of code points that is
 reserved exclusively for use in the UTF-16 encoding (_i.e._ *surrogate*
@@ -46,7 +46,7 @@ allowed to represent the code points in the inclusive range U+D800 to
 U+DFFF. In the UTF-16 case, these code points are only allowed to be
 used in the encoding to specify characters in the U+00010000 to
 U+0010FFFF range. Refer to sections [3.8 and 3.9 of the Unicode
-Standard][5] for
+Standard][unicode-10-ch3] for
 details.
 
 ## Ion String
@@ -58,7 +58,7 @@ Ion binary and text formats.
 
 ### Text Format
 
-See the [grammar][6] for a formal definition of the
+See the [grammar][text-grammar] for a formal definition of the
 Ion Text encoding for the `string` type.
 
 Multiple Ion long `string` literals that are adjacent to each other by
@@ -249,7 +249,7 @@ octets and `string` is a sequence of Unicode code points.
 
 ### Text Format
 
-See the [grammar][6] for a formal definition of the
+See the [grammar][text-grammar] for a formal definition of the
 Ion Text encoding for the `clob` type.
 
 Similar to `string`, adjoining long string literals within an Ion `clob`
@@ -384,19 +384,18 @@ This is represented directly as the octet values in the `clob` value.
 
 ## References
 
-* [The Unicode Home Page][7]
-* [Unicode Encoding FAQ][8]
-* [Wikipedia UTF-16 Article][9]
-* [Wikipedia UTF-8 Article][10]
+* [The Unicode Home Page][unicode]
+* [Unicode Encoding FAQ][unicode-bom]
+* [Wikipedia UTF-8 Article][wiki-utf-8]
+* [Wikipedia UTF-16 Article][wiki-utf-16]
 
 <!-- references -->
-[1]: {{ site.baseurl }}/docs.html
-[2]: http://www.unicode.org/
-[3]: http://www.unicode.org/versions/Unicode10.0.0/
-[4]: https://docs.oracle.com/javase/8/docs/api/java/lang/CharSequence.html
-[5]: http://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
-[6]: text.html#grammar
-[7]: http://unicode.org
-[8]: http://www.unicode.org/faq/utf_bom.html
-[9]: http://en.wikipedia.org/wiki/UTF-16
-[10]: http://en.wikipedia.org/wiki/UTF-8
+[docs]: {{ site.baseurl }}/docs.html
+[text-grammar]: text.html#grammar
+[unicode]: http://unicode.org
+[unicode-bom]: http://www.unicode.org/faq/utf_bom.html
+[unicode-10]: http://www.unicode.org/versions/Unicode10.0.0/
+[unicode-10-ch3]: http://www.unicode.org/versions/Unicode10.0.0/ch03.pdf
+[java-charsequence]: https://docs.oracle.com/javase/8/docs/api/java/lang/CharSequence.html
+[wiki-utf-8]: http://en.wikipedia.org/wiki/UTF-8
+[wiki-utf-16]: http://en.wikipedia.org/wiki/UTF-16

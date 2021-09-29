@@ -4,7 +4,7 @@ title: Symbols
 description: "Amazon Ion symbols are critical to the notation's performance and space-efficiency. This page defines the various concepts and data structures related to symbol management."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 
 Amazon Ion symbols are critical to the notation's performance and
 space-efficiency. This page defines the various concepts and data
@@ -622,4 +622,4 @@ annotations:
     }
 
 <!-- references -->
-[1]: {{ site.baseurl }}/docs.html
+[docs]: {{ site.baseurl }}/docs.html

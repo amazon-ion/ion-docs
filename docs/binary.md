@@ -4,7 +4,7 @@ title: Ion Binary Encoding
 description: "An explanation of the Amazon Ion binary encoding."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 
 This document covers the binary Ion format.
 
@@ -13,8 +13,8 @@ This document covers the binary Ion format.
 
 ## Value Streams
 
-In the binary format, a [value stream][2] always starts with a
-_binary version marker_ (BVM) that specifies the precise Ion version used to
+In the binary format, a [value stream][glossary-value-stream] always starts with
+a _binary version marker_ (BVM) that specifies the precise Ion version used to
 encode the data that follows:
 
 <pre class="textdiagram">
@@ -109,7 +109,7 @@ Int field  |   |      bits           |
 Ints are sequences of octets, interpreted as sign-and-magnitude big endian
 integers (with the sign on the highest-order bit of the first octet). This
 means that the representations of 123456 and -123456 should only differ in
-their sign bit. (See [Signed Number Representations][3]
+their sign bit. (See [Signed Number Representations][wiki-signed-num]
 for more info.)
 
 ### VarUInt and VarInt Fields
@@ -450,7 +450,7 @@ In the binary encoding, all Ion symbols are stored as integer _symbol IDs_
 whose text values are provided by a symbol table.  If _L_ is zero then the
 symbol ID is zero and the length and symbol ID fields are omitted.
 
-See [Ion Symbols][4] for more details about symbol representations
+See [Ion Symbols][symbols] for more details about symbol representations
 and symbol tables.
 
 
@@ -601,7 +601,7 @@ two bytes.
 
 Implementations should use symbol ID zero as the field name
 to emphasize the lack of meaning of the field name. For more general details
-about the semantics of symbol ID zero, refer to [Ion Symbols][4].
+about the semantics of symbol ID zero, refer to [Ion Symbols][symbols].
 
 For example, consider the following empty `struct` with three bytes of
 padding:
@@ -758,7 +758,7 @@ The type code 15 is illegal in Ion 1.0 data.
 </table>
 
 <!-- References -->
-[1]: {{ site.baseurl }}/docs.html
-[2]: glossary.html#value_stream
-[3]: http://en.wikipedia.org/wiki/Signed_number_representations
-[4]: symbols.html
+[docs]: {{ site.baseurl }}/docs.html
+[glossary-value-stream]: glossary.html#value_stream
+[wiki-signed-num]: http://en.wikipedia.org/wiki/Signed_number_representations
+[symbols]: symbols.html
