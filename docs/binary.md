@@ -35,7 +35,7 @@ contain the actual data. These values are generally referred to as "top-level
 values".
 
 <pre class="textdiagram">
-              31                      0
+
              +-------------------------+
 value stream |  binary version marker  |
              +-------------------------+
@@ -83,7 +83,6 @@ UInt field |          bits           |
            +=========================+
            :          bits           :
            +=========================+
-            n+7                     n
 </pre>
 
 UInts are sequences of octets, interpreted as big-endian.
@@ -103,7 +102,6 @@ Int field  |   |      bits           |
            +=========================+
            :          bits           :
            +=========================+
-            n+7                     n
 </pre>
 
 Ints are sequences of octets, interpreted as sign-and-magnitude big endian
@@ -121,7 +119,7 @@ octet (and only the last octet) has its high-order bit set to terminate the
 field.
 
 <pre class="textdiagram">
-                7  6                   0       n+7 n+6                 n
+                7  6                   0        7                      0
               +===+=====================+     +---+---------------------+
 VarUInt field : 0 :         bits        :  …  | 1 |         bits        |
               +===+=====================+     +---+---------------------+
@@ -131,7 +129,7 @@ VarUInts are a sequence of octets. The high-order bit of the last octet is one,
 indicating the end of the sequence. All other high-order bits must be zero.
 
 <pre class="textdiagram">
-               7   6  5               0       n+7 n+6                 n
+               7   6  5               0        7                      0
              +===+                           +---+
 VarInt field : 0 :       payload          …  | 1 |       payload
              +===+                           +---+
@@ -206,12 +204,12 @@ follows:
     field.
 
 
-### 0: null
+### 0x0: null
 
 <pre class="textdiagram">
             7       4 3       0
            +---------+---------+
-Null value |    0    |    15   |
+Null value |   0x0   |    15   |
            +---------+---------+
 </pre>
 
@@ -223,7 +221,7 @@ valid _L_ value is 15, representing the only value of this type, `null.null`.
 <pre class="textdiagram">
          7       4 3       0
         +---------+---------+
-NOP Pad |    0    |    L    |
+NOP Pad |   0x0   |    L    |
         +---------+---------+======+
         :     length [VarUInt]     :
         +--------------------------+
@@ -258,12 +256,12 @@ NOP padding is valid anywhere a value can be encoded, except for within an
 [annotation](#annotations) wrapper. [NOP padding in `struct`](#nop-pad-struct)
 requires additional encoding considerations.
 
-### 1: bool
+### 0x1: bool
 
 <pre class="textdiagram">
             7       4 3       0
            +---------+---------+
-Bool value |    1    |   rep   |
+Bool value |   0x1   |   rep   |
            +---------+---------+
 </pre>
 
@@ -273,7 +271,7 @@ representation of 0 means false; a representation of 1 means true; and a
 representation of 15 means `null.bool`.
 
 
-### 2 and 3: int
+### 0x2 and 0x3: int
 
 Values of type `int` are stored using two type codes: 2 for positive values
 and 3 for negative values. Both codes use a UInt subfield to store the magnitude.
@@ -281,7 +279,7 @@ and 3 for negative values. Both codes use a UInt subfield to store the magnitude
 <pre class="textdiagram">
            7       4 3       0
           +---------+---------+
-Int value |  2 or 3 |    L    |
+Int value |0x2 / 0x3|    L    |
           +---------+---------+======+
           :     length [VarUInt]     :
           +==========================+
@@ -299,12 +297,12 @@ the magnitude is empty. Note that this implies there are two equivalent
 binary representations of null integer values.
 
 
-### 4: float
+### 0x4: float
 
 <pre class="textdiagram">
               7       4 3       0
             +---------+---------+
-Float value |    4    |    L    |
+Float value |   0x4   |    L    |
             +---------+---------+-----------+
             |   representation [IEEE-754]   |
             +-------------------------------+
@@ -330,12 +328,12 @@ There are two exceptions for the _L_ field:
 16-bit and 128-bit float values.
 
 
-### 5: decimal
+### 0x5: decimal
 
 <pre class="textdiagram">
                7       4 3       0
               +---------+---------+
-Decimal value |    5    |    L    |
+Decimal value |   0x5   |    L    |
               +---------+---------+======+
               :     length [VarUInt]     :
               +--------------------------+
@@ -356,13 +354,13 @@ If _L_ is 0 the value is `0.` (_aka_ `0d0`), and there are no length, exponent,
 or coefficient subfields.
 
 
-### 6: timestamp
+### 0x6: timestamp
 
 
 <pre class="textdiagram">
                  7       4 3       0
                 +---------+---------+
-Timestamp value |    6    |    L    |
+Timestamp value |   0x6   |    L    |
                 +---------+---------+========+
                 :      length [VarUInt]      :
                 +----------------------------+
@@ -433,12 +431,12 @@ components in the text encoding are in the local time! This means that
 transcoding requires a conversion between UTC and local time.
 
 
-### 7: symbol
+### 0x7: symbol
 
 <pre class="textdiagram">
               7       4 3       0
              +---------+---------+
-Symbol value |    7    |    L    |
+Symbol value |   0x7   |    L    |
              +---------+---------+======+
              :     length [VarUInt]     :
              +--------------------------+
@@ -454,12 +452,12 @@ See [Ion Symbols][symbols] for more details about symbol representations
 and symbol tables.
 
 
-### 8: string
+### 0x8: string
 
 <pre class="textdiagram">
               7       4 3       0
              +---------+---------+
-String value |    8    |    L    |
+String value |   0x8   |    L    |
              +---------+---------+======+
              :     length [VarUInt]     :
              +==========================+
@@ -472,12 +470,12 @@ UTF-8 octets. If _L_ is zero then the string is the empty string "" and the
 length and representation fields are omitted.
 
 
-### 9: clob
+### 0x9: clob
 
 <pre class="textdiagram">
             7       4 3       0
            +---------+---------+
-Clob value |    9    |    L    |
+Clob value |   0x9   |    L    |
            +---------+---------+======+
            :     length [VarUInt]     :
            +==========================+
@@ -492,12 +490,12 @@ application).
 Zero-length clobs are legal, so _L_ may be zero.
 
 
-### 10: blob
+### 0xA: blob
 
 <pre class="textdiagram">
             7       4 3       0
            +---------+---------+
-Blob value |   10    |    L    |
+Blob value |   0xA   |    L    |
            +---------+---------+======+
            :     length [VarUInt]     :
            +==========================+
@@ -511,12 +509,12 @@ application).
 Zero-length blobs are legal, so _L_ may be zero.
 
 
-### 11: list
+### 0xB: list
 
 <pre class="textdiagram">
             7       4 3       0
            +---------+---------+
-List value |   11    |    L    |
+List value |   0xB   |    L    |
            +---------+---------+======+
            :     length [VarUInt]     :
            +==========================+
@@ -535,12 +533,12 @@ Because values indicate their total lengths in octets, it is possible to locate
 the beginning of each successive value in constant time.
 
 
-### 12: sexp
+### 0xC: sexp
 
 <pre class="textdiagram">
             7       4 3       0
            +---------+---------+
-Sexp value |   12    |    L    |
+Sexp value |   0xC   |    L    |
            +---------+---------+======+
            :     length [VarUInt]     :
            +==========================+
@@ -553,7 +551,7 @@ Values of type `sexp` are encoded exactly as are `list` values, except with a
 different type code.
 
 
-### 13: struct
+### 0xD: struct
 
 Structs are encoded as sequences of symbol/value pairs. Since all symbols are
 encoded as positive integers, we can omit the typedesc on the field names and
@@ -562,7 +560,7 @@ just encode the integer value.
 <pre class="textdiagram">
               7       4 3       0
              +---------+---------+
-Struct value |   13    |    L    |
+Struct value |   0xD   |    L    |
              +---------+---------+======+
              :     length [VarUInt]     :
              +======================+===+==================+
@@ -644,7 +642,7 @@ codes. The annotations themselves are encoded as integer symbol ids.
 <pre class="textdiagram">
                     7       4 3       0
                    +---------+---------+
-Annotation wrapper |   14    |    L    |
+Annotation wrapper |   0xE   |    L    |
                    +---------+---------+======+
                    :     length [VarUInt]     :
                    +--------------------------+
@@ -702,7 +700,7 @@ The following table enumerates the illegal type descriptors in Ion 1.0 data.
 </thead>
 <tbody>
 <tr class="even">
-<td align="left">1</td>
+<td align="left">0x1</td>
 <td align="left">[2-14]</td>
 <td align="left">
 For <code>bool</code> values, <i>L</i> is used to encode the value, and may be
@@ -710,7 +708,7 @@ For <code>bool</code> values, <i>L</i> is used to encode the value, and may be
 </td>
 </tr>
 <tr class="odd">
-<td align="left">3</td>
+<td align="left">0x3</td>
 <td align="left">[0]</td>
 <td align="left">
 The <code>int</code> 0 is always stored with type code 2. Thus,
@@ -718,7 +716,7 @@ type code 3 with <i>L</i> equal to zero is illegal.
 </td>
 </tr>
 <tr class="even">
-<td align="left">4</td>
+<td align="left">0x4</td>
 <td align="left">[1-3],[5-7],[9-14]</td>
 <td align="left">
 For <code>float</code> values, only 32-bit and 64-bit IEEE-754 values are
@@ -727,7 +725,7 @@ represented with <i>L</i> equal to 0 and 15, respectively.
 </td>
 </tr>
 <tr class="odd">
-<td align="left">6</td>
+<td align="left">0x6</td>
 <td align="left">[0-1]</td>
 <td align="left">
 For <code>timestamp</code> values, a VarInt offset and VarUInt year are required.
@@ -735,7 +733,7 @@ Thus, type code 6 with <i>L</i> equal to zero or one is illegal.
 </td>
 </tr>
 <tr class="even">
-<td align="left">14</td>
+<td align="left">0xE</td>
 <td align="left">[0]*,[1-2],[15]</td>
 <td align="left">
 Annotation wrappers must have one <i>annot_length</i> field, at least one
@@ -748,10 +746,10 @@ errors when it is not followed by the rest of the BVM octet sequence.
 </td>
 </tr>
 <tr class="odd">
-<td align="left">15</td>
+<td align="left">0xF</td>
 <td align="left">[0-15]</td>
 <td align="left">
-The type code 15 is illegal in Ion 1.0 data.
+The type code 0xF is illegal in Ion 1.0 data.
 </td>
 </tr>
 </tbody>
