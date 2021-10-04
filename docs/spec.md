@@ -667,14 +667,16 @@ When multiple annotations are present, the Ion processor will maintain
 their order. Duplicate annotation symbols are allowed but discouraged.
 
 In the text format, type annotations are denoted by a non-null symbol
-token and double-colons preceding any content:
+token and double-colons preceding any value. Multiple annotations on the same
+value are separated by double-colons:
 
 ```
 {% raw %}
 int32::12                                // Suggests 32 bits as end-user type
+degrees::'celsius'::100                  // You can have multiple annotaions on a value
 'my.custom.type' :: { x : 12 , y : -1 }  // Gives a struct a user-defined type
 
-{ field: something::'another thing'::value }  // Field's name must precede annotations of its value
+{ field: some_annotation::value }        // Field's name must precede annotations of its value
 
 jpeg :: {{ ... }}                        // Indicates the blob contains jpeg data
 bool :: null.int                         // A very misleading annotation on the integer null
