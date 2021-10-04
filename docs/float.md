@@ -4,7 +4,7 @@ title: Floats
 description: "Amazon Ion supports IEEE-754 binary floating point values using the IEEE-754 32-bit (binary32) and 64-bit (binary64) encodings."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 Amazon Ion supports IEEE-754 binary floating point values using the IEEE-754
 32-bit (`binary32`) and 64-bit (`binary64`) encodings.
 In the data model, all floating point values are treated as though they are
@@ -35,12 +35,12 @@ more precision than can be stored in `binary64`, the exact `binary64`
 value is determined by using the IEEE-754 *round-to-nearest* mode with
 a *round-half-to-even* as the tie-break.  This mode/tie-break is the
 common default used in most programming environments and is discussed in detail
-in ["Correctly Rounded Binary-Decimal and Decimal-Binary Conversions"][2].
-This conversion algorithm is illustrated in a straightforward way in [Clinger's Algorithm][3].
+in ["Correctly Rounded Binary-Decimal and Decimal-Binary Conversions"][rounding].
+This conversion algorithm is illustrated in a straightforward way in [Clinger's Algorithm][clinger].
 
 When encoding a `binary32` or `binary64` value in text notation, an
 implementation MAY want to consider the approach described in
-["Printing Floating-Point Numbers Quickly and Accurately"][4].
+["Printing Floating-Point Numbers Quickly and Accurately"][printing-fp].
 
 ### Special Values
 The IEEE-754 binary floating point encoding supports special *non-number*
@@ -107,7 +107,7 @@ the following text forms all map to the same `binary64` value:
 ```
 
 <!-- References -->
-[1]: {{ site.baseurl }}/docs.html
-[2]: http://ampl.com/REFS/rounding.pdf
-[3]: http://www.cesura17.net/~will/professional/research/papers/howtoread.pdf
-[4]: http://www.cs.indiana.edu/~dyb/pubs/FP-Printing-PLDI96.pdf
+[docs]: {{ site.baseurl }}/docs.html
+[rounding]: http://ampl.com/REFS/rounding.pdf
+[clinger]: http://www.cesura17.net/~will/professional/research/papers/howtoread.pdf
+[printing-fp]: http://www.cs.indiana.edu/~dyb/pubs/FP-Printing-PLDI96.pdf

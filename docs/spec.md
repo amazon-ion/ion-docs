@@ -4,7 +4,7 @@ title: Specification
 description: "The Amazon Ion specification has three parts. A set of data types. A textual notation for values of those types. A binary notation for values of those types."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 
 The Amazon Ion specification has three parts:
 
@@ -21,13 +21,13 @@ between the formats with almost complete fidelity. ("Almost" because
 converting from text to binary does not preserve whitespace and
 comments.)
 
-The Ion [text encoding][2] is intended to be easy to read and
+The Ion [text encoding][text] is intended to be easy to read and
 write. It may be more suitable for streaming applications since sequences
 don't need to be length-prefixed. Whitespace is insignificant and is only
 required where necessary to separate tokens. C-style comments are treated
 as whitespace, and are not part of the binary encoding.
 
-The [binary encoding][3] is
+The [binary encoding][binary] is
 much more compact and efficient. An important feature is that parts of
 the whole can be accessed without "preparation", meaning you don't have
 to load it into another form before accessing the values.
@@ -196,7 +196,7 @@ is preserved through round-trips. Because most decimal values cannot be
 represented exactly in binary floating-point, `float` values may change
 "appearance" and precision when reading or writing Ion text.
 
-See also [Ion Float][4] and [Ion Decimals][5] for more notes.
+See also [Ion Float][float] and [Ion Decimals][decimal] for more notes.
 
 ### Timestamps {#timestamp}
 
@@ -204,7 +204,7 @@ Timestamps represent a specific moment in time, always include a local
 offset, and are capable of arbitrary precision.
 
 In the text format, timestamps follow the [W3C note on date and time
-formats][6], but they must end with the
+formats][w3-datetime], but they must end with the
 literal "T" if not at least whole-day precision. Fractional seconds are
 allowed, with at least one digit of precision and an unlimited maximum.
 Local-time offsets may be represented as either hour:minute offsets from
@@ -212,13 +212,13 @@ UTC, or as the literal "Z" to denote a local time of UTC. They are
 required on timestamps with time and are not allowed on date values.
 
 Ion follows the "Unknown Local Offset Convention" of
-[RFC3339][7]:
+[RFC3339][rfc3339]:
 
 > If the time in UTC is known, but the offset to local time is unknown,
 > this can be represented with an offset of "-00:00". This differs
 > semantically from an offset of "Z" or "+00:00", which imply that UTC
 > is the preferred reference point for the specified time.
-> [RFC2822][8] describes a similar
+> [RFC2822][rfc2822] describes a similar
 > convention for email.
 
 Values that are precise only to the year, month, or date are assumed to
@@ -466,7 +466,7 @@ Note that the data model does not distinguish between identifiers,
 operators, or other symbols, and that -- as always -- the binary format
 does not retain whitespace.
 
-See [Ion Symbols][9] for more details about symbol
+See [Ion Symbols][symbols] for more details about symbol
 representations and symbol tables.
 
 ### Blobs {#blob}
@@ -476,14 +476,14 @@ treats such data as a single (though often very large) value. It does no
 processing of such data other than passing it through intact.
 
 In the text format, `blob` values are denoted as
-[RFC 4648][10]-compliant
-[Base64][11] text within two
+[RFC 4648][rfc4648]-compliant
+[Base64][wiki-b64] text within two
 pairs of curly braces.
 
 When parsing `blob` text, an error must be raised if the data:
 
   * Contains characters outside
-    of the [Base64 character set][12].
+    of the [Base64 character set][rfc4648-section-4].
   * Contains a padding character (`=`) anywhere other than at the end.
   * Is terminated by an incorrect number of padding characters.
 
@@ -531,7 +531,7 @@ unscathed while remaining generally readable (at least for western
 language text). Like `blob`s, `clob`s disallow comments everywhere
 within the value.
 
-[Strings and Clobs][13] gives details on the
+[Strings and Clobs][stringclob] gives details on the
 subtle, but profound, differences between Ion strings and clobs.
 
 ```
@@ -625,7 +625,7 @@ null.list         // A null list value
 
 ### S-Expressions {#sexp}
 
-An S-expression (or [symbolic expression][14])
+An S-expression (or [symbolic expression][wiki-s-exp])
 is much like a list in that it's an ordered collection
 of values. However, the notation aligns with Lisp syntax to connote use
 of application semantics like function calls or programming-language
@@ -695,17 +695,17 @@ symbol token is an *annotation* on the value, and the second is the
 *content* of the value.
 
 <!-- References -->
-[1]: {{ site.baseurl }}/docs.html
-[2]: text.html
-[3]: binary.html
-[4]: float.html
-[5]: decimal.html
-[6]: http://www.w3.org/TR/NOTE-datetime
-[7]: http://www.ietf.org/rfc/rfc3339.txt
-[8]: http://www.ietf.org/rfc/rfc2822.txt
-[9]: symbols.html
-[10]: https://tools.ietf.org/html/rfc4648
-[11]: http://en.wikipedia.org/wiki/Base64
-[12]: https://tools.ietf.org/html/rfc4648#section-4
-[13]: stringclob.html
-[14]: https://en.wikipedia.org/wiki/S-expression
+[docs]: {{ site.baseurl }}/docs.html
+[text]: text.html
+[binary]: binary.html
+[float]: float.html
+[decimal]: decimal.html
+[symbols]: symbols.html
+[stringclob]: stringclob.html
+[w3-datetime]: http://www.w3.org/TR/NOTE-datetime
+[rfc3339]: http://www.ietf.org/rfc/rfc3339.txt
+[rfc2822]: http://www.ietf.org/rfc/rfc2822.txt
+[rfc4648]: https://tools.ietf.org/html/rfc4648
+[rfc4648-section-4]: https://tools.ietf.org/html/rfc4648#section-4
+[wiki-b64]: http://en.wikipedia.org/wiki/Base64
+[wiki-s-exp]: https://en.wikipedia.org/wiki/S-expression

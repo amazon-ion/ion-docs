@@ -4,10 +4,10 @@ title: Glossary
 description: "The following terms have particular definitions as it relates to their usage within the Amazon Ion Specification documents."
 ---
 
-# [Docs][1]/ {{ page.title }}
+# [Docs][docs]/ {{ page.title }}
 
 The following terms have particular definitions as it relates to their usage
-within the [Amazon Ion Specification][2] documents.
+within the [Amazon Ion Specification][spec] documents.
 
 ## Symbol Token
 > A symbol token is a piece of text mapped to a integer symbol ID by a symbol table. In the binary format a symbol token is always encoded using the integer, not the text.
@@ -21,5 +21,5 @@ within the [Amazon Ion Specification][2] documents.
 > A (potentially unbounded) sequence of Ion values in either text or binary.
 
 <!-- References -->
-[1]: {{ site.baseurl }}/docs.html
-[2]: spec.html
+[docs]: {{ site.baseurl }}/docs.html
+[spec]: spec.html
