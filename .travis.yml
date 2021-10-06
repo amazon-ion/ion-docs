@@ -1,6 +1,0 @@
-language: java
-sudo: false
-jdk:
-- openjdk11
-script: mvn verify
-
