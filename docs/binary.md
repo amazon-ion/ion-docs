@@ -317,7 +317,7 @@ The _L_ field of floats encodes the size of the IEEE-754 value.
 
 There are two exceptions for the _L_ field:
 
-  * If _L_ is 0, then the the value is `0e0` and representation is empty.
+  * If _L_ is 0, then the value is `0e0` and representation is empty.
     * Note, this is not to be confused with `-0e0` which is a distinct value
       and in current Ion must be encoded as a normal IEEE float bit pattern.
   * If _L_ is 15, then the value is `null.float` and the representation is
@@ -353,7 +353,7 @@ has zero length) when the coefficient's value is (positive) zero.
 
 There are two exceptions for the _L_ field:
 
-  * If _L_ is 0 the value is `0.` (_aka_ `0d0`), and there are no length,
+  * If _L_ is 0, then the value is `0.` (_aka_ `0d0`), and there are no length,
     exponent, or coefficient subfields.
   * If _L_ is 15, then the value is `null.decimal` and there are no length,
     exponent, or coefficient subfields.
