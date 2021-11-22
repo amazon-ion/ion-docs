@@ -350,8 +350,13 @@ The length of the coefficient subfield is the total length of the representation
 minus the length of _exponent_. The subfield should not be present (that is, it
 has zero length) when the coefficient's value is (positive) zero.
 
-If _L_ is 0 the value is `0.` (_aka_ `0d0`), and there are no length, exponent, 
-or coefficient subfields.
+
+There are two exceptions for the _L_ field:
+
+  * If _L_ is 0 the value is `0.` (_aka_ `0d0`), and there are no length,
+    exponent, or coefficient subfields.
+  * If _L_ is 15, then the value is `null.decimal` and there are no length,
+    exponent, or coefficient subfields.
 
 
 ### 0x6: timestamp
