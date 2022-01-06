@@ -636,7 +636,7 @@ a NOP pad, which is not allowed generally for annotations:
     // {$0:name::<NOP>}
     0xD5 0x80 0xE3 0x81 0x84 0x00
 
-### 14: Annotations {#annotations}
+### 0xE: Annotations {#annotations}
 
 This special type code doesn't map to an Ion value type, but instead is a
 wrapper used to associate annotations with content.
@@ -681,7 +681,7 @@ malformed:
 descriptor. Instead, that octet signals the start of a binary version marker.
 
 
-### 15: reserved
+### 0xF: reserved
 
 The remaining type code, 15, is reserved for future use and is not legal in Ion
 1.0 data.
