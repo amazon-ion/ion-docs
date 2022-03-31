@@ -1,0 +1,63 @@
+[
+  {
+    "name": "ion-c",
+    "category": "core",
+    "latest_release_version": "1.0.6",
+    "latest_release_date": "2022-03-28",
+    "documentation": "https://amzn.github.io/ion-c/"
+  },
+  {
+    "name": "ion-dotnet",
+    "category": "core",
+    "latest_release_version": "1.2.2",
+    "latest_release_date": "2022-02-08"
+  },
+  {
+    "name": "ion-java",
+    "category": "core",
+    "latest_release_version": "1.9.3",
+    "latest_release_date": "2022-03-23",
+    "documentation": "https://www.javadoc.io/doc/com.amazon.ion/ion-java/"
+  },
+  {
+    "name": "ion-js",
+    "category": "core",
+    "latest_release_version": "4.2.2",
+    "latest_release_date": "2022-03-17",
+    "documentation": "https://amzn.github.io/ion-js/api/"
+  },
+  {
+    "name": "ion-rust",
+    "category": "core"
+  },
+  {
+    "name": "ion-python",
+    "category": "core",
+    "latest_release_version": "0.9.1",
+    "latest_release_date": "2022-02-02",
+    "documentation": "https://ion-python.readthedocs.io/en/latest/amazon.ion.html"
+  },
+  {
+    "name": "ion-go",
+    "category": "core",
+    "latest_release_version": "1.1.3",
+    "latest_release_date": "2021-07-09",
+    "documentation": "https://pkg.go.dev/github.com/amzn/ion-go/ion"
+  },
+  {
+    "name": "ion-java-path-extraction",
+    "category": "extension",
+    "latest_release_version": "1.3.1",
+    "latest_release_date": "2021-07-09"
+  },
+  {
+    "name": "ion-element-kotlin",
+    "category": "extension"
+  },
+  {
+    "name": "ion-hive-serde",
+    "category": "extension",
+    "latest_release_version": "1.0.0",
+    "latest_release_date": "2022-03-15"
+  }
+]
