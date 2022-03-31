@@ -17,7 +17,7 @@
 # version.
 
 # TODO: See if github actions can use the github cli to automatically list all Ion repositories.
-# readonly repo_nameS="$(gh api teams/2323876/repos --jq '.[] | select(.visibility == "public") | .name')"
+# readonly REPO_NAMES="$(gh api teams/2323876/repos --jq '.[] | select(.visibility == "public") | .name')"
 
 # This should be kept up-to-date with all PUBLIC Ion repositories.
 readonly REPO_NAMES="\
@@ -97,14 +97,21 @@ $title_case_repo_name $version is now available.
     git add "$news_item_file_path"
     echo "Generated '$news_item_file_path'"
     commit_msg_body=$(printf '%s\n%s' "$commit_msg_body" "* $repo_name $tag")
+
+    # Update the data for the table on the libraries page
+    libraries=$(< _data/libraries.json)
+    jq "map(select(.name == \"$repo_name\") += \
+       { latest_release_version: \"$version\", latest_release_date: \"$release_date\"} )" \
+       <<< $libraries > _data/libraries.json
   fi
 
   [[ $GITHUB_ACTIONS ]] && echo "::endgroup::"
 done
 
-readonly NUM_NEW_POSTS=$(git status -s -uno | wc -l)
+readonly NUM_NEW_POSTS=$(git status -s -uno | grep -c _posts/)
 echo "Generated $NUM_NEW_POSTS news items."
 if [[ $NUM_NEW_POSTS -ne 0 ]]; then
+  git add _data/libraries.json
   readonly GENERATED_NEWS_COMMIT_MESSAGE="$(printf 'Adds news posts for %s releases\n%s\n' "$NUM_NEW_POSTS" "$commit_msg_body")"
   if [[ $GITHUB_ACTIONS ]]; then
     echo "::set-output name=changes::$NUM_NEW_POSTS"
