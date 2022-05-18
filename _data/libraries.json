@@ -28,7 +28,9 @@
   },
   {
     "name": "ion-rust",
-    "category": "core"
+    "category": "core",
+    "latest_release_version": "0.10.0",
+    "latest_release_date": "2022-05-17"
   },
   {
     "name": "ion-python",
