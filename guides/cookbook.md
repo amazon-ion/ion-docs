@@ -314,7 +314,8 @@ To write binary Ion, we can use `NewBinaryWriter()` and pass an instance of an `
 Implementations of the [`IonReader`][4] and [`IonWriter`][5] interfaces are
 responsible for reading and writing Ion data in both text and binary forms.
 
-`IonReader`s and `IonWriter`s may be constructed through builders.
+`IonReader`s and `IonWriter`s may be constructed through builders. Both are
+`Closeable`, and callers must call `close()` before discarding them.
 
 An [`IonReaderBuilder`][16] with the default configuration may be constructed as
 follows. This builder will construct `IonReader` instances which can read
@@ -352,13 +353,15 @@ String helloWorld = "{hello: \"world\"}";
 An `IonReader` for this data may be constructed as follows.
 
 ```java
-IonReader reader = readerBuilder.build(helloWorld);
+try (IonReader reader = readerBuilder.build(helloWorld)) {
+    readHelloWorld(reader);
+}
 ```
 
 Reading the data requires leveraging the `IonReader`'s APIs.
 
 ```java
-void readHelloWorld() {
+void readHelloWorld(IonReader reader) {
     reader.next();                                // position the reader at the first value, a struct
     reader.stepIn();                              // step into the struct
     reader.next();                                // position the reader at the first value in the struct
@@ -865,8 +868,9 @@ Ion data can be pretty-printed using an `IonWriter` constructed by a specially-c
 String unformatted = "{level1: {level2: {level3: \"foo\"}, x: 2}, y: [a,b,c]}";
 
 void rewrite(String textIon, IonWriter writer) throws IOException {
-    IonReader reader = IonReaderBuilder.standard().build(textIon);
-    writer.writeValues(reader);
+    try (IonReader reader = IonReaderBuilder.standard().build(textIon)) {
+        writer.writeValues(reader);
+    }
 }
 
 void prettyPrint() throws IOException {
@@ -1341,23 +1345,23 @@ void readNumericTypes() throws IOException {
     double second = 1.2345e6;
     BigInteger third = new BigInteger("123456");
     BigInteger fourth = new BigInteger("12345678901234567890");
+    
+    try (IonReader reader = IonReaderBuilder.standard().build(numberList)) {
+        assertEquals(IonType.DECIMAL, reader.next());
+        assertEquals(first, reader.bigDecimalValue());
+        assertEquals(first.doubleValue(), reader.doubleValue(), 1e-9);
 
-    IonReader reader = IonReaderBuilder.standard().build(numberList);
+        assertEquals(IonType.FLOAT, reader.next());
+        assertEquals(second, reader.doubleValue(), 1e-9);
 
-    assertEquals(IonType.DECIMAL, reader.next());
-    assertEquals(first, reader.bigDecimalValue());
-    assertEquals(first.doubleValue(), reader.doubleValue(), 1e-9);
+        assertEquals(IonType.INT, reader.next());
+        assertEquals(third, reader.bigIntegerValue());
+        assertEquals(third.longValue(), reader.longValue());
+        assertEquals(third.intValue(), reader.intValue());
 
-    assertEquals(IonType.FLOAT, reader.next());
-    assertEquals(second, reader.doubleValue(), 1e-9);
-
-    assertEquals(IonType.INT, reader.next());
-    assertEquals(third, reader.bigIntegerValue());
-    assertEquals(third.longValue(), reader.longValue());
-    assertEquals(third.intValue(), reader.intValue());
-
-    assertEquals(IonType.INT, reader.next());
-    assertEquals(fourth, reader.bigIntegerValue());
+        assertEquals(IonType.INT, reader.next());
+        assertEquals(fourth, reader.bigIntegerValue());
+    }
 }
 ```
 
@@ -1717,25 +1721,26 @@ InputStream getStream() {
 }
 
 int sumFooQuantities() {
-    IonReader reader = IonReaderBuilder.standard().build(getStream());
-    int sum = 0;
-    IonType type;
-    while ((type = reader.next()) != null) {
-        if (type == IonType.STRUCT) {
-            String[] annotations = reader.getTypeAnnotations();
-            if (annotations.length > 0 && annotations[0].equals("foo")) {
-                reader.stepIn();
-                while ((type = reader.next()) != null) {
-                    if (reader.getFieldName().equals("quantity")) {
-                        sum += reader.intValue();
-                        break;
+    try (IonReader reader = IonReaderBuilder.standard().build(getStream())) {
+        int sum = 0;
+        IonType type;
+        while ((type = reader.next()) != null) {
+            if (type == IonType.STRUCT) {
+                Iterator<String> iter = reader.iterateTypeAnnotations();
+                if (iter.hasNext() && iter.next().equals("foo")) {
+                    reader.stepIn();
+                    while ((type = reader.next()) != null) {
+                        if (reader.getFieldName().equals("quantity")) {
+                            sum += reader.intValue();
+                            break;
+                        }
                     }
+                    reader.stepOut();
                 }
-                reader.stepOut();
             }
         }
+        return sum;
     }
-    return sum;
 }
 ```
 </div>
@@ -2021,19 +2026,20 @@ of the CSV and write its components to an IonWriter.
 
 ```java
 void convertCsvToIon(IonWriter writer) throws IOException {
-    BufferedReader reader = getCsvReader();
-    reader.readLine(); // skip over the column labels
-    String row;
-    while ((row = reader.readLine()) != null) {
-        String[] values = row.split(",");
-        writer.stepIn(IonType.STRUCT);
-        writer.setFieldName("id");
-        writer.writeInt(Integer.parseInt(values[0]));
-        writer.setFieldName("type");
-        writer.writeString(values[1]);
-        writer.setFieldName("state");
-        writer.writeBool(Boolean.parseBoolean(values[2]));
-        writer.stepOut();
+    try (BufferedReader reader = getCsvReader()) {
+        reader.readLine(); // skip over the column labels
+        String row;
+        while ((row = reader.readLine()) != null) {
+            String[] values = row.split(",");
+            writer.stepIn(IonType.STRUCT);
+            writer.setFieldName("id");
+            writer.writeInt(Integer.parseInt(values[0]));
+            writer.setFieldName("type");
+            writer.writeString(values[1]);
+            writer.setFieldName("state");
+            writer.writeBool(Boolean.parseBoolean(values[2]));
+            writer.stepOut();
+        }
     }
 }
 ```
@@ -2228,6 +2234,7 @@ follows.
 static final IonSystem SYSTEM = IonSystemBuilder.standard().build();
 ```
 
+
 Below, this `IonSystem` instance is used to create a shared `SymbolTable`.
 
 ```java
@@ -2236,8 +2243,9 @@ InputStream getSharedSymbolTableStream() {
 }
 
 SymbolTable getSharedSymbolTable() {
-    IonReader symbolTableReader = IonReaderBuilder.standard().build(getSharedSymbolTableStream());
-    return SYSTEM.newSharedSymbolTable(symbolTableReader);
+    try (IonReader symbolTableReader = IonReaderBuilder.standard().build(getSharedSymbolTableStream())) {
+        return SYSTEM.newSharedSymbolTable(symbolTableReader);
+    }
 }
 ```
 
