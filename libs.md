@@ -33,4 +33,5 @@ description: "The latest news about Amazon Ion and the Amazon Ion community."
 |------|------------|---------------|
 | Ion support in Jackson |  [Link](https://github.com/FasterXML/jackson-dataformats-binary/tree/master/ion) | [Link](http://fasterxml.github.io/jackson-dataformats-binary/javadoc/ion/2.12/) |
 | Mir Ion (D language) | [Link](https://github.com/libmir/mir-ion) | [Link](http://mir-ion.libmir.org/) |
+| Ext Ion (PHP language) | [Link](https://github.com/awesomized/ext-ion) | - |
 
