@@ -24,7 +24,7 @@ challenges faced every day while engineering large-scale, service-oriented
 architectures. It has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well.
 
-**Available Languages:** [C][4] -- [C#][20] -- [Go][21] -- [Java][3] -- [JavaScript][6] -- [Python][5] <br>
+**Available Languages:** [C][4] -- [C#][20] -- [Go][21] -- [Java][3] -- [JavaScript][6] -- [Python][5] -- [Rust][22]<br>
 **Related Projects:** [Ion Hash][19] -- [Ion Schema][17]<br>
 **Tools:** [Hive SerDe][18]<br>
 
@@ -163,3 +163,4 @@ To learn more, check out the [Docs][8] page, or see [Libs][12] for the officiall
 [19]: https://amzn.github.io/ion-hash
 [20]: https://github.com/amzn/ion-dotnet
 [21]: https://github.com/amzn/ion-go
+[22]: https://github.com/amzn/ion-rust
