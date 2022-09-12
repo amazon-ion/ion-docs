@@ -49,7 +49,7 @@ This document covers the Amazon Ion data model and the Ion text format.
 
 [ANTLR grammar][3]
 
-This grammar formally covers the text Ion format.
+This grammar formally covers the text Ion format. It is intended to aid in understanding and provide a machine readable description that is mostly complete and correct. It is not considered authoritative.
 
 ---
 
