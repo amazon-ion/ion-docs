@@ -63,11 +63,11 @@ public final class IonGrammarTestCase {
         skip.add(testPath("bad/utf8/surrogate_2.ion"));
         skip.add(testPath("bad/utf8/surrogate_4.ion"));
         skip.add(testPath("bad/utf8/surrogate_5.ion"));
-	skip.add(testPath("bad/utf8/surrogate_6.ion"));
-	skip.add(testPath("bad/utf8/surrogate_7.ion"));
-	skip.add(testPath("bad/utf8/surrogate_8.ion"));
-	skip.add(testPath("bad/utf8/surrogate_9.ion"));
-	skip.add(testPath("bad/utf8/surrogate_10.ion"));
+        skip.add(testPath("bad/utf8/surrogate_6.ion"));
+        skip.add(testPath("bad/utf8/surrogate_7.ion"));
+        skip.add(testPath("bad/utf8/surrogate_8.ion"));
+        skip.add(testPath("bad/utf8/surrogate_9.ion"));
+        skip.add(testPath("bad/utf8/surrogate_10.ion"));
 
         // ANTLR test driver does not test UTF-16 or UTF-32
         skip.add(testPath("good/utf16.ion"));
@@ -82,11 +82,11 @@ public final class IonGrammarTestCase {
         // in the stream is not defined by the grammar.
         skip.add(testPath("bad/symbolIDUnmapped.ion"));
 
-	skip.add(testPath("bad/annotationSymbolIDUnmapped.ion"));
-	skip.add(testPath("bad/fieldNameSymbolIDUnmapped.ion"));
-	skip.add(testPath("bad/localSymbolTableWithMultipleImportsFields.ion"));
-	skip.add(testPath("bad/localSymbolTableWithMultipleSymbolsAndImportsFields.ion"));
-	skip.add(testPath("bad/localSymbolTableWithMultipleSymbolsFields.ion"));
+        skip.add(testPath("bad/annotationSymbolIDUnmapped.ion"));
+        skip.add(testPath("bad/fieldNameSymbolIDUnmapped.ion"));
+        skip.add(testPath("bad/localSymbolTableWithMultipleImportsFields.ion"));
+        skip.add(testPath("bad/localSymbolTableWithMultipleSymbolsAndImportsFields.ion"));
+        skip.add(testPath("bad/localSymbolTableWithMultipleSymbolsFields.ion"));
 
         SKIP_FILES = Collections.unmodifiableSet(skip);
     }
