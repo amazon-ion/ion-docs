@@ -1,15 +1,21 @@
 // Ion Text 1.0 ANTLR v4 Grammar
 //
-// The following grammar does not encode all of the Ion semantics, in particular:
-//
+// The following grammar does not encode the Ion Text semantics completely or
+// unambiguously.
+
+// Known gaps:
 //   * Timestamps are syntactically defined but the rules of ISO 8601 need to be
 //     applied (especially regarding day rules with months and leap years).
 //   * Non $ion_1_0 version markers are not trapped (e.g. $ion_1_1, $ion_2_0)
+//   * The semantics of Symbol Ids, Local Symbol Table defines and imports are not validated
 //   * Edge cases around Unicode semantics:
 //      - ANTLR specifies only four hex digit unicode escapes and on Java operates
 //        on UTF-16 code units (this is a flaw in ANTLR).
 //      - The grammar doesn't validate unpaired surrogate escapes in symbols or strings
 //        (e.g. "\udc00")
+//   * There are some ambiguities involving symbol operators within s-expressions
+//      - Do '-' and '+' (possibly others) right or left associate?
+//      - Do symbol operators terminate special float symbols (nan, -inf, +inf)?
 
 grammar IonText;
 
