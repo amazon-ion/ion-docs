@@ -7,8 +7,7 @@ description: "An explanation of the Amazon Ion text encoding."
 # [Docs][docs]/ {{ page.title }}
 
 A [value stream][glossary-value-stream] in the text encoding must be a
-valid sequence of Unicode code points in any of the three encoding forms
-(i.e. UTF-8, UTF-16, or UTF-32).
+valid sequence of UTF-8 code points.
 
 ## ANTLR Grammar {#grammar}
 
