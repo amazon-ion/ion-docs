@@ -24,8 +24,8 @@ comments.)
 The Ion [text encoding][text] is intended to be easy to read and
 write. It may be more suitable for streaming applications since sequences
 don't need to be length-prefixed. Whitespace is insignificant and is only
-required where necessary to separate tokens. C-style comments are treated
-as whitespace, and are not part of the binary encoding.
+required where necessary to separate tokens. C-style comments (either block
+or in-line) are treated as whitespace, and are not part of the binary encoding.
 
 The [binary encoding][binary] is
 much more compact and efficient. An important feature is that parts of
@@ -487,8 +487,9 @@ When parsing `blob` text, an error must be raised if the data:
   * Contains a padding character (`=`) anywhere other than at the end.
   * Is terminated by an incorrect number of padding characters.
 
-Within `blob` values, whitespace is ignored and comments are not allowed.
-The `/` character is always considered part of the Base64 data.
+Within `blob` values, whitespace is ignored. Comments within `blob`s 
+are not supported: the `/` character is always considered part of the
+Base64 data and the `*` is invalid.
 
 ```
 {% raw %}
@@ -528,8 +529,7 @@ data between braces must be one string. The string may only contain
 legal 7-bit ASCII characters, using the same escaping syntax as `string`
 and `symbol` values. This guarantees that the value can be transmitted
 unscathed while remaining generally readable (at least for western
-language text). Like `blob`s, `clob`s disallow comments everywhere
-within the value.
+language text). Either form of comment within a `clob` is invalid. 
 
 [Strings and Clobs][stringclob] gives details on the
 subtle, but profound, differences between Ion strings and clobs.
