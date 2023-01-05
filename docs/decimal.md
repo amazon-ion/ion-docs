@@ -12,10 +12,9 @@ representation preserves significant trailing zeros when converting
 between text and binary forms.
 
 Decimals are supported in addition to the traditional base-2 floating point
-type (see Ion `float`) to avoid the loss of precision associated with
-converting base-10 fractional values to base-2 fractional values. Sadly,
-base-10 is relatively prime to base-2; many commonly-used base-10 rational
-numbers are irrational in base-2.
+type (see Ion `float`). This avoids the loss of exactness often incurred when
+storing a decimal fraction as a binary fraction. Many common decimal numbers with 
+relatively few digits cannot be represented as a terminating binary fraction.
 
 * TOC
 {:toc}
