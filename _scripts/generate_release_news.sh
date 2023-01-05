@@ -57,7 +57,7 @@ for repo_name in $REPO_NAMES; do
   [[ $GITHUB_ACTIONS ]] && echo "::group::$repo_name"
 
   echo "Checking for releases in $repo_name"
-  release="$(gh release view -R "amzn/$repo_name" --json body,createdAt,tagName)"
+  release="$(gh release view -R "amazon-ion/$repo_name" --json body,createdAt,tagName)"
   if [[ -z "$release" ]]; then
     [[ $GITHUB_ACTIONS ]] && echo "::endgroup::"
     continue
@@ -91,7 +91,7 @@ categories: news $repo_name
 
 $title_case_repo_name $version is now available.
 
-| [Release Notes $tag](https://github.com/amzn/$repo_name/releases/tag/$tag) | [$title_case_repo_name](https://github.com/amzn/$repo_name) |
+| [Release Notes $tag](https://github.com/amazon-ion/$repo_name/releases/tag/$tag) | [$title_case_repo_name](https://github.com/amazon-ion/$repo_name) |
 " >> "$news_item_file_path"
 
     git add "$news_item_file_path"

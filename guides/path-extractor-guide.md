@@ -8,12 +8,12 @@ description: "A guide to implementing path extraction APIs."
 This document provides a guide to implementing a path extraction API as
 an alternative to the traditional streaming and DOM APIs. A reference
 implementation exists in ion-c (see
-[1](https://github.com/amzn/ion-c/blob/master/ionc/inc/ion_extractor.h),
-[2](https://github.com/amzn/ion-c/blob/master/ionc/ion_extractor_impl.h),
+[1](https://github.com/amazon-ion/ion-c/blob/master/ionc/include/ionc/ion_extractor.h),
+[2](https://github.com/amazon-ion/ion-c/blob/master/ionc/ion_extractor_impl.h),
 and
-[3](https://github.com/amzn/ion-c/blob/master/ionc/ion_extractor.c)) and
+[3](https://github.com/amazon-ion/ion-c/blob/master/ionc/ion_extractor.c)) and
 it's also available as an
-[extension to ion-java](https://github.com/amzn/ion-java-path-extraction).
+[extension to ion-java](https://github.com/amazon-ion/ion-java-path-extraction).
 
 Motivation
 ----------
