@@ -28,7 +28,7 @@ Each [library](libs.html) repo has a contributing file that provides instruction
 
 ### Do I have to create a schema in order to use Ion?
 
-> No.  Working with Ion does not require the use of schemas.  However, use cases for which constraining the universe of Ion values is helpful may utilize [Ion Schema](https://amzn.github.io/ion-schema/).
+> No.  Working with Ion does not require the use of schemas.  However, use cases for which constraining the universe of Ion values is helpful may utilize [Ion Schema](https://amazon-ion.github.io/ion-schema/).
 
 ### How can I concatenate streams of Ion data?
 

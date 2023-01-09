@@ -5,7 +5,7 @@
   {%- assign name = row["name"] -%}
   {%- capture release -%}
     {%- if row["latest_release_version"] -%}
-      [{{ row["latest_release_version"] }}](https://github.com/amzn/{{ name }}/releases/latest) ({{ row["latest_release_date"] | date: "%B %d, %Y" }})
+      [{{ row["latest_release_version"] }}](https://github.com/amazon-ion/{{ name }}/releases/latest) ({{ row["latest_release_date"] | date: "%B %d, %Y" }})
     {%- else -%}
       in development
     {%- endif -%}
@@ -18,7 +18,7 @@
     {%- endif -%}
   {%- endcapture -%}
   {%- capture repository -%}
-    [Link](https://github.com/amzn/{{ name }})
+    [Link](https://github.com/amazon-ion/{{ name }})
   {%- endcapture -%}
   | {{ name }} | {{ release }} | {{ repository }} | {{ documentation }}
 {% endfor %}

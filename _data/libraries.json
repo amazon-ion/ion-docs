@@ -4,7 +4,7 @@
     "category": "core",
     "latest_release_version": "1.1.0",
     "latest_release_date": "2022-12-06",
-    "documentation": "https://amzn.github.io/ion-c/"
+    "documentation": "https://amazon-ion.github.io/ion-c/"
   },
   {
     "name": "ion-dotnet",
@@ -24,7 +24,7 @@
     "category": "core",
     "latest_release_version": "4.3.0",
     "latest_release_date": "2022-05-10",
-    "documentation": "https://amzn.github.io/ion-js/api/"
+    "documentation": "https://amazon-ion.github.io/ion-js/api/"
   },
   {
     "name": "ion-rust",

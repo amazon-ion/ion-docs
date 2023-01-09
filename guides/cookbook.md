@@ -2499,7 +2499,7 @@ openTab('Java');  // default tab
 </script>
 
 <!-- References -->
-[1]: https://github.com/amzn/ion-java
+[1]: https://github.com/amazon-ion/ion-java
 [2]: https://www.javadoc.io/doc/com.amazon.ion/ion-java/
 [3]: https://www.javadoc.io/doc/com.amazon.ion/ion-java/latest/com/amazon/ion/IonSystem.html
 [4]: https://www.javadoc.io/doc/com.amazon.ion/ion-java/latest/com/amazon/ion/IonReader.html
@@ -2512,14 +2512,14 @@ openTab('Java');  // default tab
 [11]: https://docs.oracle.com/javase/8/docs/api/java/io/ByteArrayOutputStream.html
 [12]: https://docs.oracle.com/javase/8/docs/api/java/math/BigInteger.html
 [13]: https://docs.oracle.com/javase/8/docs/api/java/io/BufferedReader.html
-[14]: https://amzn.github.io/ion-c/
+[14]: https://amazon-ion.github.io/ion-c/
 [15]: https://www.javadoc.io/doc/com.amazon.ion/ion-java/latest/com/amazon/ion/system/IonBinaryWriterBuilder.html
 [16]: https://www.javadoc.io/doc/com.amazon.ion/ion-java/latest/com/amazon/ion/system/IonReaderBuilder.html
 [17]: {{ site.baseurl }}/docs.html
-[18]: https://amzn.github.io/ion-js/api/
-[19]: https://amzn.github.io/ion-js/api/interfaces/_ionreader_.reader.html
-[20]: https://amzn.github.io/ion-js/api/interfaces/_ionwriter_.writer.html
+[18]: https://amazon-ion.github.io/ion-js/api/
+[19]: https://amazon-ion.github.io/ion-js/api/interfaces/_ionreader_.reader.html
+[20]: https://amazon-ion.github.io/ion-js/api/interfaces/_ionwriter_.writer.html
 [21]: https://ion-python.readthedocs.io/en/latest/index.html
-[22]: https://github.com/amzn/ion-go/blob/master/ion/reader.go
-[23]: https://github.com/amzn/ion-go/blob/master/ion/writer.go
-[24]: https://pkg.go.dev/github.com/amzn/ion-go/ion
+[22]: https://github.com/amazon-ion/ion-go/blob/master/ion/reader.go
+[23]: https://github.com/amazon-ion/ion-go/blob/master/ion/writer.go
+[24]: https://pkg.go.dev/github.com/amazon-ion/ion-go/ion

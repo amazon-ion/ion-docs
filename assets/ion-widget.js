@@ -21,7 +21,7 @@
       + '<textarea rows="20" cols="60" id="ion-source-' + id + '" style="border: 1px solid lightgrey; background: white; color: black; padding: 5px; line-height: 1.3em">' + ionSource.innerHTML + '</textarea></td>'
       + '<td width="50%" style="padding: 0px"><code id="ion-text-' + id + '" style="display: block; white-space: pre-wrap"></code></td>'
       + '</tr>'
-      + '<tr><td align="center"><button id="btn-ion-parse-' + id + '">parse</button></td><td align="right"><font size="-1">made with <a href="https://github.com/amzn/ion-js">ion-js</a></font></td></tr>'
+      + '<tr><td align="center"><button id="btn-ion-parse-' + id + '">parse</button></td><td align="right"><font size="-1">made with <a href="https://github.com/amazon-ion/ion-js">ion-js</a></font></td></tr>'
       + '</table>';
   ionSource.parentNode.replaceChild(widget, ionSource);
 

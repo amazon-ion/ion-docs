@@ -145,10 +145,10 @@ To learn more, check out the [Docs][8] page, or see [Libs][12] for the officiall
 <!-- References -->
 [1]: http://json.org
 [2]: guides/why.html
-[3]: https://github.com/amzn/ion-java
-[4]: https://github.com/amzn/ion-c
-[5]: https://github.com/amzn/ion-python
-[6]: https://github.com/amzn/ion-js
+[3]: https://github.com/amazon-ion/ion-java
+[4]: https://github.com/amazon-ion/ion-c
+[5]: https://github.com/amazon-ion/ion-python
+[6]: https://github.com/amazon-ion/ion-js
 [7]: news.html
 [8]: docs.html
 [9]: help.html
@@ -159,11 +159,11 @@ To learn more, check out the [Docs][8] page, or see [Libs][12] for the officiall
 [14]: guides/why.html#dual-format-interoperability
 [15]: guides/why.html#self-describing
 [16]: guides/why.html#read-optimized-binary-format
-[17]: https://amzn.github.io/ion-schema
-[18]: https://github.com/amzn/ion-hive-serde
-[19]: https://amzn.github.io/ion-hash
-[20]: https://github.com/amzn/ion-dotnet
-[21]: https://github.com/amzn/ion-go
-[22]: https://github.com/amzn/ion-rust
+[17]: https://amazon-ion.github.io/ion-schema
+[18]: https://github.com/amazon-ion/ion-hive-serde
+[19]: https://amazon-ion.github.io/ion-hash
+[20]: https://github.com/amazon-ion/ion-dotnet
+[21]: https://github.com/amazon-ion/ion-go
+[22]: https://github.com/amazon-ion/ion-rust
 [23]: https://github.com/libmir/mir-ion
 [24]: https://github.com/awesomized/ext-ion
