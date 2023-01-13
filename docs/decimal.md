@@ -7,9 +7,9 @@ description: "Amazon Ion supports a decimal numeric type to allow accurate repre
 # [Docs][docs]/ {{ page.title }}
 
 Amazon Ion supports a decimal numeric type to allow accurate representation
-of base-10 floating point values such as currency amounts. This
-representation preserves significant trailing zeros when converting
-between text and binary forms.
+of base-10 floating point values such as currency amounts. An Ion Decimal
+has arbitrary precision and scale. This representation preserves significant
+trailing zeros when converting between text and binary forms.
 
 Decimals are supported in addition to the traditional base-2 floating point
 type (see Ion `float`). This avoids the loss of exactness often incurred when
