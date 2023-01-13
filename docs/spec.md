@@ -633,9 +633,8 @@ statements. As such, correct interpretation requires a higher-level
 context other than the raw Ion parser and data model.
 
 In the text format, S-expressions are bounded by parentheses.
-S-expressions also allow unquoted operator symbols (in addition to the
-unquoted identifier symbols allowed everywhere), so commas are
-interpreted as values rather than element separators.
+S-expressions also allow unquoted operator symbols, in addition to the
+unquoted identifier symbols allowed everywhere.
 
 ```
 null.sexp         // A null S-expression value
