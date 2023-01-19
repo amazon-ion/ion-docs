@@ -16,39 +16,7 @@
 # This script does not generate news items for releases marked as a pre-release
 # version.
 
-# TODO: See if github actions can use the github cli to automatically list all Ion repositories.
-# readonly REPO_NAMES="$(gh api teams/2323876/repos --jq '.[] | select(.visibility == "public") | .name')"
-
-# This should be kept up-to-date with all PUBLIC Ion repositories.
-readonly REPO_NAMES="\
-ion-c
-ion-cli
-ion-docs
-ion-dotnet
-ion-eclipse-plugin
-ion-element-kotlin
-ion-go
-ion-hash
-ion-hash-dotnet
-ion-hash-go
-ion-hash-java
-ion-hash-js
-ion-hash-python
-ion-hash-test
-ion-hash-test-driver
-ion-hive-serde
-ion-intellij-plugin
-ion-java
-ion-java-benchmark-cli
-ion-java-path-extraction
-ion-js
-ion-kotlin-builder
-ion-python
-ion-rust
-ion-schema
-ion-schema-kotlin
-ion-schema-rust
-"
+readonly REPO_NAMES="$(gh repo list amazon-ion --json name --visibility=Public --limit 100 -q '.[].name')"
 
 commit_msg_body=""
 
