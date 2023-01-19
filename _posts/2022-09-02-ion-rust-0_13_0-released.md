@@ -7,5 +7,5 @@ categories: news ion-rust
 
 Ion Rust 0.13.0 is now available.
 
-| [Release Notes v0.13.0](https://github.com/amzn/ion-rust/releases/tag/v0.13.0) | [Ion Rust](https://github.com/amzn/ion-rust) |
+| [Release Notes v0.13.0](https://github.com/amazon-ion/ion-rust/releases/tag/v0.13.0) | [Ion Rust](https://github.com/amazon-ion/ion-rust) |
 

@@ -7,5 +7,5 @@ categories: news ion-java
 
 Ion Java 1.9.4 is now available.
 
-| [Release Notes v1.9.4](https://github.com/amzn/ion-java/releases/tag/v1.9.4) | [Ion Java](https://github.com/amzn/ion-java) |
+| [Release Notes v1.9.4](https://github.com/amazon-ion/ion-java/releases/tag/v1.9.4) | [Ion Java](https://github.com/amazon-ion/ion-java) |
 

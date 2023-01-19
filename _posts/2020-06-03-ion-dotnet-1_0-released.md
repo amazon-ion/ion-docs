@@ -8,5 +8,5 @@ This first release for the .NET platform provides full support for the Ion type 
 
 The Amazon.IonDotnet package is available via [NuGet](https://www.nuget.org/packages/Amazon.IonDotnet).
 
-| [Release Notes](https://github.com/amzn/ion-dotnet/releases/tag/v1.0.0) | [Ion .NET](https://github.com/amzn/ion-dotnet) |
+| [Release Notes](https://github.com/amazon-ion/ion-dotnet/releases/tag/v1.0.0) | [Ion .NET](https://github.com/amazon-ion/ion-dotnet) |
 

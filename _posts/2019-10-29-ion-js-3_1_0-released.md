@@ -13,4 +13,4 @@ In addition to numerous bug fixes, this release adds support for arbitrary preci
 
 Note: this release targets Node environments only and has not been verified to work in any browsers
 
-| [Release Notes](https://github.com/amzn/ion-js/releases/tag/v3.1.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-js/releases/tag/v3.1.0) |

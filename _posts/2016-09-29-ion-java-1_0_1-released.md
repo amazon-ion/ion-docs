@@ -6,4 +6,4 @@ categories: news
 ---
 Ability to read and write 32-bit floats, and to query integer sizes (short, int, long, etc.) for more efficient materialization (no need to always start with BigInteger).
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.0.1) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.0.1) |

@@ -7,5 +7,5 @@ categories: news ion-hive-serde
 
 Ion Hive Serde 1.0.0 is now available.
 
-| [Release Notes v1.0.0](https://github.com/amzn/ion-hive-serde/releases/tag/v1.0.0) | [Ion Hive Serde](https://github.com/amzn/ion-hive-serde) |
+| [Release Notes v1.0.0](https://github.com/amazon-ion/ion-hive-serde/releases/tag/v1.0.0) | [Ion Hive Serde](https://github.com/amazon-ion/ion-hive-serde) |
 

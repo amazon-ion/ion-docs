@@ -6,4 +6,4 @@ categories: news
 ---
 This document provides developer-focused commentary on the Symbols section of the specification and discusses the implementation of symbol table, symbol token, and catalog APIs.
 
-| [Symbols Developer Guide](https://amzn.github.io/ion-docs/guides/symbols-guide.html) |
+| [Symbols Developer Guide](https://amazon-ion.github.io/ion-docs/guides/symbols-guide.html) |

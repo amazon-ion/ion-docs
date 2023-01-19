@@ -20,4 +20,4 @@ Testing improvements:
 * Migrated from Travis CI to Github Actions.
 * Integrated with ion-test-driver.
 
-| [Release Notes](https://github.com/amzn/ion-js/releases/tag/v4.1.0) | [Ion JS](https://github.com/amzn/ion-js) |
+| [Release Notes](https://github.com/amazon-ion/ion-js/releases/tag/v4.1.0) | [Ion JS](https://github.com/amazon-ion/ion-js) |

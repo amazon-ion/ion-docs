@@ -6,4 +6,4 @@ categories: news
 ---
 Javadoc changes.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.1.2) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.1.2) |

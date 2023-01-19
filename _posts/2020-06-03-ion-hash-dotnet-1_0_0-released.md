@@ -8,5 +8,5 @@ This release provides full support for hashing all Ion values.
 
 The Amazon.IonHashDotnet package is available via [NuGet](https://www.nuget.org/packages/Amazon.IonHashDotnet).
 
-| [Release Notes](https://github.com/amzn/ion-hash-dotnet/releases/tag/v1.0.0) | [Ion Hash .NET](https://github.com/amzn/ion-hash-dotnet) |
+| [Release Notes](https://github.com/amazon-ion/ion-hash-dotnet/releases/tag/v1.0.0) | [Ion Hash .NET](https://github.com/amazon-ion/ion-hash-dotnet) |
 

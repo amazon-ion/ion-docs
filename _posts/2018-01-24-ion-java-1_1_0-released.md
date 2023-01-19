@@ -6,4 +6,4 @@ categories: news
 ---
 Adds support for empty symbols, local symbol append, SID0, NOP padding, and more improvements.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.1.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.1.0) |

@@ -7,5 +7,5 @@ categories: news ion-go
 
 Ion Go 1.1.3 is now available.
 
-| [Release Notes v1.1.3](https://github.com/amzn/ion-go/releases/tag/v1.1.3) | [Ion Go](https://github.com/amzn/ion-go) |
+| [Release Notes v1.1.3](https://github.com/amazon-ion/ion-go/releases/tag/v1.1.3) | [Ion Go](https://github.com/amazon-ion/ion-go) |
 

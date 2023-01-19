@@ -6,4 +6,4 @@ categories: news
 ---
 Avoid writing fractional second if not necessary in Timestamp binary encoding.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.0.3) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.0.3) |

@@ -16,4 +16,4 @@ Limitations:
 * No UTF-16 or UTF-32 support.
 * Binary Ion streams may not exceed 2<sup>32</sup> distinct symbols.
 
-| [Release Notes](https://github.com/amzn/ion-c/releases/tag/v1.0.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-c/releases/tag/v1.0.0) |

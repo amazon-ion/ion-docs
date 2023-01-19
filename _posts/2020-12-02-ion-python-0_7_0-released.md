@@ -10,4 +10,4 @@ Bug fix:
 New API:
 * Adds IonToJSONEncoder to allow Ion data to be down-converted to JSON.
 
-| [Release Notes](https://github.com/amzn/ion-python/releases/tag/v0.7.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-python/releases/tag/v0.7.0) |

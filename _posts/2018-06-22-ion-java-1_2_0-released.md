@@ -7,4 +7,4 @@ categories: news
 * Decouples IonReader from IonSystem and adds IonReaderBuilder.
 * Adds Automatic-Module-Name in manifest so Java9 modular applications can depend on this library.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.2.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.2.0) |

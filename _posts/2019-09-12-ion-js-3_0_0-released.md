@@ -19,4 +19,4 @@ The following are known limitations:
 
 Note: this release targets Node environments only and has not been verified to work in any browsers
 
-| [Release Notes](https://github.com/amzn/ion-js/releases/tag/v3.0.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-js/releases/tag/v3.0.0) |

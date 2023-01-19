@@ -6,4 +6,4 @@ categories: news ion-python
 ---
 Adds support for reading text Ion and fixes bug affecting writes of large binary Ion values.
 
-| [Release Notes](https://github.com/amzn/ion-python/releases/tag/v0.2.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-python/releases/tag/v0.2.0) |

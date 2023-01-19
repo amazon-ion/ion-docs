@@ -7,5 +7,5 @@ categories: news ion-js
 
 Ion Js 4.2.2 is now available.
 
-| [Release Notes v4.2.2](https://github.com/amzn/ion-js/releases/tag/v4.2.2) | [Ion Js](https://github.com/amzn/ion-js) |
+| [Release Notes v4.2.2](https://github.com/amazon-ion/ion-js/releases/tag/v4.2.2) | [Ion Js](https://github.com/amazon-ion/ion-js) |
 
