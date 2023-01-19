@@ -2522,4 +2522,4 @@ openTab('Java');  // default tab
 [21]: https://ion-python.readthedocs.io/en/latest/index.html
 [22]: https://github.com/amazon-ion/ion-go/blob/master/ion/reader.go
 [23]: https://github.com/amazon-ion/ion-go/blob/master/ion/writer.go
-[24]: https://pkg.go.dev/github.com/amazon-ion/ion-go/ion
+[24]: https://pkg.go.dev/github.com/amzn/ion-go/ion

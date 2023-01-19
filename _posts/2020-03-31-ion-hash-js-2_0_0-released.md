@@ -6,5 +6,5 @@ categories: news ion-hash-js
 ---
 This release introduces a simple API for calculating an Ion hash of any value, including native JavaScript types as well as instances of ion-js 4.0's `dom.Value` class.
 
-| [Release Notes](https://github.com/amzn/ion-hash-js/releases/tag/v2.0.0) | [Ion Hash JS](https://github.com/amzn/ion-hash-js) |
+| [Release Notes](https://github.com/amazon-ion/ion-hash-js/releases/tag/v2.0.0) | [Ion Hash JS](https://github.com/amazon-ion/ion-hash-js) |
 

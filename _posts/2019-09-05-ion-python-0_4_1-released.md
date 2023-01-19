@@ -10,4 +10,4 @@ categories: news ion-python
 * Sets Travis CI dist to Xenial and removes 2.6/2.7
 
 
-| [Release Notes](https://github.com/amzn/ion-python/releases/tag/v0.4.1) |
+| [Release Notes](https://github.com/amazon-ion/ion-python/releases/tag/v0.4.1) |

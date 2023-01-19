@@ -9,5 +9,5 @@ This release includes:
 * Optimizations for reading and writing binary strings.
 * A fix for a bug that could cause an infinite loop when an IonValue was modified while simultaneously being read with a TreeReader.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.6.0) | [Ion Java](https://github.com/amzn/ion-java) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.6.0) | [Ion Java](https://github.com/amazon-ion/ion-java) |
 

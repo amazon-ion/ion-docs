@@ -13,4 +13,4 @@ Bug fixes:
 
 * Unknown SIDs larger than INT_MAX now throw an IonException instead of a NumberFormatException.
 
-| [Release Notes v1.8.1](https://github.com/amzn/ion-java/releases/tag/v1.8.1) | [Ion Java](https://github.com/amzn/ion-java) |
+| [Release Notes v1.8.1](https://github.com/amazon-ion/ion-java/releases/tag/v1.8.1) | [Ion Java](https://github.com/amazon-ion/ion-java) |

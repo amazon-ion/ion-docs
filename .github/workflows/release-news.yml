@@ -14,7 +14,7 @@ permissions: write-all
 jobs:
   generate_news_items:
     # If this is running in a fork, only run if manually dispatched.
-    if: github.repository == 'amzn/ion-docs' || github.event_name == 'workflow_dispatch'
+    if: github.repository == 'amazon-ion/ion-docs' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

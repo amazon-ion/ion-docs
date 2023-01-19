@@ -6,6 +6,6 @@ categories: news ion-hash-go
 ---
 This release provides full support for hashing all Ion values.
 
-The package is available via [GitHub](https://github.com/amzn/ion-hash-go).
+The package is available via [GitHub](https://github.com/amazon-ion/ion-hash-go).
 
-| [Release Notes](https://github.com/amzn/ion-hash-go/releases/tag/v1.0.0) | [Ion Go](https://github.com/amzn/ion-hash-go) |
+| [Release Notes](https://github.com/amazon-ion/ion-hash-go/releases/tag/v1.0.0) | [Ion Go](https://github.com/amazon-ion/ion-hash-go) |

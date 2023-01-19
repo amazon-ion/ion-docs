@@ -27,4 +27,4 @@ Tweaks:
 * Use number instead of BigInt for smaller values. (Performance optimization)
 
 
-| [Release Notes v4.2.0](https://github.com/amzn/ion-js/releases/tag/v4.2.0) | [Release Notes v4.2.1](https://github.com/amzn/ion-js/releases/tag/v4.2.1) | [Ion JS](https://github.com/amzn/ion-js) |
+| [Release Notes v4.2.0](https://github.com/amazon-ion/ion-js/releases/tag/v4.2.0) | [Release Notes v4.2.1](https://github.com/amazon-ion/ion-js/releases/tag/v4.2.1) | [Ion JS](https://github.com/amazon-ion/ion-js) |

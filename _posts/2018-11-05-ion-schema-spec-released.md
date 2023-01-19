@@ -12,5 +12,5 @@ This new specification describes a language and set of constraints used to decla
 
 A reference implementation of Ion Schema is now available as open source software.  It is written in Kotlin, and should be considered alpha software.
 
-| [Ion Schema Specification](https://amzn.github.io/ion-schema/docs/spec.html) | [Reference Implementation](https://github.com/amzn/ion-schema-kotlin) |
+| [Ion Schema Specification](https://amazon-ion.github.io/ion-schema/docs/spec.html) | [Reference Implementation](https://github.com/amazon-ion/ion-schema-kotlin) |
 

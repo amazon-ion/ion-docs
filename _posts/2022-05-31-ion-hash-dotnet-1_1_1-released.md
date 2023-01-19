@@ -7,5 +7,5 @@ categories: news ion-hash-dotnet
 
 Ion Hash Dotnet 1.1.1 is now available.
 
-| [Release Notes v1.1.1](https://github.com/amzn/ion-hash-dotnet/releases/tag/v1.1.1) | [Ion Hash Dotnet](https://github.com/amzn/ion-hash-dotnet) |
+| [Release Notes v1.1.1](https://github.com/amazon-ion/ion-hash-dotnet/releases/tag/v1.1.1) | [Ion Hash Dotnet](https://github.com/amazon-ion/ion-hash-dotnet) |
 

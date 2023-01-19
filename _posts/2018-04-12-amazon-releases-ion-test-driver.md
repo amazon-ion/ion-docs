@@ -6,4 +6,4 @@ categories: news
 ---
 A cross-implementation test driver for Amazon Ion readers and writers.
 
-| [GitHub Repository](https://github.com/amzn/ion-test-driver) |
+| [GitHub Repository](https://github.com/amazon-ion/ion-test-driver) |

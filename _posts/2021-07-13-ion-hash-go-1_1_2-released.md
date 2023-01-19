@@ -7,5 +7,5 @@ categories: news ion-hash-go
 
 Ion Hash Go 1.1.2 is now available.
 
-| [Release Notes v1.1.2](https://github.com/amzn/ion-hash-go/releases/tag/v1.1.2) | [Ion Hash Go](https://github.com/amzn/ion-hash-go) |
+| [Release Notes v1.1.2](https://github.com/amazon-ion/ion-hash-go/releases/tag/v1.1.2) | [Ion Hash Go](https://github.com/amazon-ion/ion-hash-go) |
 

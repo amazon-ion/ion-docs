@@ -6,4 +6,4 @@ categories: news
 ---
 An Eclipse plugin for working with files using the Amazon Ion data format. 
 
-| [GitHub Repository](https://github.com/amzn/ion-eclipse-plugin) | [Getting Started](https://github.com/amzn/ion-eclipse-plugin#getting-started) |
+| [GitHub Repository](https://github.com/amazon-ion/ion-eclipse-plugin) | [Getting Started](https://github.com/amazon-ion/ion-eclipse-plugin#getting-started) |

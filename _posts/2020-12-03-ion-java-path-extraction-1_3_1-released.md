@@ -7,5 +7,5 @@ categories: news ion-java-path-extraction
 
 Ion Java Path Extraction 1.3.1 is now available.
 
-| [Release Notes v1.3.1](https://github.com/amzn/ion-java-path-extraction/releases/tag/v1.3.1) | [Ion Java Path Extraction](https://github.com/amzn/ion-java-path-extraction) |
+| [Release Notes v1.3.1](https://github.com/amazon-ion/ion-java-path-extraction/releases/tag/v1.3.1) | [Ion Java Path Extraction](https://github.com/amazon-ion/ion-java-path-extraction) |
 

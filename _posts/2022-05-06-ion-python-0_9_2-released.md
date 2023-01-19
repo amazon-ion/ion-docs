@@ -7,5 +7,5 @@ categories: news ion-python
 
 Ion Python 0.9.2 is now available.
 
-| [Release Notes v0.9.2](https://github.com/amzn/ion-python/releases/tag/v0.9.2) | [Ion Python](https://github.com/amzn/ion-python) |
+| [Release Notes v0.9.2](https://github.com/amazon-ion/ion-python/releases/tag/v0.9.2) | [Ion Python](https://github.com/amazon-ion/ion-python) |
 

@@ -6,4 +6,4 @@ categories: news
 ---
 This is the initial open source release of Ion Java.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.0.0) | [Maven Central](http://search.maven.org/#artifactdetails%7Csoftware.amazon.ion%7Cion-java%7C1.0.0%7C) | [Javadoc](http://www.javadoc.io/doc/software.amazon.ion/ion-java/1.0.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.0.0) | [Maven Central](http://search.maven.org/#artifactdetails%7Csoftware.amazon.ion%7Cion-java%7C1.0.0%7C) | [Javadoc](http://www.javadoc.io/doc/software.amazon.ion/ion-java/1.0.0) |

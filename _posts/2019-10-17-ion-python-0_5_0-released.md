@@ -9,4 +9,4 @@ categories: news ion-python
 * Adds support for timestamps with arbitrary precision.
 
 
-| [Release Notes](https://github.com/amzn/ion-python/releases/tag/v0.5.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-python/releases/tag/v0.5.0) |

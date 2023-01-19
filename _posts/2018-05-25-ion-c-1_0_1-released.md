@@ -8,4 +8,4 @@ Bug fixes:
 
 * Fixed an issue that caused release builds to fail during linking.
 
-| [Release Notes](https://github.com/amzn/ion-c/releases/tag/v1.0.1) |
+| [Release Notes](https://github.com/amazon-ion/ion-c/releases/tag/v1.0.1) |

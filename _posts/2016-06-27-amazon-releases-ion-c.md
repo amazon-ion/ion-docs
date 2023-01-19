@@ -6,4 +6,4 @@ categories: news
 ---
 Ion-C is a C library for Ion.
 
-| [GitHub Repository](https://github.com/amzn/ion-c) |
+| [GitHub Repository](https://github.com/amazon-ion/ion-c) |

@@ -10,5 +10,5 @@ New features:
 * #171: Adds support for marshalling `Time` values without first creating an intermediate
   `ion.Timestamp`
 
-| [Release Notes v1.1.0](https://github.com/amzn/ion-go/releases/tag/v1.1.0) | [Ion Go](https://github.com/amzn/ion-go) |
+| [Release Notes v1.1.0](https://github.com/amazon-ion/ion-go/releases/tag/v1.1.0) | [Ion Go](https://github.com/amazon-ion/ion-go) |
  

@@ -7,5 +7,5 @@ categories: news ion-intellij-plugin
 
 Ion Intellij Plugin 2.2.0 is now available.
 
-| [Release Notes 2.2.0](https://github.com/amzn/ion-intellij-plugin/releases/tag/2.2.0) | [Ion Intellij Plugin](https://github.com/amzn/ion-intellij-plugin) |
+| [Release Notes 2.2.0](https://github.com/amazon-ion/ion-intellij-plugin/releases/tag/2.2.0) | [Ion Intellij Plugin](https://github.com/amazon-ion/ion-intellij-plugin) |
 

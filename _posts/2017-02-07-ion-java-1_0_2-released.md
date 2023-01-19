@@ -6,4 +6,4 @@ categories: news
 ---
 Provides OSGi metadata. Fixes a few small bugs.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.0.2) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.0.2) |

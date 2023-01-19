@@ -19,4 +19,4 @@ We'll keep supporting `software.amazon.ion` by publishing mirrored releases but 
 * Cached the reference to the current container context in the binary writer to reduce repetitive List lookups, resulting in a speedup (10%) when writing a sample of container-heavy test data.
 
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/com_amazon_ion_v1.5.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/com_amazon_ion_v1.5.0) |

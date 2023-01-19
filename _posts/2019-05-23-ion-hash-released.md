@@ -8,5 +8,5 @@ This new specification defines a hash algorithm for Ion values, independent of w
 
 Additionally, a reference implementation of Ion Hash written in Java is available as open source software.
 
-| [Ion Hash Specification](https://amzn.github.io/ion-hash/docs/spec.html) | [Reference Implementation](https://github.com/amzn/ion-hash-java) |
+| [Ion Hash Specification](https://amazon-ion.github.io/ion-hash/docs/spec.html) | [Reference Implementation](https://github.com/amazon-ion/ion-hash-java) |
 

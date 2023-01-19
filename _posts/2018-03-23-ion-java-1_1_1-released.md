@@ -6,4 +6,4 @@ categories: news
 ---
 Fixes `IonStruct.clone` performance regression introduced in v1.1.0.
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/v1.1.1) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/v1.1.1) |

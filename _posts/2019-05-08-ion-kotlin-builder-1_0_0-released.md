@@ -7,5 +7,5 @@ categories: news ion-kotlin-builder
 
 Ion Kotlin Builder 1.0.0 is now available.
 
-| [Release Notes v1.0.0](https://github.com/amzn/ion-kotlin-builder/releases/tag/v1.0.0) | [Ion Kotlin Builder](https://github.com/amzn/ion-kotlin-builder) |
+| [Release Notes v1.0.0](https://github.com/amazon-ion/ion-kotlin-builder/releases/tag/v1.0.0) | [Ion Kotlin Builder](https://github.com/amazon-ion/ion-kotlin-builder) |
 

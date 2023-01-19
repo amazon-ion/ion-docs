@@ -15,4 +15,4 @@ We'll keep supporting `software.amazon.ion` by publishing mirrored releases but 
 * Fixed a gzipped related memory leak
 * Performance fix for IonValueLite.clearSymbolIdValues()
 
-| [Release Notes](https://github.com/amzn/ion-java/releases/tag/com_amazon_ion_v1.4.0) |
+| [Release Notes](https://github.com/amazon-ion/ion-java/releases/tag/com_amazon_ion_v1.4.0) |

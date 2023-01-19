@@ -7,5 +7,5 @@ categories: news ion-c
 
 Ion C 1.0.5 is now available.
 
-| [Release Notes v1.0.5](https://github.com/amzn/ion-c/releases/tag/v1.0.5) | [Ion C](https://github.com/amzn/ion-c) |
+| [Release Notes v1.0.5](https://github.com/amazon-ion/ion-c/releases/tag/v1.0.5) | [Ion C](https://github.com/amazon-ion/ion-c) |
 

@@ -6,4 +6,4 @@ categories: news ion-python
 ---
 Adds support for binary and text in `simpleion.loads()` and `simpleion.dumps()`.
 
-| [Release Notes](https://github.com/amzn/ion-python/releases/tag/v0.3.1) |
+| [Release Notes](https://github.com/amazon-ion/ion-python/releases/tag/v0.3.1) |

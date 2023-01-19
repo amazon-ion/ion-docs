@@ -10,4 +10,4 @@ A browser-based sandbox environment for Ion Schema has been added to the Ion Sch
 This sandbox can be used to validate Ion values for a particular type defined in Ion Schema.
 The sandbox is created using `ion-schema-rust` latest pre-release version.
 
-| [Ion Schema Sandbox](https://amzn.github.io/ion-schema/sandbox) |
+| [Ion Schema Sandbox](https://amazon-ion.github.io/ion-schema/sandbox) |
