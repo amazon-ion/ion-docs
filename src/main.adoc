@@ -1,0 +1,28 @@
+= Ion 1.1 Specification
+Ion Team
+:doctype: book
+:creator: {author}
+:copyright: Copyright ©2022 Amazon.com Inc. or Affiliates (“Amazon”)
+:docinfo:
+:sectnums:
+:sectnumlevels: 5
+:toc:
+:toclevels: 4
+:toc-title: Contents
+:pagenums:
+:imagesdir: ../build/images
+:title-page:
+:title-page-background-image: image:bg-draft.svg[]
+:icons: font
+//:source-highlighter: pygments
+//:pygments-style: colorful
+:listing-caption: Listing
+:example-caption: Example
+:pdfmark: true
+:xrefstyle: short
+:stem: asciimath
+
+// TODO html stylesheet; see https://docs.asciidoctor.org/asciidoctor/latest/html-backend/custom-stylesheet/
+
+include::introduction.adoc[]
+include::template-semantics.adoc[]

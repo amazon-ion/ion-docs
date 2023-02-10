@@ -1,0 +1,14 @@
+[[sec:introduction]]
+== Introduction
+
+[discrete]
+=== Draft Status
+
+This document is currently a working draft and subject to change.
+
+[discrete]
+=== Audience
+
+This documents presents the formal specification for the Ion 1.1 data format.  This document is not intended to be used
+as a user guide or as a cook book, but as a reference to the syntax and semantics of the Ion data format and its logical
+data model.

@@ -1,0 +1,6 @@
+[[sec:template-semantics]]
+== Template Operational Semantics
+
+Ion 1.1 introduces the concept of _template expressions_ that _evaluate_ to the Ion data model.  This section covers the
+semantics of such expressions and indicates how they should work independent of the three _syntaxes_ that Ion 1.1
+specifies.
