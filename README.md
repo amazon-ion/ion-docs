@@ -1,6 +1,6 @@
-# Ion 1.1 Semantics
+# Ion 1.1 Specification
 
-This repository is a first crack at putting the operational semantics for Ion 1.1 templates into AsciiDoc.
+This repository holds the draft proposal for Ion 1.1.
 
 ## Building
 
