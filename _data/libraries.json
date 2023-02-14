@@ -35,8 +35,8 @@
   {
     "name": "ion-python",
     "category": "core",
-    "latest_release_version": "0.9.3",
-    "latest_release_date": "2022-08-19",
+    "latest_release_version": "0.10.0",
+    "latest_release_date": "2023-02-14",
     "documentation": "https://ion-python.readthedocs.io/en/latest/amazon.ion.html"
   },
   {
