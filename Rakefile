@@ -1,7 +1,9 @@
-version_string = `git describe --tag | cut  -d "-" -f 1,2 | tr - .`.chomp
-if version_string.empty?
-  version_string = '0'
-end
+#version_string = `git describe --tag | cut  -d "-" -f 1,2 | tr - .`.chomp
+#if version_string.empty?
+#  version_string = '0'
+#end
+
+version_string = "0.1"
 date_string = Time.now.strftime("%Y-%m-%d")
 params = "--attribute revnumber='#{version_string}' --attribute revdate='#{date_string}'"
 
@@ -22,7 +24,9 @@ namespace :spec do
     target = source.sub(/^src\/images/, 'build/images')
     file target => source do
       cp source, target, :verbose => true
-      `pngquant -f #{target}`
+      if File.extname(target) == ".png"
+        `pngquant -f #{target}`
+      end
     end
     desc "copies all data files"
     task :images => target
@@ -57,8 +61,12 @@ namespace :spec do
   end
 
   require 'rake/clean'
-  CLEAN.include('build/*')
-  CLOBBER.include('build/*')
+  CLEAN.include('build')
+  CLOBBER.include('build')
 end
 
 task :default => "spec:build"
+
+task :clean => "spec:clean"
+task :build => "spec:build"
+task :watch => "spec:watch"
