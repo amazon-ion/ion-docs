@@ -4,3 +4,202 @@
 Ion 1.1 introduces the concept of _template expressions_ that _evaluate_ to the Ion data model.  This section covers the
 semantics of such expressions and indicates how they should work independent of the three _syntaxes_ that Ion 1.1
 specifies.
+
+=== Notation
+
+For this document, we will use _natural semantics_ (i.e., _big-step operational semantics_) to describe the semantics
+of template expressions.  The following are the meta-variables and notational forms:
+
+* stem:[xi, xi_1, xi_n] - A meta-notation that is a place-holder.  It should not be found in the actual
+  notation, but used to denote that stem:[xi] (or its other meta-variables) should be replaced with the appropriate
+  notation (e.g., an expression form or somesuch).
+* stem:[v, v_1, v_n] - An Ion value.  A subscript/superscript is used to denote different instances of such values.
+* stem:[tt"sym"] - A symbolic token named `sym`.  These are used for named elements like operator or variable names and
+  are not values but compile-time identifiers
+* stem:[s, s_1, s_n] - Represent a *_stream_* of Ion values.  A stream is a distinct concept from
+  the sequence types in the Ion data model (i.e., `list` and `sexp`) in that streams _are not_ Ion values.  A top-level
+  data stream of Ion _is_ this concept.
+* stem:[(:(: v_1, ..., v_n :):)] - Represents a stream of Ion values in a destructured way to emphasize the underlying
+  values.
+* stem:[e, e_1, e_n, dot e] - A *_template expression_*.  This is some expression that when evaluated, produces a stream
+  of Ion values. The notation stem:[dot e] is used to denote an expression similar to stem:[e], but a distinct instance.
+* stem:[epsilon] - The *_fault_* state.  This is the result of an invalid computation.
+* stem:[bb"term"(xi_1, ..., xi_n)] - *_Abstract syntax_* for some kind of expression, named `term` that uses the
+  variables above to express its structure.  Generally stem:[xi] is replaced with notation for an expression, but
+  sometimes values can be used to denote things like literals. For example, an abstract syntax for a conditional
+  expression might be denoted by stem:[bb"if"(e_1, e_2, e_3)].
+* stem:[sigma, dot sigma] - The *_state_* for evaluation.  This can be thought of as the environment that the template
+  evaluates in, it is used to store the available operators and variables.
+* stem:[(:e, sigma:) darr (:dot e, dot sigma:)] - Defines the *_evaluation relation_* for some expression, stem:[e],
+  with with some state, stem:[sigma].  This can be read as an expression stem:[(:e, sigma:)] evaluates to stem:[(:dot e,
+  dot sigma:)].  This notation can use abstract syntax on the left to denote a particular kind of an expression and
+  streams of values of the right to indicate a more concrete evaluation.
+* stem:[sigma_v\[tt"x" |-> s\]] - Binds a variable named `x` to the stream stem:[s] into the state, stem:[sigma].
+* stem:[sigma_v(tt"x")] - The value of the variable named `x`.
+* stem:[bb"rule"\ ()/(xi_1\ ...\ xi_n)] - Denotes a *_reduction_* rule named `rule`, which are axiomatic semantics for
+  atomic expressions (e.g., literals). stem:[xi] are replaced with evaluation relations.  The name is optional.
+* stem:[bb"rule"\ (xi_1\ ...\ xi_n)/(xi_(n + 1)\ ...\ xi_(n + i))] - Denotes a *_congruence_* rule named `rule`.  If
+  the evaluation of stem:[xi_1\ ...\ xi_n] holds, then the evaluation stem:[xi_(n + 1)\ ...\ xi_(n + i)] must al so
+  hold. The name is optional.
+
+=== Basic Computation Model
+
+Templates expressions can be thought of as pre-processing computation that produces a stream of Ion data values.  The
+result of any given template expression stem:[e] is always a stream of Ion values (i.e., stem:[(:(:v_1, ..., v_n:):)]).
+This is necessary to denote the lack of value or multiple values in processing such expressions as distinct from Ion
+sequences which themselves are values.  Importantly, streams cannot be nested (unlike `list` and `sexp`) and so streams
+cannot be nested within streams.
+
+The Ion value stream (e.g., document) can be thought of as a top-level sequence of template expressions
+stem:[bb"top-level"(e_1, ..., e_n)].  The evaluation of these expressions can be described as a flattening of the
+resulting stream of each expression into a single top-level value stream.
+
+[stem]
+++++
+(
+    (:e_1, sigma:) darr (:(: v_1, ... v_i:):),
+    \ ...,
+    (:e_n, sigma:) darr (:(: v_(n + 1), ..., v_(n + i) :):))
+/
+(
+    (:bb"top-level"(e_1, ..., e_n), sigma:)
+    darr
+    (:(: v_1, ... v_i, ... v_(n + 1), ..., v_(n + i) :):)
+)
+++++
+
+Ion value literals are of the abstract form stem:[bb"literal"(v)] and unconditionally evaluate to the
+singleton stream of itself:
+
+[stem]
+++++
+()
+/
+(
+    (:bb"literal"(v), sigma:)
+    darr
+    (:(:\ v\ :):)
+)
+++++
+
+We can use these two rules to explain Ion 1.0 and (non-templated Ion 1.1 value streams) as top-level sequence of
+template expressions that comprise only Ion value literals.  It _is not_ the case that an implementation of Ion has to
+evaluate such a data stream as described here, but rather this is an _explanation_ of how the data stream is produced
+from the syntax of Ion data files (and the Ion template definition language).
+
+Similar to the top-level, Ion 1.1 introduces _quasi-quoted_ literals for containers that can nest expressions within
+containers.  The abstract syntax for this is as follows:
+
+[stem]
+++++
+(
+    (:e_a, sigma:) darr (:(: v_1^a, ... v_n^a :):),
+\   (:e_1, sigma:) darr (:(: v_1^1, ..., v_n^1 :):),
+\   ...,
+\   (:e_n, sigma:) darr (:(: v_1^n, ..., v_n^n :):)
+)
+/
+(
+    (:bb"list"(e_a, e_1, ..., e_n), sigma:) 
+    darr
+    (:(: v_1^a tt"::"\ ...\ tt"::" v_n^a \[ v_1^1, ..., v_n^1, ..., v_1^n, ..., v_n^n \] :):)
+)
+++++
+
+[stem]
+++++
+(
+    (:e_a, sigma:) darr (:(: v_1^a, ... v_n^a :):),
+\   (:e_1, sigma:) darr (:(: v_1^1, ..., v_n^1 :):),
+\   ...,
+\   (:e_n, sigma:) darr (:(: v_1^n, ..., v_n^n :):)
+)
+/
+(
+    (:bb"sexp"(e_a, e_1, ..., e_n), sigma:) 
+    darr
+    (:(: v_1^a tt"::"\ ...\ tt"::" v_n^a ( v_1^1\ ...\ v_n^1\ ...\ v_1^n\ ...\ v_n^n ) :):)
+)
+++++
+
+In this case we have a constructor syntax for creating `list` and `sexp` values, and some specified parts of that
+syntax are annotations, those values must be textual values (and the syntax can constrain this in practice). 
+`struct` follows similarly:
+
+[stem]
+++++
+(
+    (:e_a, sigma:) darr (:(: v_1^a, ... v_n^a :):),
+\   (:e_1^k, sigma:) darr (:(:\ v_1^k\ :):),
+\   (:e_1^v, sigma:) darr (:(: v_1^v, ..., v_n^v :):),
+\   ...
+)
+/
+(
+    (:bb"struct"(e_a, e_1^k, e_1^v, ...), sigma:) 
+    darr
+    (:(: v_1^a tt"::"\ ...\ tt"::" {v_1^k : v_1^v, ..., v_1^k : v_n^v, ...} :):)
+)
+++++
+
+In the above, field names must evaluate to a single textual value (again likely constrained by syntax) and for each
+value in the stream associated to a field name, a key/value pair is produced in the resulting `struct` value.
+
+The other type of expression in the basic model are template invocations:
+
+[stem]
+++++
+(
+    (:e_1^1, sigma:) darr (:(: v_1^1, ... v_n^1 :):),
+\   ...,
+\   (:e_n^1, sigma:) darr (:(: v_1^n, ... v_n^n :):),
+\   ...,
+\   (:e_1^k, sigma:) darr (:(: v_1^k, ... v_n^k :):),
+\   ...,
+\   (:e_n^k, sigma:) darr (:(: v_1^(k*n), ... v_n^(k*n) :):)
+)
+/
+(
+    (: bb"invoke"(tt"opname", e_1^1, ..., e_n^1, ..., e_1^k..., e_n^k), sigma:)
+    darr
+    (:
+        bb"invoke-values"(
+            tt"opname",
+            (:(: v_1^1, ..., v_n^1, ..., v_1^n, ..., v_n^n :):),
+            ...,
+            (:(: v_1^k, ..., v_n^k, ..., v_1^(k*n), ..., v_n^(k*n) :):)
+        ),
+        sigma
+    :)
+)
+++++
+
+Template invocations are functions where its formal parameters are sequences of expressions.  These sequences are
+delimited by syntax and guided by the definition of the operator.  When evaluated, each expression in a sequence is
+evaluated to a stream of values and flattened into a single stream of values which will be the argument for the formal
+parameter.
+
+The operator selected by `opname` is statically defined (the `opname` is a symbolic name determined at compile-time and
+not a dynamic parameter). `opname` is part of the state stem:[sigma] and can be configured differently in different
+contexts (e.g., as a symbol table is loaded or as a module of template operators are being defined).  These expressions
+are evaluated and flattened into a single stream per formal parameter.  It is outside of the scope of this chapter to
+describe the semantics how the operator table is loaded (see section *_TBD_*).
+
+Finally the operator function is than invoked with the resulting streams:
+
+[stem]
+++++
+()
+/
+(
+    (: bb"invoke-values"(tt"opname", s_1, ..., s_n), sigma:)
+    darr
+    s
+)
+++++
+
+In the above, `invoke` is the abstract syntax that denotes the invocation with groups of expressions.  `invoke-values`
+is the abstract syntax of the invocation of the function where the expression grouping has been resolved and flattened
+into streams of values, one per each parameter.  A user never interacts with `invoke-values`, this is an intermediate
+rule in the semantics to demonstrate the flattening and the invocation of the operator as a pure function over streams
+of values.  Finally, the reduction of `invoke-values` indicates that all invocations evaluate to streams of values.
