@@ -54,7 +54,7 @@ namespace :spec do
 
   task :build => [:html, :pdf]
 
-  task :watch do
+  task watch: [:build] do
     begin
       `bundle exec guard`
     end

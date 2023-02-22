@@ -36,9 +36,9 @@ of template expressions.  The following are the meta-variables and notational fo
   streams of values of the right to indicate a more concrete evaluation.
 * stem:[sigma_v\[tt"x" |-> s\]] - Binds a variable named `x` to the stream stem:[s] into the state, stem:[sigma].
 * stem:[sigma_v(tt"x")] - The value of the variable named `x`.
-* stem:[bb"rule"\ ()/(xi_1\ ...\ xi_n)] - Denotes a *_reduction_* rule named `rule`, which are axiomatic semantics for
+* stem:[bb"rule:"\ ()/(xi_1\ ...\ xi_n)] - Denotes a *_reduction_* rule named `rule`, which are axiomatic semantics for
   atomic expressions (e.g., literals). stem:[xi] are replaced with evaluation relations.  The name is optional.
-* stem:[bb"rule"\ (xi_1\ ...\ xi_n)/(xi_(n + 1)\ ...\ xi_(n + i))] - Denotes a *_congruence_* rule named `rule`.  If
+* stem:[bb"rule:"\ (xi_1\ ...\ xi_n)/(xi_(n + 1)\ ...\ xi_(n + i))] - Denotes a *_congruence_* rule named `rule`.  If
   the evaluation of stem:[xi_1\ ...\ xi_n] holds, then the evaluation stem:[xi_(n + 1)\ ...\ xi_(n + i)] must al so
   hold. The name is optional.
 
@@ -203,3 +203,31 @@ is the abstract syntax of the invocation of the function where the expression gr
 into streams of values, one per each parameter.  A user never interacts with `invoke-values`, this is an intermediate
 rule in the semantics to demonstrate the flattening and the invocation of the operator as a pure function over streams
 of values.  Finally, the reduction of `invoke-values` indicates that all invocations evaluate to streams of values.
+
+=== System Template Operators
+
+*_TBD._*  _This section will describe the operational semantics of the system operators._
+
+=== Template Definitions
+
+Ion 1.1, in addition to having syntax for template expansion within the data stream, has a domain specific language
+for specifying template operators.  To describe the semantics of these definitions, which parameters and expression
+bodies, we will denote an abstract syntax for the function as follows:
+
+[stem]
+++++
+bb"function"(tt"p"_1, ..., tt"p"_n, e)
+++++
+
+In the above, the stem:[tt"p"_1, ..., tt"p"_n] denote the names of the formal parameters, and stem:[e] denotes the
+expression body. Furthermore, we can store instances of this abstract syntax as values in the state stem:[sigma].  The
+notation stem:[sigma_f\[tt"x" |-> f\]] Will be used to denote a functionally mutated state that adds the operator named
+`x` to the operator table bound to the function value stem:[f].
+
+*_TBD._* _Describe the module, the exports, and the definitions themselves._
+
+==== Template Definition Expressions
+
+*_TBD._* _There are expressions that are endemic to template definitions and are otherwise unavailable to template
+expansions in the data stream, this section will describe those semantics and specifically deal with the interaction
+with the state stem:[sigma] as appropriate (i.e., `void`, `quote`, `if`, `when`, `unless`, `each`)._
