@@ -1,0 +1,4 @@
+[[sec:semantics-symbol-table]]
+== Symbol Table Semantics
+
+*_TBD._* _Introduction to the encoding machinery of symbol tables in Ion and how they semantically work._

@@ -25,4 +25,9 @@ Ion Team
 // TODO html stylesheet; see https://docs.asciidoctor.org/asciidoctor/latest/html-backend/custom-stylesheet/
 
 include::introduction.adoc[]
-include::template-semantics.adoc[]
+
+include::semantics-intro.adoc[]
+
+include::semantics-symbol-table.adoc[]
+
+include::semantics-template-expressions.adoc[]

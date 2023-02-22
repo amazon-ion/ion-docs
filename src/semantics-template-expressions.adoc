@@ -1,46 +1,9 @@
-[[sec:template-semantics]]
-== Template Operational Semantics
+[[sec:semantics-templates]]
+== Template Expression Semantics
 
 Ion 1.1 introduces the concept of _template expressions_ that _evaluate_ to the Ion data model.  This section covers the
 semantics of such expressions and indicates how they should work independent of the three _syntaxes_ that Ion 1.1
 specifies.
-
-=== Notation
-
-For this document, we will use _natural semantics_ (i.e., _big-step operational semantics_) to describe the semantics
-of template expressions.  The following are the meta-variables and notational forms:
-
-* stem:[xi, xi_1, xi_n] - A meta-notation that is a place-holder.  It should not be found in the actual
-  notation, but used to denote that stem:[xi] (or its other meta-variables) should be replaced with the appropriate
-  notation (e.g., an expression form or somesuch).
-* stem:[v, v_1, v_n] - An Ion value.  A subscript/superscript is used to denote different instances of such values.
-* stem:[tt"sym"] - A symbolic token named `sym`.  These are used for named elements like operator or variable names and
-  are not values but compile-time identifiers
-* stem:[s, s_1, s_n] - Represent a *_stream_* of Ion values.  A stream is a distinct concept from
-  the sequence types in the Ion data model (i.e., `list` and `sexp`) in that streams _are not_ Ion values.  A top-level
-  data stream of Ion _is_ this concept.
-* stem:[(:(: v_1, ..., v_n :):)] - Represents a stream of Ion values in a destructured way to emphasize the underlying
-  values.
-* stem:[e, e_1, e_n, dot e] - A *_template expression_*.  This is some expression that when evaluated, produces a stream
-  of Ion values. The notation stem:[dot e] is used to denote an expression similar to stem:[e], but a distinct instance.
-* stem:[epsilon] - The *_fault_* state.  This is the result of an invalid computation.
-* stem:[bb"term"(xi_1, ..., xi_n)] - *_Abstract syntax_* for some kind of expression, named `term` that uses the
-  variables above to express its structure.  Generally stem:[xi] is replaced with notation for an expression, but
-  sometimes values can be used to denote things like literals. For example, an abstract syntax for a conditional
-  expression might be denoted by stem:[bb"if"(e_1, e_2, e_3)].
-* stem:[sigma, dot sigma] - The *_state_* for evaluation.  This can be thought of as the environment that the template
-  evaluates in, it is used to store the available operators and variables.
-* stem:[(:e, sigma:) darr (:dot e, dot sigma:)] - Defines the *_evaluation relation_* for some expression, stem:[e],
-  with with some state, stem:[sigma].  This can be read as an expression stem:[(:e, sigma:)] evaluates to stem:[(:dot e,
-  dot sigma:)].  This notation can use abstract syntax on the left to denote a particular kind of an expression and
-  streams of values of the right to indicate a more concrete evaluation.
-* stem:[sigma_v\[tt"x" |-> s\]] - Binds a variable named `x` to the stream stem:[s] into the state, stem:[sigma].
-* stem:[sigma_v(tt"x")] - The value of the variable named `x`.
-* stem:[bb"rule:"\ ()/(xi_1\ ...\ xi_n)] - Denotes a *_reduction_* rule named `rule`, which are axiomatic semantics for
-  atomic expressions (e.g., literals). stem:[xi] are replaced with evaluation relations.  The name is optional.
-* stem:[bb"rule:"\ (xi_1\ ...\ xi_n)/(xi_(n + 1)\ ...\ xi_(n + i))] - Denotes a *_congruence_* rule named `rule`.  If
-  the evaluation of stem:[xi_1\ ...\ xi_n] holds, then the evaluation stem:[xi_(n + 1)\ ...\ xi_(n + i)] must al so
-  hold. The name is optional.
 
 === Basic Computation Model
 
