@@ -17,12 +17,13 @@ The Ion value stream (e.g., document) can be thought of as a top-level sequence 
 stem:[bb"top-level"(e_1, ..., e_n)].  The evaluation of these expressions can be described as a flattening of the
 resulting stream of each expression into a single top-level value stream.
 
-[stem]
+.Figure {counter:figure-number}. Top-level stream of expressions.
+[stem%unbreakable]
 ++++
 (
     (:e_1, sigma:) darr (:(: v_1, ... v_i:):),
     \ ...,
-    (:e_n, sigma:) darr (:(: v_(n + 1), ..., v_(n + i) :):))
+    (:e_n, dot sigma:) darr (:(: v_(n + 1), ..., v_(n + i) :):))
 /
 (
     (:bb"top-level"(e_1, ..., e_n), sigma:)
@@ -34,7 +35,8 @@ resulting stream of each expression into a single top-level value stream.
 Ion value literals are of the abstract form stem:[bb"literal"(v)] and unconditionally evaluate to the
 singleton stream of itself:
 
-[stem]
+.Figure {counter:figure-number}. Evaluation of literal Ion values.
+[stem%unbreakable]
 ++++
 ()
 /
@@ -53,7 +55,8 @@ from the syntax of Ion data files (and the Ion template definition language).
 Similar to the top-level, Ion 1.1 introduces _quasi-quoted_ literals for containers that can nest expressions within
 containers.  The abstract syntax for this is as follows:
 
-[stem]
+.Figure {counter:figure-number}. Evaluation of `list` quasi-literals.
+[stem%unbreakable]
 ++++
 (
     (:e_a, sigma:) darr (:(: v_1^a, ... v_n^a :):),
@@ -69,7 +72,8 @@ containers.  The abstract syntax for this is as follows:
 )
 ++++
 
-[stem]
+.Figure {counter:figure-number}. Evaluation of `sexp` quasi-literals.
+[stem%unbreakable]
 ++++
 (
     (:e_a, sigma:) darr (:(: v_1^a, ... v_n^a :):),
@@ -89,7 +93,8 @@ In this case we have a constructor syntax for creating `list` and `sexp` values,
 syntax are annotations, those values must be textual values (and the syntax can constrain this in practice). 
 `struct` follows similarly:
 
-[stem]
+.Figure {counter:figure-number}. Evaluation of `struct` quasi-literals.
+[stem%unbreakable]
 ++++
 (
     (:e_a, sigma:) darr (:(: v_1^a, ... v_n^a :):),
@@ -110,7 +115,8 @@ value in the stream associated to a field name, a key/value pair is produced in 
 
 The other type of expression in the basic model are template invocations:
 
-[stem]
+.Figure {counter:figure-number}. Evaluation of arguments and flattening in operator invocation.
+[stem%unbreakable]
 ++++
 (
     (:e_1^1, sigma:) darr (:(: v_1^1, ... v_n^1 :):),
@@ -150,7 +156,8 @@ describe the semantics how the operator table is loaded (see section *_TBD_*).
 
 Finally the operator function is than invoked with the resulting streams:
 
-[stem]
+.Figure {counter:figure-number}. Evaluation of operator invocation with streams of values per parameter.
+[stem%unbreakable]
 ++++
 ()
 /
@@ -177,7 +184,8 @@ Ion 1.1, in addition to having syntax for template expansion within the data str
 for specifying template operators.  To describe the semantics of these definitions, which parameters and expression
 bodies, we will denote an abstract syntax for the function as follows:
 
-[stem]
+.Figure {counter:figure-number}. Function abstract syntax.
+[stem%unbreakable]
 ++++
 bb"function"(tt"p"_1, ..., tt"p"_n, e)
 ++++

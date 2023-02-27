@@ -2,7 +2,7 @@
 Ion Team
 :doctype: book
 :creator: {author}
-:copyright: Copyright ©2022 Amazon.com Inc. or Affiliates (“Amazon”)
+:copyright: Copyright ©2023 Amazon.com Inc. or Affiliates (“Amazon”)
 :docinfo:
 :sectnums:
 :sectnumlevels: 5
@@ -16,8 +16,8 @@ Ion Team
 :icons: font
 //:source-highlighter: pygments
 //:pygments-style: colorful
-:listing-caption: Listing
-:example-caption: Example
+:!listing-caption:
+:!example-caption:
 :pdfmark: true
 :xrefstyle: short
 :stem: asciimath

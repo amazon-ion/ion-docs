@@ -40,3 +40,23 @@ and notational forms:
 * stem:[bb"rule:"\ (xi_1\ ...\ xi_n)/(xi_(n + 1)\ ...\ xi_(n + i))] - Denotes a *_congruence_* rule named `rule`.  If
   the evaluation of stem:[xi_1\ ...\ xi_n] holds, then the evaluation stem:[xi_(n + 1)\ ...\ xi_(n + i)] must al so
   hold. The name is optional.
+
+=== Abstract Syntax
+
+Ion defines an abstract data model, but there are encoding constructs (e.g. symbol tables, symbolic tokens, and template
+expressions) that complicate things somewhat as they have no pure analog in the data model and must be interpreted with
+the corresponding context.  While in some cases the data model could be embiggened to support these constructs, it can
+also be represented as abstract syntax that gets _evaluated_ into the corresponding steam of Ion values.  This section
+proposes a base abstract syntax to describe the encoded form of Ion abstractly without relying on text or binary
+concrete syntax.
+
+We can represent any Ion data model value as stem:[v], and in abstract syntax as stem:[bb"literal"(v)], this is
+well-defined for all Ion data that has unambiguous representation of _symbolic_ values in the data model (i.e.,
+annotations that have known text, struct field names that have known text, and symbol values with known text).  Such
+literal ion values require no additional context to represent in the data model.
+
+.Figure {counter:figure-number}. Ion abstract syntax
+[source%unbreakable]
+----
+WIP
+----
