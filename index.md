@@ -5,17 +5,17 @@ description: "Amazon Ion is a richly-typed, self-describing, hierarchical data s
 
 <div style="float:right; width:200px" markdown="block">
 
-| [News][7] |
+| [News][news] |
 |------|{% for post in site.posts limit:5 %}
 |<a href="{{site.baseurl}}{{post.url}}">{{ post.title }}</a>|{% endfor %}
 
 </div>
 
-**<font size="+1">Amazon Ion</font>** is a [richly-typed][13], [self-describing][15], hierarchical data serialization
-format offering [interchangeable binary and text][14] representations. The [text format][10]
-(a superset of [JSON][1]) is easy to read and author, supporting rapid
-prototyping. The [binary representation][11] is [efficient to store, transmit, and
-skip-scan parse][16].  The rich type system provides unambiguous semantics for
+**<font size="+1">Amazon Ion</font>** is a [richly-typed][rich-type-system], [self-describing][self-describing], hierarchical data serialization
+format offering [interchangeable binary and text][dual-format] representations. The [text format][spec]
+(a superset of [JSON][json]) is easy to read and author, supporting rapid
+prototyping. The [binary representation][binary] is [efficient to store, transmit, and
+skip-scan parse][binary-format].  The rich type system provides unambiguous semantics for
 long-term preservation of data which can survive multiple generations
 of software evolution.
 
@@ -24,10 +24,10 @@ challenges faced every day while engineering large-scale, service-oriented
 architectures. It has been addressing these challenges within Amazon for nearly
 a decade, and we believe others will benefit as well.
 
-**Available Languages:** [C][4] -- [C#][20] -- [Go][21] -- [Java][3] -- [JavaScript][6] -- [Python][5] -- [Rust][22]<br>
-**Community Supported:** [D][23] -- [PHP][24]<br>
-**Related Projects:** [Ion Hash][19] -- [Ion Schema][17]<br>
-**Tools:** [Hive SerDe][18]<br>
+**Available Languages:** [C][ion-c] -- [C#][ion-dotnet] -- [Go][ion-go] -- [Java][ion-java] -- [JavaScript][ion-js] -- [Python][ion-python] -- [Rust][ion-rust]<br>
+**Community Supported:** [D][mir-ion] -- [PHP][ext-ion] -- [Ion Object Mapper for .NET][dotnet-object-mapper]<br>
+**Related Projects:** [Ion Hash][ion-hash] -- [Ion Schema][ion-schema]<br>
+**Tools:** [Ion CLI][ion-cli] -- [Hive SerDe][ion-hive-serde]<br>
 
 <br>
 
@@ -87,7 +87,7 @@ height::inches::72
 lotto_numbers::[7, 9, 19, 40, 42, 44]
 ```
 
-The [Specification][10] provides an overview of the full set of Ion types.
+The [Specification][spec] provides an overview of the full set of Ion types.
 
 ### Binary Encoding
 
@@ -140,30 +140,43 @@ Similar space efficiencies are found in other aspects of Ion's binary encoding.
 
 ### More Information
 
-To learn more, check out the [Docs][8] page, or see [Libs][12] for the officially supported libraries as well as community supported tools.  For information on how to contribute, how to contact the Ion Team, and answers to the frequently asked questions, see [Help][9].
+To learn more, check out the [Docs][docs] page, or see [Libs][libs] for the officially supported libraries as well as community supported tools.  For information on how to contribute, how to contact the Ion Team, and answers to the frequently asked questions, see [Help][help].
 
 <!-- References -->
-[1]: http://json.org
-[2]: guides/why.html
-[3]: https://github.com/amazon-ion/ion-java
-[4]: https://github.com/amazon-ion/ion-c
-[5]: https://github.com/amazon-ion/ion-python
-[6]: https://github.com/amazon-ion/ion-js
-[7]: news.html
-[8]: docs.html
-[9]: help.html
-[10]: docs/spec.html
-[11]: docs/binary.html
-[12]: libs.html
-[13]: guides/why.html#rich-type-system
-[14]: guides/why.html#dual-format-interoperability
-[15]: guides/why.html#self-describing
-[16]: guides/why.html#read-optimized-binary-format
-[17]: https://amazon-ion.github.io/ion-schema
-[18]: https://github.com/amazon-ion/ion-hive-serde
-[19]: https://amazon-ion.github.io/ion-hash
-[20]: https://github.com/amazon-ion/ion-dotnet
-[21]: https://github.com/amazon-ion/ion-go
-[22]: https://github.com/amazon-ion/ion-rust
-[23]: https://github.com/libmir/mir-ion
-[24]: https://github.com/awesomized/ext-ion
+[news]: news.html
+[docs]: docs.html
+[help]: help.html
+[libs]: libs.html
+[spec]: docs/spec.html
+[binary]: docs/binary.html
+
+[json]: http://json.org
+
+<!-- Implementations -->
+[ion-java]: https://github.com/amazon-ion/ion-java
+[ion-c]: https://github.com/amazon-ion/ion-c
+[ion-python]: https://github.com/amazon-ion/ion-python
+[ion-js]: https://github.com/amazon-ion/ion-js
+[ion-dotnet]: https://github.com/amazon-ion/ion-dotnet
+[ion-go]: https://github.com/amazon-ion/ion-go
+[ion-rust]: https://github.com/amazon-ion/ion-rust
+
+<!-- Why? -->
+[rich-type-system]: guides/why.html#rich-type-system
+[dual-format]: guides/why.html#dual-format-interoperability
+[self-describing]: guides/why.html#self-describing
+[binary-format]: guides/why.html#read-optimized-binary-format
+
+<!-- Related Projects -->
+[ion-schema]: https://amazon-ion.github.io/ion-schema
+[ion-hash]: https://amazon-ion.github.io/ion-hash
+
+
+<!-- Tools/libs -->
+[ion-hive-serde]: https://github.com/amazon-ion/ion-hive-serde
+[ion-cli]: https://github.com/amazon-ion/ion-cli/
+
+<!-- External Projects -->
+[mir-ion]: https://github.com/libmir/mir-ion
+[ext-ion]: https://github.com/awesomized/ext-ion
+[dotnet-object-mapper]: https://github.com/amzn/ion-object-mapper-dotnet
