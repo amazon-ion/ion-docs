@@ -26,6 +26,8 @@ Ion Team
 
 include::introduction.adoc[]
 
+include::whatsnew.adoc[]
+
 include::semantics-intro.adoc[]
 
 // TODO replace with our current version of semantics

@@ -1,0 +1,70 @@
+[[sec:whatsnew]]
+== What's New in Ion 1.1
+
+We will go through a high-level overview of what is new and different in Ion 1.1 from Ion 1.0 from an implementer's
+perspective.
+
+=== Backwards Compatibility
+
+Ion 1.1 is backwards compatible to Ion 1.0.  Backwards compatibility is defined as being able to _parse_ Ion 1.0 encoded
+data *and* ensuring that any data model values produced by Ion 1.1 that are _not_ system values must be representable in
+Ion 1.0.  To wit, any data that can be produced and read by an application in Ion 1.1 must have an equivalent
+representation in Ion 1.0.
+
+Ion 1.1 is *not* required to preserve Ion 1.0 syntax in Ion 1.1 encoding contexts.  The Ion Version Marker (IVM) is used
+to denote the different versions of the syntax.  Ion 1.1 does retain text compatibility with Ion 1.0 in that the changes
+are a strict superset of the grammar.  Although binary encoding changes are syntactically different in Ion 1.1 (in that
+the type descriptors have been rearranged), the building blocks of the encoding is a superset of Ion 1.0 making it
+possible for an implementor to reuse the parsing machinery to support parsing data in both contexts with modest changes.
+
+IMPORTANT: *TODO*: verify if the text compatibility statement above is true. 
+
+=== New Format Features
+
+Ion 1.1 adds the following features to the data format.
+
+[[sec:whatsnew-inline-symbols]]
+==== Inlineable Symbolic Tokens
+
+In Ion 1.0, symbol values, field names, and annotations in the binary encoding was required to be encoded using a symbol
+ID and a local symbol table.  For some use cases (e.g., as write once, read maybe logs) this creates a burden on the
+writer and may not actually be efficient for reading.  Ion 1.1 introduces optional binary syntax for encoding inline
+UTF-8 sequences for these tokens which can allow an encoder to have flexibility in whether or not to add a given
+symbolic token to the symbol table.
+
+Ion text requires no change for this feature as it already had inline symbolic tokens without using the local symbol
+table.  Ion text also has compatible syntax for representing the local symbol table and encoding of symbolic tokens with
+their position in the table (i.e., the `$id` syntax).
+
+[[sec:whatsnew-delimited]]
+==== Delimited Containers
+
+In Ion 1.0, all data is length prefixed in binary.  While this is good for optimizing the reading of data, it requires
+an Ion encoder to buffer any top-level data in memory to calculate the data's length.  Ion 1.1 introduces optional
+binary syntax to allow containers to be encoded with delimiters
+
+[[sec:whatsnew-templates]]
+==== Templates/Macros
+
+IMPORTANT: *TBD*.
+
+[[sec:whatsnew-text]]
+=== Text Syntax Changes
+
+Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the data stream or document.
+
+As described earlier, Ion 1.1 textually compatible with all existing Ion 1.0 text.  The only syntax change is the
+template/macro expansion expression syntax.  This syntax is grammatically similar to s-expressions, except that these
+expressions are opened with `(:` and closed with `)`.  For example, `(:a 1 2)` would expand the template/macro named `a`
+with the parameters `1` and `2`. See the <<whatsnew-template, Templates/Macros>> section for details.  This syntax is
+colloqually known as _smile syntax_ or _smile expressions_.
+
+[[sec:whatsnew-bin]]
+=== Binary Encoding Changes
+
+Ion 1.1 binary encoding re-organizes the type descriptors to better support templates/macros and make a variety of
+data encodings more compact.  
+
+=== Ion Symbol Table Changes
+
+IMPORTANT: *TBD*.
