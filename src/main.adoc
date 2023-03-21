@@ -14,8 +14,8 @@ Ion Team
 :title-page:
 :title-page-background-image: image:bg-draft.svg[]
 :icons: font
-//:source-highlighter: pygments
-//:pygments-style: colorful
+:source-highlighter: pygments
+:pygments-style: colorful
 :!listing-caption:
 :!example-caption:
 :pdfmark: true
