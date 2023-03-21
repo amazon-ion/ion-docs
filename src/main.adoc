@@ -28,6 +28,8 @@ include::introduction.adoc[]
 
 include::semantics-intro.adoc[]
 
-include::semantics-symbol-table.adoc[]
+// TODO replace with our current version of semantics
+//include::semantics-symbol-table.adoc[]
 
-include::semantics-template-expressions.adoc[]
+// TODO replace with our current version of semantics
+//include::semantics-template-expressions.adoc[]
