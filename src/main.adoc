@@ -21,6 +21,7 @@ Ion Team
 :pdfmark: true
 :xrefstyle: short
 :stem: asciimath
+:table-stripes: odd
 
 // TODO html stylesheet; see https://docs.asciidoctor.org/asciidoctor/latest/html-backend/custom-stylesheet/
 
@@ -28,7 +29,8 @@ include::introduction.adoc[]
 
 include::whatsnew.adoc[]
 
-include::semantics-intro.adoc[]
+// TODO very much a WIP
+//include::semantics-intro.adoc[]
 
 // TODO replace with our current version of semantics
 //include::semantics-symbol-table.adoc[]

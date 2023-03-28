@@ -56,15 +56,227 @@ Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the da
 As described earlier, Ion 1.1 textually compatible with all existing Ion 1.0 text.  The only syntax change is the
 template/macro expansion expression syntax.  This syntax is grammatically similar to s-expressions, except that these
 expressions are opened with `(:` and closed with `)`.  For example, `(:a 1 2)` would expand the template/macro named `a`
-with the parameters `1` and `2`. See the <<whatsnew-template, Templates/Macros>> section for details.  This syntax is
-colloqually known as _smile syntax_ or _smile expressions_.
+with the parameters `1` and `2`. See the <<sec:whatsnew-templates, Templates/Macros>> section for details.  This syntax
+is colloqually known as _smile syntax_ or _smile expressions_.
 
 [[sec:whatsnew-bin]]
 === Binary Encoding Changes
 
-Ion 1.1 binary encoding re-organizes the type descriptors to better support templates/macros and make a variety of
-data encodings more compact.  
+Ion 1.1 binary encoding reorganizes the type descriptors to better support templates/macros and make certain encodings
+more compact, and certain lower priority encodings marginally less compact.  The IVM for this encoding is the octet
+sequence `0xE0 0x01 0x01 0xEA`.
 
-=== Ion Symbol Table Changes
+==== Low-level Encoding Changes
 
-IMPORTANT: *TBD*.
+The `VarUInt` and `VarInt` encodings have been changed to put their continuation bits before the content.  This is
+similar in structure to UTF-8 encoding, and benchmarks have shown that this encoding is about 15% faster than the Ion
+1.0 version of the encoding.
+
+A new primitive encoding type, called `VarSym` has been introduced to flexibly encode symbol IDs and symbolic tokens
+with inline text.
+
+==== Type Octets
+
+The following is a table of the type octets of the encoding (the leading byte that indicates how the following bytes
+should be decoded).
+
+[%header,cols="1,1"]
+|===
+
+| Type Octet
+| Description
+
+| `0x0_`
+.4+|
+  Template/macro expansion with single octet.  The high-order two bits indicate that the lower six bits represent the
+  template/macro ID to expand (64 single octet expansions).
+
+| `0x1_`
+
+| `0x2_`
+
+| `0x3_`
+
+| `0x4_`
+| Template/macro expansion with variable length ID.  The low nibble is the top four bits of the template/macro ID.
+  A `VarUInt` follows encoding the rest of the bits of the template/macro ID.
+
+| `0x5_`
+| Decimal. _TBD_.
+
+| `0x6_`
+| Timestamp. _TBD_.
+
+| `0x7_`
+| Symbol with inline text and length specified by low nibble.  The encoding is equivalent to String.  Variable
+  length and symbols encoded with symbol IDs are handled via `0xF7`, so `0x7E` and `0x7F` are length 14 and 15 inline
+  symbols respectively. `null.symbol` is handled by `0xAE`.
+
+| `0x8_`
+| String, length specified by low nibble. `0x8E` and `0x8F` are length 14 and 15 strings respectively.
+  Variable length strings are handled via `0xF8`.  `null.string` is handled by `0xAE`.
+
+| `0x90`- `0x98`
+| Int with length specified by the the low nibble.  `0x90` is zero. 
+
+| `0x99`
+| Boolean `false`.
+
+| `0x9A`
+| Boolean `true`.
+
+| `0x9B`
+| Float `0e0`
+
+| `0x9C`
+| Illegal (reserved for 16-bit float).
+
+| `0x9D`
+| 32-bit float.
+
+| `0x9E`
+| 64-bit float.
+
+| `0x9F`
+| Illegal (reserved for future use).
+
+| `0xA0` - `0xA2`
+| Symbol encoded with symbol ID and length specified by low nibble.  `0xA0` is `$0`.
+
+| `0xA3`
+| Symbol encoded with symbol ID and length specified by `VarUInt`.
+
+| `0xA4`
+| Single annotation encoded as a `VarUInt` symbol ID with a value following.
+
+| `0xA5`
+| Two annotations encoded as `VarUInt` symbol IDs with a value following.
+
+| `0xA6`
+| Variable length of annotations encoded as a `VarUInt`, followed by `VarUInt` encoded symbol IDs, followed by a value.
+
+| `0xA7`
+| Single annotation encoded as a `VarSym` with a value following.
+
+| `0xA8`
+| Two annotations encoded as `VarSym` with a value following.
+
+| `0xA9`
+| Variable length of annotations encoded as a `VarUInt`, followed by `VarUInt` encoded symbol IDs, followed by a value.
+
+| `0xAA`
+| Illegal (reserved for future use).
+
+| `0xAB`
+| Single byte NOP pad.
+
+| `0xAC`
+| Variable length NOP pad.
+
+| `0xAD`
+| Delimited container end.
+
+| `0xAE`
+| Typed null.  The following byte is the Ion 1.0 type descriptor (without `0x3`) in the low nibble as the type of null.
+  E.g., `0xAE 0x04` is `null.float`.  All other octets are illegal.
+
+| `0xAF`
+| `null.null`.
+
+| `0xB_`
+| Lists with length specified by the low nibble.  `0xBE` and `0xBF` are length 14 and 15 lists respectively.  Variable
+  length lists are handled by `0xFB`. `null.list` is handled by `0xAE`.
+
+| `0xC_`
+| Sexp with length specified by the low nibble.  `0xCE` and `0xCF` are length 14 and 15 sexps respectively.  Variable
+  length lists are handled by `0xFC`. `null.sexp` is handled by `0xAE`.
+
+| `0xD_`
+| Struct encoded with field names as symbol IDs and length specified by the low nibble. `0xDE` and `0xDF` are
+  length 14 and 15 structs respectively.  Variable length structs with symbol ID encoded field use `0xF3`.
+  `null.struct` is handled by `0xAE`.  `0xD1` is illegal as there are no structs with size one and Ion 1.1 eliminates
+  the Ion 1.0 ordered struct encoding.
+
+| `0xE0`
+| Start of IVM.
+
+| `0xE1`
+| Illegal (reserved for future use).
+
+| `0xE2` - `0xEF``
+| Struct encoded with fields names as `VarSym` and length specified by the low nibble.  This is similar to `0xD_`
+  encodings, except that the field names are encoded with the new format.  Variable length structs with `VarSym`encoded
+  field use `0xF2`. `null.struct` is handled by `0xAE`.
+
+| `0xF0`
+| Variable length prefixed template invocation.  A `VarUInt` specifies the entire length of an invocation of a
+  template/macro expansion and wraps the `0x0_` - `0x4_` encodings.
+
+| `0xF1`
+| Illegal (reserved for future use).
+
+| `0xF2`
+| Variable length structs with `VarSym` encoded field names.
+
+| `0xF3`
+| Variable length structs with `VarUInt` symbol ID encoded field names.
+
+| `0xF4`
+| Variable length int
+
+| `0xF5`
+| Variable length decimal
+
+| `0xF6`
+| Variable length timestamp.  Year format is not biased.
+
+| `0xF7`
+| Variable length symbol with content encoded as a `VarSym`
+
+| `0xF8`
+| Variable length string.
+
+| `0xF9`
+| Variable length BLOB (all BLOBs use this format)
+
+| `0xFA`
+| Variable length CLOB (all CLOBs use this format)
+
+| `0xFB`
+| Variable length list.
+
+| `0xFC`
+| Variable length sexp.
+
+| `0xFD`
+| Delimited list start.
+
+| `0xFE`
+| Delimited sexp start.
+
+| `0xFF`
+| Delimited struct start.  Note that all delimited structs have their field names encoded as `VarSym`.
+
+|===
+
+=== System Symbol Table Changes
+
+The system symbol table in Ion 1.1 adds the following symbols:
+
+[%header,cols="1,1"]
+|===
+
+| ID
+| Symbol Text
+
+| 10
+| `$ion_encoding`
+
+| 11
+| `$ion_literal`
+
+|===
+
+Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
+
+IMPORTANT: These assignments are provisional.
