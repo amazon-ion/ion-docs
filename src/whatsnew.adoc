@@ -69,11 +69,20 @@ sequence `0xE0 0x01 0x01 0xEA`.
 ==== Low-level Encoding Changes
 
 The `VarUInt` and `VarInt` encodings have been changed to put their continuation bits before the content.  This is
-similar in structure to UTF-8 encoding, and benchmarks have shown that this encoding is about 15% faster than the Ion
-1.0 version of the encoding.
+similar in structure to UTF-8 encoding.  `VarInt` has also been changed to be a two's complement representation rather
+than a signed magnitude representation.  Benchmarks have shown that these encoding changes to be about 15% faster than
+the Ion 1.0 version of the encoding.
+
+The `Int` encoding has also been changed to be two's complement over its original signed magnitude representation.
 
 A new primitive encoding type, called `VarSym` has been introduced to flexibly encode symbol IDs and symbolic tokens
-with inline text.
+with inline text.  This encoding is structurally identical to `VarInt` but is used to encode symbolic tokens that could
+be either a symbol ID or a length of inline UTF-8 octets.  Positive integers represent symbol IDs, Negative integers
+represent a length of UTF-8 octets to follow.  Zero is treated specially.  Specifically, A `VarSym` encoded as `0x00`
+indicates that a special control byte follows.  If that byte is `0x70`, then this indicates `$0`; if that byte is
+`0x80`, then this indicates the empty inline text; if that byte is `0xAD`, then this indicate that this is the end of a
+delimited struct (the only context for which this is allowed); finally all other octets are invalid.  The padded
+representations of zero in `VarInt` (e.g., `0x80 0x00`, `0xC0 0x00 0x00`) mean `$0`.
 
 ==== Type Octets
 
@@ -203,7 +212,7 @@ should be decoded).
 | `0xE1`
 | Illegal (reserved for future use).
 
-| `0xE2` - `0xEF``
+| `0xE2` - `0xEF`
 | Struct encoded with fields names as `VarSym` and length specified by the low nibble.  This is similar to `0xD_`
   encodings, except that the field names are encoded with the new format.  Variable length structs with `VarSym`encoded
   field use `0xF2`. `null.struct` is handled by `0xAE`.
