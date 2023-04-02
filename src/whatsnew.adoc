@@ -20,75 +20,31 @@ different versions of the syntax.  Ion 1.1 does retain text compatibility with I
 superset of the grammar, however due to the updated system symbol table, symbol IDs referred to using the `$n` syntax
 for symbols beyond the 1.0 system symbol table will not be compatible.
 
-=== New Format Features
-
-Ion 1.1 adds the following features to the data format.
-
-[[sec:whatsnew-inline-symbols]]
-==== Inlined Symbolic Tokens
-
-IMPORTANT: *_Discussion_*: Should we call this something else (e.g., _non-interned_)?
-
-In Ion 1.0, symbol values, field names, and annotations in the binary encoding are required to be encoded using a symbol
-ID and a local symbol table.  For some use cases (e.g., as write once, read maybe logs) this creates a burden on the
-writer and may not actually be efficient for reading.  Ion 1.1 introduces optional binary syntax for encoding inline
-UTF-8 sequences for these tokens which can allow an encoder to have flexibility in whether or not to add a given
-symbolic token to the symbol table.
-
-Ion text requires no change for this feature as it already had inline symbolic tokens without using the local symbol
-table.  Ion text also has compatible syntax for representing the local symbol table and encoding of symbolic tokens with
-their position in the table (i.e., the `$id` syntax).
-
-[[sec:whatsnew-delimited]]
-==== Delimited Containers
-
-In Ion 1.0, all data is length prefixed in binary.  While this is good for optimizing the reading of data, it requires
-an Ion encoder to buffer any data in memory to calculate the data's length.  Ion 1.1 introduces optional
-binary syntax to allow containers to be encoded with an end marker.
-
-[[sec:whatsnew-templates]]
-==== Templates/Macros
-
-IMPORTANT: *TBD*.
-
-=== System Symbol Table Changes
-
-The system symbol table in Ion 1.1 adds the following symbols:
-
-[%header,cols="1,1"]
-|===
-
-| ID
-| Symbol Text
-
-| 10
-| `$ion_encoding`
-
-| 11
-| `$ion_literal`
-
-|===
-
-Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
-
-IMPORTANT: These assignments are provisional.  Specifically assignments for template definitions have not been
-established.
-
 [[sec:whatsnew-text]]
 === Text Syntax Changes
 
 Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the data stream or document.
 
 As described earlier, Ion 1.1 textually compatible with all existing Ion 1.0 text.  The only syntax change is the
-encoding expression (e-expression) syntax which allows for the invocation of templates/macros in the data stream.  This
-syntax is grammatically similar to s-expressions, except that these expressions are opened with `(:` and closed with
-`)`.  For example, `(:a 1 2)` would expand the template/macro named `a` with the parameters `1` and `2`. See the
-<<sec:whatsnew-templates, Templates/Macros>> section for details.
+*encoding expression* (*e-expression*) syntax which allows for the invocation of templates and macros in the data stream.
+This syntax is grammatically similar to s-expressions, except that these expressions are opened with `(:` and closed
+with `)`.  For example, `(:a 1 2)` would expand the template/macro named `a` with the arguments `1` and `2`. See the
+<<sec:whatsnew-eexp, Encoding Expressions, Macros, and Templates>> section for details.
+
+This syntax is allowed anywhere an Ion value is allowed:
+
+[source,plain,%unbreakable]
+----
+(:foo 1 2)
+[1, 2, (:bar 3 4)]
+(cons a (:baz b))
+{c: (:bop d)}
+----
 
 E-expressions are also grammatically allowed in the field name position of a struct and when used there, indicate that
 the expression should expand to a struct value that is spliced into:
 
-[source,plain]
+[source,plain,%unbreakable]
 ----
 {
     a:1,
@@ -108,6 +64,28 @@ Ion 1.1 binary encoding reorganizes the type descriptors to better support templ
 more compact, and certain lower priority encodings marginally less compact.  The IVM for this encoding is the octet
 sequence `0xE0 0x01 0x01 0xEA`.
 
+[[sec:whatsnew-inline-symbols]]
+==== Inlined Symbolic Tokens
+
+IMPORTANT: *_Discussion_*: Should we call this something else (e.g., _non-interned_)?
+
+In Ion 1.0, symbol values, field names, and annotations are required to be encoded using a symbol ID and a local symbol
+table.  For some use cases (e.g., as write once, read maybe logs) this creates a burden on the writer and may not
+actually be efficient for reading.  Ion 1.1 introduces optional binary syntax for encoding inline UTF-8 sequences for
+these tokens which can allow an encoder to have flexibility in whether or not to add a given symbolic token to the
+symbol table.
+
+Ion text requires no change for this feature as it already had inline symbolic tokens without using the local symbol
+table.  Ion text also has compatible syntax for representing the local symbol table and encoding of symbolic tokens with
+their position in the table (i.e., the `$id` syntax).
+
+[[sec:whatsnew-delimited]]
+==== Delimited Containers
+
+In Ion 1.0, all data is length prefixed.  While this is good for optimizing the reading of data, it requires an Ion
+encoder to buffer any data in memory to calculate the data's length.  Ion 1.1 introduces optional binary syntax to allow
+containers to be encoded with an end marker.
+
 ==== Low-level Encoding Changes
 
 The `VarUInt` and `VarInt` encodings have been changed to put their continuation bits before the content.  This is
@@ -124,7 +102,7 @@ represent a length of UTF-8 octets to follow.  Zero is treated specially.  Speci
 indicates that a special control opcode follows.  The following table specifies the opcodes, all other opcodes are
 illegal.
 
-[%header,cols="1,1"]
+[%header,%unbreakable,cols="1,1"]
 |===
 
 | Control Opcode
@@ -173,9 +151,9 @@ has a biased form (encoding the year field as an offset from 1970) to make commo
 to be 59% faster to encode and 21% faster to decode.  A non-biased, arbitrary length timestamp with packed bit encoding
 is defined for cases outside of the common cases.
 
-==== E-Expressions
+==== Encoding Expressions
 
-E-expression, in text, is denoted with `(:` ... `)`.  In binary this is encoded as a _template identifier_ followed by
+E-expressions, in text, are denoted with `(:` ... `)`.  In binary this is encoded as a _template identifier_ followed by
 the encoding of the arguments to the invocation.  The template/macro's definition statically determines how the
 arguments are to be laid out.  When all arguments for a template/macro are of fixed length the parameters are layed out
 with their respective encodings. An argument may be a full Ion value with encoding opcode, or it could be a lower-level
@@ -194,14 +172,64 @@ parameters with low-level encoding _or_ two or more parameters with opcode encod
   arguments are delimited by the `0xAD` (end indicator).
 * When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
 
+
+[[sec:whatsnew-eexp]]
+=== Encoding Expressions, Macros, and Templates
+
+Ion 1.1 introduces a new kind of encoding called *encoding expression* (*e-expression*).  These expressions are (in text
+syntax) similar to s-expressions, but they are not part of the data model and are _evaluated_ into one or more Ion
+values (called a _stream_) which enable compact representation of Ion data.  E-expressions represent the invocation of
+either system defined or user defined *macros* with arguments that are either themselves e-expressions, value literals,
+or container constructors (list, sexp, struct syntax containing e-expressions) corresponding to the formal parameters of
+the macro's definition.  The resulting stream is then expanded into the resulting Ion data model. At the top level, the
+stream becomes individual top-level values. Within a list or s-expression, the stream becomes additional child elements
+in the collection.  Within a struct at the field name position, the resulting stream must contain structs and each of the
+fields in those structs become fields in the enclosing struct (the value portion is not specified); at the value
+position, the resulting stream of values becomes fields with whatever field name corresponded before the e-expression.
+
+==== Encoding Context and Modules
+
+*_TBD_*.
+
+==== Macro Arguments
+
+*_TBD_*.
+
+==== Template Definitions
+
+*_TBD_*.
+
+=== System Symbol Table Changes
+
+The system symbol table in Ion 1.1 adds the following symbols:
+
+[%header,%unbreakable,cols="1,1"]
+|===
+
+| ID
+| Symbol Text
+
+| 10
+| `$ion_encoding`
+
+| 11
+| `$ion_literal`
+
+|===
+
+Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
+
+IMPORTANT: These assignments are provisional.  Specifically assignments for template definitions have not been
+established.
+
 <<<
 
-==== Encoding Opcodes
+=== Binary Encoding Opcodes
 
 The following is a table of the encoding opcodes for the data format (the leading byte that indicates how the following
 bytes should be decoded).
 
-[%header,cols="1,1"]
+[%header,%unbreakable,cols="1,1"]
 |===
 
 | Encoding Opcode
