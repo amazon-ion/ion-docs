@@ -225,13 +225,26 @@ examples, let us define `(:struct c 5)` that evaluates to a single struct `{c: 5
 
 ==== Encoding Context and Modules
 
+In Ion 1.0, there is a single _encoding context_, the local symbol table.  In Ion 1.1, the _encoding context_ becomes
+the following:
+
+* The local symbol table which is a list of strings.  This is used to encode/decode symbolic tokens.
+
+* The local macro table which is a list of macros.  This is used to reference macros that can be invoked by
+e-expressions.
+
+* A mapping of a string name to *module* which is an organizational unit of symbol definitions and macro definitions.
+
+The *module* is a new concept in Ion 1.1.  It contains a list of of strings representing the symbol definitions of a
+module and a list of macro definitions.  Modules can be imported from the catalog (they subsume shared symbol tables),
+but can also be defined locally.  Modules are referenced as a group to allocate entries in the local symbol table and
+local macro table.
+
+==== Macro Definitions
+
 *_TBD_*.
 
-==== Macro Arguments
-
-*_TBD_*.
-
-==== Template Definitions
+===== Shared Modules
 
 *_TBD_*.
 
