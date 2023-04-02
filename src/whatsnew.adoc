@@ -51,6 +51,29 @@ binary syntax to allow containers to be encoded with an end marker.
 
 IMPORTANT: *TBD*.
 
+=== System Symbol Table Changes
+
+The system symbol table in Ion 1.1 adds the following symbols:
+
+[%header,cols="1,1"]
+|===
+
+| ID
+| Symbol Text
+
+| 10
+| `$ion_encoding`
+
+| 11
+| `$ion_literal`
+
+|===
+
+Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
+
+IMPORTANT: These assignments are provisional.  Specifically assignments for template definitions have not been
+established.
+
 [[sec:whatsnew-text]]
 === Text Syntax Changes
 
@@ -105,7 +128,33 @@ representations of zero in `VarInt` (e.g., `0x80 0x00`, `0xC0 0x00 0x00`) mean `
 
 ==== Type Encoding Changes
 
-All Ion binary encodings use the new low-level encodings as specified in the previous section.  
+All Ion binary encodings use the new low-level encodings as specified in the previous section.  Many of the opcodes used
+in Ion 1.0 have been re-organized to make e-expressions compact.
+
+Typed `null` values are now all encoded with two bytes with the `0xAE` opcode.  Lists and s-expressions have two
+encodings, the Ion 1.0 length prefixed encoding and the new delimited form that end with the `0xAD` end opcode.  Struct
+values have three encodings, the Ion 1.0 length prefixed encoding, the length prefixed encoding using `VarSym` to encode
+field names (allowing for inline symbol text), and the delimited form that encodes its field names with `VarSym` (there
+is no delimited form with Ion 1.0 encoding of field names).  Symbol values have two encodings, one is the Ion 1.0
+encoding with the symbol ID, and the other one is structurally identical to the encoding of strings, which are used for
+symbols with inline text.
+
+Annotated values no longer have an outer length container.  They are now encoded with an opcode that specifies a single
+annotation with value following; an opcode that specifies two annotations with a value following; and finally, an opcode
+that specifies a variable length of annotations followed by a value.  The latter encoding is similar to how Ion 1.0
+annotations are encoded with the exception that there is no outer length.
+
+Integers now use an `Int` sub-field instead of the Ion 1.0 encoding using sign magnitude (with two opcodes).
+
+Decimals are structurally identical to their Ion 1.0 counterpart with the exception of the negative zero coefficient.
+The Ion 1.1 `VarInt` encoding is two's complement, so negative zero cannot be encoded directly with it.  Instead an
+encoding opcode is allocated specifically for encoding negative zero decimals.
+
+Timestamps no longer encode their components as octet-aligned fields.  The Ion 1.1 format uses a packed bit encoding and
+has a biased form (encoding the year field as an offset from 1970) to make common encodings of timestamp easily fit in a
+64-bit word for microsecond and nanosecond precision (with unknown UTC offset).  Benchmarks have shown this new encoding
+to be 59% faster to encode and 21% faster to decode.  A non-biased, arbitrary length timestamp with packed bit encoding
+is defined for cases outside of the common cases.
 
 ==== E-Expressions
 
@@ -127,6 +176,8 @@ parameters with low-level encoding _or_ two or more parameters with opcode encod
   the values/invocations. * When _zero_ *and* the encoding of the arguments use a full encoding opcode per argument the
   arguments are delimited by the `0xAD` (end indicator).
 * When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
+
+<<<
 
 ==== Encoding Opcodes
 
@@ -324,26 +375,3 @@ bytes should be decoded).
 | Delimited struct start.  Note that all delimited structs have their field names encoded as `VarSym`.
 
 |===
-
-=== System Symbol Table Changes
-
-The system symbol table in Ion 1.1 adds the following symbols:
-
-[%header,cols="1,1"]
-|===
-
-| ID
-| Symbol Text
-
-| 10
-| `$ion_encoding`
-
-| 11
-| `$ion_literal`
-
-|===
-
-Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
-
-IMPORTANT: These assignments are provisional.  Specifically assignments for template definitions have not been
-established.
