@@ -107,13 +107,13 @@ representations of zero in `VarInt` (e.g., `0x80 0x00`, `0xC0 0x00 0x00`) mean `
 
 All Ion binary encodings use the new low-level encodings as specified in the previous section.  
 
-==== Template/Macro Invocations
+==== E-Expressions
 
-A new type of encoding is the macro invocation, in text this is denoted with `(:` ... `)`, and in binary this is encoded
-as a _template identifier_ followed by the encoding of the arguments to the invocation.  The template/macro's definition
-statically determines how the arguments are to be laid out.  When all arguments for a template/macro are of fixed length
-the parameters are layed out with their respective encodings. An argument may be a full Ion value with encoding opcode,
-or it could be a lower-level encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
+E-expression, in text, is denoted with `(:` ... `)`.  In binary this is encoded as a _template identifier_ followed by
+the encoding of the arguments to the invocation.  The template/macro's definition statically determines how the
+arguments are to be laid out.  When all arguments for a template/macro are of fixed length the parameters are layed out
+with their respective encodings. An argument may be a full Ion value with encoding opcode, or it could be a lower-level
+encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
 
 Parameters to a template/macro has a cardinality specified _per_ parameter.  The binary encoding uses a variable length
 bit-stream (encoded as a `VarUInt`) before the encoding of the arguments if these 
