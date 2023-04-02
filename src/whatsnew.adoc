@@ -11,22 +11,25 @@ data *and* ensuring that any data model values produced by Ion 1.1 that are _not
 Ion 1.0.  To wit, any data that can be produced and read by an application in Ion 1.1 must have an equivalent
 representation in Ion 1.0.
 
-Ion 1.1 is *not* required to preserve Ion 1.0 syntax in Ion 1.1 encoding contexts.  The Ion Version Marker (IVM) is used
-to denote the different versions of the syntax.  Ion 1.1 does retain text compatibility with Ion 1.0 in that the changes
-are a strict superset of the grammar.  Although binary encoding changes are syntactically different in Ion 1.1 (in that
-the type descriptors have been rearranged), the building blocks of the encoding is a superset of Ion 1.0 making it
-possible for an implementor to reuse the parsing machinery to support parsing data in both contexts with modest changes.
+IMPORTANT: *_Discussion_*: Is this statement too weak? Specifically, should we be attempting to "fill in the holes" in
+the Ion data model around system values?  Should we require that Ion 1.1 implementations _produce_ Ion 1.0 data?
 
-IMPORTANT: *TODO*: verify if the text compatibility statement above is true. 
+Ion 1.1 is *not* required to preserve Ion 1.0 binary encoding in Ion 1.1 encoding contexts (i.e., the type codes and
+lower-level encodings are not preserved in the new version).  The Ion Version Marker (IVM) is used to denote the
+different versions of the syntax.  Ion 1.1 does retain text compatibility with Ion 1.0 in that the changes are a strict
+superset of the grammar, however due to the updated system symbol table, symbol IDs referred to using the `$n` syntax
+for symbols beyond the 1.0 system symbol table will not be compatible.
 
 === New Format Features
 
 Ion 1.1 adds the following features to the data format.
 
 [[sec:whatsnew-inline-symbols]]
-==== Inlineable Symbolic Tokens
+==== Inlined Symbolic Tokens
 
-In Ion 1.0, symbol values, field names, and annotations in the binary encoding was required to be encoded using a symbol
+IMPORTANT: *_Discussion_*: Should we call this something else (e.g., _non-interned_)?
+
+In Ion 1.0, symbol values, field names, and annotations in the binary encoding are required to be encoded using a symbol
 ID and a local symbol table.  For some use cases (e.g., as write once, read maybe logs) this creates a burden on the
 writer and may not actually be efficient for reading.  Ion 1.1 introduces optional binary syntax for encoding inline
 UTF-8 sequences for these tokens which can allow an encoder to have flexibility in whether or not to add a given
@@ -40,8 +43,8 @@ their position in the table (i.e., the `$id` syntax).
 ==== Delimited Containers
 
 In Ion 1.0, all data is length prefixed in binary.  While this is good for optimizing the reading of data, it requires
-an Ion encoder to buffer any top-level data in memory to calculate the data's length.  Ion 1.1 introduces optional
-binary syntax to allow containers to be encoded with delimiters
+an Ion encoder to buffer any data in memory to calculate the data's length.  Ion 1.1 introduces optional
+binary syntax to allow containers to be encoded with an end marker.
 
 [[sec:whatsnew-templates]]
 ==== Templates/Macros
@@ -54,10 +57,26 @@ IMPORTANT: *TBD*.
 Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the data stream or document.
 
 As described earlier, Ion 1.1 textually compatible with all existing Ion 1.0 text.  The only syntax change is the
-template/macro expansion expression syntax.  This syntax is grammatically similar to s-expressions, except that these
-expressions are opened with `(:` and closed with `)`.  For example, `(:a 1 2)` would expand the template/macro named `a`
-with the parameters `1` and `2`. See the <<sec:whatsnew-templates, Templates/Macros>> section for details.  This syntax
-is colloqually known as _smile syntax_ or _smile expressions_.
+encoding expression (e-expression) syntax which allows for the invocation of templates/macros in the data stream.  This
+syntax is grammatically similar to s-expressions, except that these expressions are opened with `(:` and closed with
+`)`.  For example, `(:a 1 2)` would expand the template/macro named `a` with the parameters `1` and `2`. See the
+<<sec:whatsnew-templates, Templates/Macros>> section for details.
+
+E-expressions are also grammatically allowed in the field name position of a struct and when used there, indicate that
+the expression should expand to a struct value that is spliced into:
+
+[source,plain]
+----
+{
+    a:1,
+    b:2,
+    (:foo 1 2),
+    c: 3,
+}
+----
+
+In the above example, the e-expression `(:foo 1 2)` must evaluate into a struct that will be spliced between the `b`
+field and the `c` field.  If it does not evaluate to a struct, then the above is an error.
 
 [[sec:whatsnew-bin]]
 === Binary Encoding Changes
@@ -84,10 +103,35 @@ indicates that a special control byte follows.  If that byte is `0x70`, then thi
 delimited struct (the only context for which this is allowed); finally all other octets are invalid.  The padded
 representations of zero in `VarInt` (e.g., `0x80 0x00`, `0xC0 0x00 0x00`) mean `$0`.
 
-==== Type Octets
+==== Type Encoding Changes
 
-The following is a table of the type octets of the encoding (the leading byte that indicates how the following bytes
-should be decoded).
+All Ion binary encodings use the new low-level encodings as specified in the previous section.  
+
+==== Template/Macro Invocations
+
+A new type of encoding is the macro invocation, in text this is denoted with `(:` ... `)`, and in binary this is encoded
+as a _template identifier_ followed by the encoding of the arguments to the invocation.  The template/macro's definition
+statically determines how the arguments are to be laid out.  When all arguments for a template/macro are of fixed length
+the parameters are layed out with their respective encodings. An argument may be a full Ion value with encoding opcode,
+or it could be a lower-level encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
+
+Parameters to a template/macro has a cardinality specified _per_ parameter.  The binary encoding uses a variable length
+bit-stream (encoded as a `VarUInt`) before the encoding of the arguments if these 
+
+When an parameter to a template may have multiple values or invocations (i.e., _optional_, _one or more_, or _zero or
+more_), a bit stream aligned to the nearest byte in big endian order precedes the encoded values/invocations to indicate
+the presence or lack of presence of the argument at that position.  This bit stream is only used when one or more such
+parameters with low-level encoding _or_ two or more parameters with opcode encoding exist.
+
+* When _positive_ this is an _octet length_ prefix for the values/invocations. * When _negative_ this is a _count_ for
+  the values/invocations. * When _zero_ *and* the encoding of the arguments use a full encoding opcode per argument the
+  arguments are delimited by the `0xAD` (end indicator).
+* When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
+
+==== Encoding Opcodes
+
+The following is a table of the encoding opcodes for the data format (the leading byte that indicates how the following
+bytes should be decoded).
 
 [%header,cols="1,1"]
 |===
@@ -110,11 +154,24 @@ should be decoded).
 | Template/macro expansion with variable length ID.  The low nibble is the top four bits of the template/macro ID.
   A `VarUInt` follows encoding the rest of the bits of the template/macro ID.
 
-| `0x5_`
-| Decimal. _TBD_.
+| `0x50` - `0x5E`
+| Decimal. Length specified by low nibble.  Encoding is structurally as in Ion 1.0, but with the new `VarInt` and `Int`
+  encodings for the coefficient and exponent sub-fields.  Also note that `0x5E` is a length 14 decimal and not variable
+  length.  `0xF5` encodes variable length decimals. `null.decimal` is handled by `0xAE`.
 
-| `0x6_`
-| Timestamp. _TBD_.
+| `0x5F`
+| Decimal, with negative zero coefficient.  Length is specified by `VarUInt` and an exponent encoded as an `Int`
+  follows.  The new encodings for `VarInt`/`Int` are not sign magnitude, so this special case is handled with the type
+  octet.
+
+| `0x60` - `0x6C`
+| Timestamp.  Bit-packed encoding with different degrees of resolution based on the low-nibble (see timestamp encoding
+  for details).  The year in these encodings are offset (biased) from 1970 to provide a more compact encoding up to
+  2097.  `0xF6` encodes variable length timestamp without year bias in a bit-packed encoding. `null.timestamp` is
+  handled by `0xAE`.
+
+| `0x6D` - `0x6F`
+| Illegal (reserved for future use).
 
 | `0x7_`
 | Symbol with inline text and length specified by low nibble.  The encoding is equivalent to String.  Variable
@@ -214,8 +271,8 @@ should be decoded).
 
 | `0xE2` - `0xEF`
 | Struct encoded with fields names as `VarSym` and length specified by the low nibble.  This is similar to `0xD_`
-  encodings, except that the field names are encoded with the new format.  Variable length structs with `VarSym`encoded
-  field use `0xF2`. `null.struct` is handled by `0xAE`.
+  encodings, except that the field names are encoded with the new format.  Variable length structs with `VarSym` encoded
+  fields use `0xF2`. `null.struct` is handled by `0xAE`.
 
 | `0xF0`
 | Variable length prefixed template invocation.  A `VarUInt` specifies the entire length of an invocation of a
@@ -288,4 +345,5 @@ The system symbol table in Ion 1.1 adds the following symbols:
 
 Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
 
-IMPORTANT: These assignments are provisional.
+IMPORTANT: These assignments are provisional.  Specifically assignments for template definitions have not been
+established.
