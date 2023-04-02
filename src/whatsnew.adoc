@@ -33,6 +33,7 @@ with `)`.  For example, `(:a 1 2)` would expand the template/macro named `a` wit
 
 This syntax is allowed anywhere an Ion value is allowed:
 
+.Figure {counter:figure-number}. E-expression Examples
 [source,plain,%unbreakable]
 ----
 (:foo 1 2)
@@ -44,6 +45,7 @@ This syntax is allowed anywhere an Ion value is allowed:
 E-expressions are also grammatically allowed in the field name position of a struct and when used there, indicate that
 the expression should expand to a struct value that is spliced into:
 
+.Figure {counter:figure-number}. E-Expression in field position of struct.
 [source,plain,%unbreakable]
 ----
 {
@@ -182,10 +184,44 @@ values (called a _stream_) which enable compact representation of Ion data.  E-e
 either system defined or user defined *macros* with arguments that are either themselves e-expressions, value literals,
 or container constructors (list, sexp, struct syntax containing e-expressions) corresponding to the formal parameters of
 the macro's definition.  The resulting stream is then expanded into the resulting Ion data model. At the top level, the
-stream becomes individual top-level values. Within a list or s-expression, the stream becomes additional child elements
-in the collection.  Within a struct at the field name position, the resulting stream must contain structs and each of the
-fields in those structs become fields in the enclosing struct (the value portion is not specified); at the value
-position, the resulting stream of values becomes fields with whatever field name corresponded before the e-expression.
+stream becomes individual top-level values.  Consider for illustrative purposes an e-expression `(:values 1 2 3)` that
+evaluates to the stream `1`, `2`, `3` and `(:void)` that evaluates to the empty stream.  In the following examples,
+`values` and `void` are the names of the macros being invoked and each line is equivalent.
+
+.Figure {counter:figure-number}. Top-level E-expressions
+[source,plain,%unbreakable]
+----
+a (:values 1 2 3) b (:void) c
+a 1 2 3 b c
+----
+
+Within a list or s-expression, the stream becomes additional child elements in the collection.
+
+.Figure {counter:figure-number}. E-expressions in lists
+[source,plain,%unbreakable]
+----
+[a, (:values 1 2 3), b, (:void), c]
+[a, 1, 2, 3, b, c]
+----
+
+.Figure {counter:figure-number}. E-expressions in s-expressions
+[source,plain,%unbreakable]
+----
+(a (:values 1 2 3) b (:void) c)
+(a 1 2 3 b c)
+----
+
+Within a struct at the field name position, the resulting stream must contain structs and each of the fields in those
+structs become fields in the enclosing struct (the value portion is not specified); at the value position, the resulting
+stream of values becomes fields with whatever field name corresponded before the e-expression.  In the following
+examples, let us define `(:struct c 5)` that evaluates to a single struct `{c: 5}`.
+
+.Figure {counter:figure-number}. E-expressions in structs
+[source,plain,%unbreakable]
+----
+{a: (:values 1 2 3), b: 4, (:struct c 5), d: 6}
+{a: 1, a: 2, a: 3, b: 4, c: 5, d: 6}
+----
 
 ==== Encoding Context and Modules
 
@@ -224,6 +260,7 @@ established.
 
 <<<
 
+[appendix]
 === Binary Encoding Opcodes
 
 The following is a table of the encoding opcodes for the data format (the leading byte that indicates how the following

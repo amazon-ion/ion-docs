@@ -6,6 +6,7 @@ Ion Team
 :docinfo:
 :sectnums:
 :sectnumlevels: 5
+:appendix-caption: Appendix
 :toc:
 :toclevels: 4
 :toc-title: Contents
