@@ -155,7 +155,7 @@ is defined for cases outside of the common cases.
 
 ==== Encoding Expressions
 
-E-expressions, in text, are denoted with `(:` ... `)`.  In binary this is encoded as a _template identifier_ followed by
+E-expressions, in text, are denoted with `(:` ... `)`.  In binary this is encoded as a _macro identifier_ followed by
 the encoding of the arguments to the invocation.  The template/macro's definition statically determines how the
 arguments are to be laid out.  When all arguments for a template/macro are of fixed length the parameters are layed out
 with their respective encodings. An argument may be a full Ion value with encoding opcode, or it could be a lower-level
@@ -234,17 +234,59 @@ the following:
 e-expressions.
 
 * A mapping of a string name to *module* which is an organizational unit of symbol definitions and macro definitions.
+  Within the encoding context, this name is unique and used to address a module's contents either as the list of symbols
+  to install into the local symbol table, the list of macros to install into the local macro table, or to qualify the
+  name of a macro in a text e-expression or the definition of a macro.
 
-The *module* is a new concept in Ion 1.1.  It contains a list of of strings representing the symbol definitions of a
-module and a list of macro definitions.  Modules can be imported from the catalog (they subsume shared symbol tables),
-but can also be defined locally.  Modules are referenced as a group to allocate entries in the local symbol table and
-local macro table.
+The *module* is a new concept in Ion 1.1.  It contains:
+
+* A list of of strings representing the symbol table of the module.
+
+* A list of macro definitions.
+
+Modules can be imported from the catalog (they subsume shared symbol tables), but can also be defined locally.  Modules
+are referenced as a group to allocate entries in the local symbol table and local macro table.
 
 ==== Macro Definitions
 
+Macros can be defined by a user either directly in a module in an encoding context, or in a shared module defined
+externally (i.e., shared symbol table).  A macro has a name which must be unique in a module *or* it may have no name.
+
+Ion 1.1 defines a list of _system macros_ that are built-in in the module named `$ion`.  Unlike the system symbol table,
+which is always installed and accessible in the local symbol table, the system macros are both always accessible to
+e-expressions and not installed in the local macro table by default.
+
+In Ion binary, macros are always addressed in e-expressions by the offset in the local macro table.  System macros may
+be addressed by the system macro identifier using a specific encoding op-code.  In Ion text, macros may be addressed by
+the offset in the local macro table (mirroring binary), its name if its name is unique within the local macro table, or
+by qualifying the macro name/offset with the module name in the encoding context.  An e-expression can _only_ refer to
+macros installed in the local macro table.
+
+For illustrative purposes let's consider the module named `foo` that has a macro named `bar` at
+offset 5 installed at the begining of the local macro table.
+
+.Figure {counter:figure-number}. E-expressions name resolution in text
+[source,plain,%unbreakable]
+----
+// allowed if there are no ther macros named 'bar' 
+(:bar)
+// fully qualified by module--always allowed
+(:foo:bar)
+// by local macro table offset
+(:5)
+// system macros are always addressable by name--in binary this would be a different offset with a different opcode
+(:$ion:void)
+----
+
+Macros also define a fixed set of zero or more parameters that they accept.  These parameters each have their own
+cardinality which can be specified as _required_ (exactly one), _optional_ (zero or one), _zero or more_, and _one or
+more_.
+
+==== Template Definition Language
+
 *_TBD_*.
 
-===== Shared Modules
+==== Shared Modules
 
 *_TBD_*.
 
@@ -413,7 +455,8 @@ bytes should be decoded).
 | Start of IVM.
 
 | `0xE1`
-| Illegal (reserved for future use).
+| System e-expression with variable length ID.  The low nibble is the top four bits of the macro ID.
+  A `VarUInt` follows encoding the rest of the bits of the macro ID.
 
 | `0xE2` - `0xEF`
 | Struct encoded with fields names as `VarSym` and length specified by the low nibble.  This is similar to `0xD_`
