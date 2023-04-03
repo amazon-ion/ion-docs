@@ -26,10 +26,10 @@ for symbols beyond the 1.0 system symbol table will not be compatible.
 Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the data stream or document.
 
 As described earlier, Ion 1.1 textually compatible with all existing Ion 1.0 text.  The only syntax change is the
-*encoding expression* (*e-expression*) syntax which allows for the invocation of templates and macros in the data stream.
-This syntax is grammatically similar to s-expressions, except that these expressions are opened with `(:` and closed
-with `)`.  For example, `(:a 1 2)` would expand the template/macro named `a` with the arguments `1` and `2`. See the
-<<sec:whatsnew-eexp, Encoding Expressions, Macros, and Templates>> section for details.
+*encoding expression* (*e-expression*) syntax which allows for the invocation of macros in the data stream. This syntax
+is grammatically similar to s-expressions, except that these expressions are opened with `(:` and closed with `)`.  For
+example, `(:a 1 2)` would expand the macro named `a` with the arguments `1` and `2`. See the <<sec:whatsnew-eexp,
+Macros, Templates, and Encoding-Expressions>> section for details.
 
 This syntax is allowed anywhere an Ion value is allowed:
 
@@ -62,9 +62,9 @@ field and the `c` field.  If it does not evaluate to a struct, then the above is
 [[sec:whatsnew-bin]]
 === Binary Encoding Changes
 
-Ion 1.1 binary encoding reorganizes the type descriptors to better support templates/macros and make certain encodings
-more compact, and certain lower priority encodings marginally less compact.  The IVM for this encoding is the octet
-sequence `0xE0 0x01 0x01 0xEA`.
+Ion 1.1 binary encoding reorganizes the type descriptors to better support macros and make certain encodings more
+compact, and certain lower priority encodings marginally less compact.  The IVM for this encoding is the octet sequence
+`0xE0 0x01 0x01 0xEA`.
 
 [[sec:whatsnew-inline-symbols]]
 ==== Inlined Symbolic Tokens
@@ -153,16 +153,16 @@ has a biased form (encoding the year field as an offset from 1970) to make commo
 to be 59% faster to encode and 21% faster to decode.  A non-biased, arbitrary length timestamp with packed bit encoding
 is defined for cases outside of the common cases.
 
-==== Encoding Expressions
+==== Encoding Expressions in Binary
 
 E-expressions, in text, are denoted with `(:` ... `)`.  In binary this is encoded as a _macro identifier_ followed by
-the encoding of the arguments to the invocation.  The template/macro's definition statically determines how the
-arguments are to be laid out.  When all arguments for a template/macro are of fixed length the parameters are layed out
+the encoding of the arguments to the invocation.  The macro's definition statically determines how the
+arguments are to be laid out.  When all arguments for a macro are of fixed length the parameters are layed out
 with their respective encodings. An argument may be a full Ion value with encoding opcode, or it could be a lower-level
 encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
 
-Parameters to a template/macro has a cardinality specified _per_ parameter.  The binary encoding uses a variable length
-bit-stream (encoded as a `VarUInt`) before the encoding of the arguments if these 
+Parameters to a macro have a cardinality specified _per_ parameter.  The binary encoding uses a variable length
+bit-stream (encoded as a `VarUInt`) before the encoding of the arguments to indicate 
 
 When an parameter to a template may have multiple values or invocations (i.e., _optional_, _one or more_, or _zero or
 more_), a bit stream aligned to the nearest byte in big endian order precedes the encoded values/invocations to indicate
@@ -172,11 +172,12 @@ parameters with low-level encoding _or_ two or more parameters with opcode encod
 * When _positive_ this is an _octet length_ prefix for the values/invocations. * When _negative_ this is a _count_ for
   the values/invocations. * When _zero_ *and* the encoding of the arguments use a full encoding opcode per argument the
   arguments are delimited by the `0xAD` (end indicator).
+
 * When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
 
 
 [[sec:whatsnew-eexp]]
-=== Encoding Expressions, Macros, and Templates
+=== Macros, Templates, and Encoding-Expressions
 
 Ion 1.1 introduces a new kind of encoding called *encoding expression* (*e-expression*).  These expressions are (in text
 syntax) similar to s-expressions, but they are not part of the data model and are _evaluated_ into one or more Ion
@@ -247,6 +248,8 @@ The *module* is a new concept in Ion 1.1.  It contains:
 Modules can be imported from the catalog (they subsume shared symbol tables), but can also be defined locally.  Modules
 are referenced as a group to allocate entries in the local symbol table and local macro table.
 
+Ion 1.1 introduces a new system value for the encoding context (see the *_TBD_* section for details.)
+
 ==== Macro Definitions
 
 Macros can be defined by a user either directly in a module in an encoding context, or in a shared module defined
@@ -262,8 +265,8 @@ the offset in the local macro table (mirroring binary), its name if its name is 
 by qualifying the macro name/offset with the module name in the encoding context.  An e-expression can _only_ refer to
 macros installed in the local macro table.
 
-For illustrative purposes let's consider the module named `foo` that has a macro named `bar` at
-offset 5 installed at the begining of the local macro table.
+For illustrative purposes let's consider the module named `foo` that has a macro named `bar` at offset 5 installed at
+the begining of the local macro table.
 
 .Figure {counter:figure-number}. E-expressions name resolution in text
 [source,plain,%unbreakable]
@@ -278,17 +281,35 @@ offset 5 installed at the begining of the local macro table.
 (:$ion:void)
 ----
 
-Macros also define a fixed set of zero or more parameters that they accept.  These parameters each have their own
-cardinality which can be specified as _required_ (exactly one), _optional_ (zero or one), _zero or more_, and _one or
-more_.
-
 ==== Template Definition Language
 
-*_TBD_*.
+User defined macros are defined by their *template* which defines how they are invoked and what stream of data they
+evaluate to.  This template is defined using a domain specific language with s-expressions.  A template defines a fixed
+set of zero or more parameters that it can accept.  These parameters each have their own cardinality which can be
+specified as _required_ (exactly one), _optional_ (zero or one), _zero or more_, and _one or more_.  Furthermore the
+template defines what type of argument can be accepted by each of these parameters:
+
+* Specific type(s) of Ion value.
+
+* Lower-level binary data (e.g. fixed width integers or `VarUInt`) for efficient encodings of the e-expressions in
+binary.
+
+* Specific e-expressions to allow for structural composition of macros and efficient encoding in binary.
+
+The template defintion includes a *template expression* that make up the body of the template (see the *_TBD_* section
+for details).  In the language, system macros, macros defined in previously defined modules in the encoding context, and
+macros defined previously in the current module are accessible to be invoked with `(name ...)` syntax where `name` is
+the macro to be invoked.  Certain names in the previous syntax are reserved for special forms (i.e., `quote`, `if`,
+`when`, `unless`, and `each`).  When a macro name is shadowed by a special form, or is ambiguous with respect to all
+macros visible, it can always be qualified with `(module:name ...)` syntax.
+
+INFORMATION: *_TBD_* put an easy to access example of a template definition.
 
 ==== Shared Modules
 
-*_TBD_*.
+Ion 1.1 extends the concept of _shared symbol table_ to be a _shared module_.  An Ion 1.0 shared symbol table is a
+shared module with no macro definitions.  A new schema for the convention of serializing shared modules in Ion are
+introduced in Ion 1.1 (see the *_TBD_* section for details).
 
 === System Symbol Table Changes
 
@@ -308,10 +329,10 @@ The system symbol table in Ion 1.1 adds the following symbols:
 
 |===
 
-Template/macro system operators are namespaced separately and therefore do not have entries in the system symbol table.
+System macro identifiers are namespaced separately and therefore do not have entries in the system symbol table.
 
-IMPORTANT: These assignments are provisional.  Specifically assignments for template definitions have not been
-established.
+IMPORTANT: These assignments are provisional.  Specifically assignments for the template definition language have not
+been established.
 
 <<<
 
@@ -329,8 +350,8 @@ bytes should be decoded).
 
 | `0x0_`
 .4+|
-  Template/macro expansion with single octet.  The high-order two bits indicate that the lower six bits represent the
-  template/macro ID to expand (64 single octet expansions).
+  E-expression with macro identifier encoded in the opcode.  The high-order two bits indicate that the lower six bits
+  represent the macro identifier to expand (64 single opcode expansions).  Arguments follow.
 
 | `0x1_`
 
@@ -339,8 +360,8 @@ bytes should be decoded).
 | `0x3_`
 
 | `0x4_`
-| Template/macro expansion with variable length ID.  The low nibble is the top four bits of the template/macro ID.
-  A `VarUInt` follows encoding the rest of the bits of the template/macro ID.
+| E-expression with variable length macro identifier.  The low nibble is the top four bits of the macro identifier.
+  A `VarUInt` follows encoding the rest of the bits of the macro identifier.  Arguments follow.
 
 | `0x50` - `0x5E`
 | Decimal. Length specified by low nibble.  Encoding is structurally as in Ion 1.0, but with the new `VarInt` and `Int`
@@ -464,8 +485,8 @@ bytes should be decoded).
   fields use `0xF2`. `null.struct` is handled by `0xAE`.
 
 | `0xF0`
-| Variable length prefixed template invocation.  A `VarUInt` specifies the entire length of an invocation of a
-  template/macro expansion and wraps the `0x0_` - `0x4_` encodings.
+| Variable length prefixed E-expression.  A `VarUInt` specifies the entire length of the e-expression followed by a
+  `VarUInt` identifier for the macro and the arguments of the e-expression following.
 
 | `0xF1`
 | Illegal (reserved for future use).
