@@ -52,7 +52,14 @@ namespace :spec do
     end
   end
 
-  task :build => [:html, :pdf]
+  task :docbook => :prereqs do
+    begin
+      puts "Converting to Docbook..."
+      `bundle exec asciidoctor -b docbook #{params} src/main.adoc -o build/#{doc_name}.xml`
+    end
+  end
+
+  task :build => [:html, :pdf, :docbook]
 
   task watch: [:build] do
     begin
