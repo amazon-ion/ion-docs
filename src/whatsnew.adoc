@@ -4,6 +4,16 @@
 We will go through a high-level overview of what is new and different in Ion 1.1 from Ion 1.0 from an implementer's
 perspective.
 
+=== Motivation
+
+Ion 1.1 has been designed to address some of the trade-offs in Ion 1.0 to make it suitable for a wider range of
+applications.  Ion 1.1 now makes length prefixing of data optional, but also makes the interning of symbolic tokens
+optional as well.  This allows for applications that write data more than they read data or are constrained by the
+writer in some way to have more flexibility.  Data density is another motivation.  Certain encodings (e.g., timestamps,
+integers) have been made more compact and efficient, but more significantly, macros and templates now enable
+applications to have very flexible interning of their data's structure.  In aggregate, data transcoded from Ion 1.0 to
+Ion 1.1 should be more compact.
+
 === Backwards Compatibility
 
 Ion 1.1 is backwards compatible to Ion 1.0.  Backwards compatibility is defined as being able to _parse_ Ion 1.0 encoded
@@ -96,6 +106,9 @@ the Ion 1.0 version of the encoding.
 
 The `Int` encoding has also been changed to be two's complement over its original signed magnitude representation.
 
+IMPORTANT: *_Discussion_*: Should we call these new low-level encodings something else to not confuse them with their
+1.0 counterparts?  If so, what should we call them?
+
 A new primitive encoding type, called `VarSym` has been introduced to flexibly encode symbol IDs and symbolic tokens
 with inline text.  This encoding is structurally identical to `VarInt` but is used to encode symbolic tokens that could
 be either a symbol ID or a length of the UTF-8 octets that follow.
@@ -113,7 +126,7 @@ follows. The following table specifies the control opcodes, all other opcodes ar
 | Control Opcode
 | Description
 
-| `0x1_` - `0x4_`, `0xF0`
+| `0x0_` - `0x4_`, `0xE1`, `0xF0`
 | E-expression follows.  This is only valid when a field name in a struct is expected.
 
 | `0x70`
@@ -122,14 +135,20 @@ follows. The following table specifies the control opcodes, all other opcodes ar
 | `0x80`
 | Represents empty inline text (i.e., `''`).
 
+| `0xAD`
+| Ends a delimited struct.  This is only valid when a field name in a _delimited_ struct is expected.
+
 |===
 
 The padded representations of zero in `VarSym` (e.g., `0x80 0x00`, `0xC0 0x00 0x00`) all mean `$0`.
 
+NOTE: The _control opcode_ is designed to parallel the Ion 1.1 _type opcodes_ which is why they might seem, out of that
+context, arbitrary.
+
 ==== Type Encoding Changes
 
-All Ion types use the encoding use the new low-level encodings as specified in the previous section.  Many of the
-opcodes used in Ion 1.0 have been re-organized primarily to make e-expressions compact.
+All Ion types use the new low-level encodings as specified in the previous section.  Many of the opcodes used in Ion 1.0
+have been re-organized primarily to make e-expressions compact.
 
 Typed `null` values are now all encoded with two bytes with the `0xAE` opcode.  Lists and s-expressions have two
 encodings, the Ion 1.0 length prefixed encoding and the new delimited form that end with the `0xAD` end opcode.  Struct
@@ -144,6 +163,9 @@ annotation with value following; an opcode that specifies two annotations with a
 that specifies a variable length of annotations followed by a value.  The latter encoding is similar to how Ion 1.0
 annotations are encoded with the exception that there is no outer length.
 
+IMPORTANT: *_Discussion_*: Should we provide an op-code for length prefixing the entire annotation?  If so, where should
+it go? E.g, make the variable length SID based annotations support this.
+
 Integers now use an `Int` sub-field instead of the Ion 1.0 encoding using sign magnitude (with two opcodes).
 
 Decimals are structurally identical to their Ion 1.0 counterpart with the exception of the negative zero coefficient.
@@ -152,34 +174,17 @@ encoding opcode is allocated specifically for encoding negative zero decimals.
 
 Timestamps no longer encode their sub-field components as octet-aligned fields.  The Ion 1.1 format uses a packed bit
 encoding and has a biased form (encoding the year field as an offset from 1970) to make common encodings of timestamp
-easily fit in a 64-bit word for microsecond and nanosecond precision (with unknown UTC offset).  Benchmarks have shown
-this new encoding to be 59% faster to encode and 21% faster to decode.  A non-biased, arbitrary length timestamp with
-packed bit encoding is defined for cases outside of the common cases.
+easily fit in a 64-bit word for microsecond and nanosecond precision (with UTC offset or unknown UTC offset).
+Benchmarks have shown this new encoding to be 59% faster to encode and 21% faster to decode.  A non-biased, arbitrary
+length timestamp with packed bit encoding is defined for cases outside of the common cases.
 
 ==== Encoding Expressions in Binary
 
-E-expressions, in binary are encoded with an opcode that encodes the _macro identifier_ or an opcode that specifies a
+E-expressions in binary are encoded with an opcode that encodes the _macro identifier_ or an opcode that specifies a
 `VarUInt` for the macro identifier.  This is followed by the encoding of the arguments to the e-expression.  The macro's
 definition statically determines how the arguments are to be laid out.  When all arguments for a macro are of fixed
-length the parameters are layed out with their respective encodings. An argument may be a full Ion value with encoding
-opcode, or it could be a lower-level encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
-
-When an parameter to a template may have multiple values or invocations (i.e., _optional_, _one or more_, or _zero or
-more_), a bit stream aligned to the nearest byte in big endian order precedes the encoded values/invocations to indicate
-the presence or lack of presence of the argument at that position.  This bit stream is only used when one or more such
-parameters with low-level encoding _or_ two or more parameters with typed opcode encoding exist.
-
-For each parameter that is specified to have a _zero or more_ or _one or more_ cardinality, its argument prefixed with a
-`VarInt` that specifies the length of the argument:
-
-* When _positive_ this is an _octet length_ prefix for the values/invocations. * When _negative_ this is a _count_ for
-  the values/invocations. * When _zero_ *and* the encoding of the arguments use a full encoding opcode per argument the
-  arguments are delimited by the `0xAD` (end indicator).
-
-* When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
-
-This `VarInt` is not required when an e-expression encoding has the argument bit-stream indicating no argument is
-present (i.e., empty).
+cardinality the parameters are layed out with their respective encodings. An argument may be a full Ion value with
+encoding opcode, or it could be a lower-level encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
 
 [[sec:whatsnew-eexp]]
 === Macros, Templates, and Encoding-Expressions
@@ -220,13 +225,14 @@ Within a list or s-expression, the stream becomes additional child elements in t
 
 Within a struct at the field name position, the resulting stream must contain structs and each of the fields in those
 structs become fields in the enclosing struct (the value portion is not specified); at the value position, the resulting
-stream of values becomes fields with whatever field name corresponded before the e-expression.  In the following
-examples, let us define `(:struct c 5)` that evaluates to a single struct `{c: 5}`.
+stream of values becomes fields with whatever field name corresponded before the e-expression (empty stream elides the
+field all together).  In the following examples, let us define `(:struct c 5)` that evaluates to a single struct `{c:
+5}`.
 
 .Figure {counter:figure-number}. E-expressions in structs
 [source,plain,%unbreakable]
 ----
-{a: (:values 1 2 3), b: 4, (:struct c 5), d: 6}
+{a: (:values 1 2 3), b: 4, (:struct c 5), d: 6, e: (:void)}
 {a: 1, a: 2, a: 3, b: 4, c: 5, d: 6}
 ----
 
@@ -257,12 +263,18 @@ table is initially, implicitly allocated with the symbols in the `$ion` module).
 
 Ion 1.1 introduces a new system value for the encoding context (see the *_TBD_* section for details.)
 
+.Figure {counter:figure-number}. Encoding Context in Ion Text
+[source,plain,%unbreakable]
+----
+// TODO - Example
+----
+
 IMPORTANT: This is still being actively worked and is provisional.
 
 ==== Macro Definitions
 
-Macros can be defined by a user either directly in a module either in an encoding context or in a shared module defined
-externally (i.e., shared module).  A macro has a name which must be unique in a module *or* it may have no name.
+Macros can be defined by a user either directly in a local module within an encoding context or in a shared module
+defined externally (i.e., shared module).  A macro has a name which must be unique in a module *or* it may have no name.
 
 Ion 1.1 defines a list of _system macros_ that are built-in in the module named `$ion`.  Unlike the system symbol table,
 which is always installed and accessible in the local symbol table, the system macros are both always accessible to
@@ -270,10 +282,11 @@ e-expressions and not installed in the local macro table by default (unlike the 
 
 In Ion binary, macros are always addressed in e-expressions by the offset in the local macro table.  System macros may
 be addressed by the system macro identifier using a specific encoding op-code.  In Ion text, macros may be addressed by
-the offset in the local macro table (mirroring binary), its name if its name is unique within the local macro table, or
-by qualifying the macro name/offset with the module name in the encoding context.  An e-expression can _only_ refer to
-macros installed in the local macro table or a macro from the system module.  In text, an e-expression referring to a
-system macro that *is not* installed in the local macro table, must use a qualified name with the `$ion` module name.
+the offset in the local macro table (mirroring binary), its name if its name is unambiguous within the local encoding
+context, or by qualifying the macro name/offset with the module name in the encoding context.  An e-expression can
+_only_ refer to macros installed in the local macro table or a macro from the system module.  In text, an e-expression
+referring to a system macro that *is not* installed in the local macro table, must use a qualified name with the `$ion`
+module name.
 
 For illustrative purposes let's consider the module named `foo` that has a macro named `bar` at offset 5 installed at
 the begining of the local macro table.
@@ -311,8 +324,9 @@ for details).  In the language, system macros, macros defined in previously defi
 macros defined previously in the current module are accessible to be invoked with `(name ...)` syntax where `name` is
 the macro to be invoked.  Certain names in the expression syntax are reserved for special forms (i.e., `quote`, `if`,
 `when`, `unless`, and `each`).  When a macro name is shadowed by a special form, or is ambiguous with respect to all
-macros visible, it can always be qualified with `(module:name ...)` syntax where `module` is the name of the module and
-`name` is the offset or name of the macro.
+macros visible, it can always be qualified with `(':module:name' ...)` syntax where `module` is the name of the module
+and `name` is the offset or name of the macro.  Referring to a previously defined macro name _within_ a module may be
+qualified with `(':name ...')` syntax.
 
 INFORMATION: *_TBD_* put an easy to access example of a template definition.
 
@@ -374,7 +388,7 @@ bytes should be decoded).
 
 | `0x4_`
 | E-expression with variable length macro identifier.  The low nibble is the top four bits of the macro identifier.
-  A `VarUInt` follows encoding the rest of the bits of the macro identifier.  Encoded arguments that match the expected
+  A `VarUInt` follows encoding the rest of the bits of the macro identifier which is offset from 64.  Encoded arguments that match the expected
   parameter list follow.
 
 | `0x50` - `0x5E`
@@ -443,6 +457,7 @@ bytes should be decoded).
 
 | `0xA6`
 | Variable length of annotations encoded as a `VarUInt`, followed by `VarUInt` encoded symbol IDs, followed by a value.
+  (*_Note_*: we could add length prefixing here to make it consistent with Ion 1.0 annotations)
 
 | `0xA7`
 | Single annotation encoded as a `VarSym` with a value following.
@@ -451,7 +466,7 @@ bytes should be decoded).
 | Two annotations encoded as `VarSym` with a value following.
 
 | `0xA9`
-| Variable length of annotations encoded as a `VarUInt`, followed by `VarUInt` encoded symbol IDs, followed by a value.
+| Variable length of annotations encoded as a `VarUInt`, followed by `VarSym` encoded symbol IDs, followed by a value.
 
 | `0xAA`
 | _Illegal (reserved for future use)._
@@ -490,8 +505,7 @@ bytes should be decoded).
 | Start of IVM.
 
 | `0xE1`
-| System e-expression with variable length ID.  The low nibble is the top four bits of the macro ID.
-  A `VarUInt` follows encoding the rest of the bits of the macro ID.
+| System e-expression with variable length ID.  A `VarUInt` follows encoding the rest of the bits of the macro ID.
 
 | `0xE2` - `0xEF`
 | Struct encoded with fields names as `VarSym` and length specified by the low nibble.  This is similar to `0xD_`
@@ -539,12 +553,37 @@ bytes should be decoded).
 | Variable length sexp.
 
 | `0xFD`
-| Delimited list start.
+| Delimited list start.  The list ends with `0xAD`.
 
 | `0xFE`
-| Delimited sexp start.
+| Delimited s-expression start.  The s-expression ends with `0xAD`.
 
 | `0xFF`
-| Delimited struct start.  Note that all delimited structs have their field names encoded as `VarSym`.
+| Delimited struct start.  Note that all delimited structs have their field names encoded as `VarSym`. The struct ends
+  with a special marker at the field name position of `0x00` `0xAD`.
 
 |===
+
+[appendix]
+=== E-Expression Calling Conventions in Binary
+
+IMPORTANT: *_WIP_*: This section is incomplete.
+
+When an parameter to a template may have multiple values or invocations (i.e., _zero or one_, _one or more_, or _zero or
+more_), a bit stream aligned to the nearest byte in big endian order precedes the encoded values/invocations to indicate
+the presence or lack of presence of the argument at that position.  This bit stream is only used when one or more such
+parameters with low-level encoding _or_ two or more parameters with typed opcode encoding exist.
+
+For each parameter that is specified to have a _zero or more_ or _one or more_ cardinality, its argument prefixed with a
+`VarInt` that specifies the length of the argument:
+
+* When _positive_ this is an _octet length_ prefix for the values/invocations.
+
+* When _negative_ this is a _count_ for
+  the values/invocations. * When _zero_ *and* the encoding of the arguments use a full encoding opcode per argument the
+  arguments are delimited by the `0xAD` (end indicator).
+
+* When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
+
+This `VarInt` is not required when an e-expression encoding has the argument bit-stream indicating no argument is
+present (i.e., empty).
