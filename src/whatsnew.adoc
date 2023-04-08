@@ -7,12 +7,12 @@ perspective.
 === Motivation
 
 Ion 1.1 has been designed to address some of the trade-offs in Ion 1.0 to make it suitable for a wider range of
-applications.  Ion 1.1 now makes length prefixing of data optional, but also makes the interning of symbolic tokens
+applications.  Ion 1.1 now makes length prefixing of data optional and also makes the interning of symbolic tokens
 optional as well.  This allows for applications that write data more than they read data or are constrained by the
 writer in some way to have more flexibility.  Data density is another motivation.  Certain encodings (e.g., timestamps,
-integers) have been made more compact and efficient, but more significantly, macros and templates now enable
-applications to have very flexible interning of their data's structure.  In aggregate, data transcoded from Ion 1.0 to
-Ion 1.1 should be more compact.
+integers) have been made more compact and efficient, but more significantly, macros now enable applications to have very
+flexible interning of their data's structure.  In aggregate, data transcoded from Ion 1.0 to Ion 1.1 should be more
+compact.
 
 === Backwards Compatibility
 
@@ -35,8 +35,8 @@ for symbols beyond the 1.0 system symbol table are not be compatible.
 
 Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the data stream or document.
 
-The only syntax change for the text format is the *encoding expression* (*e-expression*) syntax which allows for the
-invocation of macros in the data stream. This syntax is grammatically similar to s-expressions, except that these
+The only syntax change for the text format is the *encoding expression* (*E-expression*) syntax which allows for the
+invocation of macros in the data stream. This syntax is grammatically similar to S-expressions, except that these
 expressions are opened with `(:` and closed with `)`.  For example, `(:a 1 2)` would expand the macro named `a` with the
 arguments `1` and `2`. See the <<sec:whatsnew-eexp, Macros, Templates, and Encoding-Expressions>> section for details.
 
@@ -65,13 +65,13 @@ the expression should expand to a struct value that is merged into the enclosing
 }
 ----
 
-In the above example, the e-expression `(:foo 1 2)` must evaluate into a struct that will be merged between the `b`
+In the above example, the E-expression `(:foo 1 2)` must evaluate into a struct that will be merged between the `b`
 field and the `c` field.  If it does not evaluate to a struct, then the above is an error.
 
 [[sec:whatsnew-bin]]
 === Binary Encoding Changes
 
-Ion 1.1 binary encoding reorganizes the type descriptors to support compact e-expressions, make certain encodings
+Ion 1.1 binary encoding reorganizes the type descriptors to support compact E-expressions, make certain encodings
 more compact, and certain lower priority encodings marginally less compact.  The IVM for this encoding is the octet
 sequence `0xE0 0x01 0x01 0xEA`.
 
@@ -148,9 +148,9 @@ context, arbitrary.
 ==== Type Encoding Changes
 
 All Ion types use the new low-level encodings as specified in the previous section.  Many of the opcodes used in Ion 1.0
-have been re-organized primarily to make e-expressions compact.
+have been re-organized primarily to make E-expressions compact.
 
-Typed `null` values are now all encoded with two bytes with the `0xAE` opcode.  Lists and s-expressions have two
+Typed `null` values are now all encoded with two bytes with the `0xAE` opcode.  Lists and S-expressions have two
 encodings, the Ion 1.0 length prefixed encoding and the new delimited form that end with the `0xAD` end opcode.  Struct
 values have three encodings, the Ion 1.0 length prefixed encoding, the length prefixed encoding using `VarSym` to encode
 field names (allowing for inline symbol text), and the delimited form that encodes its field names with `VarSym` (there
@@ -181,22 +181,21 @@ length timestamp with packed bit encoding is defined for cases outside of the co
 ==== Encoding Expressions in Binary
 
 E-expressions in binary are encoded with an opcode that encodes the _macro identifier_ or an opcode that specifies a
-`VarUInt` for the macro identifier.  This is followed by the encoding of the arguments to the e-expression.  The macro's
-definition statically determines how the arguments are to be laid out.  When all arguments for a macro are of fixed
-cardinality the parameters are layed out with their respective encodings. An argument may be a full Ion value with
+`VarUInt` for the macro identifier.  This is followed by the encoding of the arguments to the E-expression.  The macro's
+definition statically determines how the arguments are to be laid out.  An argument may be a full Ion value with
 encoding opcode, or it could be a lower-level encoding (e.g., fixed width integer or `VarInt`/`VarUInt`).
 
 [[sec:whatsnew-eexp]]
 === Macros, Templates, and Encoding-Expressions
 
-Ion 1.1 introduces a new kind of encoding called *encoding expression* (*e-expression*).  These expressions are (in text
-syntax) similar to s-expressions, but they are not part of the data model and are _evaluated_ into one or more Ion
+Ion 1.1 introduces a new kind of encoding called *encoding expression* (*E-expression*).  These expressions are (in text
+syntax) similar to S-expressions, but they are not part of the data model and are _evaluated_ into one or more Ion
 values (called a _stream_) which enable compact representation of Ion data.  E-expressions represent the invocation of
-either system defined or user defined *macros* with arguments that are either themselves e-expressions, value literals,
-or container constructors (list, sexp, struct syntax containing e-expressions) corresponding to the formal parameters of
+either system defined or user defined *macros* with arguments that are either themselves E-expressions, value literals,
+or container constructors (list, sexp, struct syntax containing E-expressions) corresponding to the formal parameters of
 the macro's definition.  The resulting stream is then expanded into the resulting Ion data model.
 
-At the top level, the stream becomes individual top-level values.  Consider for illustrative purposes an e-expression
+At the top level, the stream becomes individual top-level values.  Consider for illustrative purposes an E-expression
 `(:values 1 2 3)` that evaluates to the stream `1`, `2`, `3` and `(:void)` that evaluates to the empty stream.  In the
 following examples, `values` and `void` are the names of the macros being invoked and each line is equivalent.
 
@@ -207,7 +206,7 @@ a (:values 1 2 3) b (:void) c
 a 1 2 3 b c
 ----
 
-Within a list or s-expression, the stream becomes additional child elements in the collection.
+Within a list or S-expression, the stream becomes additional child elements in the collection.
 
 .Figure {counter:figure-number}. E-expressions in lists
 [source,plain,%unbreakable]
@@ -216,7 +215,7 @@ Within a list or s-expression, the stream becomes additional child elements in t
 [a, 1, 2, 3, b, c]
 ----
 
-.Figure {counter:figure-number}. E-expressions in s-expressions
+.Figure {counter:figure-number}. E-expressions in S-expressions
 [source,plain,%unbreakable]
 ----
 (a (:values 1 2 3) b (:void) c)
@@ -225,14 +224,14 @@ Within a list or s-expression, the stream becomes additional child elements in t
 
 Within a struct at the field name position, the resulting stream must contain structs and each of the fields in those
 structs become fields in the enclosing struct (the value portion is not specified); at the value position, the resulting
-stream of values becomes fields with whatever field name corresponded before the e-expression (empty stream elides the
-field all together).  In the following examples, let us define `(:struct c 5)` that evaluates to a single struct `{c:
-5}`.
+stream of values becomes fields with whatever field name corresponded before the E-expression (empty stream elides the
+field all together).  In the following examples, let us define `(:make_struct c 5)` that evaluates to a single struct
+`{c: 5}`.
 
 .Figure {counter:figure-number}. E-expressions in structs
 [source,plain,%unbreakable]
 ----
-{a: (:values 1 2 3), b: 4, (:struct c 5), d: 6, e: (:void)}
+{a: (:values 1 2 3), b: 4, (:make_struct c 5), d: 6, e: (:void)}
 {a: 1, a: 2, a: 3, b: 4, c: 5, d: 6}
 ----
 
@@ -244,12 +243,12 @@ becomes the following:
 * The local symbol table which is a list of strings.  This is used to encode/decode symbolic tokens.
 
 * The local macro table which is a list of macros.  This is used to reference macros that can be invoked by
-e-expressions.
+E-expressions.
 
 * A mapping of a string name to *module* which is an organizational unit of symbol definitions and macro definitions.
   Within the encoding context, this name is unique and used to address a module's contents either as the list of symbols
   to install into the local symbol table, the list of macros to install into the local macro table, or to qualify the
-  name of a macro in a text e-expression or the definition of a macro.
+  name of a macro in a text E-expression or the definition of a macro.
 
 The *module* is a new concept in Ion 1.1.  It contains:
 
@@ -261,30 +260,35 @@ Modules can be imported from the catalog (they subsume shared symbol tables), bu
 are referenced as a group to allocate entries in the local symbol table and local macro table (e.g., the local symbol
 table is initially, implicitly allocated with the symbols in the `$ion` module).
 
-Ion 1.1 introduces a new system value for the encoding context (see the *_TBD_* section for details.)
+Ion 1.1 introduces a new system value (an _encoding directive_) for the encoding context (see the *_TBD_* section for
+details.)
 
-.Figure {counter:figure-number}. Encoding Context in Ion Text
+.Figure {counter:figure-number}. Ion encoding directive example
 [source,plain,%unbreakable]
 ----
-// TODO - Example
+$ion_encoding::{
+  modules:         [ /* module declarations - including imports */ ],
+  install_symbols: [ /* names of declared modules */ ],
+  install_macros:  [ /* names of declared modules */ ]
+}
 ----
 
 IMPORTANT: This is still being actively worked and is provisional.
 
 ==== Macro Definitions
 
-Macros can be defined by a user either directly in a local module within an encoding context or in a shared module
+Macros can be defined by a user either directly in a local module within an encoding directive or in a shared module
 defined externally (i.e., shared module).  A macro has a name which must be unique in a module *or* it may have no name.
 
 Ion 1.1 defines a list of _system macros_ that are built-in in the module named `$ion`.  Unlike the system symbol table,
 which is always installed and accessible in the local symbol table, the system macros are both always accessible to
-e-expressions and not installed in the local macro table by default (unlike the local symbol table).
+E-expressions and not installed in the local macro table by default (unlike the local symbol table).
 
-In Ion binary, macros are always addressed in e-expressions by the offset in the local macro table.  System macros may
+In Ion binary, macros are always addressed in E-expressions by the offset in the local macro table.  System macros may
 be addressed by the system macro identifier using a specific encoding op-code.  In Ion text, macros may be addressed by
 the offset in the local macro table (mirroring binary), its name if its name is unambiguous within the local encoding
-context, or by qualifying the macro name/offset with the module name in the encoding context.  An e-expression can
-_only_ refer to macros installed in the local macro table or a macro from the system module.  In text, an e-expression
+context, or by qualifying the macro name/offset with the module name in the encoding context.  An E-expression can
+_only_ refer to macros installed in the local macro table or a macro from the system module.  In text, an E-expression
 referring to a system macro that *is not* installed in the local macro table, must use a qualified name with the `$ion`
 module name.
 
@@ -294,7 +298,7 @@ the begining of the local macro table.
 .Figure {counter:figure-number}. E-expressions name resolution in text
 [source,plain,%unbreakable]
 ----
-// allowed if there are no ther macros named 'bar' 
+// allowed if there are no other macros named 'bar' 
 (:bar)
 // fully qualified by module--always allowed
 (:foo:bar)
@@ -304,31 +308,31 @@ the begining of the local macro table.
 (:$ion:void)
 ----
 
-==== Template Definition Language
+==== Macro Definition Language
 
-User defined macros are defined by their *template* which defines how they are invoked and what stream of data they
-evaluate to.  This template is defined using a domain specific language with s-expressions.  A template defines a fixed
-set of zero or more parameters that it can accept.  These parameters each have their own cardinality which can be
-specified as _required_ (exactly one), _optional_ (zero or one), _zero or more_, and _one or more_.  Furthermore the
-template defines what type of argument can be accepted by each of these parameters:
+User defined macros are defined by their parameters and *template* which defines how they are invoked and what stream of
+data they evaluate to.  This template is defined using a domain specific Ion macro definition language with
+S-expressions. A template defines a list of zero or more parameters that it can accept.  These parameters each have
+their own cardinality of expression arguments which can be specified as _exactly one_, _zero or one_, _zero or more_,
+and _one or more_. Furthermore the template defines what type of argument can be accepted by each of these parameters:
 
 * Specific type(s) of Ion value.
 
-* Lower-level binary data (e.g. fixed width integers or `VarUInt`) for efficient encodings of the e-expressions in
+* Lower-level binary data (e.g. fixed width integers or `VarUInt`) for efficient encodings of the E-expressions in
 binary.
 
-* Specific e-expressions to allow for structural composition of macros and efficient encoding in binary.
+* Specific _macro shaped arguments_ to allow for structural composition of macros and efficient encoding in binary.
 
-The template defintion includes a *template expression* that make up the body of the template (see the *_TBD_* section
+The macro defintion includes a *template body* that defines how the macro is expanded (see the *_TBD_* section
 for details).  In the language, system macros, macros defined in previously defined modules in the encoding context, and
 macros defined previously in the current module are accessible to be invoked with `(name ...)` syntax where `name` is
 the macro to be invoked.  Certain names in the expression syntax are reserved for special forms (i.e., `quote`, `if`,
 `when`, `unless`, and `each`).  When a macro name is shadowed by a special form, or is ambiguous with respect to all
 macros visible, it can always be qualified with `(':module:name' ...)` syntax where `module` is the name of the module
 and `name` is the offset or name of the macro.  Referring to a previously defined macro name _within_ a module may be
-qualified with `(':name ...')` syntax.
+qualified with `(':name' ...)` syntax.
 
-INFORMATION: *_TBD_* put an easy to access example of a template definition.
+INFORMATION: *_TBD_* put an easy to access example of a macro definition.
 
 ==== Shared Modules
 
@@ -357,7 +361,7 @@ The system symbol table in Ion 1.1 adds the following symbols:
 
 System macro identifiers are namespaced separately and therefore do not have entries in the system symbol table.
 
-IMPORTANT: These assignments are provisional.  Specifically assignments for the template definition language have not
+IMPORTANT: These assignments are provisional.  Specifically assignments for the macro definition language have not
 been established.
 
 <<<
@@ -388,8 +392,8 @@ bytes should be decoded).
 
 | `0x4_`
 | E-expression with variable length macro identifier.  The low nibble is the top four bits of the macro identifier.
-  A `VarUInt` follows encoding the rest of the bits of the macro identifier which is offset from 64.  Encoded arguments that match the expected
-  parameter list follow.
+  A `VarUInt` follows encoding the rest of the bits of the macro identifier which is offset from 64.  Encoded arguments
+  that match the expected parameter list follow.
 
 | `0x50` - `0x5E`
 | Decimal. Length specified by low nibble.  Encoding is structurally as in Ion 1.0, but with the new `VarInt` and `Int`
@@ -505,7 +509,7 @@ bytes should be decoded).
 | Start of IVM.
 
 | `0xE1`
-| System e-expression with variable length ID.  A `VarUInt` follows encoding the rest of the bits of the macro ID.
+| System E-expression with variable length ID.  A `VarUInt` follows encoding the rest of the bits of the macro ID.
 
 | `0xE2` - `0xEF`
 | Struct encoded with fields names as `VarSym` and length specified by the low nibble.  This is similar to `0xD_`
@@ -513,8 +517,8 @@ bytes should be decoded).
   fields use `0xF2`. `null.struct` is handled by `0xAE`.
 
 | `0xF0`
-| Variable length prefixed E-expression.  A `VarUInt` specifies the entire length of the e-expression followed by a
-  `VarUInt` identifier for the macro and the arguments of the e-expression following.
+| Variable length prefixed E-expression.  A `VarUInt` specifies the entire length of the E-expression followed by a
+  `VarUInt` identifier for the macro and the arguments of the E-expression following.
 
 | `0xF1`
 | _Illegal (reserved for future use)._
@@ -556,7 +560,7 @@ bytes should be decoded).
 | Delimited list start.  The list ends with `0xAD`.
 
 | `0xFE`
-| Delimited s-expression start.  The s-expression ends with `0xAD`.
+| Delimited S-expression start.  The S-expression ends with `0xAD`.
 
 | `0xFF`
 | Delimited struct start.  Note that all delimited structs have their field names encoded as `VarSym`. The struct ends
@@ -567,12 +571,16 @@ bytes should be decoded).
 [appendix]
 === E-Expression Calling Conventions in Binary
 
-IMPORTANT: *_WIP_*: This section is incomplete.
+IMPORTANT: *_WIP_*: This section is incomplete and needs rework.
 
-When an parameter to a template may have multiple values or invocations (i.e., _zero or one_, _one or more_, or _zero or
+An E-expression specifies the macro ID, followed by the macro's arguments.  The macro's _parameter list_ determins which
+how these arguments are laid out.  When all parameters for a macro have _exactly one_ argument, each argument is encoded
+using their normal Ion binary encodings.
+
+When a parameter to a macro may have multiple argument expressions (i.e., _zero or one_, _one or more_, or _zero or
 more_), a bit stream aligned to the nearest byte in big endian order precedes the encoded values/invocations to indicate
-the presence or lack of presence of the argument at that position.  This bit stream is only used when one or more such
-parameters with low-level encoding _or_ two or more parameters with typed opcode encoding exist.
+the presence or absence of the argument at that position.  This bit stream is only used when one or more such parameters
+with low-level encoding (tagless) _or_ two or more parameters with typed opcode (tagged) encoding exist.
 
 For each parameter that is specified to have a _zero or more_ or _one or more_ cardinality, its argument prefixed with a
 `VarInt` that specifies the length of the argument:
@@ -585,5 +593,5 @@ For each parameter that is specified to have a _zero or more_ or _one or more_ c
 
 * When _zero_ *and* the encoding of the arguments use lower-level encodings, this denotes empty arguments.
 
-This `VarInt` is not required when an e-expression encoding has the argument bit-stream indicating no argument is
+This `VarInt` is not required when an E-expression encoding has the argument bit-stream indicating no argument is
 present (i.e., empty).
