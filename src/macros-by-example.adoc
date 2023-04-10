@@ -157,8 +157,8 @@ In the template language, macro invocations can appear almost anywhere:
 (:detail_page_url "B08KTZ8249") ⇒ "https://www.amazon.com/dp/B08KTZ8249"
 ----
 
-NOTE: While this doesn’t look like much of an improvement, the full string takes 38 to encode, but
-the macro invocation can be encoded with as few as 12 bytes.
+NOTE: While this doesn’t look like much of an improvement, the full string takes 38 bytes to encode,
+but the macro invocation takes as few as 12 bytes.
 
 
 === Special Form: `*literal*`
@@ -243,8 +243,9 @@ that the parameter `foo` accepts any value.
 
 === Cardinality: Rest Parameters
 
-Some macros can accept an arbitrary number of arguments.  The `make_string` macro is one of those,
-concatenating zero or more arguments into a single string:
+Sometimes we want a macro to accept an arbitrary number of arguments, in particular _all the rest
+of them_.  The `make_string` macro is one of those, concatenating all of its arguments into a
+single string:
 
 ----
 (:make_string)                 ⇒ ""
@@ -631,7 +632,7 @@ but it also applies to `*?*` and `***` cardinality:
 [{mrk}]
 ----
 (*public* optionals
-  [(*any** a), (*any?* b), (*any!* c), (*any** d), (*any?* e), (*any\...* f)]
+  [(**any* **a), (*any?* b), (*any!* c), (*any** d), (*any?* e), (*any\...* f)]
   (make_list a b c d e f))
 ----
 
