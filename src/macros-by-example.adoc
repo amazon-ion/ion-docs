@@ -120,14 +120,19 @@ From the point of view of ``reverse``’s template, the input struct is literal 
 E-expressions can nest, so we could also encode the same data using `price`:
 
 ----
-(:reverse first (:price a c)) ⇒ [{amount:a, currency:c}, first]
+(:reverse first (:price a c))
+⇒ (:reverse first {amount:a, currency:c})
+⇒ [{amount:a, currency:c}, first]
 ----
+
+As the example suggests, expansion steps proceed "inside out" and the outer macro receives the
+results from the inner invocation.
 
 
 === Invoking Macros from Templates
 
-So the template language treats symbols as parameter references, other scalars as literals, and
-structs and lists as quasi-literals, but what about S-expressions?
+Template expressions that are S-expressions are _operator invocations_, where the operators are
+either macros or _special forms_.  We start with the former:
 
 [{mrk}]
 ----
@@ -136,10 +141,8 @@ structs and lists as quasi-literals, but what about S-expressions?
   (make_string "https://www.amazon.com/" path))
 ----
 
-Template expressions that are S-expressions are operator invocations, where the operators are
-either special forms or macro invocations.  In this case, it’s the latter: an invocation of the
-system macro (_i.e._, built-in function) `make_string`, which concatenates its arguments to produce
-a single string:
+In this case, the S-expression `(make_string …)` is an invocation of the system macro (that is, a
+built-in function) `make_string`, which concatenates its arguments to produce a single string:
 
 ----
 (:website_url "gp/cart") ⇒ "https://www.amazon.com/gp/cart"
@@ -276,21 +279,18 @@ _cardinality_.  In the examples so far, all parameters have had _exactly-one_ ca
 `parts` has _zero-or-more_ cardinality.  We’ll see additional cardinalities soon!
 
 
-=== Templates Transform Streams
+=== Arguments and Results are Streams
 
-Rest-parameters raise a question: what happens when a template references a parameter that was
-given more than one argument?  The answer revolves around a unique aspect of Ion’s macro system
-and template language: the inputs to and the output from a macro are streams of values,
-constrained in size by cardinality declarations.  When a macro is invoked, each parameter is
-bound to a stream of values, and within the macro definition, each parameter’s name is a reference to that stream,
+The inputs to and results from a macro are modeled as streams of values, constrained in size by
+cardinality declarations.  When a macro is invoked, each argument produces a stream of values,
+and within the macro definition, each parameter name refers to the corresponding stream,
 not to a specific value.  The declared cardinality of a parameter constrains the number of
 elements produced by its stream, and is verified by the macro expansion system.
 
-More generally, the template language itself is stream-oriented, and the results of template
-expressions are streams.  While most expression forms produce exactly-one value, various macros
-and special forms can produce zero or more values.
+More generally, the results of all template expressions are streams.  While most expressions
+produce a single value, various macros and special forms can produce zero or more values.
 
-We have everything we need to illustrate, via another system macro, `values`:
+We have everything we need to illustrate this, via another system macro, `values`:
 
 [{mrk}]
 ----
@@ -358,9 +358,9 @@ nature.  When used in field-value position, each result from a macro is bound to
 independently, leading to the field being repeated or even absent:
 
 ----
-{ name: (:values) }     ⇒ { }
-{ name: (:values v) }   ⇒ { name: v }
-{ name: (:values v w) } ⇒ { name: v, name: w }
+{ name: (:values) }          ⇒ { }
+{ name: (:values v) }        ⇒ { name: v }
+{ name: (:values v ann::w) } ⇒ { name: v, name: ann::w }
 ----
 
 An E-expression can even be used in place of a key-value pair, in which case it must return
@@ -454,8 +454,8 @@ argument, albeit one with no value(s).
 
 Void is important because we need something outside the Ion data model to express that Ion data
 doesn't exist.  We can’t use null because `null` is a value!  In much the same way that Ion
-differentiates a null-field from an absent field (_e.g._, `{a:null}` versus `{}`), macros need to
-differentiate the absence of value from all other values in the Ion data model.
+differentiates a null-field from an absent field (for example, `{a:null}` versus `{}`), macros
+need to differentiate the absence of value from all other values in the Ion data model.
 
 We’ll use the term _void_ most accurately as a synonym for “empty stream”, but you might catch us
 talking as if void were a value, when it’s actually no value at all.  We’ll even mint the word
@@ -481,7 +481,7 @@ signatures, namely `*!*`, `*?*`, `***`, and `*+*`. The former is the default, so
 
 ==== zero-or-one
 
-The zero-or-one cardinality, denoted in signatures by the modifier `*?*`, is much like the default
+A parameter with the modifier `*?*` has _zero-or-one cardinality_, which is much like the default
 exactly-one cardinality, except the parameter is voidable.  That is, it accepts an empty-stream
 argument as a way to denote an absent parameter.
 
@@ -515,7 +515,7 @@ detect void:
 ----
 
 The `*if_void*` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
-the first being a stream to check. If and only if that stream is void (_i.e._, it produces no
+the first being a stream to check. If and only if that stream is void (it produces no
 values), the second sub-expression is expanded and its results are returned by the `*if_void*`
 expression. Otherwise, it produces at least one value, so the third sub-expression is expanded and
 returned.
@@ -532,20 +532,21 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 
 ==== zero-or-more
 
-A zero-or-more `***` parameter is identical in meaning to our friend `*\...*` from the perspective
-of its template, but it can be used in any position, not just last place.
+A parameter with the modifier `***` has _zero-or-more cardinality_.  This modifier behaves the
+same as `*\...*` from the perspective of its template, but it can be used in any position, not
+just last place.
 
 [{mrk}]
 ----
 (*public* prices
-  [(*number** amount), (*symbol* currency)]
+  [(**number* **amount), (*symbol* currency)]
   (*for_each* amount
     (price amount currency)))
 ----
 
-From the perspective of the invoker, the calling convention is different since the “all the rest”
+The calling convention for `***` is different from `*\...*` since the “all the rest”
 convention can’t be used to draw the boundaries of the stream.  Instead, we use a list or
-S-expression as a delimiting container to group the applicable sub-expressions:
+S-expression as a _delimiting container_ to group the applicable sub-expressions:
 
 [{mrk}]
 ----
@@ -554,8 +555,8 @@ S-expression as a delimiting container to group the applicable sub-expressions:
 (:prices [10, 9.99] GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
-The delimiting sequence is effectively shorthand for a `values` expression, but arbitrary
-expressions are not allowed:
+Delimiting sequences and `values` expressions may appear similar because they both denote streams
+of values, but they are not interchangeable:
 
 [{mrk}]
 ----
@@ -576,7 +577,7 @@ Note that the delimiter is required even for single values to avoid ambiguity.  
 
 [{mrk}]
 ----
-(*public* ouch [(*list** stuff)] …)
+(*public* ouch [(**list* **stuff)] …)
 ----
 
 In the E-expression `(:ouch [])`  is that list the delimiting container, or the sole input value?
@@ -599,8 +600,8 @@ parameter’s declared type.
 
 ==== one-or-more
 
-A one-or-more `*+*` parameter works just like `***` except the resulting stream must produce at
-least one value.  To continue using our prices example:
+A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `***` except
+the resulting stream must produce at least one value.  To continue using our `prices` example:
 
 [{mrk}]
 ----
@@ -630,7 +631,7 @@ but it also applies to `*?*` and `***` cardinality:
 [{mrk}]
 ----
 (*public* optionals
-  [(**any* **a), (*any?* b), (*any!* c), (*any** d), (*any?* e), (*any\...* f)]
+  [(**any* **a), (*any?* b), (*any!* c), (**any* **d), (*any?* e), (*any\...* f)]
   (make_list a b c d e f))
 ----
 
