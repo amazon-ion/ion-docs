@@ -4,7 +4,7 @@
 :mrk: subs="+normal"
 
 
-Before getting into the technical details of Ion’s macro and module system, it’ll help to be more
+Before getting into the technical details of Ion’s macro and module system, it will help to be more
 familiar with the _use_ of macros.  We’ll step through increasingly sophisticated use cases, some
 admittedly synthetic for illustrative purposes, with the intent of teaching the core concepts and
 moving parts without getting into the weeds of more formal specification.
@@ -21,9 +21,9 @@ The most basic macro is a constant:
   3.141592653589793)
 ----
 
-This declaration—taken recklessly out of context to keep things simple—defines a public macro
+This declaration—taken out of context to keep things simple—defines a public macro
 named `pi`.  The `[]` is the macro’s signature, in this case a trivial one that declares no
-parameters.  The macro therefore accepts no arguments and always returns the obvious value.
+parameters.  The macro therefore accepts no arguments and always returns a constant value.
 
 To use this macro in a document, we write an _encoding expression_, aka E-expression:
 
@@ -34,7 +34,7 @@ To use this macro in a document, we write an _encoding expression_, aka E-expres
 ----
 
 The syntax `(:pi)` looks a lot like an S-expression.  It’s not, though, since colons
-cannot appear unquoted in that context.  Ion 1.1 makes use of what’s invalid syntax in Ion
+cannot appear unquoted in that context.  Ion 1.1 makes use of syntax that is not valid in Ion
 1.0—specifically, the `(:` digraph—to denote E-expressions.  Those characters must be followed by
 a reference to a macro, and we say that the E-expression is an invocation of the macro.  Here,
 `(:pi)` is an invocation of the macro named `pi`.
@@ -50,7 +50,7 @@ That document is equivalent to the following, in the sense that they denote the 
 ----
 
 The process by which the Ion implementation turns the former document into the latter is called
-_macro expansion_ or just _expansion_.  This happens automatically and (largely) invisibly to
+_macro expansion_ or just _expansion_.  This happens transparently to
 Ion-consuming applications: the stream of values in both cases are the same.  The documents have
 the same content, encoded in two different ways.  It’s reasonable to think of `(:pi)` as a custom
 encoding for `3.141592653589793`, and the notation’s similarity to S-expressions leads us to the
@@ -59,8 +59,8 @@ term “encoding expression”.
 NOTE: Any Ion 1.1 document with macros can be fully-expanded into an equivalent Ion 1.0 document.
 
 We’ll streamline future examples with a couple conventions.  First, assume that any E-expression
-is occurring within an Ion 1.1 document; due to the unquoted colon, that form is a syntax error
-in Ion 1.0 context! Second, we’ll use the relation ⇒ to mean “expands to”, so we can say:
+is occurring within an Ion 1.1 document;
+second, we’ll use the relation notation, `⇒`, to mean “expands to”.  So we can say:
 
 ----
 (:pi) ⇒ 3.141592653589793
@@ -82,25 +82,25 @@ that they can accept inputs that determine their results.
 (:price 99 USD) ⇒ { amount: 99, currency: USD }
 ----
 
-This macro has a non-trivial signature that declares two parameters, named `a` and `c`, and it
+This macro has a signature that declares two parameters, named `a` and `c`, and it
 therefore accepts two arguments when invoked.
 
-NOTE: For reasons that will soon be more clear, we will be careful to distinguish between the
+NOTE: We are careful to distinguish between the
 views from “inside” and “outside” the macro: _parameters_ are the names used by a macro’s
 implementation to refer to its expansion-time inputs, while _arguments_ are the data provided to a
 macro at the point of invocation. In other words, we have “formal” parameters and “actual”
 arguments.
 
-Compared to the constant `pi` above, the body of this macro is suddenly interesting.  The struct
-therein is our first non-trivial _template_, an expression in Ion’s new domain-specific language
+The struct
+in this macro is our first non-trivial _template_, an expression in Ion’s new domain-specific language
 for defining macro functions.  This expression language treats Ion scalar values (except for
 symbols) as literals, giving the decimal in ``pi``’s template its intended meaning.  Expressions
-that are structs are interpreted as quasi-literals: the field names are literal, but the field
+that are structs are interpreted as _quasi-literals_: the field names are literal, but the field
 “values” are arbitrary expressions.  This is why the `amount` and `currency` field names show up
 as-is in the expansion.  The sub-expressions in this template demonstrate that the expression
 language treats symbols as variable references.  Here, `a` and `c` in the template refer to the
 parameters of the macro, and during expansion they are “filled in” with the values supplied by
-the invoking E-expression.
+the invocation of the macro.
 
 The template language also treats lists quasi-literally, and every element inside the list is an
 expression.  Here’s a silly macro to illustrate:
@@ -113,7 +113,7 @@ expression.  Here’s a silly macro to illustrate:
 (:reverse first {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, first]
 ----
 
-To point out what may be obvious, note that the `a` in the E-expression is _not_ part of the
+Note that the `a` in the E-expression is _not_ part of the
 expression language and not a reference to the macro’s first parameter or any other named entity.
 From the point of view of ``reverse``’s template, the input struct is literal data.
 
@@ -163,7 +163,7 @@ but the macro invocation takes as few as 12 bytes.
 
 === Special Form: `*literal*`
 
-To explain more carefully, when a template-expression is syntactically an S-expression, its first
+When a template-expression is syntactically an S-expression, its first
 element must be a symbol that matches either a set of keywords denoting the special forms, or the
 name of a previously-defined macro.  The interpretation of the S-expression’s remaining elements
 depends on how the symbol resolves.  In the case of macro invocations, we’ve seen above that the
@@ -192,16 +192,16 @@ evaluated that way, it must be a special form.
 
 Finally, these special forms are part of the template language itself, and are not visible to
 encoded data: the E-expression `(:literal foo)` must necessarily refer to some user-defined macro
-named `literal`, not to this special form.  (There’s also no need for such a form in
+named `literal`, not to this special form.  As an aside, there is no need for such a form in
 E-expressions, because in that context symbols and S-expressions are not “evaluated”, and
-everything is literal except for E-expressions (which are not data, but encoding artifacts).)
+everything is literal except for E-expressions (which are not data, but encoding artifacts).
 
 
 === Parameter Types
 
 In our examples so far, the macro signatures have been simple lists of parameter names, and each
 parameter accepts a value of any type.  But this is often undesirable, since the resulting output
-could be schematically malformed, or worse(?), macro-expansion could fail in hard-to-diagnose ways:
+could violate the intended schema or the macro-expansion could fail in hard-to-diagnose ways:
 
 [{mrk}]
 ----
@@ -210,9 +210,9 @@ could be schematically malformed, or worse(?), macro-expansion could fail in har
 
 This E-expression cannot be expanded because `make_string` requires its arguments to be textual
 values, and `[true]` is not a string or symbol.  But this failure happens within the
-implementation of `detail_page_url`, not the point where the error occurred.  In this example
-those points are only one step removed, but it’s not hard to imagine macros where the stack is
-deep enough to make diagnosis quite difficult.
+implementation of `detail_page_url`, not the point where the error occurred.  In this example,
+those points are only one step removed, but it’s not hard to imagine macros where the call stack is
+deep enough to make diagnosis difficult.
 
 To detect problems close to their source, macro signatures can declare type constraints on their parameters:
 
@@ -223,7 +223,7 @@ To detect problems close to their source, macro signatures can declare type cons
   (website_url (make_string "dp/" asin)))
 ----
 
-Here we constrain the `asin` parameter to produce a string so the blame is more clear:
+Here we constrain the `asin` parameter to produce a string so the intent is clear and the Ion parser can emit an error sooner:
 
 [{mrk}]
 ----
@@ -267,10 +267,9 @@ The `*\...*` modifier can only occur on the last parameter, declaring that “al
 arguments will be passed to that one name.
 
 NOTE: The Ion grammar treats identifiers like `text` and operators like `\...` as separate tokens
-even when juxtaposed like `text\...`. The template language syntax leverages that, and we’ll use the
-latter representation from now on.
+regardless of whether they are separated by whitespace. 
 
-At this point our distinction between parameters and arguments starts showing its value, since
+At this point our distinction between parameters and arguments becomes apparent, since
 they are no longer one-to-one: this macro with one parameter can be invoked with one argument, or
 twenty, or none. We describe the acceptable number of arguments for a parameter as its
 _cardinality_.  In the examples so far, all parameters have had _exactly-one_ cardinality, while
@@ -283,7 +282,7 @@ Rest-parameters raise a question: what happens when a template references a para
 given more than one argument?  The answer revolves around a unique aspect of Ion’s macro system
 and template language: the inputs to and the output from a macro are streams of values,
 constrained in size by cardinality declarations.  When a macro is invoked, each parameter is
-bound to a stream of values, and the use of the parameter’s name is a reference to that stream,
+bound to a stream of values, and within the macro definition, each parameter’s name is a reference to that stream,
 not to a specific value.  The declared cardinality of a parameter constrains the number of
 elements produced by its stream, and is verified by the macro expansion system.
 
@@ -463,8 +462,8 @@ talking as if void were a value, when it’s actually no value at all.  We’ll 
 _voidable_ to describe parameters that can accept zero values, like the ``*\...*``s above. This
 neologism will prove useful, you’ll see.
 
-To really nail the point home: the special-case E-expression `(:)` is synonymous with `(:void)`
-and exists solely as a more-pleasant argument expression for voidable parameters.
+The special-case E-expression `(:)` is synonymous with `(:void)`
+and exists solely as a more succinct argument expression for voidable parameters.
 
 
 === Other Cardinalities
@@ -573,8 +572,7 @@ call a macro inside the delimiter, with no loss of generality:
 (:prices [(:values 10)] GBP) ⇒ {amount:10, currency:GBP}
 ----
 
-Note that the delimiter is required even for single values, again for consistency but more
-importantly to avoid ambiguity.  Consider this macro:
+Note that the delimiter is required even for single values to avoid ambiguity.  Consider this macro:
 
 [{mrk}]
 ----
@@ -602,7 +600,7 @@ parameter’s declared type.
 ==== one-or-more
 
 A one-or-more `*+*` parameter works just like `***` except the resulting stream must produce at
-least one value.  To continue abusing our prices example:
+least one value.  To continue using our prices example:
 
 [{mrk}]
 ----
@@ -666,13 +664,11 @@ anywhere. Ion documents are not schema-constrained: nothing forces any part of t
 specific type or shape.  We call Ion “self-describing” precisely because each value
 self-describes its type via a type tag.
 
-This adds considerable overhead throughout the document, which is frustrating when schema
-constraints are enforced through some mechanism outside the serializer/deserializer.  It’s worse
+If schema constraints are enforced through some mechanism outside the serializer/deserializer, the type tags are unnecessary and may add up to a non-trivial amount of wasted space.
 when you observe that the overhead for each value also includes length information: encoding an
 octet of data takes two octets on the stream.
 
-Ion 1.1 confesses to the impact of this overhead, and the macro system aims to address it by
-allowing parameters to have tagless types.  These are semantic subtypes of the concrete types,
+Ion 1.1 tries to mitigate this overhead in the binary format by allowing macro parameters to have tagless types.  These are semantic subtypes of the concrete types,
 constrained such that type tags are not necessary in the binary form.  In general this can shave
 4-6 bits off each value, which can add up in aggregate.  In the extreme, that octet of data can
 be encoded with no overhead at all.
@@ -686,7 +682,7 @@ To define a tagless parameter, add the `*tagless*` modifier to any of the concre
   {x: x, y: y})
 ----
 ----
-(:point 3 17) => {x:3, y:17}
+(:point 3 17) ⇒ {x:3, y:17}
 ----
 
 The type constraint has no real benefit here in text, as tagless types aim to improve the binary
