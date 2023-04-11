@@ -651,10 +651,7 @@ just `e`, then we must also provide a delimiter for `d`:
 
 === Tagless and Fixed-Width Types
 
-It’s time to shift gears to discuss a feature that primarily benefits binary-encoded data:
-tagless types.
-
-Those familiar with binary Ion will understand that the encoding of every value starts off with a
+In Ion 1.0, the binary encoding of every value starts off with a
 “type tag”, an opcode that indicates the data-type of the next value and thus the interpretation
 of the following octets of data.  In general, these tags also indicate whether the value has
 annotations, and whether it’s null.
@@ -699,7 +696,7 @@ argument values cannot be expressed using macros, like we’ve done before:
 ----
 
 While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
-that a text E-expression can’t express things that can’t be done in the corresponding binary
+that a text E-expression may only expresses things that can also be expressed using an equivalent binary
 E-expression.
 
 For more impact, use `*tagless*` with one of a set of additional “binary-only” types: `*uint*`,
@@ -714,7 +711,7 @@ have no unique representation in Ion text: they appear there as normal ints and 
   [bytes])
 ----
 
-Invocations of this macro are encoded (more or less) as a plain sequence of octets, because the
+Invocations of this macro are encoded as a sequence of untagged octets, because the
 macro definition constrains the argument shape such that nothing else is acceptable.  A text
 invocation is written using normal ints:
 
