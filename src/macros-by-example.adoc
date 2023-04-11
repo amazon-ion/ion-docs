@@ -235,8 +235,8 @@ encoding to be more compact by omitting type information or using fixed-width va
 
 This example reveals additional syntax for parameter declarations.  So far, a parameter was
 declared by a symbol denoting its name, now we have an S-expression pairing a type and a name.
-In this context the types include all the normal “concrete” Ion types, plus some useful abstract
-supertypes like `*number*`, `*text*`, and `*lob*`, as well as the unconstrained “top type” `*any*`.
+In this context the types include all the normal “concrete” Ion types, abstract
+supertypes like `*number*`, `*text*`, and `*lob*`, and the unconstrained “top type” `*any*`.
 The latter is the default type, so the signature `[foo]` is equivalent to `[(*any* foo)]` meaning
 that the parameter `foo` accepts any value.
 
