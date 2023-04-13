@@ -249,6 +249,9 @@ named `literal`, not to this special form.  As an aside, there is no need for su
 E-expressions, because in that context symbols and S-expressions are not “evaluated”, and
 everything is literal except for E-expressions (which are not data, but encoding artifacts).
 
+NOTE: Ion 1.1 defines a number of built-in macros and special forms. While this document covers
+the highlights, it is not a complete reference to all features.
+
 
 === Parameter Types
 
@@ -462,25 +465,42 @@ types are verified:
 TODO: demonstrate splicing in TDL macro invocations
 
 
-=== Mapping Templates Over Streams
+=== Mapping Templates Over Streams: `*for*`
 
-Another way to produce a stream is via a mapping form. The `*for_each*` special form evaluates a
-template once for each value provided by a macro parameter.  Each time, the parameter name is
-shadowed and rebound to the next value on the stream.
+Another way to produce a stream is via a mapping form.  The `*for*` special form evaluates a
+template once for each value provided by a stream or streams.  Each time, a local variable is
+created and bound to the next value on the stream.
 
 [{mrk}]
 ----
 (*public* prices
-  [(*symbol* currency), (*number\...* amount)]
-  (*for_each* amount
-    (price amount currency)))
+  [(*symbol* currency), (*number\...* amounts)]
+  (*for* [(amt amounts)]
+    (price amt currency)))
 ----
+
+The list following `*for*` contains pairs of variable names and template expressions, so here
+each value from `amounts` is given the name `amt` before the `price` is expanded.
+
 ----
 (:prices GBP 10 9.99 12.)
   ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP} {amount:12., currency:GBP}
 ----
 
-TODO: Consider the more-general binding form
+More than one stream can be iterated in parallel, and iteration terminates when any stream
+becomes empty.
+
+[{mrk}]
+----
+(*public* zip [(**any* **front), (**any* **back)]
+  (*for* [(f front),
+        (b back)]
+    [f, b]))
+----
+----
+(:zip [1, 2, 3] [a, b])
+  ⇒ [1, a] [2, b]
+----
 
 
 === Empty Streams: `*void*`
