@@ -30,6 +30,8 @@ include::introduction.adoc[]
 
 include::whatsnew.adoc[]
 
+include::macros-by-example.adoc[]
+
 // TODO very much a WIP
 //include::semantics-intro.adoc[]
 
