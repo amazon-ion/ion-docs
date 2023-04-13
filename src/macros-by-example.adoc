@@ -9,6 +9,16 @@ familiar with the _use_ of macros.  We’ll step through increasingly sophistica
 admittedly synthetic for illustrative purposes, with the intent of teaching the core concepts and
 moving parts without getting into the weeds of more formal specification.
 
+Ion macros are defined using a domain-specific language that is in turn expressed via the Ion
+data model. That is, macro definitions are Ion data, and use Ion features like S-expressions and
+symbols to represent code in a LISP-like fashion.  In this document, the fundamental construct we
+explore is the _macro definition_, denoted using an S-expression of the form `(*public* _name_ …)`
+where `*public*` is a keyword and `_name_` must be a symbol denoting the macro's name.
+
+NOTE: S-expressions of that shape only declare macros when they occur in the context of an encoding
+module, which is the topic of a chapter to come.  We will completely ignore modules for now, and
+the examples below omit this context to keep things simple.
+
 
 === Constants
 
@@ -21,11 +31,12 @@ The most basic macro is a constant:
   3.141592653589793)
 ----
 
-This declaration—taken out of context to keep things simple—defines a public macro
-named `pi`.  The `[]` is the macro’s signature, in this case a trivial one that declares no
-parameters.  The macro therefore accepts no arguments and always returns a constant value.
+This declaration defines a public macro named `pi`.  The `[]` is the macro’s _signature_, in this
+case a trivial one that declares no parameters.  The `3.141592653589793` is a similarly trivial
+_template_, an expression in Ion 1.1's domain-specific language for defining macro functions.
+This macro accepts no arguments and always returns a constant value.
 
-To use this macro in a document, we write an _encoding expression_, aka E-expression:
+To use `pi` in an Ion document, we write an _encoding expression_ or _E-expression_:
 
 [{mrk}]
 ----
@@ -69,8 +80,7 @@ second, we’ll use the relation notation, `⇒`, to mean “expands to”.  So 
 
 === Simple Templates
 
-Most macros are of course non-constant.  Since macros are mathematically functional, this implies
-that they can accept inputs that determine their results.
+Most macros are not constant, they accept inputs that determine their results.
 
 [{mrk}]
 ----
@@ -78,12 +88,13 @@ that they can accept inputs that determine their results.
   [a, c]                          // signature
   { amount: a, currency: c })     // template
 ----
-----
-(:price 99 USD) ⇒ { amount: 99, currency: USD }
-----
 
 This macro has a signature that declares two parameters, named `a` and `c`, and it
 therefore accepts two arguments when invoked.
+
+----
+(:price 99 USD) ⇒ { amount: 99, currency: USD }
+----
 
 NOTE: We are careful to distinguish between the
 views from “inside” and “outside” the macro: _parameters_ are the names used by a macro’s
@@ -163,6 +174,45 @@ In the template language, macro invocations can appear almost anywhere:
 NOTE: While this doesn’t look like much of an improvement, the full string takes 38 bytes to encode,
 but the macro invocation takes as few as 12 bytes.
 
+Careful readers will note that templates can use `[…]` and `{…}` notation to construct lists and
+structs, but `(…)` doesn't construct S-expressions.  This gap is filled by the built-in macro
+`make_sexp` which accepts any number of arguments and puts them in a sexp:
+
+[{mrk}]
+----
+(*public* double_sexp [val] (make_sexp val val))
+----
+----
+(:make_sexp true 19.3 null) ⇒ (true 19.3 null)
+(:double_sexp double) ⇒ (double double)
+----
+
+
+==== E-expressions Versus S-expressions
+
+We've now seen two ways to invoke macros, and their difference deserves thorough exploration.
+
+An E-expression is an encoding artifact of a serialized Ion document. It has no intrinsic meaning
+other than the fact that it represents a macro invocation.  The meaning of the document can only
+be determined by expanding the macro, passing the E-expression's arguments to the function
+defined by the macro.  This all happens as the Ion document is parsed, transparent to the reader
+of the document.  In casual terms, E-expressions are expanded away before the application sees
+the data.
+
+Within the template-expression language, you can define new macros in terms of other macros, and
+those invocations are written as S-expressions.  Unlike E-expressions, these are normal Ion data
+structures, consumed by the Ion system and interpreted as code.  Further, they only exist in the
+context of a macro definition, inside an encoding module, while E-expressions can occur
+_anywhere_ in an Ion document.
+
+WARNING: It's entirely possible to write a macro that can generate all or part of a macro
+definition.  We don't recommend that you spend time considering such things at this point.
+
+These two invocation forms are syntactically aligned in their calling convention, but are
+distinct in context and "immediacy".  E-expressions occur anywhere and are invoked immediately,
+as they are parsed.  S-expression invocations occur only within macro definitions, and are only
+invoked if and when that code path is ever executed by invocation of the surrounding macro.
+
 
 === Special Form: `*literal*`
 
@@ -226,15 +276,16 @@ To detect problems close to their source, macro signatures can declare type cons
   (website_url (make_string "dp/" asin)))
 ----
 
-Here we constrain the `asin` parameter to produce a string so the intent is clear and the Ion parser can emit an error sooner:
+Here we constrain the `asin` parameter to produce a string so the intent is clear and the Ion
+parser can emit an error sooner:
 
 [{mrk}]
 ----
 (:detail_page_url [true]) ⇒ _**error**: detail_page_url expects a string_
 ----
 
-These types also serve a second, perhaps more impactful, purpose: they can allow the binary
-encoding to be more compact by omitting type information or using fixed-width values.
+These types also serve a second purpose: they can allow the binary encoding to be more compact by
+avoiding type tags or using fixed-width values.
 
 This example reveals additional syntax for parameter declarations.  So far, a parameter was
 declared by a symbol denoting its name, now we have an S-expression pairing a type and a name.
@@ -296,21 +347,22 @@ We have everything we need to illustrate this, via another system macro, `values
 ----
 (*public* values [(*any\...* vals)] vals)
 ----
+
+[{mrk}]
 ----
 (:values 1)           ⇒ 1
 (:values 1 true null) ⇒ 1 true null
 (:values)             ⇒ _nothing_
 ----
 
-Here we finally see a macro that produces something other than exactly one value!  The `values`
-macro accepts any number of arguments and returns their values, effectively a multi-value
-identity function.  We can use this to explore how streams combine in E-expressions.
+The `values` macro accepts any number of arguments and returns their values, effectively a
+multi-value identity function.  We can use this to explore how streams combine in E-expressions.
 
 
-==== Inlining in encoded data
+==== Splicing in Encoded Data
 
 When an E-expression occurs at top-level or within a list or S-expression, the results are
-inlined into the surrounding container:
+spliced into the surrounding container:
 
 ----
 [first, (:values), last]          ⇒ [first, last]
@@ -340,20 +392,19 @@ returns too-few or too-many values.
 ----
 
 In this example, the parameters expect exactly one argument, producing exactly one value.  When
-the cardinality allows multiple values, then arguments are inlined into a single stream.  We saw
+the cardinality allows multiple values, then the argument result-streams are concatenated.  We saw
 this (rather subtly) above in the nested use of `values`, but can also illustrate using the
-rest-parameter to `make_string`, using indentation to clarify the nesting:
+rest-parameter to `make_string`, which we'll expand here in steps:
 
 ----
-(:make_string (:values)
-              a
-              (:values b
-                       (:values c)
-                       d)
-              e)                   ⇒ "abcde"
+(:make_string (:values) a (:values b (:values c) d) e) ⇒
+(:make_string a (:values b (:values c) d) e) ⇒
+(:make_string a (:values b c d) e) ⇒
+(:make_string a b c d e) ⇒
+"abcde"
 ----
 
-Inlining within sequences is straightforward, but structs are trickier due to their key/value
+Splicing within sequences is straightforward, but structs are trickier due to their key/value
 nature.  When used in field-value position, each result from a macro is bound to the field-name
 independently, leading to the field being repeated or even absent:
 
@@ -373,14 +424,14 @@ structs, which are merged into the surrounding container:
 { a:1, (:values {b:2}), z:3 }       ⇒ { a:1, b:2, z:3 }
 { a:1, (:values {b:2} {z:3}), z:3 } ⇒ { a:1, b:2, z:3, z:3 }
 
-{ a:1, (:values key "value") } ⇒ _**error**: struct expected for inlining into struct_
+{ a:1, (:values key "value") } ⇒ _**error**: struct expected for splicing into struct_
 ----
 
 
-==== Inlining in template expressions
+==== Splicing in Template Expressions
 
-The preceding examples demonstrate inlining of E-expressions into encoded data, but similar
-stream-inlining occurs within the template language, making it trivial to convert a stream to a
+The preceding examples demonstrate splicing of E-expressions into encoded data, but similar
+stream-splicing occurs within the template language, making it trivial to convert a stream to a
 list:
 
 [{mrk}]
@@ -400,7 +451,7 @@ list:
 (:clumsy_bag true 2) ⇒ {'':true, '':2}
 ----
 
-As a reminder, streams and lists are different, there’s no flattening involved, and declared
+Streams and lists are different, there’s no flattening involved, and declared
 types are verified:
 
 [{mrk}]
@@ -408,7 +459,7 @@ types are verified:
 (:int_list 1 [2] 3) ⇒ _**error**: [2] is not an int_
 ----
 
-TODO: demonstrate inlining in TDL macro invocations
+TODO: demonstrate splicing in TDL macro invocations
 
 
 === Mapping Templates Over Streams
@@ -434,8 +485,11 @@ TODO: Consider the more-general binding form
 
 === Empty Streams: `*void*`
 
-To wrap up our discussion of streams, we have another important built-in macro: `void` accepts
-no values and produces no value. In other words, it’s a constant, the empty stream:
+The empty stream is an important edge case that requires careful handling and communication.
+We'll use the term _void_ to mean “empty stream”.  We’ll even mint the word _voidable_ to
+describe parameters that can accept empty streams, like the ``*\...*``s above.
+
+Correspondingly, the built-in macro `void` accepts no values and produces an empty stream:
 
 ----
 (:int_list (:void)) ⇒ []
@@ -445,41 +499,58 @@ no values and produces no value. In other words, it’s a constant, the empty st
 ----
 
 When used as a macro argument, a `void` invocation (like any other expression) counts as one
-argument, albeit one with no value(s).
+argument:
 
 [{mrk}]
 ----
 (:pi (:void)) ⇒ _**error**: 'pi' expects 0 arguments, given 1_
 ----
 
-Void is important because we need something outside the Ion data model to express that Ion data
-doesn't exist.  We can’t use null because `null` is a value!  In much the same way that Ion
-differentiates a null-field from an absent field (for example, `{a:null}` versus `{}`), macros
-need to differentiate the absence of value from all other values in the Ion data model.
+The special-case E-expression `(:)` is synonymous with `(:void)` and is useful as a more succinct
+expression of absent arguments:
 
-We’ll use the term _void_ most accurately as a synonym for “empty stream”, but you might catch us
-talking as if void were a value, when it’s actually no value at all.  We’ll even mint the word
-_voidable_ to describe parameters that can accept zero values, like the ``*\...*``s above. This
-neologism will prove useful, you’ll see.
+----
+(:int_list (:)) ⇒ []
+(:int_list 1 (:) 2) ⇒ [1, 2]
+----
 
-The special-case E-expression `(:)` is synonymous with `(:void)`
-and exists solely as a more succinct argument expression for voidable parameters.
+TIP: While `void` and `values` both produce the empty stream, the former is preferred for
+clarity of intent and terminology.
 
 
 === Other Cardinalities
 
-For a language that’s thoroughly stream-oriented, rest-parameters don’t offer much flexibility
-with respect to cardinality.  The `*\...*` modifier can only be the final parameter, meaning that
-only that parameter can be invoked with more than one subexpression and produce more than one
-value.  So far other parameters must have exactly-one value, which is fairly limiting.
+As described earlier, parameters can have different cardinality of arguments, meaning that a
+parameter may be assigned with multiple argument sub-expressions.  But except for rest-parameters,
+we've only seen a single argument per parameter.
 
-In fact, the macro system provides four distinct cardinality constraints: exactly-one,
-zero-or-one, zero-or-more, and one-or-more.  They each have modifier symbols that can be used in
-signatures, namely `*!*`, `*?*`, `***`, and `*+*`. The former is the default, so the signatures
-`[arg]`, `[(*any* arg)]`, and `[(*any!* arg)]` are all equivalent.
+In fact, the macro language allows any parameter to accept a stream of values, providing five
+cardinality modifiers that can be used in the signature of a macro.
+
+[cols="1,1"]
+|===
+|*Modifier* |*Cardinality*
+| `*!*`     |exactly-one
+| `*?*`     |zero-or-one
+| `*+*`     |one-or-more
+| `***`     |zero-or-more
+| `*\...*`  |zero-or-more "rest" arguments
+|===
 
 
-==== zero-or-one
+==== Exactly-One
+
+Most parameters require exactly one value and thus have _exactly-one cardinality_.  This is the
+default when a signature has no modifier, but the `*!*` modifier can be used for clarity.
+
+TIP: The signatures `[_param_]`, `[(*any* _param_)]`, and `[(*any!* _param_)]` are all
+equivalent.
+
+This cardinality means that the parameter requires a stream producing a single value, so one
+might refer to them as _singleton streams_ or just _singletons_ colloquially.
+
+
+==== Zero-or-One
 
 A parameter with the modifier `*?*` has _zero-or-one cardinality_, which is much like the default
 exactly-one cardinality, except the parameter is voidable.  That is, it accepts an empty-stream
@@ -530,7 +601,7 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 ----
 
 
-==== zero-or-more
+==== Zero-or-More
 
 A parameter with the modifier `***` has _zero-or-more cardinality_.  This modifier behaves the
 same as `*\...*` from the perspective of its template, but it can be used in any position, not
@@ -546,7 +617,7 @@ just last place.
 
 The calling convention for `***` is different from `*\...*` since the “all the rest”
 convention can’t be used to draw the boundaries of the stream.  Instead, we use a list or
-S-expression as a _delimiting container_ to group the applicable sub-expressions:
+S-expression as delimiting syntax to group the applicable sub-expressions:
 
 [{mrk}]
 ----
@@ -554,6 +625,33 @@ S-expression as a _delimiting container_ to group the applicable sub-expressions
 (:prices (10  9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 (:prices [10, 9.99] GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
+
+Within the delimiter, the invocation can have any number of values and/or macro
+invocations.  The macro parameter produces the results of those expressions, concatenated into a
+single stream, and the expander verifies that each value on that stream is acceptable by the
+parameter’s declared type.
+
+----
+(:prices [1, (:values 2 3), 4] GBP) ⇒ {amount:1, currency:GBP}
+                                      {amount:2, currency:GBP}
+                                      {amount:3, currency:GBP}
+                                      {amount:4, currency:GBP}
+----
+
+[IMPORTANT]
+====
+To avoid ambiguity, the delimiter is required even for singleton values.  Consider this
+macro:
+
+[{mrk}]
+----
+(*public* ouch [(**list* **stuff)] …)
+----
+
+In the E-expression `(:ouch [])` without this rule, it would be ambiguous if the argument was void
+or a singleton empty-list value.
+With this rule, this invocation always means "no arguments" which produces the empty stream.
+====
 
 Delimiting sequences and `values` expressions may appear similar because they both denote streams
 of values, but they are not interchangeable:
@@ -565,40 +663,17 @@ of values, but they are not interchangeable:
 ----
 
 That’s because the binary representation of these parameters uses a tagless format for these
-delimiters to keep the common case as dense as possible, and it’s not possible to replace that
-container with a macro invocation.  The text form mirrors that limitation, but you can always
-call a macro inside the delimiter, with no loss of generality:
+delimiters to keep the common case as dense as possible. It’s not possible to replace that
+container with a macro invocation, and the text form mirrors that limitation. If the parameter
+type allows (see <<tagless>>), you can call a macro inside the delimiter, with no loss of
+generality:
 
 ----
 (:prices [(:values 10)] GBP) ⇒ {amount:10, currency:GBP}
 ----
 
-Note that the delimiter is required even for single values to avoid ambiguity.  Consider this macro:
 
-[{mrk}]
-----
-(*public* ouch [(**list* **stuff)] …)
-----
-
-In the E-expression `(:ouch [])`  is that list the delimiting container, or the sole input value?
-When expanding the E-expression does `stuff` produce void, or a single empty list?  `***`-arguments
-require a delimiting container precisely so there’s no ambiguity, regardless of the element type,
-and the answer is that `stuff` is void.
-
-Within the delimiting container, the invocation can have any number of values and/or macro
-invocations.  The macro parameter produces the results of those expressions, concatenated into a
-single stream, and the expander verifies that each value on that stream is acceptable by the
-parameter’s declared type.
-
-----
-(:prices (1 (:values 2 3) 4) GBP) ⇒ {amount:1, currency:GBP}
-                                    {amount:2, currency:GBP}
-                                    {amount:3, currency:GBP}
-                                    {amount:4, currency:GBP}
-----
-
-
-==== one-or-more
+==== One-or-More
 
 A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `***` except
 the resulting stream must produce at least one value.  To continue using our `prices` example:
@@ -624,9 +699,9 @@ produces one or more values.
 
 === Optional Arguments
 
-When a trailing parameter is voidable, an invocation can omit its corresponding argument, as long
-as no following parameter is being given a value.  We’ve seen this as applied to rest-parameters,
-but it also applies to `*?*` and `***` cardinality:
+When a trailing parameter is voidable, an invocation can omit its corresponding arguments or
+delimiter, as long as no following parameter is being given an argument or delimiter.  We’ve seen
+this as applied to rest-parameters, but it also applies to `*?*` and `***` parameters:
 
 [{mrk}]
 ----
@@ -650,6 +725,7 @@ just `e`, then we must also provide a delimiter for `d`:
 ----
 
 
+[#tagless]
 === Tagless and Fixed-Width Types
 
 In Ion 1.0, the binary encoding of every value starts off with a
@@ -662,11 +738,13 @@ anywhere. Ion documents are not schema-constrained: nothing forces any part of t
 specific type or shape.  We call Ion “self-describing” precisely because each value
 self-describes its type via a type tag.
 
-If schema constraints are enforced through some mechanism outside the serializer/deserializer, the type tags are unnecessary and may add up to a non-trivial amount of wasted space.
+If schema constraints are enforced through some mechanism outside the serializer/deserializer,
+the type tags are unnecessary and may add up to a non-trivial amount of wasted space.
 when you observe that the overhead for each value also includes length information: encoding an
 octet of data takes two octets on the stream.
 
-Ion 1.1 tries to mitigate this overhead in the binary format by allowing macro parameters to have tagless types.  These are semantic subtypes of the concrete types,
+Ion 1.1 tries to mitigate this overhead in the binary format by allowing macro parameters to have
+tagless types.  These are subtypes of the concrete types,
 constrained such that type tags are not necessary in the binary form.  In general this can shave
 4-6 bits off each value, which can add up in aggregate.  In the extreme, that octet of data can
 be encoded with no overhead at all.
@@ -816,6 +894,6 @@ CAUTION: Because these are tagless encodings, we cannot use macros in place of t
 containers, so unfortunately we cannot generate a point or series of points through a macro.
 
 
-=== Macro return-types
+=== Return Types
 
 TODO
