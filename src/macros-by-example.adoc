@@ -132,8 +132,8 @@ E-expressions can nest, so we could also encode the same data using `price`:
 
 ----
 (:reverse first (:price a c))
-⇒ (:reverse first {amount:a, currency:c})
-⇒ [{amount:a, currency:c}, first]
+  ⇒ (:reverse first {amount:a, currency:c})
+  ⇒ [{amount:a, currency:c}, first]
 ----
 
 As the example suggests, expansion steps proceed "inside out" and the outer macro receives the
@@ -370,7 +370,7 @@ spliced into the surrounding container:
 (first (:values left right) last) ⇒ (first left right last)
 ----
 
-This also applies in many (but not all!) argument positions inside an E-expression:
+This also applies wherever a <<tagless,tagged type>> can appear inside an E-expression:
 
 ----
 (first (:values (:values left right) (:values)) last) => (first left right last)
@@ -397,11 +397,11 @@ this (rather subtly) above in the nested use of `values`, but can also illustrat
 rest-parameter to `make_string`, which we'll expand here in steps:
 
 ----
-(:make_string (:values) a (:values b (:values c) d) e) ⇒
-(:make_string a (:values b (:values c) d) e) ⇒
-(:make_string a (:values b c d) e) ⇒
-(:make_string a b c d e) ⇒
-"abcde"
+(:make_string (:values) a (:values b (:values c) d) e)
+  ⇒ (:make_string a (:values b (:values c) d) e)
+  ⇒ (:make_string a (:values b c d) e)
+  ⇒ (:make_string a b c d e)
+  ⇒ "abcde"
 ----
 
 Splicing within sequences is straightforward, but structs are trickier due to their key/value
@@ -477,7 +477,7 @@ shadowed and rebound to the next value on the stream.
 ----
 ----
 (:prices GBP 10 9.99 12.)
-⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP} {amount:12., currency:GBP}
+  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP} {amount:12., currency:GBP}
 ----
 
 TODO: Consider the more-general binding form
@@ -854,18 +854,18 @@ pseudo-type:
 ----
 ----
 (:scatterplot (3 17) (395 23) (15 48) (2023 5) …)
-=>
-[{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}, …]
+  =>
+  [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}, …]
 ----
 
-What’s happening here is that each argument S-expression like `(3 17)` is _implicitly an
+Each argument S-expression like `(3 17)` is _implicitly an
 E-expression_ invoking the `point` macro.  The argument mirrors the shape of the inner macro,
 without repeating its name.  Further, expansion of the implied ``point``s happens automatically,
 so the overall behavior is just like the preceding struct-based variant and the `points`
 parameter produces a stream of structs.
 
-As the text notation here suggests, macro-shaped parameters are tagless, and the binary form also
-elides any opcodes mentioning `point` and just encodes its arguments with minimal delimiting.
+The binary encoding of macro-shaped parameters are similarly tagless, eliding any opcodes
+mentioning `point` and just writing its arguments with minimal delimiting.
 
 Macro types can be combined with any cardinality, following the same rules as before.  Note that
 when combined with `***` or `*+*` this requires callers to use two layers of delimiting
@@ -880,19 +880,34 @@ each macro instance:
 ----
 ----
 (:scatterplot ((3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
-=>
-{
-  points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
-  x_label: "hour",
-  y_label: "widgets"
-}
+  =>
+  {
+    points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
+    x_label: "hour",
+    y_label: "widgets"
+  }
 ----
 
-TODO Describe binary representation
+As with non-macro arguments, you cannot replace a delimiting-list with a macro invocation.
+Further, you can't use a macro invocation as an _element_ of the delimiting-list:
 
-CAUTION: Because these are tagless encodings, we cannot use macros in place of the delimiting
-containers, so unfortunately we cannot generate a point or series of points through a macro.
+[{mrk}]
+----
+(:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
+  => _**error**: delimiting list or sexp expected, found :make_points_
 
+(:scatterplot [(3 17), (:make_points 395 23 15 48), (2023 5)] "hour" "widgets")
+  => _**error**: sexp expected with args for 'point', found :make_points_
+
+(:scatterplot [(3 17), (:point 395 23), (15 48), (2023 5)] "hour" "widgets")
+  => _**error**: sexp expected with args for 'point', found :point_
+----
+
+This limitation mirrors the binary encoding, where both the delimiting list and the individual
+macro invocations are tagless and there's no way to express a macro invocation.
+
+TIP: The primary goal of macro-shaped arguments, and tagless types in general, is to increase
+density by tightly constraining the inputs.
 
 === Return Types
 
