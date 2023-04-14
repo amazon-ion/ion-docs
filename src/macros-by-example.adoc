@@ -376,7 +376,7 @@ spliced into the surrounding container:
 This also applies wherever a <<tagless,tagged type>> can appear inside an E-expression:
 
 ----
-(first (:values (:values left right) (:values)) last) => (first left right last)
+(first (:values (:values left right) (:values)) last) ⇒ (first left right last)
 ----
 
 Note that each argument-expression always maps to one parameter, even when that expression
@@ -790,9 +790,9 @@ argument values cannot be expressed using macros, like we’ve done before:
 
 [{mrk}]
 ----
-(:point null.int 17)   => _**error**: tagless int does not accept nulls_
-(:point a::3 17)       => _**error**: tagless int does not accept annotations_
-(:point (:values 1) 2) => _**error**: cannot use macro for a tagless argument_
+(:point null.int 17)   ⇒ _**error**: tagless int does not accept nulls_
+(:point a::3 17)       ⇒ _**error**: tagless int does not accept annotations_
+(:point (:values 1) 2) ⇒ _**error**: cannot use macro for a tagless argument_
 ----
 
 While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
@@ -817,9 +817,9 @@ invocation is written using normal ints:
 
 [{mrk}]
 ----
-(:byte_array 0 1 2 3 4 5 6 7 8) => [0, 1, 2, 3, 4, 5, 6, 7, 8]
-(:byte_array 9 -10 11)          => _**error**: -10 is not a valid uint8_
-(:byte_array 256)               => _**error**: 256 is not a valid uint8_
+(:byte_array 0 1 2 3 4 5 6 7 8) ⇒ [0, 1, 2, 3, 4, 5, 6, 7, 8]
+(:byte_array 9 -10 11)          ⇒ _**error**: -10 is not a valid uint8_
+(:byte_array 256)               ⇒ _**error**: 256 is not a valid uint8_
 ----
 As above, Ion text doesn’t have syntax specifically denoting “8-bit unsigned integers”, so to
 keep text and binary capabilities aligned, the parser rejects invocations where an argument value
@@ -875,7 +875,7 @@ pseudo-type:
 ----
 ----
 (:scatterplot (3 17) (395 23) (15 48) (2023 5) …)
-  =>
+  ⇒
   [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}, …]
 ----
 
@@ -901,7 +901,7 @@ each macro instance:
 ----
 ----
 (:scatterplot ((3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
-  =>
+  ⇒
   {
     points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
     x_label: "hour",
@@ -915,13 +915,13 @@ Further, you can't use a macro invocation as an _element_ of the delimiting-list
 [{mrk}]
 ----
 (:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
-  => _**error**: delimiting list or sexp expected, found :make_points_
+  ⇒ _**error**: delimiting list or sexp expected, found :make_points_
 
 (:scatterplot [(3 17), (:make_points 395 23 15 48), (2023 5)] "hour" "widgets")
-  => _**error**: sexp expected with args for 'point', found :make_points_
+  ⇒ _**error**: sexp expected with args for 'point', found :make_points_
 
 (:scatterplot [(3 17), (:point 395 23), (15 48), (2023 5)] "hour" "widgets")
-  => _**error**: sexp expected with args for 'point', found :point_
+  ⇒ _**error**: sexp expected with args for 'point', found :point_
 ----
 
 This limitation mirrors the binary encoding, where both the delimiting list and the individual
