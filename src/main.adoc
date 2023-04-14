@@ -4,10 +4,11 @@ Ion Team
 :creator: {author}
 :copyright: Copyright ©2023 Amazon.com Inc. or Affiliates (“Amazon”)
 :docinfo:
+:sectanchors:
 :sectnums:
 :sectnumlevels: 5
 :appendix-caption: Appendix
-:toc:
+:toc: left
 :toclevels: 4
 :toc-title: Contents
 :pagenums:
