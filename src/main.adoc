@@ -40,3 +40,5 @@ include::macros-by-example.adoc[]
 
 // TODO replace with our current version of semantics
 //include::semantics-template-expressions.adoc[]
+
+include::glossary.adoc[]
