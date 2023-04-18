@@ -479,8 +479,9 @@ created and bound to the next value on the stream.
     (price amt currency)))
 ----
 
-The list following `*for*` contains pairs of variable names and template expressions, so here
-each value from `amounts` is given the name `amt` before the `price` is expanded.
+The list immediately following `*for*` contains S-expressions pairing variable names with
+template expressions.  Here, each value from the template `amounts` is given the name `amt`
+before the `price` invocation is expanded.
 
 ----
 (:prices GBP 10 9.99 12.)
