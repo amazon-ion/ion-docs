@@ -24,7 +24,7 @@ The association of a name with an entity (for example, a module or macro). See a
 all declarations are definitions: some introduce new names for existing entities.
 
 definition::
-The specification of a new entity. Most (but not all) definitions are declarations.
+The specification of a new entity.
 
 directive::
 A unit of data in an Ion document that affects the encoding context, and thus the way the
@@ -45,7 +45,7 @@ The 1.0 `$ion_symbol_table` directive is effectively a less capable alternative 
 
 encoding environment::
 The context-specific data maintained by an Ion implementation while encoding or decoding data. In
-Ion 1.0 this consists of the local symbol table; in Ion 1.1 it also has the local module table
+Ion 1.0 this consists of the local symbol table; in Ion 1.1 this is expanded to include the local module table
 and a collection of available modules.
 
 encoding expression::
