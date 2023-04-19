@@ -1,0 +1,320 @@
+[[sec:moduleexample]]
+== Modules by Example
+
+:nrm: subs="+normal"
+
+Within the spectrum of Ion 1.1's new encoding facilities, macros lie at the bottom, affecting the
+serialized byte-stream.  The prior chapter explored macro definitions while ignoring the contexts
+within which those definitions exist.  This chapter covers that context top-down.
+
+
+=== Encoding Environment 1.0
+
+An Ion _document_ is a stream of octets conforming to either the Ion text or binary specification.
+(For our purposes here, a document does not necessarily exist as a file, and isn’t necessarily
+finite.)  The interpretation of those octets is guided by an _encoding environment_, the
+context-specific data maintained by an Ion implementation while encoding or decoding a document.
+The Ion 1.0 encoding environment is effectively just the local symbol table.
+
+The encoding environment is controlled by _directives_ embedded in the document at top-level.
+These directives, also known as “system values”, are encoding artifacts and are not part of the
+application data model.
+
+Ion 1.0 has two forms of directives:
+
+* An Ion Version Marker (IVM) resets the environment to the default provided by that version of
+Ion.
+* An `$ion_symbol_table` struct defines a new environment that takes effect immediately after the
+struct closes.
+
+A _segment_ is a contiguous portion of a document that uses the same encoding environment.
+Segment boundaries are caused by directives: an IVM starts a new segment, while an
+`$ion_symbol_table` struct ends a segment, defining a new one that starting immediately
+afterwards.
+
+TODO Ion text docs always start with a 1.0 segment until an IVM is encountered.
+
+
+=== Modules from the Outside
+
+In Ion 1.1, you define, share, and install symbols and macros using _encoding modules_.
+The logical interface to a module has three main components: a spec version, a symbol
+table, and a macro table.
+
+A module's _spec version_ indicates which Ion specification it uses. This ensures the module has
+stable semantics over time.  Spec versions are expressed as Ion version markers, and a module can
+only be used in segments encoded with that version or later.
+
+// TODO The above may be too strict; use solely for symbols could be more relaxed.
+
+A module's _exported symbol table_ is simply a sequence of strings. These denote the
+text of symbols, and are equivalent in meaning to the `symbols` list of an Ion 1.0 shared symbol
+table.
+
+A module's _exported macro table_ is a sequence of <name, macro> pairs.  Names can be
+null, in which case the corresponding macro can be referenced by its zero-based index in the
+table, known as its _exported address_.  Non-null names in the table must all be unique, so that
+a name-to-macro mapping function is well-defined.
+
+TIP: Macros have their own "object identity" independent of the names that map to them.  It's
+possible for the same macro to have multiple addresses and/or names.
+
+To reuse macros across documents, _shared modules_ subsume the capabilities
+of shared symbol tables while remaining backwards-compatible with their current schema and catalog
+semantics.
+
+IMPORTANT: Any existing Ion shared symbol table is a valid encoding module, albeit one that only
+declares symbols and not macros.
+
+
+=== Encoding Environment 1.1
+
+In Ion 1.1, the encoding environment is enhanced to include:
+
+  * The current Ion version, because a document may have segments using different Ion versions.
+  * The _available modules_, a name->module mapping.
+  * The local macro table, assembled from a subset of the available modules.
+
+Upon encountering the `$ion_1_1` IVM, the environment is reset to the default state, in which:
+
+  * The current Ion version is 1.1.
+  * The available modules contains only the `$ion` module, version 2 (v1 being Ion 1.0).
+  * The current local macro table is empty.
+  * The current symbol table is the Ion 1.1 system symbol table.
+
+To customize this environment, we use an _encoding directive_: a
+top-level struct annotated with `$ion_encoding`. Like `$ion_symbol_table`, this directive defines a
+new encoding environment that goes into effect immediately after the struct closes.
+
+The general syntax of an encoding directive is as follows:
+
+[{nrm}]
+----
+**$ion_encoding**::{
+  modules:         [ /* module declarations \*/ ],
+  install_symbols: [ /* names declared in 'modules' field \*/ ],
+  install_macros:  [ /* names declared in 'modules' field */ ]
+}
+----
+
+The three fields here correspond directly to the main components of the environment.
+The `modules` field enumerates the available modules, while the `install_symbols`
+and `install_macros` fields specify the layout of the local symbol and macro tables.
+
+Let’s look at some examples illustrating the relation between `$ion_symbol_table` and
+`$ion_encoding`.
+
+
+=== Defining Local Symbols
+
+The most basic Ion encoding scenario uses only locally-defined symbols.
+In Ion 1.0, this is expressed as follows:
+
+[{nrm}]
+----
+*$ion_1_0*
+**$ion_symbol_table**::{
+  symbols: ["s1", "s2"]
+}
+----
+
+Here’s an Ion 1.1 document that’s equivalent, in the sense that it allocates symbol IDs in the
+same order. (The IDs will be different, though, due to new system symbols.)
+
+[{nrm}]
+----
+*$ion_1_1*
+**$ion_encoding**::{
+  modules: [
+    (*module* local
+      (*symbols* [ "s1", "s2" ]))
+  ],
+  install_symbols: [ local ]
+}
+----
+
+The definition of the local symbol table has been refactored into two parts. First, the list of
+symbols is expressed inside a module named `local`. Then, the symbols from that module are
+installed to form the new local symbol table. Compared to the behavior of `$ion_symbol_table`,
+this is akin to defining a named symbol table “inline” to hold local symbols, then defining the
+local symbol table only via `imports` and no `symbols` field.
+
+Let's look more closely at the definition of `local`:
+
+[{nrm}]
+----
+(*module* local
+  (*symbols* ["s1", "s2"]))
+----
+
+The `*module*` keyword starts an S-expression that defines a new module with the given name.
+The `*symbols*` keyword starts a subform that defines the module's exported symbol table.
+This clause expects a list of strings, and both the syntax and semantics are the same as the
+`symbols` field of `$ion_shared_symbol_table`.
+
+Once this module is defined, we can _install_ it into the local symbol table:
+
+[{nrm}]
+----
+  install_symbols: [ local ]
+----
+
+This field expects a list of symbols that match names declared in the `modules` field.  The
+resulting local symbol table is simply the concatenation of the exported symbol tables of those
+modules.  This works the same way as the `imports` field of `$ion_symbol_table`.
+
+
+=== Importing Symbols
+
+Given the equivalencies above, we could perform a naive round-trip of the preceding 1.1 document
+back to 1.0. First, turn the `local` module into the equivalent shared symbol table:
+
+[{nrm}]
+----
+**$ion_shared_symbol_table**::{
+  name: "local",
+  version: 1,
+  symbols: ["s1", "s2"]
+}
+----
+
+Then translate `install_symbols:[local]` into its 1.0 equivalent:
+
+[{nrm}]
+----
+*$ion_1_0*
+**$ion_symbol_table**::{
+  imports: [{ name: "local", version: 1, max_id: 2 }]
+}
+----
+
+NOTE:  Even ignoring Ion 1.1, this is how you would hoist local symbols into a
+new shared symbol table.
+
+The latter imports-only document has this 1.1 equivalent:
+
+
+[{nrm}]
+----
+*$ion_1_1*
+**$ion_encoding**::{
+  modules: [
+    (*import* local "local" 1 2)
+  ],
+  install_symbols: [ local ]
+}
+----
+
+Here we see a new form inside the `modules` field that imports a module into the encoding
+environment and assigns it a name.
+The `*import*` keyword starts an S-expression that expects three or four arguments. The first is
+a symbolic name that we can use later to refer to the imported module.  The remaining arguments
+are effectively the `name`, `version` and `max_id` fields of the 1.0 `imports` struct.
+
+TIP: From the perspective of Ion 1.1, shared symbol tables _are_ encoding modules.
+
+
+=== Declaring Multiple Modules
+
+Within a directive's `modules` field, both `*module*` and `*import*` clauses have the same
+ultimate effect, declaring a name->module mapping for the encoding environment.
+Let’s look at a scenario with both imported and locally-defined symbols:
+
+[{nrm}]
+----
+*$ion_1_0*
+**$ion_symbol_table**::{
+  imports: [{ name: "shared1", version: 1, max_id: 10 },
+            { name: "shared2", version: 2, max_id: 20 }],
+  symbols: ["s1", "s2"]
+}
+----
+
+Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
+
+[{nrm}]
+----
+*$ion_1_1*
+**$ion_encoding**::{
+  modules: [(*import* n1 "shared1" 1 10),
+            (*import* n2 "shared2" 2 20),
+            (*module* local (*symbols* ["s1", "s2"]))],
+  install_symbols: [n1, n2, local]
+}
+----
+
+Just as in the 1.0 version, this allocates symbol IDs starting with ten from `shared1`, twenty
+from `shared2`, then the two locally-defined symbols.
+
+By decoupling symbol-table importing from installation, Ion 1.1 allows some encoding techniques
+that are not possible in 1.0.  For example, we can give local symbols smaller IDs than imported
+symbols by installing `local` first:
+
+[{nrm}]
+----
+*$ion_1_1*
+**$ion_encoding**::{
+  modules: [(*import* n1 "shared1" 1 10),
+            (*import* n2 "shared2" 2 20),
+            (*module* local (*symbols* ["s1", "s2"]))]
+  install_symbols: [local, n1, n2]                       // 'local' is first
+}
+----
+
+
+=== Extending the Symbol Table
+
+The last 1.0 feature to examine is local symbol table extension:
+
+[{nrm}]
+----
+*$ion_1_0*
+**$ion_symbol_table**::{
+  symbols: ["s1", "s2"]
+}
+
+// ... application data ...
+
+**$ion_symbol_table**::{
+  imports: *$ion_symbol_table*,
+  symbols: ["s3", "s4"]
+}
+----
+
+To achieve this in Ion 1.1, we must copy the available modules from the current segment into
+the next, while also defining a new module for the additional symbols.
+
+[{nrm}]
+----
+*$ion_1_1*
+**$ion_encoding**::{
+  modules: [(*module* local (*symbols* ["s1", "s2"]))],
+  install_symbols: [local]
+}
+
+// ... application data ...
+
+**$ion_encoding**::{
+  modules: [
+    *{asterisk}*,                                      // retain all available modules
+    (*module* local2 (*symbols* ["s3", "s4"]))
+  ],
+  install_symbols: [local, local2]
+}
+----
+
+The asterisk in the latter `*modules*` list retains the name→module mappings from the current
+encoding environment, so they can be reused in the new one. Alternatively, individual modules can be
+named, if only a subset is desired.
+
+Here again, Ion 1.1 enables a new technique: we can prepend new symbols to the existing LST.
+
+[{nrm}]
+----
+**$ion_encoding**::{
+  modules:[ local,
+            (*module* local2 (*symbols* ["s3", "s4"]))],
+  install_symbols: [local2, local]                    // 'local2' is first
+}
+----
+
