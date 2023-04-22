@@ -12,8 +12,8 @@ moving parts without getting into the weeds of more formal specification.
 Ion macros are defined using a domain-specific language that is in turn expressed via the Ion
 data model. That is, macro definitions are Ion data, and use Ion features like S-expressions and
 symbols to represent code in a LISP-like fashion.  In this document, the fundamental construct we
-explore is the _macro definition_, denoted using an S-expression of the form `(*public* _name_ …)`
-where `*public*` is a keyword and `_name_` must be a symbol denoting the macro's name.
+explore is the _macro definition_, denoted using an S-expression of the form `(*macro* _name_ …)`
+where `*macro*` is a keyword and `_name_` must be a symbol denoting the macro's name.
 
 NOTE: S-expressions of that shape only declare macros when they occur in the context of an encoding
 module, which is the topic of a chapter to come.  We will completely ignore modules for now, and
@@ -27,11 +27,11 @@ The most basic macro is a constant:
 
 [{mrk}]
 ----
-(*public* pi []
+(*macro* pi []
   3.141592653589793)
 ----
 
-This declaration defines a public macro named `pi`.  The `[]` is the macro’s _signature_, in this
+This declaration defines a macro named `pi`.  The `[]` is the macro’s _signature_, in this
 case a trivial one that declares no parameters.  The `3.141592653589793` is a similarly trivial
 _template_, an expression in Ion 1.1's domain-specific language for defining macro functions.
 This macro accepts no arguments and always returns a constant value.
@@ -84,7 +84,7 @@ Most macros are not constant, they accept inputs that determine their results.
 
 [{mrk}]
 ----
-(*public* price
+(*macro* price
   [a, c]                          // signature
   { amount: a, currency: c })     // template
 ----
@@ -118,7 +118,7 @@ expression.  Here’s a silly macro to illustrate:
 
 [{mrk}]
 ----
-(*public* reverse [a, b] [b, a])
+(*macro* reverse [a, b] [b, a])
 ----
 ----
 (:reverse first {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, first]
@@ -147,7 +147,7 @@ either macros or _special forms_.  We start with the former:
 
 [{mrk}]
 ----
-(*public* website_url
+(*macro* website_url
   [path]
   (make_string "https://www.amazon.com/" path))
 ----
@@ -163,7 +163,7 @@ In the template language, macro invocations can appear almost anywhere:
 
 [{mrk}]
 ----
-(*public* detail_page_url
+(*macro* detail_page_url
   [asin]
   (website_url (make_string "dp/" asin)))
 ----
@@ -180,7 +180,7 @@ structs, but `(…)` doesn't construct S-expressions.  This gap is filled by the
 
 [{mrk}]
 ----
-(*public* double_sexp [val] (make_sexp val val))
+(*macro* double_sexp [val] (make_sexp val val))
 ----
 ----
 (:make_sexp true 19.3 null) ⇒ (true 19.3 null)
@@ -225,7 +225,7 @@ always the case. The `*literal*` form makes this clear:
 
 [{mrk}]
 ----
-(*public* USD_price [dollars] (price dollars (*literal* USD)))
+(*macro* USD_price [dollars] (price dollars (*literal* USD)))
 ----
 ----
 (:USD_price 12.99) ⇒ { amount: 12.99, currency: USD }
@@ -274,7 +274,7 @@ To detect problems close to their source, macro signatures can declare type cons
 
 [{mrk}]
 ----
-(*public* detail_page_url
+(*macro* detail_page_url
   [(*string* asin)]
   (website_url (make_string "dp/" asin)))
 ----
@@ -316,7 +316,7 @@ To make this work, the definition of make_string is effectively:
 
 [{mrk}]
 ----
-(*public* make_string [(*text \...* parts)] …)
+(*macro* make_string [(*text \...* parts)] …)
 ----
 
 This says that `parts` is a _rest parameter_ accepting zero or more arguments of type `*text*`.
@@ -348,7 +348,7 @@ We have everything we need to illustrate this, via another system macro, `values
 
 [{mrk}]
 ----
-(*public* values [(*any\...* vals)] vals)
+(*macro* values [(*any\...* vals)] vals)
 ----
 
 [{mrk}]
@@ -384,7 +384,7 @@ returns too-few or too-many values.
 
 [{mrk}]
 ----
-(*public* reverse [a, b] [b, a])
+(*macro* reverse [a, b] [b, a])
 ----
 
 [{mrk}]
@@ -439,10 +439,10 @@ list:
 
 [{mrk}]
 ----
-(*public* int_list
+(*macro* int_list
   [(**int\...** vals)]
   [ vals ])
-(*public* clumsy_bag
+(*macro* clumsy_bag
   [(**any\...** elts)]
   { '': elts })
 ----
@@ -473,7 +473,7 @@ created and bound to the next value on the stream.
 
 [{mrk}]
 ----
-(*public* prices
+(*macro* prices
   [(*symbol* currency), (*number\...* amounts)]
   (*for* [(amt amounts)]
     (price amt currency)))
@@ -493,7 +493,7 @@ becomes empty.
 
 [{mrk}]
 ----
-(*public* zip [(**any* **front), (**any* **back)]
+(*macro* zip [(**any* **front), (**any* **back)]
   (*for* [(f front),
         (b back)]
     [f, b]))
@@ -579,7 +579,7 @@ argument as a way to denote an absent parameter.
 
 [{mrk}]
 ----
-(*public* temperature
+(*macro* temperature
   [(*decimal* degrees), (*symbol?* scale)]
   {degrees: degrees, scale: scale})
 ----
@@ -597,7 +597,7 @@ detect void:
 
 [{mrk}]
 ----
-(*public* temperature
+(*macro* temperature
   [(*decimal* degrees), (*symbol?* scale)]
   {degrees: degrees, scale: (*if_void* scale (*literal* K) scale)})
 ----
@@ -630,7 +630,7 @@ just last place.
 
 [{mrk}]
 ----
-(*public* prices
+(*macro* prices
   [(**number* **amount), (*symbol* currency)]
   (*for_each* amount
     (price amount currency)))
@@ -666,7 +666,7 @@ macro:
 
 [{mrk}]
 ----
-(*public* ouch [(**list* **stuff)] …)
+(*macro* ouch [(**list* **stuff)] …)
 ----
 
 In the E-expression `(:ouch [])` without this rule, it would be ambiguous if the argument was void
@@ -701,7 +701,7 @@ the resulting stream must produce at least one value.  To continue using our `pr
 
 [{mrk}]
 ----
-(*public* prices
+(*macro* prices
   [(*number+* amount), (*symbol* currency)]
   (*for_each* amount
     (price amount currency)))
@@ -726,7 +726,7 @@ this as applied to rest-parameters, but it also applies to `*?*` and `***` param
 
 [{mrk}]
 ----
-(*public* optionals
+(*macro* optionals
   [(**any* **a), (*any?* b), (*any!* c), (**any* **d), (*any?* e), (*any\...* f)]
   (make_list a b c d e f))
 ----
@@ -774,7 +774,7 @@ To define a tagless parameter, add the `*tagless*` modifier to any of the concre
 
 [{mrk}]
 ----
-(*public* point
+(*macro* point
   [(*tagless int* x), (*tagless int* y)]
   {x: x, y: y})
 ----
@@ -806,7 +806,7 @@ have no unique representation in Ion text: they appear there as normal ints and 
 
 [{mrk}]
 ----
-(*public* byte_array
+(*macro* byte_array
   [(*tagless uint8\...* bytes)]
   [bytes])
 ----
@@ -851,7 +851,7 @@ can go is `*struct*`, and things aren’t really any better:
 
 [{mrk}]
 ----
-(*public* scatterplot [(*struct\...* points)]
+(*macro* scatterplot [(*struct\...* points)]
   [points])
 ----
 ----
@@ -870,7 +870,7 @@ pseudo-type:
 
 [{mrk}]
 ----
-(*public* scatterplot [(*point\...* points)]
+(*macro* scatterplot [(*point\...* points)]
   [points])
 ----
 ----
@@ -895,7 +895,7 @@ each macro instance:
 
 [{mrk}]
 ----
-(*public* scatterplot
+(*macro* scatterplot
   [(*point** points), (*string* x_label), (*string* y_label)]
   { points: [points], x_label: x_label, y_label: y_label })
 ----
