@@ -3,8 +3,7 @@
 
 :nrm: subs="+normal"
 
-Within the spectrum of Ion 1.1's new encoding facilities, macros lie at the bottom, affecting the
-serialized byte-stream.  The prior chapter explored macro definitions while ignoring the contexts
+The prior chapter explored macro definitions while ignoring the contexts
 within which those definitions exist.  This chapter covers that context top-down.
 
 
@@ -13,8 +12,8 @@ within which those definitions exist.  This chapter covers that context top-down
 An Ion _document_ is a stream of octets conforming to either the Ion text or binary specification.
 (For our purposes here, a document does not necessarily exist as a file, and isn’t necessarily
 finite.)  The interpretation of those octets is guided by an _encoding environment_, the
-context-specific data maintained by an Ion implementation while encoding or decoding a document.
-The Ion 1.0 encoding environment is effectively just the local symbol table.
+context maintained by an Ion implementation while encoding or decoding a document.
+The Ion 1.0 encoding environment is just the local symbol table.
 
 The encoding environment is controlled by _directives_ embedded in the document at top-level.
 These directives, also known as “system values”, are encoding artifacts and are not part of the
@@ -63,16 +62,16 @@ To reuse macros across documents, _shared modules_ subsume the capabilities
 of shared symbol tables while remaining backwards-compatible with their current schema and catalog
 semantics.
 
-IMPORTANT: Any existing Ion shared symbol table is a valid encoding module, albeit one that only
-declares symbols and not macros.
+IMPORTANT: All existing Ion shared symbol tables **are** encoding modules.  Such modules only
+declare symbols and not macros.
 
 
-=== Encoding Environment 1.1
+=== Ion 1.1 Encoding Environment
 
 In Ion 1.1, the encoding environment is enhanced to include:
 
   * The current Ion version, because a document may have segments using different Ion versions.
-  * The _available modules_, a name->module mapping.
+  * The _available modules_, a name to module mapping.
   * The local macro table, assembled from a subset of the available modules.
 
 Upon encountering the `$ion_1_1` IVM, the environment is reset to the default state, in which:
