@@ -7,7 +7,7 @@ The prior chapter explored macro definitions while ignoring the contexts
 within which those definitions exist.  This chapter covers that context top-down.
 
 
-=== Encoding Environment 1.0
+=== Ion 1.0 Encoding Environment
 
 An Ion _document_ is a stream of octets conforming to either the Ion text or binary specification.
 (For our purposes here, a document does not necessarily exist as a file, and isn’t necessarily
@@ -298,16 +298,16 @@ the next, while also defining a new module for the additional symbols.
 
 **$ion_encoding**::{
   modules: [
-    *{asterisk}*,                                      // retain all available modules
+    (*retain* *{asterisk}*),
     (*module* local2 (*symbols* ["s3", "s4"]))
   ],
   install_symbols: [local, local2]
 }
 ----
 
-The asterisk in the latter `*modules*` list retains the name→module mappings from the current
-encoding environment, so they can be reused in the new one. Alternatively, individual modules can be
-named, if only a subset is desired.
+The `*retain*` clause indicates that all (`*{asterisk}*`) of the available modules in the
+current encoding environment are to be reused in the new one. Alternatively, individual modules
+can be named, if only a subset is desired.
 
 Here again, Ion 1.1 enables a new technique: we can prepend new symbols to the existing LST.
 
