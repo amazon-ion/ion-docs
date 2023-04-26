@@ -486,10 +486,10 @@ the name is ambiguous, meaning that two installed modules map it to different ma
 (:point 17 28) ⇒ **error**: ':point' is ambiguous, exported by 'geo' and 'g3d'.
 ----
 
-Another thing to note in this directive is that the `**import** g3d` declaration includes a symbol
+Another thing to note in the directive used above is that the `**import** g3d` declaration includes a symbol
 table name and version, but no max_id argument.  As with legacy imports, absence of max_id forces
 the Ion implementation to acquire the symbol table entity with exactly the stated version.  While
-this is generally not best-practice for importing symbols, exact-match is a precondition for
+this is generally not best-practice for importing symbols, exact-match is a **requirement** for
 using the module in `install_macros`.  In other words, when a document is encoded using macros,
 the Ion decoder will always use the _exact_ version of those macros that was used when encoding
 the data.
@@ -580,7 +580,7 @@ imported into it:
 
 When the Ion implementation loads the 'chart' module, it will transitively load the geometry
 module as well, but the import of `com.example.geometry` by `com.example.charts` is
-_private_ to the importer.
+_not visible by name_ to the importer.
 
 You can do similar things within an encoding directive:
 
