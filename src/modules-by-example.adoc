@@ -56,7 +56,7 @@ null, in which case the corresponding macro can be referenced by its zero-based 
 table, known as its _exported address_.  Non-null names in the table must all be unique, so that
 a name-to-macro mapping function is well-defined.
 
-TIP: Macros have their own "object identity" independent of the names that map to them.  It's
+TIP: Macros have their own identity independent of the names that map to them.  It's
 possible for the same macro to have multiple addresses and/or names.
 
 To reuse macros across documents, _shared modules_ subsume the capabilities
@@ -88,6 +88,10 @@ Upon encountering the `$ion_1_1` IVM, the environment is reset to the default st
 To customize this environment, we use an _encoding directive_: a
 top-level struct annotated with `$ion_encoding`. Like `$ion_symbol_table`, this directive defines a
 new encoding environment that goes into effect immediately after the struct closes.
+
+NOTE: We use the term "encoding directive" to refer to the `$ion_encoding` struct, and "local
+symbol table directive" to refer to the `$ion_symbol_table` struct.  Both forms are valid in
+Ion 1.1.
 
 The general syntax of an encoding directive is as follows:
 
@@ -262,6 +266,10 @@ symbols by installing `local` first:
   install_symbols: [local, n1, n2]                       // 'local' is first
 }
 ----
+
+While there is little impact in this example, when imported tables are large this technique can
+ensure that local symbols fit into the first 256 addresses, using only two bytes to encode in
+binary.
 
 
 === Extending the Symbol Table
