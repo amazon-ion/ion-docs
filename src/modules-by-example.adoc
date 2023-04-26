@@ -175,7 +175,7 @@ back to 1.0. First, turn the `local` module into the equivalent shared symbol ta
 [{nrm}]
 ----
 **$ion_shared_symbol_table**::{
-  name: "extracted",
+  name: "com.example.extracted",
   version: 1,
   symbols: ["s1", "s2"]
 }
@@ -187,7 +187,7 @@ Then translate `install_symbols:[local]` into its 1.0 equivalent:
 ----
 *$ion_1_0*
 **$ion_symbol_table**::{
-  imports: [{ name: "extracted", version: 1, max_id: 2 }]
+  imports: [{ name: "com.example.extracted", version: 1, max_id: 2 }]
 }
 ----
 
@@ -202,9 +202,9 @@ The latter imports-only document has this 1.1 equivalent:
 *$ion_1_1*
 **$ion_encoding**::{
   modules: [
-    (*import* local "extracted" 1 2)
+    (*import* extracted "com.example.extracted" 1 2)
   ],
-  install_symbols: [ local ]
+  install_symbols: [ extracted ]
 }
 ----
 
@@ -226,8 +226,8 @@ Let’s look at a scenario with both imported and locally-defined symbols:
 ----
 *$ion_1_0*
 **$ion_symbol_table**::{
-  imports: [{ name: "shared1", version: 1, max_id: 10 },
-            { name: "shared2", version: 2, max_id: 20 }],
+  imports: [{ name: "com.example.shared1", version: 1, max_id: 10 },
+            { name: "com.example.shared2", version: 2, max_id: 20 }],
   symbols: ["s1", "s2"]
 }
 ----
@@ -238,15 +238,15 @@ Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
 ----
 *$ion_1_1*
 **$ion_encoding**::{
-  modules: [(*import* n1 "shared1" 1 10),
-            (*import* n2 "shared2" 2 20),
+  modules: [(*import* m1 "com.example.shared1" 1 10),
+            (*import* m2 "com.example.shared2" 2 20),
             (*module* local (*symbols* ["s1", "s2"]))],
-  install_symbols: [n1, n2, local]
+  install_symbols: [m1, m2, local]
 }
 ----
 
-Just as in the 1.0 version, this allocates ten symbol IDs for `shared1` (as requested by its
-max_id argument), twenty symbol IDs for `shared2`, then the two locally-defined symbols.
+Just as in the 1.0 version, this allocates ten symbol IDs for `m1` (as requested by its
+max_id argument), twenty symbol IDs for `m2`, then the two locally-defined symbols.
 
 By decoupling symbol-table importing from installation, Ion 1.1 allows some encoding techniques
 that are not possible in 1.0.  For example, we can give local symbols smaller IDs than imported
@@ -256,10 +256,10 @@ symbols by installing `local` first:
 ----
 *$ion_1_1*
 **$ion_encoding**::{
-  modules: [(*import* n1 "shared1" 1 10),
-            (*import* n2 "shared2" 2 20),
+  modules: [(*import* m1 "com.example.shared1" 1 10),
+            (*import* m2 "com.example.shared2" 2 20),
             (*module* local (*symbols* ["s1", "s2"]))]
-  install_symbols: [local, n1, n2]                       // 'local' is first
+  install_symbols: [local, m1, m2]                       // 'local' is first
 }
 ----
 
