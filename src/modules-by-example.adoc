@@ -329,7 +329,8 @@ define modules that export macros, then you enumerate the modules whose macros y
 install. The lists of exported macros from each of those modules are concatenated to form a
 contiguous address space so that any macro can be referenced by an integer.
 
-We can now define our macros for two-dimensional geometry with full context:
+We can now define a small module for two-dimensional geometry, finally showing macro definitions
+in full context:
 
 [{nrm}]
 ----
@@ -396,6 +397,7 @@ Macros are most useful when they're shared across documents, and for that we use
 a generalization of Ion 1.0's shared symbol tables. As discussed in
 <<_modules_from_the_outside>>, they export both a symbol table and a macro table.
 
+TIP: In Ion 1.1, a shared symbol table _is_ a shared module.
 
 NOTE: We intend to propose a new schema for shared modules, akin to the new `$ion_encoding` schema.
 That should be easier to explain and understand than the format below.
@@ -486,8 +488,9 @@ the name is ambiguous, meaning that two installed modules map it to different ma
 (:point 17 28) ⇒ **error**: ':point' is ambiguous, exported by 'geo' and 'g3d'.
 ----
 
-Another thing to note in the directive used above is that the `**import** g3d` declaration includes a symbol
-table name and version, but no max_id argument.  As with legacy imports, absence of max_id forces
+Another thing to note in the directive used above is that the `**import** g3d` declaration
+includes a symbol table name and version, but no max_id argument.  As with imports in a local
+symbol table, absence of max_id forces
 the Ion implementation to acquire the symbol table entity with exactly the stated version.  While
 this is generally not best-practice for importing symbols, exact-match is a **requirement** for
 using the module in `install_macros`.  In other words, when a document is encoded using macros,
@@ -638,8 +641,7 @@ smile syntax does not apply.  Instead, use a quoted symbol:
 ----
 
 That has the intended effect of keeping `scatterplot` using 2D points, but it's somewhat awkward.
-A more ergonomic approach is to introduce an alias to disambugate:
-
+A more ergonomic approach is to introduce an alias to disambiguate:
 
 [{nrm}]
 ----
@@ -688,7 +690,16 @@ available to consumers of the module, and for that they can be exported:
 ----
 
 Exports can also be used to "pass through" selected macros from an imported module: `(*export*
-':g2d:line')` exports the name `line` from the enclosing module.
+':g2d:line')` exports the name `line` from the enclosing module.  The pass-through form is
+_almost_ the same as the pair of clauses:
+
+[{nrm}]
+----
+(*alias* line ':g2d:line')
+(*export* line)
+----
+
+..._except_ the latter declares a local name while the pass-through does not.
 
 IMPORTANT: The macro names exported by a module must be unique, regardless of whether they are
 exported implicitly via `*macro*` or explicitly via `*export*`.
@@ -729,7 +740,15 @@ the macro table as well:
 === Separate Installation
 
 The preceding example has some repetition between `install_symbols` and `install_macros`,
-illustrating that the symbol and macro tables are maintained independently.  There's no
+illustrating that the symbol and macro tables are maintained independently.
+The following is legal:
+
+----
+  install_symbols: [local, local2]
+  install_macros:  [local2, local]
+----
+
+There's no
 assumption that the document needs both symbols and macros from every module, or that the
 relative allocation of addresses should be the same.  If anything, we assume the opposite: that
 installing the macros from a module suggests that you don't need to install its symbols since
