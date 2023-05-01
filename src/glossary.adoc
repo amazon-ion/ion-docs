@@ -4,20 +4,27 @@
 
 [glossary]
 
-arity::
-The number of arguments declared by or passed to a macro.  A macro can be _fixed_ or _variable_
-arity; the number of subforms in an invocation is its _actual arity_.
+actual arity::
+The number of subforms (arguments or argument groups) in a macro invocation.
+A macro can be _fixed arity_ or _variable arity_.
 
 argument::
-A single subform within an encoding expression, corresponding to one of the macro’s parameters.
-This is a one-to-one relation except in the case of rest parameters, where any number of trailing
-arguments are passed to the same parameter.
+A single sub-expression within a macro invocation, corresponding to one of the macro’s
+parameters.  This is by default a one-to-one relation, but a parameter's cardinality constraint
+can change this to a many-to-one relation.
 
-cardinality::
-The number of elements accepted by a single argument of a macro, or produced by a macro. The
-arguments and results of a macro are streams, and each can be constrained to have exactly-one
-(`*!*`), zero-or-one (`*?*`), zero-or-more (`*{asterisk}*`, `*\...*`), or one-or-more (`*+*`)
-elements.
+argument cardinality::
+The number of arguments to a macro invocation associated with a particular parameter.
+Since an argument produces a stream of values, this can be different from the parameter's _stream
+cardinality_.
+
+argument group::
+In a macro invocation, a sequence containing multiple arguments, used to express parameters that
+accept more than one argument.
+
+cardinality constraint::
+The part of a macro signature that specifies a parameter's acceptable _argument cardinality_ and
+_stream cardinality_.
 
 declaration::
 The association of a name with an entity (for example, a module or macro). See also _definition_. Not
@@ -27,9 +34,10 @@ definition::
 The specification of a new entity.
 
 directive::
-A unit of data in an Ion document that affects the encoding context, and thus the way the
-document’s data is decoded. In Ion 1.0 there are two directives: the Ion Version Marker, and
-top-level `$ion_symbol_table` structs. Ion 1.1 adds the `$ion_encoding` directive.
+A keyword or unit of data in an Ion document that affects the encoding environment, and thus the
+way the document’s data is decoded.
+In Ion 1.0 there are two directives: _Ion version markers_, and the _symbol table directives_.
+Ion 1.1 adds _encoding directives_.
 
 document::
 A stream of octets conforming to either the Ion text or binary specification. Can consist of
@@ -40,8 +48,9 @@ E-expression::
 See _encoding expression_.
 
 encoding directive::
-In Ion 1.1, a top-level `$ion_encoding` struct that controls the segment immediately following it.
-The 1.0 `$ion_symbol_table` directive is effectively a less capable alternative syntax.
+In an Ion 1.1 segment, a top-level struct annotated with `$ion_encoding`.
+Defines a new encoding environment for the segment immediately following it.
+The _symbol table directive_ is effectively a less capable alternative syntax.
 
 encoding environment::
 The context-specific data maintained by an Ion implementation while encoding or decoding data. In
@@ -54,6 +63,18 @@ denoting the function to invoke. The Ion text format uses “smile syntax” `(:
 E-expressions. Ion binary devotes a large number of opcodes to E-expressions, so they can be
 compact.
 
+fixed arity::
+Describes a macro without optional or rest parameters, so invocations must have actual arity that
+equals the macro's formal arity.
+
+formal arity::
+The number of parameters declared by a macro.  Due to _optional parameters_ and _rest parameters_,
+the _actual arity_ of a macro invocation may differ from its formal arity.
+
+Ion version marker::
+A keyword directive that denotes the start of a new segment encoded with a specific Ion version.
+Also known as “IVM”.
+
 macro::
 A transformation function that accepts some number of streams of values, and produces a stream of
 values.
@@ -62,12 +83,16 @@ macro definition::
 Specifies a macro in terms of a _signature_ and a _template_.
 
 macro reference::
-Identifies a macro for invocation, renaming, or exporting. Must always be unambiguous. Lexically
+Identifies a macro for invocation, alias, or exporting. Must always be unambiguous. Lexically
 scoped, and never a “forward reference” to a macro that’s declared later in the document.
 
 module::
 The data entity that defines and exports both symbols and macros. Modules are imported by
 encoding directives then installed into the local symbol and/or macro tables.
+
+optional parameter::
+A parameter that can have its corresponding subform(s) omitted when the macro is invoked.
+A parameter is optional if it is _voidable_ and all following arguments are also voidable.
 
 parameter::
 A named input to a macro, as defined by its signature. At expansion time a parameter produces a
@@ -80,10 +105,11 @@ like `:__module-name__:__name-or-address__`.
 
 rest parameter::
 A macro parameter—always the final parameter—declared with the `*\...*` modifier, that accepts all
-remaining arguments to the macro. Similar to “varargs” parameters in Java and other languages.
+remaining arguments to the macro as if they were in an implicit _argument group_.
+Similar to “varargs” parameters in Java and other languages.
 
 segment::
-A contiguous portion of a document that uses the same encoding environment. Segment boundaries
+A contiguous partition of a document that uses the same encoding environment. Segment boundaries
 are caused by directives: an IVM starts a new segment, while `$ion_symbol_table` and `$ion_encoding`
 directives end segments (with a new one starting immediately afterwards).
 
@@ -91,6 +117,22 @@ signature::
 The part of a macro definition that specifies its “calling convention”, in terms of the shape,
 type, and cardinality of arguments it accepts, and the type and cardinality of the results it
 produces.
+
+stream cardinality::
+The number of values passed to a parameter by a macro invocation.
+See also _argument cardinality_.
+
+subform::
+A nested portion within some syntactic form of the module or macro declarations.
+
+symbol table directive::
+A top-level struct annotated with `$ion_symbol_table`.  Defines a new encoding environment
+without any macros.  Valid in Ion 1.0 and 1.1.
+
+system symbol::
+A symbol provided by the Ion implementation via the system module `$ion`.
+System symbols are available at all points within an Ion document, though the selection of symbols
+varies by segment according to its Ion version.
 
 system macro::
 A macro provided by the Ion implementation via the system module `$ion`.
@@ -108,9 +150,13 @@ unqualified macro reference::
 A macro reference that consists of either a macro name or numeric address, without a qualifying
 module name. These are resolved using lexical scope and must always be unambiguous.
 
+variable arity::
+Describes a macro with optional and/or rest parameters, so invocations may have actual arity
+different from the macro's formal arity.
+
 void::
 An empty stream of values. Produced by the system macro `void` as in the E-expression `(:void)`.
 
 voidable::
 Describes a parameter that accepts void, aka the empty stream.
-Such parameters have zero-or-one (`*?*`), zero-or-more (`*{asterisk}*`, `*\...*`) cardinality.
+Such parameters have stream cardinality constraints of zero-or-one or zero-or-more.
