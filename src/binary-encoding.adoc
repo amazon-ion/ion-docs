@@ -159,12 +159,17 @@ expansion.
 
 A `VarSym` begins with a <<varint,`VarInt`>>; once this integer has been read, we can evaluate it to determine how to proceed. If the VarInt is:
 
-* *greater than zero*, it represents a symbol ID. The symbol’s associated text can be found in the local symbol table. No more bytes follow.
-* *less than zero*, its absolute value represents a number of UTF-8 bytes that follow the `VarInt`. These bytes represent the symbol’s text.
-* *exactly zero*, another byte follows that is an <<opcodes, opcode>>. The `VarSym` parser is not responsible for evaluating this opcode, only returning it—the caller will decide whether the opcode is legal in the current context. Example usages of the opcode include:
+* *greater than zero*, it represents a symbol ID. The symbol’s associated text can be found in the local symbol table.
+No more bytes follow.
+* *less than zero*, its absolute value represents a number of UTF-8 bytes that follow the `VarInt`. These bytes
+represent the symbol’s text.
+* *exactly zero*, another byte follows that is an <<opcodes, opcode>>. The `VarSym` parser is not responsible for
+evaluating this opcode, only returning it—the caller will decide whether the opcode is legal in the current context.
+Example usages of the opcode include:
 ** Representing SID `$0` as `0x70`
 ** Representing the empty string (`""`) as `0x80`
-** When used to encode a struct field name, the opcode can invoke a macro that will evaluate to a struct whose key/value pairs are spliced into the parent struct (TODO: Link)
+** When used to encode a struct field name, the opcode can invoke a macro that will evaluate to a struct whose key/value
+pairs are spliced into the parent struct (TODO: Link)
 ** In a delimited struct, terminating the sequence of (name, value) pairs with `0xAD`. (TODO: Link)
 
 ==== Example encoding of a `VarSym` with symbol ID `$10` ====
@@ -418,10 +423,12 @@ F4 05 50 fc
 Float values are encoded using the IEEE-754 specification, and can be serialized in four sizes:
 
 * 0 bits (0 bytes), representing the value 0e0 and indicated by opcode `0x5A`
-* 16 bits (2 bytes, link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[half precision]), indicated
-by opcode `0x5B`
-* 32 bits (4 bytes, link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[single precision]), indicated by opcode `0x5C`
-* 64 bits (8 bytes, link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[double precision]), indicated by opcode `0x5D`
+* 16 bits (2 bytes, link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[half precision]),
+indicated by opcode `0x5B`
+* 32 bits (4 bytes, link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[single precision]),
+indicated by opcode `0x5C`
+* 64 bits (8 bytes, link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[double precision]),
+indicated by opcode `0x5D`
 
 Note that in the Ion data model, float values are always 64 bits. However, if a value can be losslessly serialized
 in fewer than 64 bits, applications may choose to do so.
@@ -625,7 +632,9 @@ consume only enough bits to represent the fractional precision supported by the 
 
 ==== Opcode `0x73`: Hour+Minutes @ UTC or Unknown (4 bytes)
 
-NOTE: Each encoding for a precision greater than or equal to `Hour+Minutes` comes in two flavors: one that uses a single bit (`U`) to indicate UTC versus Unknown offset, and another that uses 7 bits (`o`) to encode the number of quarter-hours offset from `-14:00`.
+NOTE: Each encoding for a precision greater than or equal to `Hour+Minutes` comes in two flavors: one that uses a single
+bit (`U`) to indicate UTC versus Unknown offset, and another that uses 7 bits (`o`) to encode the number of quarter-hours
+offset from `-14:00`.
 
 [source]
 ----
@@ -661,9 +670,9 @@ NOTE: Each encoding for a precision greater than or equal to `Hour+Minutes` come
 ==== Opcode `0x77`: Milliseconds @ UTC or Unknown (6 bytes)
 [source]
 ----
-+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmU:ssss|ss--:----|
-+=========+=========+=========+=========+=========+
++=========+=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmk:ssss|ssff:ffff|ffff:----|
++=========+=========+=========+=========+=========+=========+
 ----
 
 ==== Opcode `0x78`: Milliseconds @ Offset (7 bytes)
@@ -762,7 +771,8 @@ If the timestamp's length is greater than or equal to `8`, it has fractional sec
 `(coefficient, exponent)` pair, similar to a <<decimals, decimal>>. However, it is illegal for the fractional
 seconds value to be greater than or equal to `1.0` or less than `0.0`. For this reason, both the exponent and
 the coefficient are encoded using unsigned types. The included exponent `VarUInt` is implicitly negative, preventing
-the encoding of decimal numbers greater than `1.0`. The coefficient `FixedUInt` is unsigned to prevent the encoding of fractional seconds less than `0.0`. Note that validation is still required; namely:
+the encoding of decimal numbers greater than `1.0`. The coefficient `FixedUInt` is unsigned to prevent the encoding of
+fractional seconds less than `0.0`. Note that validation is still required; namely:
 
 * An exponent value of `0` is illegal, as that would result in a fractional seconds greater than `1.0` (a whole second).
 * If `coefficient * 10^-exponent > 1.0`, that `(coefficient, exponent)` pair is illegal.
