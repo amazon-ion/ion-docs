@@ -10,21 +10,19 @@ A macro can be _fixed arity_ or _variable arity_.
 
 argument::
 A single sub-expression within a macro invocation, corresponding to one of the macro’s
-parameters.  This is by default a one-to-one relation, but a parameter's cardinality constraint
+parameters.  This is by default a one-to-one relation, but a parameter's grouping mode
 can change this to a many-to-one relation.
 
-argument cardinality::
-The number of arguments to a macro invocation associated with a particular parameter.
-Since an argument produces a stream of values, this can be different from the parameter's _stream
-cardinality_.
-
 argument group::
-In a macro invocation, a sequence containing multiple arguments, used to express parameters that
-accept more than one argument.
+The concrete syntax for a _grouped parameter_.
+In a macro invocation, a list containing multiple arguments, delimited  explicitly with `[...]`
+notation. Used to express parameters that accept more than one argument.
 
-cardinality constraint::
-The part of a macro signature that specifies a parameter's acceptable _argument cardinality_ and
-_stream cardinality_.
+cardinality::
+Describes the number of values that a parameter will accept when invoked.
+One of zero-or-one, exactly-one, zero-or-more, or one-or-more.
+Specified in a signature by one of the modifiers `*?*`, `*+*`, `*{asterisk}*`, `*+*`, `*\...*`
+or `*\...+*`.
 
 declaration::
 The association of a name with an entity (for example, a module or macro). See also _definition_. Not
@@ -54,8 +52,8 @@ The _symbol table directive_ is effectively a less capable alternative syntax.
 
 encoding environment::
 The context-specific data maintained by an Ion implementation while encoding or decoding data. In
-Ion 1.0 this consists of the local symbol table; in Ion 1.1 this is expanded to include the local module table
-and a collection of available modules.
+Ion 1.0 this consists of the current symbol table; in Ion 1.1 this is expanded to include the Ion
+spec version, the current macro table, and a collection of available modules.
 
 encoding expression::
 The invocation of a macro in encoded data, aka E-expression. Starts with a macro reference
@@ -70,6 +68,16 @@ equals the macro's formal arity.
 formal arity::
 The number of parameters declared by a macro.  Due to _optional parameters_ and _rest parameters_,
 the _actual arity_ of a macro invocation may differ from its formal arity.
+
+grouped parameter::
+A macro parameter that accepts multiple arguments in an _argument group_ when the macro is
+invoked.
+See also _grouping mode_.
+
+grouping mode::
+One of three ways that a macro parameter is given arguments. A _simple parameter_ accepts one
+argument, a _grouped parameter_ accepts a list of arguments, and a _rest parameter_ accepts
+"all the rest" of the trailing arguments without a grouping list.
 
 Ion version marker::
 A keyword directive that denotes the start of a new segment encoded with a specific Ion version.
@@ -104,9 +112,10 @@ or a numeric address within the range of the module’s exported macro table. In
 like `:__module-name__:__name-or-address__`.
 
 rest parameter::
-A macro parameter—always the final parameter—declared with the `*\...*` modifier, that accepts all
-remaining arguments to the macro as if they were in an implicit _argument group_.
+A macro parameter—always the final parameter—declared with the `*\...*` or `*\...+*` modifier,
+that accepts all remaining arguments to the macro as if they were in an implicit _argument group_.
 Similar to “varargs” parameters in Java and other languages.
+See also _grouping mode_.
 
 segment::
 A contiguous partition of a document that uses the same encoding environment. Segment boundaries
@@ -118,9 +127,9 @@ The part of a macro definition that specifies its “calling convention”, in t
 type, and cardinality of arguments it accepts, and the type and cardinality of the results it
 produces.
 
-stream cardinality::
-The number of values passed to a parameter by a macro invocation.
-See also _argument cardinality_.
+simple parameter::
+A macro parameter that matches a single argument when the macro is invoked.
+See also _grouping mode_.
 
 subform::
 A nested portion within some syntactic form of the module or macro declarations.
@@ -159,4 +168,4 @@ An empty stream of values. Produced by the system macro `void` as in the E-expre
 
 voidable::
 Describes a parameter that accepts void, aka the empty stream.
-Such parameters have stream cardinality constraints of zero-or-one or zero-or-more.
+Such parameters have cardinality zero-or-one or zero-or-more.
