@@ -35,6 +35,8 @@ include::macros-by-example.adoc[]
 
 include::modules-by-example.adoc[]
 
+include::binary-encoding.adoc[]
+
 // TODO very much a WIP
 //include::semantics-intro.adoc[]
 

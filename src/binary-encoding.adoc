@@ -1,0 +1,803 @@
+= Binary Encoding
+:toc:
+
+[[encoding_primitives]]
+== Encoding primitives
+
+[[varuint]]
+=== `VarUInt`
+
+A variable-length unsigned integer.
+
+The bytes of a ``VarUInt``s are written in
+link:https://en.wikipedia.org/wiki/Endianness:[Little Endian byte order]. This means that the first byte will contain
+the ``VarUInt``'s least significant bits.
+
+The least significant bits in the `VarUInt` indicate the number of bytes that were used to encode the integer. The number
+of bytes can be found by counting the number of trailing zeros in the first byte(s) and adding one to it. All bits that
+are more significant than the first `1` represent the magnitude of the `VarUInt`.
+
+==== Example encoding of VarUInt 14 ====
+[source]
+----
+              ┌──── Lowest bit is 1 (`end`), indicating
+              │     this is the only byte.
+0 0 0 1 1 1 0 1
+└─────┬─────┘
+unsigned int 14
+----
+
+==== Example encoding of VarUInt 729 ====
+[source]
+----
+             ┌──── There's 1 trailing zero, so this
+             │     integer is two bytes wide.
+            ┌┴┐
+0 1 1 0 0 1 1 0  0 0 0 0 1 0 1 1
+└────┬────┘      └──────┬──────┘
+lowest 6 bits    highest 8 bits
+of the unsigned  of the unsigned
+integer          integer
+----
+
+==== Example encoding of VarUInt 21,043 ====
+[source]
+----
+            ┌───── There are 2 trailing zeros, so this
+            │      integer is three bytes wide.
+          ┌─┴─┐
+1 0 0 1 1 1 0 0  1 0 0 1 0 0 0 1  0 0 0 0 0 0 1 0
+└───┬───┘        └──────┬──────┘  └──────┬──────┘
+lowest 6 bits    next 8 bits of   highest 8 bits
+of the unsigned  the unsigned     of the unsigned
+integer          integer          integer
+----
+
+NOTE: Ion 1.0 uses link:https://en.wikipedia.org/wiki/Endianness[Big Endian byte order] and indicates the width of the
+integer by having
+link:https://amazon-ion.github.io/ion-docs/docs/binary.html#varuint-and-varint-fields[an `end` flag bit in the highest
+ bit of each byte].
+
+[[varint]]
+=== `VarInt`
+
+A variable-length signed integer.
+
+From an encoding perspective, ``VarInt``s are structurally similar to a `VarUInt` (<<varuint, described above>>). Both
+encode their bytes using Little Endian byte order, and both use the count of trailing zero bits to indicate how many
+bytes were used to encode the integer. They differ in the _interpretation_ of their bits; while a ``VarUInt``'s bits
+are unsigned, a ``VarInt``'s bits are encoded using
+link:https://en.wikipedia.org/wiki/Two%27s_complement[two's complement notation].
+
+TIP: An implementation could choose to read a `VarInt` by instead reading a `VarUInt` and then reinterpreting its bits
+as two's complement.
+
+==== Example encoding of VarInt 14 ====
+[source]
+----
+              ┌──── Lowest bit is 1 (`end`), indicating
+              │     this is the only byte.
+0 0 0 0 1 1 1 1
+└─────┬─────┘
+ 2's comp. 14
+----
+
+==== Example encoding of VarInt -14 ====
+[source]
+----
+              ┌──── Lowest bit is 1 (`end`), indicating
+              │     this is the only byte.
+1 1 1 0 0 1 0 1
+└─────┬─────┘
+ 2's comp. -14
+----
+
+==== Example encoding of VarInt 729 ====
+[source]
+----
+             ┌──── There's 1 trailing zero, so this
+             │     integer is two bytes wide.
+            ┌┴┐
+0 1 1 0 0 1 1 0  0 0 0 0 1 0 1 1
+└────┬────┘      └──────┬──────┘
+lowest 6 bits    highest 8 bits
+of the 2's       of the 2's
+comp. integer    comp. integer
+----
+
+==== Example encoding of VarInt -729 ====
+[source]
+----
+             ┌──── There's 1 trailing zero, so this
+             │     integer is two bytes wide.
+            ┌┴┐
+1 0 0 1 1 1 1 0  1 1 1 1 0 1 0 0
+└────┬────┘      └──────┬──────┘
+lowest 6 bits    highest 8 bits
+of the 2's       of the 2's
+comp. integer    comp. integer
+----
+
+[[fixeduint]]
+=== `FixedUInt`
+
+A fixed-width, little-endian, unsigned integer whose length is inferred from the context in which it appears.
+
+==== Example encoding of FixedUInt 3,954,261 ====
+[source]
+----
+
+0 1 0 1 0 1 0 1  0 1 0 1 0 1 1 0  0 0 1 1 1 1 0 0
+└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
+lowest 8 bits    next 8 bits of   highest 8 bits
+of the unsigned  the unsigned     of the unsigned
+integer          integer          integer
+----
+
+[[fixedint]]
+=== `FixedInt`
+
+A fixed-width, little-endian, signed integer whose length is known from the context in which it appears. Its bytes
+are interpreted as two's complement.
+
+==== Example encoding of FixedInt -3,954,261 ====
+[source]
+----
+
+1 0 1 0 1 0 1 1  1 0 1 0 1 0 0 1  1 1 0 0 0 0 1 1
+└──────┬──────┘  └──────┬──────┘  └──────┬──────┘
+lowest 8 bits    next 8 bits of   highest 8 bits
+of the 2's       the 2's comp.    of the 2's comp.
+comp. integer    integer          integer
+----
+
+[[varsym]]
+=== `VarSym`
+
+A variable-length symbol whose UTF-8 bytes can be inline, found in the symbol table, or derived from a macro
+expansion.
+
+A `VarSym` begins with a <<varint,`VarInt`>>; once this integer has been read, we can evaluate it to determine how to proceed. If the VarInt is:
+
+* *greater than zero*, it represents a symbol ID. The symbol’s associated text can be found in the local symbol table. No more bytes follow.
+* *less than zero*, its absolute value represents a number of UTF-8 bytes that follow the `VarInt`. These bytes represent the symbol’s text.
+* *exactly zero*, another byte follows that is an <<opcodes, opcode>>. The `VarSym` parser is not responsible for evaluating this opcode, only returning it—the caller will decide whether the opcode is legal in the current context. Example usages of the opcode include:
+** Representing SID `$0` as `0x70`
+** Representing the empty string (`""`) as `0x80`
+** When used to encode a struct field name, the opcode can invoke a macro that will evaluate to a struct whose key/value pairs are spliced into the parent struct (TODO: Link)
+** In a delimited struct, terminating the sequence of (name, value) pairs with `0xAD`. (TODO: Link)
+
+==== Example encoding of a `VarSym` with symbol ID `$10` ====
+[source]
+----
+              ┌─── The leading VarInt ends in a `1`,
+              │    no more VarInt bytes follow.
+              │
+0 0 0 1 0 1 0 1
+└─────┬─────┘
+  2's comp.
+  positive 10
+----
+
+==== Example encoding of a `VarSym` with symbol text `hello` ====
+[source]
+----
+              ┌─── The leading VarInt ends in a `1`,
+              │    no more VarInt bytes follow.
+              │      h         e        l        l        o
+1 1 1 1 0 1 1 1  01101000  01100101 01101100 01101100 01101111
+└─────┬─────┘    └─────────────────────┬─────────────────────┘
+  2's comp.               5-byte UTF-8 encoded "hello"
+  negative 5
+----
+
+==== Example encoding of `''` (symbol with empty text) using an opcode ====
+[source]
+----
+              ┌─── The leading VarInt ends in a `1`,
+              │    no more VarInt bytes follow.
+              │
+0 0 0 0 0 0 0 1  1110000
+└─────┬─────┘    └──┬──┘
+  2's comp.      opcode 0x70:
+  zero           empty symbol
+----
+
+[[opcodes]]
+== Opcodes
+
+An _opcode_ is a 1-byte <<fixeduint, `FixedUInt`>> that tells the reader what the next expression represents and how the
+bytes that follow should be interpreted.
+
+[[single_byte_macro_invocations]]
+=== Single-byte macro invocations
+
+// TODO: link to macros chapter
+
+If the value of the opcode is less than `64` (`0x40`), it represents an invocation of the macro at the corresponding
+__address__—an offset within the local macro table.
+
+==== Example encoding of a single-byte invocation of the macro at address `7`
+[source]
+----
+0 0 0 0 0 1 1 1
+└──────┬──────┘
+  FixedUInt 7
+----
+
+==== Example encoding of an invocation of the macro at address `31`
+[source]
+----
+0 0 0 1 1 1 1 1
+└──────┬──────┘
+  FixedUInt 31
+----
+
+// TODO: Link to macro calling conventions
+
+Note that the opcode alone tells us which macro is being invoked, but it does not supply enough information for the
+reader to parse any arguments that may follow. The parsing of arguments is described in detail in the section _Macro
+calling conventions_.
+
+[[multi_byte_macro_invocations]]
+=== Multibyte macro invocations
+
+While invocations of macro addresses in the range `[0, 63]` can be encoded in a single byte using
+<<single_byte_macro_invocations, single byte macro invocations>>, many applications will benefit from defining more than
+64 macros.
+
+If the high nibble of the opcode is `0x4_`, then the low nibble represents the four least significant bits of the macro
+address. A <<varuint, `VarUInt`>> follows that contains the remaining, more significant bits.
+
+Because the first 64 macro addresses can already be encoded using high nibbles `0` to `3`, the decoded value is biased
+by 64. (That is: the reader must add 64 to the decoded value. If the decoded value is `0`, the macro address that it
+represents is `64`.)
+
+Because the address is encoded using a `VarUInt`, there is no (theoretical) limit to the number of addresses that can
+be invoked. However, larger addresses require more bytes to encode. This following table shows the number of bytes
+needed to encode invocations of macro addresses in various ranges.
+
+|===
+| Address range | Bytes needed | Magnitude bits available
+
+|0 to 63
+|1
+|6
+
+|64 to 2,112
+|2
+|11
+
+|2,113 to 262,208
+|3
+|18
+
+|262,209 to 33,554,432
+|4
+|25
+|===
+
+==== Example encoding of an invocation of the macro at address `131`
+[source]
+----
+                               ┌─── The address VarUInt ends in a `1`,
+                               │    no more VarUInt bytes follow.
+                               │
+0 1 0 0 0 0 1 1  0 0 0 0 1 0 0 1
+└──┬──┘ └──┬──┘  └──────┬──────┘
+   │       │            └──────────── VarUInt containing the 7 most
+   │       └── 4 least significant    significant bits of the macro
+opcode high    bits of the macro      address
+nibble 4       address
+
+Magnitude bits: 0000100_0011
+Decoded value : 67
+Biased value  : 131
+----
+
+==== Example encoding of an invocation of the macro at address `1211`
+[source]
+----
+
+                               ┌─── The address VarUInt ends in a `1`,
+                               │    no more VarUInt bytes follow.
+                               │
+0 1 0 0 1 0 1 1  1 0 0 0 1 1 1 1
+└──┬──┘ └──┬──┘  └──────┬──────┘
+   │       │            └──────────── VarUInt containing the 7 most
+   │       └── 4 least significant    significant bits of the macro
+opcode high    bits of the macro      address
+nibble 4       address
+
+Magnitude bits: 1000111_1011
+Decoded value : 1,147
+Biased value  : 1,211
+----
+
+==== Example encoding of an invocation of the macro at address `71376`
+[source]
+----
+
+                              ┌─── The address VarUInt ends in `10`; the trailing
+                              │    zero indicates that one more VarUInt byte follows.
+                             ┌┴┐
+0 1 0 0 0 0 0 0  1 0 1 0 0 1 1 0  0 1 0 0 0 1 0 1
+└──┬──┘ └──┬──┘  └──────┬──────┘  └──────┬──────┘
+   │       │            │                └──────────── the 8 most significant bits
+   │       │            │                              of the macro address
+   │       │            │
+   │       │            └──────────── VarUInt containing the next 7 most
+   │       └── 4 least significant    significant bits of the macro
+opcode high    bits of the macro      address
+nibble 4       address
+
+Magnitude bits: 01000101_101001_0000
+Decoded value : 71,312
+Biased value  : 71,376
+----
+
+NOTE: From this point on in the document, example encodings are given in hexidecimal notation.
+
+[[booleans]]
+== Booleans
+
+`0x5E` represents boolean `true`, while `0x5F` represents boolean `false`.
+
+// XXX: Structurally, these examples should be at depth 3. However, all other example sections in the doc
+//      are at heading depth 4, which keeps them out of the TOC. These are also at depth 4 for consistency.
+
+==== Example encoding of `true`
+[source]
+----
+5e
+----
+
+==== Example encoding of `false`
+[source]
+----
+5f
+----
+
+[[numbers]]
+== Numbers
+
+[[integers]]
+=== Integers
+
+Opcodes in the range `0x50` to `0x58` represent an integer. The opcode is followed by a <<fixedint, `FixedInt`>> that
+represents the integer value. The low nibble of the opcode (`0x_0` to `0x_8`) indicates the size of the `FixedInt`.
+Opcode `0x50` represents integer `0`; no more bytes follow.
+
+Integers that require more than 8 bytes are encoded using the variable-length integer opcode `0xF4`, followed by a
+<<varuint, VarUInt>> indicating how many bytes of representation data follow.
+
+==== Example encoding of `0`
+[source]
+----
+┌──── Opcode in 50-58 range indicates integer
+│┌─── Low nibble 0 indicates
+││    no more bytes follow.
+50
+----
+
+==== Example encoding of `17`
+[source]
+----
+┌──── Opcode in 50-58 range indicates integer
+│┌─── Low nibble 1 indicates
+││    a single byte follows.
+51 11
+    └── FixedInt 17
+----
+
+==== Example encoding of `-944`
+[source]
+----
+┌──── Opcode in 50-58 range indicates integer
+│┌─── Low nibble 2 indicates
+││    that two bytes follow.
+52 50 fc
+   └─┬─┘
+FixedInt -944
+----
+
+==== Example variable-length encoding of `-944`
+[source]
+----
+┌──── Opcode F4 indicates a variable-length integer, VarUInt length follows
+│   ┌─── VarUInt 2; a 2-byte FixedInt follows
+│   │    that two bytes follow.
+F4 05 50 fc
+      └─┬─┘
+   FixedInt -944
+----
+
+[[floats]]
+=== Floats
+
+Float values are encoded using the IEEE-754 specification, and can be serialized in four sizes:
+
+* 0 bits (0 bytes), representing the value 0e0 and indicated by opcode `0x5A`
+* 16 bits (2 bytes, link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[half precision]), indicated
+by opcode `0x5B`
+* 32 bits (4 bytes, link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[single precision]), indicated by opcode `0x5C`
+* 64 bits (8 bytes, link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[double precision]), indicated by opcode `0x5D`
+
+Note that in the Ion data model, float values are always 64 bits. However, if a value can be losslessly serialized
+in fewer than 64 bits, applications may choose to do so.
+
+==== Example encoding of `0e0`
+[source]
+----
+┌──── Opcode in range 5A-5D indicates a float
+│┌─── Low nibble A indicates
+││    a 0-length float; 0e0
+5A
+----
+
+==== Example encoding of `3.14`
+[source]
+----
+┌──── Opcode in range 5A-5D indicates a float
+│┌─── Low nibble B indicates a 2-byte float
+││
+5B 42 47
+   └─┬─┘
+half-precision 3.14
+----
+
+==== Example encoding of `3.1415927`
+[source]
+----
+┌──── Opcode in range 5A-5D indicates a float
+│┌─── Low nibble C indicates a 4-byte,
+││    single-precision value.
+5C 40 49 0F DB
+   └────┬────┘
+single-precision 3.1415927
+----
+
+==== Example encoding of `3.141592653589793`
+[source]
+----
+┌──── Opcode in range 5A-5D indicates a float
+│┌─── Low nibble C indicates a 4-byte,
+││    single-precision value.
+5D 40 09 21 FB 54 44 2D 18
+   └──────────┬──────────┘
+double-precision 3.141592653589793
+----
+
+[[decimals]]
+=== Decimals
+
+If an opcode has a high nibble of `0x6_`, it represents a decimal. Low nibble values `0x_E` and below indicate
+the number of trailing bytes used to encode the decimal.
+
+The body of the decimal is encoded as a <<varint, `VarInt`>> representing its exponent, followed by a `FixedInt`
+representing its coefficient. The width of the coefficient is the total length of the decimal encoding minus the length
+of the exponent. It is possible for the coefficient to have a width of zero, indicating a coefficient of `0`.
+
+Decimal values that require more than 14 bytes can be encoded using the variable-length decimal opcode: `0xF6`.
+
+A decimal with a coefficient of `-0` (which cannot be encoded in a `VarInt`) is encoded using opcode `6F`.
+
+==== Example encoding of `0d0`
+[source]
+----
+┌──── Opcode in range 60-6F indicates a decimal
+│┌─── Low nibble 0 indicates a zero-byte
+││    decimal; 0d0
+60
+----
+
+==== Example encoding of `1.27`
+[source]
+----
+┌──── Opcode in range 60-6F indicates a decimal
+│┌─── Low nibble 2 indicates a 2-byte decimal
+││
+62 fd 7f
+   │  └─── Coefficient: 1-byte FixedInt 127
+   └────── Exponent: VarInt -2
+----
+
+==== Example variable-length encoding of `1.27`
+[source]
+----
+┌──── Opcode F6 indicates a variable-length decimal
+│
+F6 05 fd 7f
+   │  │  └─── Coefficient: 1-byte FixedInt 127
+   │  └────── Exponent: VarInt -2
+   └───────── Decimal length: VarUInt 2
+----
+
+==== Example variable-length encoding of `-0d3`
+[source]
+----
+┌──── Opcode 6F indicates a variable-length decimal with a coefficient of -0
+│
+6F 03 03
+   │  └────── Exponent: FixedInt 3
+   └───────── Decimal length: VarUInt 1
+----
+
+[[timestamps]]
+== Timestamps
+
+NOTE: In Ion 1.0, text timestamp fields were encoded using the local time while binary timestamp fields were encoded
+using UTC time. This required applications to perform conversion logic when transcribing from one format to the other.
+*In Ion 1.1, all binary timestamp fields are encoded in local time.*
+
+[[short_form_timestamp]]
+=== Short-form timestamp
+
+If an opcode has a high nibble of `0x7_`, it represents a short-form timestamp. This encoding focuses on making the
+most common timestamp precisions and ranges the most compact; less common precisions can still be expressed via
+the variable-length <<long_form_timestamp, long form timestamp>> encoding.
+
+Timestamps may be encoded using the short form if they meet all of the following conditions:
+
+* *The year is between 1970 and 2097*. The year subfield is encoded as the number of years since 1970. 7 bits are
+dedicated to representing the biased year, allowing timestamps through the year 2097 to be encoded in this form.
+* *The local offset is either UTC, unknown, or falls between `-14:00` to `+14:00` and is divisible by 15 minutes.* 7
+bits are dedicated to representing the local offset as the number of quarter hours from -56 (that is: offset `-14:00`).
+The value `0b1111111` indicates an unknown offset. At the time of this writing (2023-05T),
+link:https://en.wikipedia.org/wiki/List_of_UTC_offsets[all real-world offsets fall between `-12:00` and `+14:00`].
+* *The timestamp's fractional second precision (if present) is either 3 digits (milliseconds), 6 digits (microseconds),
+or 9 digits (nanoseconds).*
+
+The following letters to are used to denote bits in each subfield in diagrams that follow. Subfields occur in the same
+order in all encoding variants, and consume the same number of bits, with the exception of the fractional bits, which
+consume only enough bits to represent the fractional precision supported by the opcode being used.
+
+[cols="^1, ^1, 4"]
+|===
+|Letter code | Number of bits | Subfield
+
+| *Y*
+| 7
+| Year
+
+| *M*
+| 4
+| Month
+
+| *D*
+| 5
+| Day
+
+| *H*
+| 5
+| Hour
+
+| *m*
+| 6
+| Minute
+
+| *o*
+| 7
+| Offset
+
+| *U*
+| 1
+| Unknown or UTC offset
+
+| *s*
+|6
+| Second
+
+| *f*
+| 10 (ms) +
+20(μs) +
+30(ns) +
+| Fractional second
+
+| *-*
+| n/a
+| Unused
+|===
+
+==== Opcode `0x70`: Year (1 byte)
+[source]
+----
++=========+
+|YYYY:YYY-|
++=========+
+----
+
+==== Opcode `0x71`: Month (2 bytes)
+[source]
+----
++=========+=========+
+|YYYY:YYYM|MMM-:----|
++=========+=========+
+----
+
+==== Opcode `0x72`: Day (2 bytes)
+[source]
+----
++=========+=========+
+|YYYY:YYYM|MMMD:DDDD|
++=========+=========+
+----
+
+==== Opcode `0x73`: Hour+Minutes @ UTC or Unknown (4 bytes)
+
+NOTE: Each encoding for a precision greater than or equal to `Hour+Minutes` comes in two flavors: one that uses a single bit (`U`) to indicate UTC versus Unknown offset, and another that uses 7 bits (`o`) to encode the number of quarter-hours offset from `-14:00`.
+
+[source]
+----
++=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmU:----|
++=========+=========+=========+=========+
+----
+
+==== Opcode `0x74`: Hour+Minutes @ Offset (5 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|oo--:----|
++=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x75`: Seconds @ UTC or Unknown (5 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmU:ssss|ss--:----|
++=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x76`: Seconds @ Offset (5 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|oo--:----|
++=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x77`: Milliseconds @ UTC or Unknown (6 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmU:ssss|ss--:----|
++=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x78`: Milliseconds @ Offset (7 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ff--:----|
++=========+=========+=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x79`: Microseconds @ UTC or Unknown (7 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmk:ssss|ssff:ffff|ffff:ffff|ffff:ff--|
++=========+=========+=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x7A`: Microseconds @ Offset (8 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ffff:ffff|ffff:----|
++=========+=========+=========+=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x7B`: Nanoseconds @ UTC or Unknown (8 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ffff:ffff|ffff:----|
++=========+=========+=========+=========+=========+=========+=========+=========+
+----
+
+==== Opcode `0x7B`: Nanoseconds @ Offset (8 bytes)
+[source]
+----
++=========+=========+=========+=========+=========+=========+=========+=========+
+|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ffff:ffff|ffff:----|
++=========+=========+=========+=========+=========+=========+=========+=========+
+----
+
+WARNING: Opcodes `0x7D`, `0x7E`, and `7F` are illegal; they are reserved for future use.
+
+[[long_form_timestamp]]
+=== Long-form timestamp
+
+Unlike the <<short_form_timestamp, Short-form timestamp encoding>>, which is limited to encoding
+timestamps in the most commonly referenced timestamp ranges and precisions for which it optimizes,
+the long-form timestamp encoding is capable of representing any valid timestamp.
+
+The long form begins with opcode `0xF7`. A <<varuint, `VarUInt`>> follows indicating the number
+of bytes that were needed to represent the timestamp. The encoding consumes the minimum number
+of bytes required to represent the timestamp. The declared length can be mapped to the timestamp’s
+precision as follows:
+
+[cols="^1, 6"]
+|===
+|Length | Corresponding precision
+
+| 0
+| illegal
+
+| 1
+| illegal
+
+| 2
+| Year
+
+| 3
+| Month or Day (see below)
+
+| 4
+| Illegal. The hour cannot be specified without also specifying minutes.
+
+| 5
+| Illegal
+
+| 6
+| Minutes
+
+| 7
+| Seconds
+
+| 8 or more
+| Fractional seconds
+|===
+
+Unlike the short-form encoding, the long-form encoding reserves:
+
+* *14 bits for the year (`Y`)*, which is not biased.
+* *12 bits for the offset*, which counts the number of minutes (not quarter-hours) from -1440
+(that is: `-24:00`). An offset value of `0b111111111111` indicates an unknown offset.
+
+If the timestamp's length is greater than or equal to `8`, it has fractional seconds that are encoded as a
+`(coefficient, exponent)` pair, similar to a <<decimals, decimal>>. However, it is illegal for the fractional
+seconds value to be greater than or equal to `1.0` or less than `0.0`. For this reason, both the exponent and
+the coefficient are encoded using unsigned types. The included exponent `VarUInt` is implicitly negative, preventing
+the encoding of decimal numbers greater than `1.0`. The coefficient `FixedUInt` is unsigned to prevent the encoding of fractional seconds less than `0.0`. Note that validation is still required; namely:
+
+* An exponent value of `0` is illegal, as that would result in a fractional seconds greater than `1.0` (a whole second).
+* If `coefficient * 10^-exponent > 1.0`, that `(coefficient, exponent)` pair is illegal.
+
+If the timestamp's length is `3`, the least significant bit in the final byte (`h`) is a flag
+that indicates month (`0`) or day (`1`) precision.
+
+==== Opcode `0xF7`: Long-form timestamp
+[source]
+----
+     1         2         3         4         5         6         7       8         n
++=========+=========+=========+=========+=========+=========+=========+=======+   +=========+
+|YYYY:YYYY|YYYY:YYMM|MMDD:DDDh|HHHH:mmmm|mmoo:oooo|oooo:ooss|ssss|----|VarUInt|...|FixedUInt|...
++=========+=========+=========+=========+=========+=========+=========+=======+   +=========+
+----
+
+// TODO: The remaining sections (and others) will be added/completed in a follow-on PR
+
+[[text]]
+== Text
+
+[[strings]]
+=== Strings
+
+[[symbols_with_inline_text]]
+=== Symbols with inline text
+
+[[symbols_with_symbol_table_addresses]]
+=== Symbols with symbol table text
+
+[[binary_data]]
+== Binary data
+
+[[blobs]]
+=== Blobs
+
+[[clobs]]
+=== Clobs
