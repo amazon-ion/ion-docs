@@ -55,8 +55,8 @@
   {
     "name": "ion-element-kotlin",
     "category": "extension",
-    "latest_release_version": "1.0.0",
-    "latest_release_date": "2022-06-29"
+    "latest_release_version": "1.1.0",
+    "latest_release_date": "2023-05-12"
   },
   {
     "name": "ion-hive-serde",
