@@ -326,7 +326,7 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 <|Delimited struct with `VarSym` field names start
 
 |`4`
-<|Reserved
+<|Variable length prefixed macro invocation
 
 |`5`
 <|Variable length integer
@@ -356,10 +356,10 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 <|Variable length struct with `VarSym` field names
 
 |`E`
-<|Reserved
+<|Variable length blob
 
 |`F`
-<|Variable length prefixed macro invocation
+<|Variable length clob
 
 |===
 
@@ -1047,24 +1047,329 @@ address that is decoded is biased by the number of addresses that can be encoded
 |16,641
 |===
 
-
 [[binary_data]]
 == Binary data
 
 [[blobs]]
 === Blobs
 
+Opcode `FE` indicates a blob of binary data.
+
+==== Example encoding of a 24-byte blob
+[source]
+----
+┌──── Opcode FE indicates a blob, VarUInt length follows
+│   ┌─── Length: VarUInt 24
+│   │
+FE 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
+      └────────────────────────────────┬────────────────────────────────────┘
+                            24 bytes of binary data
+----
+
+
 [[clobs]]
 === Clobs
+
+Opcode `FF` indicates a clob--character data of an unspecified encoding.
+
+==== Example encoding of a 24-byte clob
+[source]
+----
+┌──── Opcode FF indicates a clob, VarUInt length follows
+│   ┌─── Length: VarUInt 24
+│   │
+FF 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
+      └────────────────────────────────┬────────────────────────────────────┘
+                            24 bytes of binary data
+----
 
 [[containers]]
 == Containers
 
+Each of the container types (list, s-expression, and struct) has both a length-prefixed encoding and a delimited
+encoding.
+
+The length-prefixed encoding places more burden on the writer, but simplifies reading and enables skipping
+over uninteresting values in the data stream. In contrast, the delimited encoding is simpler and faster for
+writers, but requires the reader to visit each child value in turn to skip over the container.
+
 [[lists]]
 === Lists
+
+==== Length-prefixed encoding
+
+An opcode with a high nibble of `0xA_` indicates a length-prefixed list. The lower nibble of the
+opcode indicates how many bytes were used to encode the child values that the list contains.
+
+If the list's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFA` opcode
+to write a variable-length list. The `0xFA` opcode is followed by a
+<<varuint, `VarUInt`>> that indicates the list's byte length.
+
+===== Example length-prefixed encoding of an empty list (`[]`)
+[source]
+----
+┌──── An Opcode in the range 0xA0-0xAF indicates a list.
+│┌─── A low nibble of 0 indicates that the child values of this list took zero bytes to encode.
+A0
+----
+
+===== Example encoding of `[1, 2, 3]`
+[source]
+----
+┌──── An Opcode in the range 0xA0-0xAF indicates a list.
+│┌─── A low nibble of 0 indicates that the child values of this list took zero bytes to encode.
+A6 51 01 51 02 51 03
+   └─┬─┘ └─┬─┘ └─┬─┘
+     1     2     3
+----
+
+===== Example encoding of `["variable length list"]`
+[source]
+----
+┌──── Opcode 0xFA indicates a variable-length list. A VarUInt length follows.
+│  ┌───── Length: VarUInt 22
+│  │  ┌────── Opcode 0xF8 indicates a variable-length string. A VarUInt length follows.
+│  │  │  ┌─────── Length: VarUInt 20
+│  │  │  │   v  a  r  i  a  b  l  e     l  e  n  g  t  h     l  i  s  t
+FA 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 6c 69 73 74
+      └─────────────────────────────┬─────────────────────────────────┘
+                          Nested string element
+----
+
+==== Delimited encoding
+
+Opcode `0xF1` begins a delimited list, while opcode `0xF0` closes the most recently opened delimited container
+that has not yet been closed.
+
+===== Example delimited encoding of an empty list (`[]`)
+[source]
+----
+┌──── Opcode 0xF1 indicates a delimited list
+│  ┌─── Opcode 0xF0 indicates the end of the most recently opened container
+F1 F0
+----
+
+===== Example encoding of `[1, 2, 3]`
+[source]
+----
+┌──── Opcode 0xF1 indicates a delimited list
+│                    ┌─── Opcode 0xF0 indicates the end of
+│                    │    the most recently opened container
+F1 51 01 51 02 51 03 F0
+   └─┬─┘ └─┬─┘ └─┬─┘
+     1     2     3
+----
+
+===== Example encoding of `[1, [2], 3]`
+[source]
+----
+┌──── Opcode 0xF1 indicates a delimited list
+│        ┌─── Opcode 0xF1 begins a nested delimited list
+│        │        ┌─── Opcode 0xF0 closes the most recently
+│        │        │    opened delimited container: the nested list.
+│        │        │        ┌─── Opcode 0xF0 closes the most recently opened (and still open)
+│        │        │        │    delimited container: the outer list.
+│        │        │        │
+F1 51 01 F1 51 02 F0 51 03 F0
+   └─┬─┘    └─┬─┘    └─┬─┘
+     1        2        3
+----
 
 [[s_expressions]]
 === S-expressions
 
+==== Length-prefixed encoding
+
+An opcode with a high nibble of `0xB_` indicates a length-prefixed S-expression. The lower nibble of the
+opcode indicates how many bytes were used to encode the child values that the S-expression contains.
+
+If the S-expression's encoded byte-length is too large to be encoded in a nibble, writers may use
+the `0xFB` opcode to write a variable-length S-expression. The `0xFB` opcode is followed by a
+<<varuint, `VarUInt`>> that indicates the S-expression's byte length.
+
+===== Example length-prefixed encoding of an empty S-expression (`()`)
+[source]
+----
+┌──── An Opcode in the range 0xB0-0xBF indicates an S-expression.
+│┌─── A low nibble of 0 indicates that the child values of this S-expression took zero bytes to encode.
+B0
+----
+
+===== Example encoding of `(1 2 3)`
+[source]
+----
+┌──── An Opcode in the range 0xB0-0xBF indicates an S-expression.
+│┌─── A low nibble of 6 indicates that the child values of this S-expression took six bytes to encode.
+B6 51 01 51 02 51 03
+   └─┬─┘ └─┬─┘ └─┬─┘
+     1     2     3
+----
+
+===== Example encoding of `("variable length sexp")`
+[source]
+----
+┌──── Opcode 0xFB indicates a variable-length list. A VarUInt length follows.
+│  ┌───── Length: VarUInt 22
+│  │  ┌────── Opcode 0xF8 indicates a variable-length string. A VarUInt length follows.
+│  │  │  ┌─────── Length: VarUInt 20
+│  │  │  │   v  a  r  i  a  b  l  e     l  e  n  g  t  h     s  e  x  p
+FB 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 73 65 78 70
+      └─────────────────────────────┬─────────────────────────────────┘
+                          Nested string element
+----
+
+==== Delimited encoding
+
+Opcode `0xF2` begins a delimited S-expression, while opcode `0xF0` closes the most recently opened
+delimited container that has not yet been closed.
+
+===== Example delimited encoding of an empty S-expression (`()`)
+[source]
+----
+┌──── Opcode 0xF2 indicates a delimited S-expression
+│  ┌─── Opcode 0xF0 indicates the end of the most recently opened container
+F2 F0
+----
+
+===== Example encoding of `(1 2 3)`
+[source]
+----
+┌──── Opcode 0xF2 indicates a delimited S-expression
+│                    ┌─── Opcode 0xF0 indicates the end of
+│                    │    the most recently opened container
+F2 51 01 51 02 51 03 F0
+   └─┬─┘ └─┬─┘ └─┬─┘
+     1     2     3
+----
+
+===== Example encoding of `(1 (2) 3)`
+[source]
+----
+┌──── Opcode 0xF2 indicates a delimited S-expression
+│        ┌─── Opcode 0xF2 begins a nested delimited S-expression
+│        │        ┌─── Opcode 0xF0 closes the most recently
+│        │        │    opened delimited container: the nested S-expression.
+│        │        │        ┌─── Opcode 0xF0 closes the most recently opened (and still open)
+│        │        │        │    delimited container: the outer S-expression.
+│        │        │        │
+F2 51 01 F2 51 02 F0 51 03 F0
+   └─┬─┘    └─┬─┘    └─┬─┘
+     1        2        3
+----
+
 [[structs]]
 === Structs
+
+Structs have 3 available encodings:
+
+. Structs with symbol address field names
+. Structs with <<varsym, `VarSym`>> field names
+. Delimited structs with `VarSym` field names
+
+[[structs_with_symbol_address_field_names]]
+==== Structs with symbol address field names
+
+An opcode with a high nibble of `0xC_` indicates a struct with symbol address field names. The lower
+nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)`
+pairs.
+
+If the struct's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFC` opcode
+to write a variable-length struct with symbol address field names. The `0xFC` opcode is followed by a
+<<varuint, `VarUInt`>> that indicates the byte length.
+
+Each field in the struct is encoded as a <<varuint, `VarUInt`>> representing the address of the field name's
+text in the symbol table, followed by an opcode-prefixed value.
+
+===== Example encoding of an empty struct (`{}`)
+[source]
+----
+┌──── An opcode in the range 0xC0-0xCF indicates a struct with symbol address field names
+│┌─── A lower nibble of 0 indicates that the struct's fields took zero bytes to encode
+C0
+----
+
+===== Example encoding of `{$10: 1, $11: 2}`
+[source]
+----
+┌──── An opcode in the range 0xC0-0xCF indicates a struct with symbol address field names
+│  ┌─── Field name: VarUInt 10 ($10)
+│  │        ┌─── Field name: VarUInt 11 ($11)
+│  │        │
+C6 15 51 01 17 51 02
+      └─┬─┘    └─┬─┘
+        1        2
+----
+
+===== Example encoding of `{$10: "variable length struct"}`
+[source]
+----
+ ┌───────────── Opcode `FC` indicates a variable length struct with symbol address field names
+ │  ┌────────── Length: VarUInt 25
+ │  │  ┌─────── Field name: VarUInt 10 ($10)
+ │  │  │  ┌──── Opcode `F8` indicates a variable length string
+ │  │  │  │  ┌─ VarUInt: 22 the string is 22 bytes long
+ │  │  │  │  │  v  a  r  i  a  b  l  e     l  e  n  g  t  h     s  t  r  u  c  t
+FC 33 15 F8 2D 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 73 74 72 75 63 74
+               └─────────────────────────────┬─────────────────────────────────┘
+                                        UTF-8 bytes
+----
+
+[[structs_with_varsym_field_names]]
+==== Structs with `VarSym` field names
+
+NOTE: This encoding is very similar to <<structs_with_symbol_address_field_names, structs with symbol address
+field names>>, but allows writers to choose between representing each field name as a symbol address
+(for example: `$10`) or inline UTF-8 bytes (for example: `"foo"`). This encoding is potentially less
+dense, but offers writers significant flexibility over whether and when field names are added to the
+symbol table.
+
+An opcode with a high nibble of `0xD_` indicates a struct with <<varsym, `VarSym`>> field names. The lower
+nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)`
+pairs.
+
+WARNING: Empty structs MUST be written using `0xC0`. `0xD0` is a reserved opcode.
+
+If the struct's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFD` opcode
+to write a variable-length struct with <<varsym, `VarSym`>> field names. The `0xFD` opcode is followed by a
+<<varuint, `VarUInt`>> that indicates the byte length.
+
+Each field in the struct is encoded as a  <<varsym, `VarSym`>> field name, followed by an
+opcode-prefixed value.
+
+===== Example encoding of `{"foo": 1, $11: 2}`
+[source]
+----
+┌─── Opcode with high nibble `D` indicates a struct with VarSym field names
+│┌── Length: 7
+││ ┌─ VarSym -3      ┌─ VarSym: 11 ($11)
+││ │   f  o  o       │
+D9 FD 66 6F 6F 51 01 17 91 02
+      └──┬───┘ └─┬─┘    └─┬─┘
+      3 UTF-8    1        2
+       bytes
+----
+
+// TODO: Demonstrate splicing macro values into the struct via VarSym escape code `0x00`.
+
+[[delimited_structs]]
+==== Delimited structs
+
+Opcode `0xF3` indicates the beginning of a delimited struct with `VarSym` field names,
+while opcode `0xF0` closes the most recently opened delimited container that has not yet been closed.
+
+NOTE: There is no delimited encoding for structs with symbol address field names.
+
+===== Example encoding of `{"foo": 1, $11: 2}`
+[source]
+----
+┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.
+│
+│  ┌─ VarSym -3      ┌─ VarSym: 11 ($11)
+│  │                 │
+│  │                 │         ┌─ Opcode 0xF0 indicates the end of the most
+│  │   f  o  o       │         │  recently opened delimited container
+F3 FD 66 6F 6F 51 01 17 91 02 F0
+      └──┬───┘ └─┬─┘    └─┬─┘
+      3 UTF-8    1        2
+       bytes
+----
