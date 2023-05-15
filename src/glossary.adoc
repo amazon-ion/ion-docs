@@ -19,7 +19,7 @@ In a macro invocation, a list containing multiple arguments, delimited explicitl
 notation. Used to express parameters that accept more than one argument.
 
 cardinality::
-Describes the number of values that a parameter will accept when invoked.
+Describes the number of values that a parameter will accept when the macro is invoked.
 One of zero-or-one, exactly-one, zero-or-more, or one-or-more.
 Specified in a signature by one of the modifiers `*?*`, `*!*`, `*{asterisk}*`, `*+*`, `*\...*`
 or `*\...+*`.
