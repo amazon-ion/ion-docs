@@ -15,13 +15,13 @@ can change this to a many-to-one relation.
 
 argument group::
 The concrete syntax for a _grouped parameter_.
-In a macro invocation, a list containing multiple arguments, delimited  explicitly with `[...]`
+In a macro invocation, a list containing multiple arguments, delimited explicitly with `[...]`
 notation. Used to express parameters that accept more than one argument.
 
 cardinality::
 Describes the number of values that a parameter will accept when invoked.
 One of zero-or-one, exactly-one, zero-or-more, or one-or-more.
-Specified in a signature by one of the modifiers `*?*`, `*+*`, `*{asterisk}*`, `*+*`, `*\...*`
+Specified in a signature by one of the modifiers `*?*`, `*!*`, `*{asterisk}*`, `*+*`, `*\...*`
 or `*\...+*`.
 
 declaration::
@@ -52,7 +52,7 @@ The _symbol table directive_ is effectively a less capable alternative syntax.
 
 encoding environment::
 The context-specific data maintained by an Ion implementation while encoding or decoding data. In
-Ion 1.0 this consists of the current symbol table; in Ion 1.1 this is expanded to include the Ion
+Ion 1.0 this consists of the current symbol table; in Ion 1.1 this is expanded to also include the Ion
 spec version, the current macro table, and a collection of available modules.
 
 encoding expression::
