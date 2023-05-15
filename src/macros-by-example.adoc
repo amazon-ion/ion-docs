@@ -714,10 +714,13 @@ applicable sub-expressions.  This is denoted by wrapping the parameter's type in
 [{mrk}]
 ----
 (*macro* prices
-  [(amount *[number]{asterisk}*), (currency *symbol!*)]
+  [(amount [*number*]),      // <1>
+   (currency *symbol!*)]
   (*for* [(amt amount)]
     (price amt currency)))
 ----
+
+<1> Note the use of `[]` around `*number*`.
 
 This is referred to as a _grouped parameter_, and at invocation it requires a list delimiting its
 _argument group_:
@@ -747,23 +750,24 @@ macro:
 
 [{mrk}]
 ----
-(*macro* ouch [(stuff *[list]{asterisk}*)] …)
+(*macro* ouch [(stuff [*list*])] …)
 ----
 
 Without this rule, the E-expression `(:ouch [])` would be ambiguous whether the parameter was
 intended to be void or a singleton empty-list value.
 ====
 
-The parameter declaration `(amount *[number]{asterisk}*)` includes both grouping and
-cardinality modifiers because those concepts are separate: grouping says whether multiple
-_arguments_ can be provided, while cardinality describes the number of _values_ those argument(s)
-must produce.  This means that the declaration `(amount *[number]+*)` is also possible,
+Grouping says whether multiple _arguments_ can be provided, while cardinality describes the
+number of _values_ those argument(s) must produce.
+The parameter declaration `(amount [*number*])` makes grouping explicit, but has a default
+cardinality modifier of `*{asterisk}*`.
+The declaration `(amount *[number]+*)` is also valid,
 indicating that the sequence of arguments must produce at least one value.
-
-TIP: Rest parameters are effectively another grouping mode, so they cannot be combined with `[]`.
 
 TIP: Grouped parameters cannot use the `*?*` and `*!*` cardinalities; there's no point in
 requiring a list when no more than one value can be produced.
+
+TIP: Rest parameters are effectively another grouping mode, so they cannot be combined with `[]`.
 
 Delimiting sequences and `values` expressions may appear similar because they both denote streams
 of values, but they are not interchangeable:
@@ -790,13 +794,12 @@ generality:
 When a trailing parameter is voidable, an invocation can omit its corresponding arguments or
 group, as long as no following parameter is being given an argument or group.  We’ve seen
 this as applied to `*\...*` rest-parameters, but it also applies to `*?*` and `*{asterisk}*`
-parameters,
-with or without groups:
+parameters, with or without groups:
 
 [{mrk}]
 ----
 (*macro* optionals
-  [(a *[any]{asterisk}*), (b *any?*), (c *any!*), (d *[any]{asterisk}*), (e *any?*), (f *any\...*)]
+  [(a [*any*]), (b *any?*), (c *any!*), (d [*any*]), (e *any?*), (f *any\...*)]
   (make_list a b c d e f))
 ----
 
