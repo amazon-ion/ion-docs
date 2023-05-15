@@ -69,9 +69,9 @@ term “encoding expression”.
 
 NOTE: Any Ion 1.1 document with macros can be fully-expanded into an equivalent Ion 1.0 document.
 
-We’ll streamline future examples with a couple conventions.  First, assume that any E-expression
+We can streamline future examples with a couple conventions.  First, assume that any E-expression
 is occurring within an Ion 1.1 document;
-second, we’ll use the relation notation, `⇒`, to mean “expands to”.  So we can say:
+second, we use the relation notation, `⇒`, to mean “expands to”.  So we can say:
 
 ----
 (:pi) ⇒ 3.141592653589793
@@ -106,12 +106,9 @@ The struct
 in this macro is our first non-trivial _template_, an expression in Ion’s new domain-specific language
 for defining macro functions.  This expression language treats Ion scalar values (except for
 symbols) as literals, giving the decimal in ``pi``’s template its intended meaning.  Expressions
-that are structs are interpreted as _quasi-literals_: the field names are literal, but the field
+that are structs are interpreted _almost_ literally: the field names are literal, but the field
 “values” are arbitrary expressions.  This is why the `amount` and `currency` field names show up
-as-is in the expansion.  The sub-expressions in this template demonstrate that the expression
-language treats symbols as variable references.  Here, `a` and `c` in the template refer to the
-parameters of the macro, and during expansion they are “filled in” with the values supplied by
-the invocation of the macro.
+as-is in the expansion.  We call these almost-literal forms _quasi-literals_.
 
 The template language also treats lists quasi-literally, and every element inside the list is an
 expression.  Here’s a silly macro to illustrate:
@@ -121,12 +118,23 @@ expression.  Here’s a silly macro to illustrate:
 (*macro* reverse [a, b] [b, a])
 ----
 ----
-(:reverse first {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, first]
+(:reverse first 1990) ⇒ [1990, first]
 ----
 
-Note that the `a` in the E-expression is _not_ part of the
-expression language and not a reference to the macro’s first parameter or any other named entity.
-From the point of view of ``reverse``’s template, the input struct is literal data.
+The sub-expressions in these templates demonstrate that the expression language treats symbols as
+variable references.  Each `a`, `b`, and `c` in the templates above refer to the parameters of the
+surrounding macro, and during expansion they are “filled in” with the values supplied by
+the invocation of the macro.
+
+These names are part of the macro language that have no relation to data encoded using the macro:
+
+----
+(:reverse c {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, c]
+----
+
+Symbols in an E-expression are _not_ part of the expression language and do not reference macro
+parameters or any other named entity.
+From the point of view of ``reverse``’s template, the inputs are literal data.
 
 E-expressions can nest, so we could also encode the same data using `price`:
 
@@ -275,27 +283,28 @@ To detect problems close to their source, macro signatures can declare type cons
 [{mrk}]
 ----
 (*macro* detail_page_url
-  [(*string* asin)]
+  [(asin *string* *!*)]
   (website_url (make_string "dp/" asin)))
 ----
 
-Here we constrain the `asin` parameter to produce a string so the intent is clear and the Ion
-parser can emit an error sooner:
+This example reveals additional syntax for parameter declarations.  So far, a parameter was
+declared by a symbol denoting its name, now we have an S-expression containing a name, a type,
+and a _cardinality_. Here the parameter's name is `asin`, its type is `string`, and its cardinality
+is `*!*` meaning that a single value is expected.
+The intended input domain is now clear and the Ion parser can emit an error sooner:
 
 [{mrk}]
 ----
 (:detail_page_url [true]) ⇒ _**error**: detail_page_url expects a string_
 ----
 
-These types also serve a second purpose: they can allow the binary encoding to be more compact by
-avoiding type tags or using fixed-width values.
-
-This example reveals additional syntax for parameter declarations.  So far, a parameter was
-declared by a symbol denoting its name, now we have an S-expression pairing a type and a name.
 In this context the types include all the normal “concrete” Ion types, abstract
 supertypes like `*number*`, `*text*`, and `*lob*`, and the unconstrained “top type” `*any*`.
-The latter is the default type, so the signature `[foo]` is equivalent to `[(*any* foo)]` meaning
-that the parameter `foo` accepts any value.
+The latter is the default type, and the signature `[foo]` is equivalent to `[(foo *any* *{asterisk}*)]`
+meaning that the parameter `foo` accepts zero or more values of any type.
+
+TIP: These types also serve a second purpose: they can allow the binary encoding to be more compact by
+avoiding type tags or using fixed-width values.
 
 
 === Cardinality: Rest Parameters
@@ -316,7 +325,7 @@ To make this work, the definition of make_string is effectively:
 
 [{mrk}]
 ----
-(*macro* make_string [(*text \...* parts)] …)
+(*macro* make_string [(parts *text \...*)] …)
 ----
 
 This says that `parts` is a _rest parameter_ accepting zero or more arguments of type `*text*`.
@@ -324,19 +333,22 @@ The `*\...*` modifier can only occur on the last parameter, declaring that “al
 arguments will be passed to that one name.
 
 NOTE: The Ion grammar treats identifiers like `text` and operators like `\...` as separate tokens
-regardless of whether they are separated by whitespace. 
+regardless of whether they are separated by whitespace.  We think it's easier to read without
+whitespace and will use that convention from now on.
 
 At this point our distinction between parameters and arguments becomes apparent, since
 they are no longer one-to-one: this macro with one parameter can be invoked with one argument, or
-twenty, or none. We describe the acceptable number of arguments for a parameter as its
+twenty, or none. We describe the acceptable number of values for a parameter as its
 _cardinality_.  In the examples so far, all parameters have had _exactly-one_ cardinality, while
 `parts` has _zero-or-more_ cardinality.  We’ll see additional cardinalities soon!
+
+TIP: To declare a rest parameter that requires at least one value, use the `*\...+*` modifier.
 
 
 === Arguments and Results are Streams
 
-The inputs to and results from a macro are modeled as streams of values, constrained in size by
-cardinality declarations.  When a macro is invoked, each argument produces a stream of values,
+The inputs to and results from a macro are modeled as streams of values.
+When a macro is invoked, each argument produces a stream of values,
 and within the macro definition, each parameter name refers to the corresponding stream,
 not to a specific value.  The declared cardinality of a parameter constrains the number of
 elements produced by its stream, and is verified by the macro expansion system.
@@ -348,7 +360,7 @@ We have everything we need to illustrate this, via another system macro, `values
 
 [{mrk}]
 ----
-(*macro* values [(*any\...* vals)] vals)
+(*macro* values [(vals *any\...*)] vals)
 ----
 
 [{mrk}]
@@ -384,7 +396,8 @@ returns too-few or too-many values.
 
 [{mrk}]
 ----
-(*macro* reverse [a, b] [b, a])
+(*macro* reverse [(a *any!*), (b *any!*)] // Recall that ! means "exactly one value"
+  [b, a])
 ----
 
 [{mrk}]
@@ -440,10 +453,10 @@ list:
 [{mrk}]
 ----
 (*macro* int_list
-  [(**int\...** vals)]
+  [(vals **int\...**)]
   [ vals ])
 (*macro* clumsy_bag
-  [(**any\...** elts)]
+  [(elts **any\...**)]
   { '': elts })
 ----
 ----
@@ -474,14 +487,15 @@ created and bound to the next value on the stream.
 [{mrk}]
 ----
 (*macro* prices
-  [(*symbol* currency), (*number\...* amounts)]
-  (*for* [(amt amounts)]
+  [(currency *symbol!*), (amounts *number\...*)]
+  (*for* [(amt amounts)]                          // <1>
     (price amt currency)))
 ----
 
-The list immediately following `*for*` contains S-expressions pairing variable names with
-template expressions.  Here, each value from the template `amounts` is given the name `amt`
-before the `price` invocation is expanded.
+<1> The first subform of `*for*` is a list of binding pairs, S-expressions containing a variable
+names and a template expressions.  Here, that template expression is simply a parameter
+reference, so each individual value from the `amounts` is bound to the name `amt` before the
+`price` invocation is expanded.
 
 ----
 (:prices GBP 10 9.99 12.)
@@ -493,7 +507,7 @@ becomes empty.
 
 [{mrk}]
 ----
-(*macro* zip [(**any* **front), (**any* **back)]
+(*macro* zip [(front *any{asterisk}*), (back *any{asterisk}*)]
   (*for* [(f front),
         (b back)]
     [f, b]))
@@ -502,6 +516,9 @@ becomes empty.
 (:zip [1, 2, 3] [a, b])
   ⇒ [1, a] [2, b]
 ----
+
+NOTE: This termination rule is under discussion; see
+https://github.com/amazon-ion/ion-docs/issues/201
 
 
 === Empty Streams: `*void*`
@@ -541,31 +558,26 @@ clarity of intent and terminology.
 
 === Other Cardinalities
 
-As described earlier, parameters can have different cardinality of arguments, meaning that a
-parameter may be assigned with multiple argument sub-expressions.  But except for rest-parameters,
-we've only seen a single argument per parameter.
-
-In fact, the macro language allows any parameter to accept a stream of values, providing five
-cardinality modifiers that can be used in the signature of a macro.
+As described earlier, parameters are all streams of values, but the number of values can be
+controlled by the parameter's cardinality.  So far we have seen the `*!*` (exactly-one) and `*\...*`
+(zero-or-more) cardinality modifiers, and in total there are six:
 
 [cols="1,1"]
 |===
 |*Modifier* |*Cardinality*
-| `*!*`     |exactly-one
-| `*?*`     |zero-or-one
-| `*+*`     |one-or-more
-| `***`     |zero-or-more
-| `*\...*`  |zero-or-more "rest" arguments
+| `*!*`     |exactly-one value
+| `*?*`     |zero-or-one value
+| `*+*`     |one-or-more values
+| `***`     |zero-or-more values
+| `*\...*`  |zero-or-more values, as "rest" arguments
+| `*\...+*` |one-or-more values, as "rest" arguments
 |===
 
 
 ==== Exactly-One
 
-Most parameters require exactly one value and thus have _exactly-one cardinality_.  This is the
-default when a signature has no modifier, but the `*!*` modifier can be used for clarity.
-
-TIP: The signatures `[_param_]`, `[(*any* _param_)]`, and `[(*any!* _param_)]` are all
-equivalent.
+Many parameters expect exactly one value and thus have _exactly-one cardinality_.
+We've seen that his is expressed by writing the `*!*` modifier after the parameter type.
 
 This cardinality means that the parameter requires a stream producing a single value, so one
 might refer to them as _singleton streams_ or just _singletons_ colloquially.
@@ -573,14 +585,14 @@ might refer to them as _singleton streams_ or just _singletons_ colloquially.
 
 ==== Zero-or-One
 
-A parameter with the modifier `*?*` has _zero-or-one cardinality_, which is much like the default
+A parameter with the modifier `*?*` has _zero-or-one cardinality_, which is much like
 exactly-one cardinality, except the parameter is voidable.  That is, it accepts an empty-stream
 argument as a way to denote an absent parameter.
 
 [{mrk}]
 ----
 (*macro* temperature
-  [(*decimal* degrees), (*symbol?* scale)]
+  [(degrees *decimal!*), (scale *symbol?*)]
   {degrees: degrees, scale: scale})
 ----
 
@@ -592,13 +604,13 @@ Since the scale is voidable, we can pass it void:
 ----
 
 Note that the result’s `scale` field has disappeared because no value was provided.  It would be
-more useful to fill in a default value, and to do that we introduce another special form that can
+more useful to fill in a default value, and to do that we introduce a special form that can
 detect void:
 
 [{mrk}]
 ----
 (*macro* temperature
-  [(*decimal* degrees), (*symbol?* scale)]
+  [(degrees *decimal!*), (scale *symbol?*)]
   {degrees: degrees, scale: (*if_void* scale (*literal* K) scale)})
 ----
 ----
@@ -609,8 +621,7 @@ detect void:
 The `*if_void*` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
 the first being a stream to check. If and only if that stream is void (it produces no
 values), the second sub-expression is expanded and its results are returned by the `*if_void*`
-expression. Otherwise, it produces at least one value, so the third sub-expression is expanded and
-returned.
+expression. Otherwise, the third sub-expression is expanded and returned.
 
 NOTE: Exactly one branch is expanded, because otherwise the void stream might be used in a context
 that requires a value, resulting in an errant expansion error.
@@ -631,24 +642,94 @@ just last place.
 [{mrk}]
 ----
 (*macro* prices
-  [(**number* **amount), (*symbol* currency)]
-  (*for_each* amount
-    (price amount currency)))
+  [(amount *number{asterisk}*), (currency *symbol!*)]
+  (*for* [(amt amount)]
+    (price amt currency)))
 ----
 
 The calling convention for `***` is different from `*\...*` since the “all the rest”
-convention can’t be used to draw the boundaries of the stream.  Instead, we use a list or
-S-expression as delimiting syntax to group the applicable sub-expressions:
+convention can’t be used to draw the boundaries of the stream.  Instead, we need a single
+expression that produces the desired values:
 
 [{mrk}]
 ----
-(:prices () JPY)         ⇒ _void_
-(:prices (10  9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
-(:prices [10, 9.99] GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:) JPY)               ⇒ _void_
+(:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
+(:prices (:values 10 9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
-Within the delimiter, the invocation can have any number of values and/or macro
-invocations.  The macro parameter produces the results of those expressions, concatenated into a
+
+==== One-or-More
+
+A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `***` except
+the resulting stream must produce at least one value.  To continue using our `prices` example:
+
+[{mrk}]
+----
+(*macro* prices
+  [(amount *number+*), (currency *symbol!*)]
+  (*for* [(amt amount)]
+    (price amt currency)))
+----
+
+[{mrk}]
+----
+(:prices (:) JPY) ⇒ _**error**: at least one value expected for + parameter_
+(:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
+(:prices (:values 10 9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+----
+
+A macro's final parameter can use a variant of rest parameters with one-or-more cardinality,
+denoted by the `*\...+*` modifier:
+
+[{mrk}]
+----
+(*macro* thanks [(names *text\...+*)]
+  (make_string "Thank you to my Patreon supporters:\n"
+    (for [(n names)]
+      (make_string "  * " n "\n"))))
+----
+
+[{mrk}]
+----
+(:thanks) ⇒ _**error**: at least one value expected for \...+ parameter_
+
+(:thanks Larry Curly Moe) =>
+'''\
+Thank you to my Patreon supporters:
+  * Larry
+  * Curly
+  * Moe
+'''
+----
+
+
+=== Grouped Parameters
+
+The non-rest versions of multi-value parameters can be annoying to invoke, since they require the
+use of `values` or some other template to produce the stream of values.  To streamline invocation,
+a macro can opt-in to special syntax that uses a list as delimiting syntax to group the
+applicable sub-expressions.  This is denoted by wrapping the parameter's type in `[]`:
+
+[{mrk}]
+----
+(*macro* prices
+  [(amount *[number]{asterisk}*), (currency *symbol!*)]
+  (*for* [(amt amount)]
+    (price amt currency)))
+----
+
+This is referred to as a _grouped parameter_, and at invocation it requires a list delimiting its
+_argument group_:
+
+----
+(:prices [1, 2, 3] GBP) ⇒ {amount:1, currency:GBP}
+                          {amount:2, currency:GBP}
+                          {amount:3, currency:GBP}
+----
+
+Within the group, the invocation can have any number of arguments, including macro invocations.
+The macro parameter produces the results of those expressions, concatenated into a
 single stream, and the expander verifies that each value on that stream is acceptable by the
 parameter’s declared type.
 
@@ -666,13 +747,23 @@ macro:
 
 [{mrk}]
 ----
-(*macro* ouch [(**list* **stuff)] …)
+(*macro* ouch [(stuff *[list]{asterisk}*)] …)
 ----
 
-In the E-expression `(:ouch [])` without this rule, it would be ambiguous if the argument was void
-or a singleton empty-list value.
-With this rule, this invocation always means "no arguments" which produces the empty stream.
+Without this rule, the E-expression `(:ouch [])` would be ambiguous whether the parameter was
+intended to be void or a singleton empty-list value.
 ====
+
+The parameter declaration `(amount *[number]{asterisk}*)` includes both grouping and
+cardinality modifiers because those concepts are separate: grouping says whether multiple
+_arguments_ can be provided, while cardinality describes the number of _values_ those argument(s)
+must produce.  This means that the declaration `(amount *[number]+*)` is also possible,
+indicating that the sequence of arguments must produce at least one value.
+
+TIP: Rest parameters are effectively another grouping mode, so they cannot be combined with `[]`.
+
+TIP: Grouped parameters cannot use the `*?*` and `*!*` cardinalities; there's no point in
+requiring a list when no more than one value can be produced.
 
 Delimiting sequences and `values` expressions may appear similar because they both denote streams
 of values, but they are not interchangeable:
@@ -694,55 +785,34 @@ generality:
 ----
 
 
-==== One-or-More
-
-A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `***` except
-the resulting stream must produce at least one value.  To continue using our `prices` example:
-
-[{mrk}]
-----
-(*macro* prices
-  [(*number+* amount), (*symbol* currency)]
-  (*for_each* amount
-    (price amount currency)))
-----
-
-[{mrk}]
-----
-(:prices () JPY) ⇒ _**error**: at least one value expected for + parameter_
-(:prices [99] EUR)               ⇒ {amount:99, currency:EUR}
-(:prices \((:) (:values 99)) EUR) ⇒ {amount:99, currency:EUR}
-----
-
-Note that among the delimited expressions, empty results are fine, as long as their concatenation
-produces one or more values.
-
-
 === Optional Arguments
 
 When a trailing parameter is voidable, an invocation can omit its corresponding arguments or
-delimiter, as long as no following parameter is being given an argument or delimiter.  We’ve seen
-this as applied to rest-parameters, but it also applies to `*?*` and `***` parameters:
+group, as long as no following parameter is being given an argument or group.  We’ve seen
+this as applied to `*\...*` rest-parameters, but it also applies to `*?*` and `*{asterisk}*`
+parameters,
+with or without groups:
 
 [{mrk}]
 ----
 (*macro* optionals
-  [(**any* **a), (*any?* b), (*any!* c), (**any* **d), (*any?* e), (*any\...* f)]
+  [(a *[any]{asterisk}*), (b *any?*), (c *any!*), (d *[any]{asterisk}*), (e *any?*), (f *any\...*)]
   (make_list a b c d e f))
 ----
 
 Since `d`, `e`, and `f` are all voidable, they can be omitted by invokers.  But `c` is required so
-`a` and `b` must always be present, at least as an empty delimiter:
+`a` and `b` must always be present, at least as an empty group:
 
 ----
-(:optionals [] (:) for_c) ⇒ [for_c]
+(:optionals [] (:) "value for c") ⇒ ["value for c"]
 ----
 
 Now `c` receives the symbol `for_c` while the other parameters are all void.  If we want to provide
-just `e`, then we must also provide a delimiter for `d`:
+just `e`, then we must also provide a group for `d`:
 
 ----
-(:optionals [] (:) for_c () for_e) ⇒ [for_c, for_e]
+(:optionals [] (:) "value for c" [] "value for e")
+  ⇒ ["value for c", "value for e"]
 ----
 
 
@@ -764,50 +834,63 @@ the type tags are unnecessary and may add up to a non-trivial amount of wasted s
 when you observe that the overhead for each value also includes length information: encoding an
 octet of data takes two octets on the stream.
 
-Ion 1.1 tries to mitigate this overhead in the binary format by allowing macro parameters to have
-tagless types.  These are subtypes of the concrete types,
+Ion 1.1 tries to mitigate this overhead in the binary format by allowing macro parameters to use
+more-constrained _primitive types_.  These are subtypes of the concrete types,
 constrained such that type tags are not necessary in the binary form.  In general this can shave
 4-6 bits off each value, which can add up in aggregate.  In the extreme, that octet of data can
 be encoded with no overhead at all.
+
+The following primitive types are available:
+
+[cols="1,1"]
+|===
+|*Primitive Type*                               |*Description*
+| `*var_symbol*`                                | Tagless symbol (SID or text)
+| `*var_string*`                                | Tagless string
+| `*var_int*`                                   | Tagless, variable-width signed int
+| `*var_uint*`                                  | Tagless, variable-width unsigned int
+|  `*int8*`  `*int16*`   `*int32*`   `*int64*`  | Fixed-width signed int
+| `*uint8*` `*uint16*`  `*uint32*`  `*uint64*`  | Fixed-width unsigned int
+|          `*float16*` `*float32*` `*float64*`  | Fixed-width float
+|===
+
 
 To define a tagless parameter, add the `*tagless*` modifier to any of the concrete types:
 
 [{mrk}]
 ----
 (*macro* point
-  [(*tagless int* x), (*tagless int* y)]
+  [(x *var_int!*), (y *var_int!*)]
   {x: x, y: y})
 ----
 ----
 (:point 3 17) ⇒ {x:3, y:17}
 ----
 
-The type constraint has no real benefit here in text, as tagless types aim to improve the binary
+The type constraint has no real benefit here in text, as primitive types aim to improve the binary
 encoding. TODO talk about binary length improvement.
 
-This density comes at the cost of flexibility.  Tagless types cannot be annotated or null, and
-argument values cannot be expressed using macros, like we’ve done before:
+This density comes at the cost of flexibility.  Primitive types cannot be annotated or null, and
+arguments cannot be expressed using macros, like we’ve done before:
 
 [{mrk}]
 ----
-(:point null.int 17)   ⇒ _**error**: tagless int does not accept nulls_
-(:point a::3 17)       ⇒ _**error**: tagless int does not accept annotations_
-(:point (:values 1) 2) ⇒ _**error**: cannot use macro for a tagless argument_
+(:point null.int 17)   ⇒ _**error**: primitive var_int does not accept nulls_
+(:point a::3 17)       ⇒ _**error**: primitive var_int does not accept annotations_
+(:point (:values 1) 2) ⇒ _**error**: cannot use macro for a primitive argument_
 ----
 
 While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
-that a text E-expression may only expresses things that can also be expressed using an equivalent binary
-E-expression.
+that a text E-expression may only express things that can also be expressed using an equivalent
+binary E-expression.
 
-For more impact, use `*tagless*` with one of a set of additional “binary-only” types: `*uint*`,
-`*uint8*`, `*uint16*`, `*uint32*`, `*uint64*`, `*int8*`, `*int16*`, `*int32*`, `*int64*`,
-`*float16*`, `*float32*`, and `*float64*`.  This set is called “binary only” because their values
-have no unique representation in Ion text: they appear there as normal ints and floats.
+For more impact, use one of the fixed-width types, which are binary-encoded with no per-value
+overhead.
 
 [{mrk}]
 ----
 (*macro* byte_array
-  [(*tagless uint8\...* bytes)]
+  [(bytes *uint8\...*)]
   [bytes])
 ----
 
@@ -821,11 +904,12 @@ invocation is written using normal ints:
 (:byte_array 9 -10 11)          ⇒ _**error**: -10 is not a valid uint8_
 (:byte_array 256)               ⇒ _**error**: 256 is not a valid uint8_
 ----
+
 As above, Ion text doesn’t have syntax specifically denoting “8-bit unsigned integers”, so to
 keep text and binary capabilities aligned, the parser rejects invocations where an argument value
 exceeds the range of the binary-only type.
 
-The use of tagless types brings inherent tradeoffs which requires careful consideration, but in
+Primitive types have inherent tradeoffs and require careful consideration, but in
 the right circumstances the density wins can be significant.
 
 
@@ -851,14 +935,14 @@ can go is `*struct*`, and things aren’t really any better:
 
 [{mrk}]
 ----
-(*macro* scatterplot [(*struct\...* points)]
+(*macro* scatterplot [(points *struct\...*)]
   [points])
 ----
 ----
 (:scatterplot (:point 3 17) (:point 395 23) (:point 15 48) (:point 2023 5) …)
 ----
 
-What we’d like is to build eliminate the `point` calls and just write a stream of pairs, something
+What we’d like is to eliminate the `point` calls and just write a stream of pairs, something
 like:
 
 ----
@@ -870,9 +954,13 @@ pseudo-type:
 
 [{mrk}]
 ----
-(*macro* scatterplot [(*point\...* points)]
+(*macro* scatterplot [(points point**\...**)]  // <1>
   [points])
 ----
+
+<1> `point` is not one of the built-in types, so its a reference to the macro of that name
+defined earlier.
+
 ----
 (:scatterplot (3 17) (395 23) (15 48) (2023 5) …)
   ⇒
@@ -888,19 +976,19 @@ parameter produces a stream of structs.
 The binary encoding of macro-shaped parameters are similarly tagless, eliding any opcodes
 mentioning `point` and just writing its arguments with minimal delimiting.
 
-Macro types can be combined with any cardinality, following the same rules as before.  Note that
-when combined with `***` or `*+*` this requires callers to use two layers of delimiting
-containers, and outer delimiter for the parameter-stream as a whole, and an inner delimiter for
+Macro types can be grouped and/or combined with any cardinality, following the same rules as
+before.  Note that grouped macro shapes require callers to use two layers of delimiting
+containers: and outer list for the group, and an inner S-expression for
 each macro instance:
 
 [{mrk}]
 ----
 (*macro* scatterplot
-  [(*point** points), (*string* x_label), (*string* y_label)]
+  [(points [point] *+*), (x_label *string!*), (y_label *string!*)]
   { points: [points], x_label: x_label, y_label: y_label })
 ----
 ----
-(:scatterplot ((3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
+(:scatterplot [(3 17), (395 23), (15 48), (2023 5)] "hour" "widgets")
   ⇒
   {
     points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
@@ -909,7 +997,7 @@ each macro instance:
   }
 ----
 
-As with non-macro arguments, you cannot replace a delimiting-list with a macro invocation.
+As with non-macro arguments, you cannot replace a grouping list with a macro invocation.
 Further, you can't use a macro invocation as an _element_ of the delimiting-list:
 
 [{mrk}]
@@ -927,8 +1015,9 @@ Further, you can't use a macro invocation as an _element_ of the delimiting-list
 This limitation mirrors the binary encoding, where both the delimiting list and the individual
 macro invocations are tagless and there's no way to express a macro invocation.
 
-TIP: The primary goal of macro-shaped arguments, and tagless types in general, is to increase
+TIP: The primary goal of macro-shaped arguments, and primitive types in general, is to increase
 density by tightly constraining the inputs.
+
 
 === Return Types
 
