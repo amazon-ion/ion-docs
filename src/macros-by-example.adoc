@@ -115,14 +115,14 @@ expression.  Here’s a silly macro to illustrate:
 
 [{mrk}]
 ----
-(*macro* reverse [a, c] [c, a])
+(*macro* reverse [a, b] [b, a])
 ----
 ----
 (:reverse first 1990) ⇒ [1990, first]
 ----
 
 The sub-expressions in these templates demonstrate that the expression language treats symbols as
-variable references.  Each `a` and `c` in the templates above refer to the parameters of the
+variable references.  Each `a`, `b`, and `c` in the templates above refer to the parameters of the
 surrounding macro, and during expansion they are “filled in” with the values supplied by
 the invocation of the macro.
 
@@ -132,8 +132,8 @@ These names are part of the macro language that have no relation to data encoded
 (:reverse c {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, c]
 ----
 
-The `a` and ``c``s in this E-expression is _not_ part of the
-expression language and not a reference to the macro’s first parameter or any other named entity.
+Symbols in an E-expression are _not_ part of the expression language and do not reference macro
+parameters or any other named entity.
 From the point of view of ``reverse``’s template, the inputs are literal data.
 
 E-expressions can nest, so we could also encode the same data using `price`:
@@ -397,7 +397,7 @@ returns too-few or too-many values.
 
 [{mrk}]
 ----
-(*macro* reverse [(a *any!*), (b *any!*)]
+(*macro* reverse [(a *any!*), (b *any!*)] // Recall that ! means "exactly one value"
   [b, a])
 ----
 
@@ -577,7 +577,7 @@ controlled by the parameter's cardinality.  So far we have seen the `*!*` (exact
 
 ==== Exactly-One
 
-Most parameters require exactly one value and thus have _exactly-one cardinality_.
+Many parameters expect exactly one value and thus have _exactly-one cardinality_.
 We've seen that his is expressed by writing the `*!*` modifier after the parameter type.
 
 This cardinality means that the parameter requires a stream producing a single value, so one
@@ -849,7 +849,7 @@ The following primitive types are available:
 | `*var_symbol*`                                | Tagless symbol (SID or text)
 | `*var_string*`                                | Tagless string
 | `*var_int*`                                   | Tagless, variable-width signed int
-| `*uint*`                                      | Tagless, variable-width unsigned int
+| `*var_uint*`                                  | Tagless, variable-width unsigned int
 |  `*int8*`  `*int16*`   `*int32*`   `*int64*`  | Fixed-width signed int
 | `*uint8*` `*uint16*`  `*uint32*`  `*uint64*`  | Fixed-width unsigned int
 |          `*float16*` `*float32*` `*float64*`  | Fixed-width float
