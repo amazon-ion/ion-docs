@@ -1030,19 +1030,19 @@ the opcode.
 Writers MUST encode a symbol address in the smallest number of bytes possible. For each opcode above, the symbol
 address that is decoded is biased by the number of addresses that can be encoded in fewer bytes.
 
-[cols="^1,1,1"]
+[cols="^1a,1a,1a"]
 |===
 |Opcode |Symbol address range |Bias
 
-|*0xE1*
+|`0xE1`
 |0 to 255
 |0
 
-|*0xE2*
+|`0xE2`
 |256 to 16,640
 |256
 
-|*0xE3*
+|`0xE3`
 |16,641 to infinity
 |16,641
 |===
@@ -1262,9 +1262,9 @@ F2 51 01 F2 51 02 F0 51 03 F0
 
 Structs have 3 available encodings:
 
-. Structs with symbol address field names
-. Structs with <<varsym, `VarSym`>> field names
-. Delimited structs with `VarSym` field names
+. <<structs_with_symbol_address_field_names, Structs with symbol address field names>>
+. <<structs_with_varsym_field_names, Structs with `VarSym` field names>>
+. <<delimited_structs, Delimited structs with `VarSym` field names>>
 
 [[structs_with_symbol_address_field_names]]
 ==== Structs with symbol address field names
@@ -1319,7 +1319,7 @@ FC 33 15 F8 2D 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 73 74 72 75 63 74
 
 NOTE: This encoding is very similar to <<structs_with_symbol_address_field_names, structs with symbol address
 field names>>, but allows writers to choose between representing each field name as a symbol address
-(for example: `$10`) or inline UTF-8 bytes (for example: `"foo"`). This encoding is potentially less
+(for example: `$10`) or as inline UTF-8 bytes (for example: `"foo"`). This encoding is potentially less
 dense, but offers writers significant flexibility over whether and when field names are added to the
 symbol table.
 
@@ -1373,3 +1373,228 @@ F3 FD 66 6F 6F 51 01 17 91 02 F0
       3 UTF-8    1        2
        bytes
 ----
+
+[[nulls]]
+=== Nulls
+
+The opcode `0xEA` indicates an untyped null (that is: `null`, or its alias `null.null`).
+
+The opcode `0xEB` indicates a typed null; a byte follows whose value indicates the type. The byte-to-type
+mapping is as follows:
+
+[cols="^1a,4a"]
+|===
+|Byte |Type
+
+|`0x00`
+|`null.bool`
+
+|`0x01`
+|`null.int`
+
+|`0x02`
+|`null.float`
+
+|`0x03`
+|`null.decimal`
+
+|`0x04`
+|`null.timestamp`
+
+|`0x05`
+|`null.string`
+
+|`0x06`
+|`null.symbol`
+
+|`0x07`
+|`null.clob`
+
+|`0x08`
+|`null.blob`
+
+|`0x09`
+|`null.list`
+
+|`0x0A`
+|`null.sexp`
+
+|`0x0B`
+|`null.struct`
+|===
+
+==== Example encoding of `null`
+[source]
+----
+┌──── The opcode `0xEA` represents a null (null.null)
+EA
+----
+
+==== Example encoding of `null.string`
+[source]
+----
+┌──── The opcode `0xEB` indicates a typed null; a byte indicating the type follows
+│  ┌──── Byte 0x05 indicates the type `string`
+EB 0x5
+----
+
+[[annotations]]
+=== Annotations
+
+Annotations can be encoded either <<annotations_with_symbol_addresses, as symbol addresses>>
+or <<annotations_with_varsym_text, as ``VarSym``s>>. In both encodings, the annotations sequence appears
+just before the value that it decorates.
+
+If an annotations sequence appears before one or more additional annotations sequences, the sequences
+are concatenated.
+
+It is illegal for an annotations sequence to appear before any of the following:
+
+* The end of the stream
+* A <<nops, `NOP`>>
+// TODO: Links
+* An E-expression (that is: a macro invocation). To add annotations to a macro invocation, see the
+`annotate` macro.
+
+If an annotations sequence appears before one or more additional annotations sequences, the sequences
+are concatenated.
+
+[[annotations_with_symbol_addresses]]
+==== Annotations with symbol addresses
+Opcodes `0xE4` through `0xE6` indicate one or more annotations encoded as symbol addresses. If the opcode is:
+
+* `0xE4`, a single <<varuint, `VarUInt`>>-encoded symbol address follows.
+* `0xE5`, two <<varuint, `VarUInt`>>-encoded symbol addresses follow.
+* `0xE6`, a <<varuint, `VarUInt`>> follows that represents the number of bytes needed to encode
+the annotations sequence, which can be made up of any number of `VarUInt` symbol addresses.
+
+==== Example encoding of `$10::false`
+[source]
+----
+┌──── The opcode `0xE4` indicates a single annotation encoded as a symbol address follows
+│  ┌──── Annotation with symbol address: VarUInt 10
+E4 15 5F
+      └── The annotated value: `false`
+----
+
+==== Example encoding of `$10::$11::false`
+[source]
+----
+┌──── The opcode `0xE5` indicates that two annotations encoded as symbol addresses follow
+│  ┌──── Annotation with symbol address: VarUInt 10 ($10)
+│  │  ┌──── Annotation with symbol address: VarUInt 11 ($11)
+E5 15 17 5F
+         └── The annotated value: `false`
+----
+
+==== Example encoding of `$10::$11::$12::false`
+[source]
+----
+┌──── The opcode `0xE6` indicates a variable-length sequence of symbol address annotations;
+│     a VarUInt follows representing the length of the sequence.
+│   ┌──── Annotations sequence length: VarUInt 3 with symbol address: VarUInt 10 ($10)
+│   │  ┌──── Annotation with symbol address: VarUInt 10 ($10)
+│   │  │  ┌──── Annotation with symbol address: VarUInt 11 ($11)
+│   │  │  │  ┌──── Annotation with symbol address: VarUInt 12 ($12)
+E5 07 15 17 19 5F
+               └── The annotated value: `false`
+----
+
+[[annotations_with_varsym_text]]
+==== Annotations with `VarSym` text
+
+Opcodes 0xE7 through 0xE9 indicate one or more annotations encoded as <<varsym, `VarSym`>>s.
+
+If the opcode is:
+
+* `0xE7`, a single `VarSym`-encoded symbol follows.
+* `0xE8`, two `VarSym`-encoded symbols follow.
+* `0xE9`, a `VarUInt` follows that represents the byte length of the annotations sequence, which is
+made up of any number of annotations encoded as ``VarSym``s.
+
+While this encoding is more flexible than <<annotations_with_symbol_addresses, annotations with
+symbol addresses>>, it can be slightly less compact when all the annotations are encoded as symbol
+addresses.
+
+==== Example encoding of `$10::false`
+[source]
+----
+┌──── The opcode `0xE7` indicates a single annotation encoded as a VarSym follows
+│  ┌──── Annotation with symbol address: VarSym 10 ($10)
+E7 15 5F
+      └── The annotated value: `false`
+----
+
+==== Example encoding of `foo::false`
+[source]
+----
+┌──── The opcode `0xE7` indicates a single annotation encoded as a VarSym follows
+│  ┌──── Annotation: VarSym -3; 3 bytes of UTF-8 text follow
+│  │   f  o  o
+E7 FD 66 6F 6F 5F
+      └──┬───┘ └── The annotated value: `false`
+      3 UTF-8
+       bytes
+----
+
+==== Example encoding of `$10::foo::false`
+
+Note that `VarSym` annotation sequences can switch between symbol address and inline text
+on a per-annotation basis.
+
+[source]
+----
+┌──── The opcode `0xE8` indicates two annotations encoded as VarSyms follow
+│  ┌──── Annotation: VarSym 10 ($10)
+│  │  ┌──── Annotation: VarSym -3; 3 bytes of UTF-8 text follow
+│  │  │   f  o  o
+E8 15 FD 66 6F 6F 5F
+         └──┬───┘ └── The annotated value: `false`
+         3 UTF-8
+          bytes
+----
+
+==== Example encoding of `$10::foo::$11::false`
+
+[source]
+----
+┌──── The opcode `0xE9` indicates a variable-length sequence of VarSym-encoded annotations
+│  ┌──── Length: VarUInt 6
+│  │  ┌──── Annotation: VarSym 10 ($10)
+│  │  │  ┌──── Annotation: VarSym -3; 3 bytes of UTF-8 text follow
+│  │  │  │           ┌──── Annotation: VarSym 11 ($11)
+│  │  │  │   f  o  o │
+E9 0D 15 FD 66 6F 6F 17 5F
+            └──┬───┘    └── The annotated value: `false`
+            3 UTF-8
+             bytes
+----
+
+[[nops]]
+=== ``NOP``s
+
+A `NOP` (short for "no-operation") is the binary equivalent of whitespace. `NOP` bytes have no meaning,
+but can be used as padding to achieve a desired alignment.
+
+An opcode of `0xEC` indicates a single-byte `NOP` pad. An opcode of `0xED` indicates that a
+<<varuint, `VarUInt`>> follows that represents the number of additional bytes to skip.
+
+==== Example encoding of a 1-byte `NOP`
+[source]
+----
+┌──── The opcode `0xEC` represents a 1-byte NOP pad
+│
+EC
+----
+
+==== Example encoding of a 4-byte `NOP`
+[source]
+----
+┌──── The opcode `0xED` represents a variable-length NOP pad; a VarUInt length follows
+│  ┌──── Length: VarUInt 2; two more bytes of NOP follow
+│  │
+ED 05 93 C6
+      └─┬─┘
+NOP bytes, values ignored
+----
+
