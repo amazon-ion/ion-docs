@@ -301,8 +301,7 @@ The intended input domain is now clear and the Ion parser can emit an error soon
 In this context the types include all the normal “concrete” Ion types, abstract
 supertypes like `*number*`, `*text*`, and `*lob*`, and the unconstrained “top type” `*any*`.
 The latter is the default type, and the signature `[foo]` is equivalent to `[(foo *any* *{asterisk}*)]`
-meaning
-that the parameter `foo` accepts zero or more values of any type.
+meaning that the parameter `foo` accepts zero or more values of any type.
 
 TIP: These types also serve a second purpose: they can allow the binary encoding to be more compact by
 avoiding type tags or using fixed-width values.
@@ -978,7 +977,7 @@ The binary encoding of macro-shaped parameters are similarly tagless, eliding an
 mentioning `point` and just writing its arguments with minimal delimiting.
 
 Macro types can be grouped and/or combined with any cardinality, following the same rules as
-before.  Note that grouped macro types require callers to use two layers of delimiting
+before.  Note that grouped macro shapes require callers to use two layers of delimiting
 containers: and outer list for the group, and an inner S-expression for
 each macro instance:
 
