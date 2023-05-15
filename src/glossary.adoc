@@ -16,7 +16,7 @@ can change this to a many-to-one relation.
 argument group::
 The concrete syntax for a _grouped parameter_.
 In a macro invocation, a list containing multiple arguments, delimited explicitly with `[...]`
-notation. Used to express parameters that accept more than one argument.
+notation in Ion text. Used to express parameters that accept more than one argument.
 
 cardinality::
 Describes the number of values that a parameter will accept when the macro is invoked.
