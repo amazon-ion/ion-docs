@@ -631,13 +631,14 @@ double-precision 3.141592653589793
 If an opcode has a high nibble of `0x6_`, it represents a decimal. Low nibble values `0x_E` and below indicate
 the number of trailing bytes used to encode the decimal.
 
-The body of the decimal is encoded as a <<varint, `VarInt`>> representing its exponent, followed by a `FixedInt`
-representing its coefficient. The width of the coefficient is the total length of the decimal encoding minus the length
-of the exponent. It is possible for the coefficient to have a width of zero, indicating a coefficient of `0`.
+The body of the decimal is encoded as a <<varint, `VarInt`>> representing its coefficient, followed by a `FixedInt`
+representing its exponent. The width of the exponent is the total length of the decimal encoding minus the length
+of the coefficient. It is possible for the exponent to have a width of zero, indicating an exponent of `0`.
 
 Decimal values that require more than 14 bytes can be encoded using the variable-length decimal opcode: `0xF6`.
 
-A decimal with a coefficient of `-0` (which cannot be encoded in a `VarInt`) is encoded using opcode `6F`.
+A decimal with a coefficient of `-0` (which cannot be encoded as a `VarInt`) is encoded using opcode `6F`.
+The opcode is followed by a `VarUInt` representing the byte length and a `FixedInt` representing the exponent.
 
 ==== Example encoding of `0d0`
 [source]
@@ -652,11 +653,11 @@ A decimal with a coefficient of `-0` (which cannot be encoded in a `VarInt`) is 
 [source]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
-│┌─── Low nibble 2 indicates a 2-byte decimal
+│┌─── Low nibble 3 indicates a 3-byte decimal
 ││
-62 fd 7f
-   │  └─── Coefficient: 1-byte FixedInt 127
-   └────── Exponent: VarInt -2
+63 FD 01 FE
+   └─┬─┘ └─── Exponent: 1-byte FixedInt -2
+     └────── Coefficient: VarInt 127
 ----
 
 ==== Example variable-length encoding of `1.27`
@@ -664,10 +665,10 @@ A decimal with a coefficient of `-0` (which cannot be encoded in a `VarInt`) is 
 ----
 ┌──── Opcode F6 indicates a variable-length decimal
 │
-F6 05 fd 7f
-   │  │  └─── Coefficient: 1-byte FixedInt 127
-   │  └────── Exponent: VarInt -2
-   └───────── Decimal length: VarUInt 2
+F6 07 FD 01 FE
+   │  └─┬─┘ └─── Exponent: 1-byte FixedInt -2
+   │    └────── Coefficient: VarInt 127
+   └───────── Decimal length: VarUInt 3
 ----
 
 ==== Example variable-length encoding of `-0d3`
