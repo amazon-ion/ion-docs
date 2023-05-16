@@ -13,9 +13,10 @@ The bytes of a ``VarUInt``s are written in
 link:https://en.wikipedia.org/wiki/Endianness:[Little Endian byte order]. This means that the first byte will contain
 the ``VarUInt``'s least significant bits.
 
-The least significant bits in the `VarUInt` indicate the number of bytes that were used to encode the integer. The number
-of bytes can be found by counting the number of trailing zeros in the first byte(s) and adding one to it. All bits that
-are more significant than the first `1` represent the magnitude of the `VarUInt`.
+The least significant bits in the `VarUInt` indicate the number of bytes that were used to encode the integer.
+If a `VarUInt` is `_N_` bytes long, its `_N-1_` least significant bits will be `0`; a terminal `1` bit will be
+in the next most significant position.
+All bits that are more significant than the terminal `1` represent the magnitude of the `VarUInt`.
 
 ==== Example encoding of VarUInt 14 ====
 [source]
@@ -30,7 +31,7 @@ unsigned int 14
 ==== Example encoding of VarUInt 729 ====
 [source]
 ----
-             ┌──── There's 1 trailing zero, so this
+             ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
             ┌┴┐
 0 1 1 0 0 1 1 0  0 0 0 0 1 0 1 1
@@ -43,7 +44,7 @@ integer          integer
 ==== Example encoding of VarUInt 21,043 ====
 [source]
 ----
-            ┌───── There are 2 trailing zeros, so this
+            ┌───── There are 2 zeros in the least significant bits, so this
             │      integer is three bytes wide.
           ┌─┴─┐
 1 0 0 1 1 1 0 0  1 0 0 1 0 0 0 1  0 0 0 0 0 0 1 0
@@ -64,9 +65,9 @@ link:https://amazon-ion.github.io/ion-docs/docs/binary.html#varuint-and-varint-f
 A variable-length signed integer.
 
 From an encoding perspective, ``VarInt``s are structurally similar to a `VarUInt` (<<varuint, described above>>). Both
-encode their bytes using Little Endian byte order, and both use the count of trailing zero bits to indicate how many
-bytes were used to encode the integer. They differ in the _interpretation_ of their bits; while a ``VarUInt``'s bits
-are unsigned, a ``VarInt``'s bits are encoded using
+encode their bytes using Little Endian byte order, and both use the count of least-significant zero bits to indicate
+how many bytes were used to encode the integer. They differ in the _interpretation_ of their bits; while a
+``VarUInt``'s bits are unsigned, a ``VarInt``'s bits are encoded using
 link:https://en.wikipedia.org/wiki/Two%27s_complement[two's complement notation].
 
 TIP: An implementation could choose to read a `VarInt` by instead reading a `VarUInt` and then reinterpreting its bits
@@ -77,7 +78,7 @@ as two's complement.
 ----
               ┌──── Lowest bit is 1 (`end`), indicating
               │     this is the only byte.
-0 0 0 0 1 1 1 1
+0 0 0 1 1 1 0 1
 └─────┬─────┘
  2's comp. 14
 ----
@@ -95,7 +96,7 @@ as two's complement.
 ==== Example encoding of VarInt 729 ====
 [source]
 ----
-             ┌──── There's 1 trailing zero, so this
+             ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
             ┌┴┐
 0 1 1 0 0 1 1 0  0 0 0 0 1 0 1 1
@@ -108,7 +109,7 @@ comp. integer    comp. integer
 ==== Example encoding of VarInt -729 ====
 [source]
 ----
-             ┌──── There's 1 trailing zero, so this
+             ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
             ┌┴┐
 1 0 0 1 1 1 1 0  1 1 1 1 0 1 0 0
@@ -166,11 +167,11 @@ represent the symbol’s text.
 * *exactly zero*, another byte follows that is an <<opcodes, opcode>>. The `VarSym` parser is not responsible for
 evaluating this opcode, only returning it—the caller will decide whether the opcode is legal in the current context.
 Example usages of the opcode include:
-** Representing SID `$0` as `0x70`
-** Representing the empty string (`""`) as `0x80`
+** Representing SID `$0` as `0x70`. (See: <<strings, Strings>>)
+** Representing the empty string (`""`) as `0x80`. (See: <<symbols_with_inline_text, Symbols with inline text>>)
 ** When used to encode a struct field name, the opcode can invoke a macro that will evaluate to a struct whose key/value
 pairs are spliced into the parent struct (TODO: Link)
-** In a delimited struct, terminating the sequence of (name, value) pairs with `0xAD`. (TODO: Link)
+** In a <<delimited_structs, delimited struct>>, terminating the sequence of `(field name, value)` pairs with `0xF0`.
 
 ==== Example encoding of a `VarSym` with symbol ID `$10` ====
 [source]
@@ -223,16 +224,16 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |High nibble | Low nibble | Meaning
 
 |`0x0_` to `0x3_`
-| `*`
+|`*`
 |Single-byte macro invocations
 
 |`0x4_`
-| `*`
+|`*`
 |Multibyte macro invocations
 
 .4+|`0x5_`
-| `0`-`8`
-|Integers
+|`0`-`8`
+|Integers up to 8 bytes wide
 
 |`9`
 <|Reserved
@@ -474,8 +475,8 @@ Biased value  : 1,211
 [source]
 ----
 
-                              ┌─── The address VarUInt ends in `10`; the trailing
-                              │    zero indicates that one more VarUInt byte follows.
+                              ┌─── The address VarUInt ends in `10`; the zero in the least significant
+                              │    bits indicates that one more VarUInt byte follows.
                              ┌┴┐
 0 1 0 0 0 0 0 0  1 0 1 0 0 1 1 0  0 1 0 0 0 1 0 1
 └──┬──┘ └──┬──┘  └──────┬──────┘  └──────┬──────┘
@@ -492,23 +493,20 @@ Decoded value : 71,312
 Biased value  : 71,376
 ----
 
-NOTE: From this point on in the document, example encodings are given in hexidecimal notation.
+NOTE: From this point on in the document, example encodings are given in hexadecimal notation.
 
 [[booleans]]
 == Booleans
 
 `0x5E` represents boolean `true`, while `0x5F` represents boolean `false`.
 
-// XXX: Structurally, these examples should be at depth 3. However, all other example sections in the doc
-//      are at heading depth 4, which keeps them out of the TOC. These are also at depth 4 for consistency.
-
-==== Example encoding of `true`
+=== Example encoding of `true`
 [source]
 ----
 5e
 ----
 
-==== Example encoding of `false`
+=== Example encoding of `false`
 [source]
 ----
 5f
@@ -563,7 +561,7 @@ FixedInt -944
 ----
 ┌──── Opcode F5 indicates a variable-length integer, VarUInt length follows
 │   ┌─── VarUInt 2; a 2-byte FixedInt follows
-│   │    that two bytes follow.
+│   │
 F5 05 50 fc
       └─┬─┘
    FixedInt -944
@@ -1030,7 +1028,7 @@ the opcode.
 Writers MUST encode a symbol address in the smallest number of bytes possible. For each opcode above, the symbol
 address that is decoded is biased by the number of addresses that can be encoded in fewer bytes.
 
-[cols="^1a,1a,1a"]
+[cols="^1a,4a,4a"]
 |===
 |Opcode |Symbol address range |Bias
 
@@ -1039,12 +1037,12 @@ address that is decoded is biased by the number of addresses that can be encoded
 |0
 
 |`0xE2`
-|256 to 16,640
+|256 to 65,791
 |256
 
 |`0xE3`
-|16,641 to infinity
-|16,641
+|65,792 to infinity
+|65,792
 |===
 
 [[binary_data]]
@@ -1327,7 +1325,8 @@ An opcode with a high nibble of `0xD_` indicates a struct with <<varsym, `VarSym
 nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)`
 pairs.
 
-WARNING: Empty structs MUST be written using `0xC0`. `0xD0` is a reserved opcode.
+WARNING: Empty length-prefixed structs MUST be written using `0xC0`. `0xD0` is a reserved opcode. Empty
+<<delimited_structs, delimited structs>> have their own encoding.
 
 If the struct's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFD` opcode
 to write a variable-length struct with <<varsym, `VarSym`>> field names. The `0xFD` opcode is followed by a
@@ -1349,15 +1348,27 @@ D9 FD 66 6F 6F 51 01 17 91 02
        bytes
 ----
 
-// TODO: Demonstrate splicing macro values into the struct via VarSym escape code `0x00`.
+TODO: Demonstrate splicing macro values into the struct via VarSym escape code `0x00`.
 
 [[delimited_structs]]
 ==== Delimited structs
 
-Opcode `0xF3` indicates the beginning of a delimited struct with `VarSym` field names,
+Opcode `0xF3` indicates the beginning of a delimited struct with <<varsym, `VarSym`>> field names,
 while opcode `0xF0` closes the most recently opened delimited container that has not yet been closed.
 
-NOTE: There is no delimited encoding for structs with symbol address field names.
+NOTE: While length-prefixed structs can choose between <<structs_with_symbol_address_field_names, structs with
+symbol address field names>> and <<structs_with_varsym_field_names, structs with `VarSym` field names>>,
+delimited structs always use `VarSym`-encoded field names.
+
+===== Example encoding of the empty struct (`{}`)
+[source]
+----
+┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.│
+│  ┌─── VarSym escape code 0x00: an opcode follows
+│  │  ┌─── Opcode 0xF0 indicates the end of the most
+│  │  │    recently opened delimited container
+F3 00 F0
+----
 
 ===== Example encoding of `{"foo": 1, $11: 2}`
 [source]
@@ -1365,10 +1376,10 @@ NOTE: There is no delimited encoding for structs with symbol address field names
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.
 │
 │  ┌─ VarSym -3      ┌─ VarSym: 11 ($11)
-│  │                 │
-│  │                 │         ┌─ Opcode 0xF0 indicates the end of the most
-│  │   f  o  o       │         │  recently opened delimited container
-F3 FD 66 6F 6F 51 01 17 91 02 F0
+│  │                 │        ┌─── VarSym escape code 0x00: an opcode follows
+│  │                 │        │  ┌─── Opcode 0xF0 indicates the end of the most
+│  │   f  o  o       │        │  │    recently opened delimited container
+F3 FD 66 6F 6F 51 01 17 91 02 00 F0
       └──┬───┘ └─┬─┘    └─┬─┘
       3 UTF-8    1        2
        bytes
@@ -1455,9 +1466,6 @@ It is illegal for an annotations sequence to appear before any of the following:
 // TODO: Links
 * An E-expression (that is: a macro invocation). To add annotations to a macro invocation, see the
 `annotate` macro.
-
-If an annotations sequence appears before one or more additional annotations sequences, the sequences
-are concatenated.
 
 [[annotations_with_symbol_addresses]]
 ==== Annotations with symbol addresses
