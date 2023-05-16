@@ -757,11 +757,19 @@ consume only enough bits to represent the fractional precision supported by the 
 | Unused
 |===
 
+NOTE: Timestamps are encoded in Little Endian byte order. In the diagrams below, the bytes are read from left to right
+(least significant to most significant), while the bits within each byte should be read from right to left. (Again
+least significant to most significant.) +
+While this encoding may complicate the diagrams somewhat, it guarantees that the timestamp's subfields (`year`, `month`,
+etc.) occupy the same bit indexes regardless of how many bytes there are overall. (The last subfield,
+`fractional_seconds`, always begins at the same bit index when present, but can vary in length according to the
+precision.)
+
 ==== Opcode `0x70`: Year (1 byte)
 [source]
 ----
 +=========+
-|YYYY:YYY-|
+|-YYY:YYYY|
 +=========+
 ----
 
@@ -769,7 +777,7 @@ consume only enough bits to represent the fractional precision supported by the 
 [source]
 ----
 +=========+=========+
-|YYYY:YYYM|MMM-:----|
+|MYYY:YYYY|----:-MMM|
 +=========+=========+
 ----
 
@@ -777,7 +785,7 @@ consume only enough bits to represent the fractional precision supported by the 
 [source]
 ----
 +=========+=========+
-|YYYY:YYYM|MMMD:DDDD|
+|MYYY:YYYY|DDDD:DMMM|
 +=========+=========+
 ----
 
@@ -790,15 +798,16 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmU:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|----:Ummm|
 +=========+=========+=========+=========+
 ----
 
 ==== Opcode `0x74`: Hour+Minutes @ Offset (5 bytes)
 [source]
 ----
+
 +=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|oo--:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|----:--oo|
 +=========+=========+=========+=========+=========+
 ----
 
@@ -806,7 +815,7 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmU:ssss|ss--:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|----:--ss|
 +=========+=========+=========+=========+=========+
 ----
 
@@ -814,7 +823,7 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|oo--:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|
 +=========+=========+=========+=========+=========+
 ----
 
@@ -822,7 +831,7 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmk:ssss|ssff:ffff|ffff:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|----:ffff|
 +=========+=========+=========+=========+=========+=========+
 ----
 
@@ -830,7 +839,7 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ff--:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|----:--ff|
 +=========+=========+=========+=========+=========+=========+=========+
 ----
 
@@ -838,7 +847,7 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmk:ssss|ssff:ffff|ffff:ffff|ffff:ff--|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|ffff:ffff|--ff:ffff|
 +=========+=========+=========+=========+=========+=========+=========+
 ----
 
@@ -846,7 +855,7 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ffff:ffff|ffff:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|ffff:ffff|----:ffff|
 +=========+=========+=========+=========+=========+=========+=========+=========+
 ----
 
@@ -854,16 +863,16 @@ offset from `-14:00`.
 [source]
 ----
 +=========+=========+=========+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ffff:ffff|ffff:----|
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|ffff:ffff|ffff:ffff|ffff:ffff|
 +=========+=========+=========+=========+=========+=========+=========+=========+
 ----
 
-==== Opcode `0x7B`: Nanoseconds @ Offset (8 bytes)
+==== Opcode `0x7B`: Nanoseconds @ Offset (9 bytes)
 [source]
 ----
-+=========+=========+=========+=========+=========+=========+=========+=========+
-|YYYY:YYYM|MMMD:DDDD|HHHH:Hmmm|mmmo:oooo|ooss:ssss|ffff:ffff|ffff:ffff|ffff:----|
-+=========+=========+=========+=========+=========+=========+=========+=========+
++=========+=========+=========+=========+=========+=========+=========+=========+=========+
+|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|ffff:ffff|ffff:ffff|--ff:ffff|
++=========+=========+=========+=========+=========+=========+=========+=========+=========+
 ----
 
 WARNING: Opcodes `0x7D`, `0x7E`, and `7F` are illegal; they are reserved for future use.
@@ -920,15 +929,15 @@ Unlike the short-form encoding, the long-form encoding reserves:
 
 If the timestamp's length is greater than or equal to `8`, it has fractional seconds that are encoded as a
 `(coefficient, exponent)` pair, similar to a <<decimals, decimal>>. However, it is illegal for the fractional
-seconds value to be greater than or equal to `1.0` or less than `0.0`. For this reason, both the exponent and
-the coefficient are encoded using unsigned types. The included exponent `VarUInt` is implicitly negative, preventing
-the encoding of decimal numbers greater than `1.0`. The coefficient `FixedUInt` is unsigned to prevent the encoding of
-fractional seconds less than `0.0`. Note that validation is still required; namely:
+seconds value to be greater than or equal to `1.0` or less than `0.0`. For this reason, both the coefficient and
+the exponent are encoded using unsigned types. The included coefficient `VarUInt` is unsigned to prevent the encoding of
+fractional seconds less than `0.0`. The exponent `FixedUInt` is implicitly negative, discouraging the encoding of
+decimal numbers greater than `1.0`. Note that validation is still required; namely:
 
 * An exponent value of `0` is illegal, as that would result in a fractional seconds greater than `1.0` (a whole second).
 * If `coefficient * 10^-exponent > 1.0`, that `(coefficient, exponent)` pair is illegal.
 
-If the timestamp's length is `3`, the least significant bit in the final byte (`h`) is a flag
+If the timestamp's length is `3`, the most significant bit in the final byte (`h`) is a flag
 that indicates month (`0`) or day (`1`) precision.
 
 ==== Opcode `0xF7`: Long-form timestamp
@@ -936,7 +945,7 @@ that indicates month (`0`) or day (`1`) precision.
 ----
      1         2         3         4         5         6         7       8         n
 +=========+=========+=========+=========+=========+=========+=========+=======+   +=========+
-|YYYY:YYYY|YYYY:YYMM|MMDD:DDDh|HHHH:mmmm|mmoo:oooo|oooo:ooss|ssss|----|VarUInt|...|FixedUInt|...
+|YYYY:YYYY|MMYY:YYYY|hDDD:DDMM|mmmm:HHHH|oooo:oomm|ssoo:oooo|----|ssss|VarUInt|...|FixedUInt|...
 +=========+=========+=========+=========+=========+=========+=========+=======+   +=========+
 ----
 
