@@ -217,11 +217,11 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 
 |`0x0_` to `0x3_`
 |`A`-`F`
-|Single-byte macro invocations
+|E-expression with the address in the opcode
 
 |`0x4_`
 |`A`-`F`
-|Multibyte macro invocations
+|E-expression with the address as a trailing `FlexUInt`
 
 .4+|`0x5_`
 |`0`-`8`
@@ -358,13 +358,13 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 
 
 
-[[macro_invocation_with_address_in_opcode]]
-=== Macro Invocation With Address in the Opcode
+[[e_expression_with_the_address_in_the_opcode]]
+=== E-expression With the Address in the Opcode
 
 // TODO: link to macros chapter
 
-If the value of the opcode is less than `64` (`0x40`), it represents an invocation of the macro at the corresponding
-__address__—an offset within the local macro table.
+If the value of the opcode is less than `64` (`0x40`), it represents an E-expression invoking the macro at the
+corresponding __address__—an offset within the local macro table.
 
 .Figure {counter:figure}: Invocation of macro address `_7_`
 [source,%unbreakable]
@@ -382,17 +382,15 @@ __address__—an offset within the local macro table.
   FixedUInt 31
 ----
 
-// TODO: Link to macro calling conventions
-
 Note that the opcode alone tells us which macro is being invoked, but it does not supply enough information for the
 reader to parse any arguments that may follow. The parsing of arguments is described in detail in the section _Macro
 calling conventions_. (TODO: Link)
 
-[[macro_invocation_with_address_as_flexuint]]
-=== Macro Invocation With Address as `FlexUInt`
+[[e_expression_with_the_address_as_a_trailing_flexuint]]
+=== E-expression With the Address as a Trailing `FlexUInt`
 
-While invocations of macro addresses in the range `[0, 63]` can be encoded in a single byte using
-<<macro_invocation_with_address_in_opcode, invocations where the address is found in the opcode>>,
+While E-expressions invoking macro addresses in the range `[0, 63]` can be encoded in a single byte using
+<<e_expression_with_the_address_in_the_opcode, E-expressions with the address in the opcode>>,
 many applications will benefit from defining more than 64 macros.
 
 If the high nibble of the opcode is `0x4_`, then the low nibble represents the four least significant bits of the macro
@@ -1222,7 +1220,7 @@ EB 06
 ----
 
 [[symbols_with_symbol_address]]
-=== Symbols With Symbol Address
+=== Symbols With a Symbol Address
 
 Symbol values whose text can be found in the local symbol table are encoded using opcodes `0xE1` through `0xE3`:
 
@@ -1286,8 +1284,8 @@ EB 07
 [[clobs]]
 === Clobs
 
-Opcode `FF` indicates a clob--character data of an unspecified encoding. A `FlexUInt` follows that represents the clob's
-byte-length.
+Opcode `FF` indicates a clob--binary character data of an unspecified encoding. A `FlexUInt` follows that represents
+the clob's byte-length.
 
 `0xEB x08` represents `null.clob`.
 
@@ -1532,9 +1530,9 @@ EB 0B
 [[structs_with_symbol_address_field_names]]
 ==== Structs With Symbol Address Field Names
 
-An opcode with a high nibble of `0xC_` indicates a struct with symbol address field names. The lower
-nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)`
-pairs.
+An opcode with a high nibble of `0xC_` indicates a struct with symbol address field names (which is similar to the
+link:https://amazon-ion.github.io/ion-docs/docs/binary.html#0xd-struct[only available encoding of structs in Ion 1.0].
+The lower nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)` pairs.
 
 If the struct's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFC` opcode
 to write a variable-length struct with symbol address field names. The `0xFC` opcode is followed by a
@@ -1618,8 +1616,11 @@ TODO: Demonstrate splicing macro values into the struct via FlexSym escape code 
 [[delimited_structs]]
 ==== Delimited Structs
 
-Opcode `0xF3` indicates the beginning of a delimited struct with <<flexsym, `FlexSym`>> field names,
-while opcode `0xF0` closes the most recently opened delimited container that has not yet been closed.
+Opcode `0xF3` indicates the beginning of a delimited struct with <<flexsym, `FlexSym`>> field names.
+
+Unlike lists and S-expressions, structs cannot use opcode `0xF0` by itself to indicate the end of the delimited
+container. This is because `0xF0` is a valid `FlexSym` (a symbol with 16 bytes of inline text). To close the delimited
+struct, the writer emits a `0x00` byte (a `FlexSym` escape) followed by the opcode `0xF0`.
 
 NOTE: While length-prefixed structs can choose between <<structs_with_symbol_address_field_names, structs with
 symbol address field names>> and <<structs_with_flexsym_field_names, structs with `FlexSym` field names>>,
@@ -1655,8 +1656,7 @@ F3 FD 66 6F 6F 51 01 17 91 02 00 F0
 
 The opcode `0xEA` indicates an untyped null (that is: `null`, or its alias `null.null`).
 
-The opcode `0xEB` indicates a typed null; a byte follows whose value indicates the type. The byte-to-type
-mapping is as follows:
+The opcode `0xEB` indicates a typed null; a byte follows whose value represents an offset into the following table:
 
 [cols="^1a,4a"]
 |===
@@ -1699,6 +1699,10 @@ mapping is as follows:
 |`null.struct`
 |===
 
+All other byte values are reserved for future use.
+
+NOTE: Future versions of Ion may decide to generalize this into a "constants" table.
+
 .Figure {counter:figure}: Encoding of `_null_`
 [source,%unbreakable]
 ----
@@ -1717,6 +1721,9 @@ EB 05
 [[annotations]]
 == Annotations
 
+[sidebar]
+TODO: Decide whether we want an Ion 1.0-style double-length-prefixed sequence.
+
 Annotations can be encoded either <<annotations_with_symbol_addresses, as symbol addresses>>
 or <<annotations_with_flexsym_text, as ``FlexSym``s>>. In both encodings, the annotations sequence appears
 just before the value that it decorates.
@@ -1726,9 +1733,8 @@ It is illegal for an annotations sequence to appear before any of the following:
 * Another annotations sequence
 * The end of the stream
 * A <<nops, `NOP`>>
-// TODO: Links
-* An E-expression (that is: a macro invocation). To add annotations to the expansion of a macro invocation, see the
-`annotate` macro.
+* An <<e_expression_with_the_address_in_the_opcode, E-expression>> (that is: a macro invocation). To add annotations
+to the expansion of an E-expression, see the `annotate` macro. (TODO: Link)
 
 [[annotations_with_symbol_addresses]]
 === Annotations With Symbol Addresses
@@ -1849,6 +1855,10 @@ but can be used as padding to achieve a desired alignment.
 
 An opcode of `0xEC` indicates a single-byte `NOP` pad. An opcode of `0xED` indicates that a
 <<flexuint, `FlexUInt`>> follows that represents the number of additional bytes to skip.
+
+It is legal for a `NOP` to appear anywhere that a value can be encoded. It is not legal for a `NOP` to appear in
+annotation sequences or struct field names. If a `NOP` appears in place of a struct field _value_, then the associated
+field name is ignored; the `NOP` is immediately followed by the next field name, if any.
 
 .Figure {counter:figure}: Encoding of a 1-byte `_NOP_`
 [source,%unbreakable]
