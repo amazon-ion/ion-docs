@@ -7,7 +7,7 @@
 A variable-length unsigned integer.
 
 The bytes of a ``VarUInt``s are written in
-link:https://en.wikipedia.org/wiki/Endianness:[Little Endian byte order]. This means that the first byte will contain
+link:https://en.wikipedia.org/wiki/Endianness:[little-endian byte order]. This means that the first byte will contain
 the ``VarUInt``'s least significant bits.
 
 The least significant bits in the `VarUInt` indicate the number of bytes that were used to encode the integer.
@@ -62,7 +62,7 @@ link:https://amazon-ion.github.io/ion-docs/docs/binary.html#varuint-and-varint-f
 A variable-length signed integer.
 
 From an encoding perspective, ``VarInt``s are structurally similar to a `VarUInt` (<<varuint, described above>>). Both
-encode their bytes using Little Endian byte order, and both use the count of least-significant zero bits to indicate
+encode their bytes using little-endian byte order, and both use the count of least-significant zero bits to indicate
 how many bytes were used to encode the integer. They differ in the _interpretation_ of their bits; while a
 ``VarUInt``'s bits are unsigned, a ``VarInt``'s bits are encoded using
 link:https://en.wikipedia.org/wiki/Two%27s_complement[two's complement notation].
@@ -408,7 +408,7 @@ by 64. (That is: the reader must add 64 to the decoded value. If the decoded val
 represents is `64`.)
 
 Because the address is encoded using a `VarUInt`, there is no (theoretical) limit to the number of addresses that can
-be invoked. However, larger addresses require more bytes to encode. This following table shows the number of bytes
+be invoked. However, larger addresses require more bytes to encode. The following table shows the number of bytes
 needed to encode invocations of macro addresses in various ranges.
 
 |===
@@ -497,6 +497,8 @@ NOTE: From this point on in the document, example encodings are given in hexadec
 
 `0x5E` represents boolean `true`, while `0x5F` represents boolean `false`.
 
+`0xEB 0x00` represents `null.bool`.
+
 .Figure {counter:figure}: Encoding of boolean `_true_`
 [source,%unbreakable]
 ----
@@ -507,6 +509,15 @@ NOTE: From this point on in the document, example encodings are given in hexadec
 [source,%unbreakable]
 ----
 5F
+----
+
+.Figure {counter:figure}: Encoding of `_null.bool_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: boolean
+│  │
+EB 00
 ----
 
 [[numbers]]
@@ -522,6 +533,8 @@ Opcode `0x50` represents integer `0`; no more bytes follow.
 Integers that require more than 8 bytes are encoded using the variable-length integer opcode `0xF5`,
 followed by a
 <<varuint, VarUInt>> indicating how many bytes of representation data follow.
+
+`0xEB 0x01` represents `null.int`.
 
 .Figure {counter:figure}: Encoding of integer `_0_`
 [source,%unbreakable]
@@ -564,6 +577,15 @@ F5 05 50 FC
    FixedInt -944
 ----
 
+.Figure {counter:figure}: Encoding of `_null.int_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: integer
+│  │
+EB 01
+----
+
 [[floats]]
 === Floats
 
@@ -578,7 +600,9 @@ indicated by opcode `0x5C`
 indicated by opcode `0x5D`
 
 Note that in the Ion data model, float values are always 64 bits. However, if a value can be losslessly serialized
-in fewer than 64 bits, applications may choose to do so.
+in fewer than 64 bits, Ion implementations may choose to do so.
+
+`0xEB 0x02` represents `null.float`.
 
 .Figure {counter:figure}: Encoding of float `_0e0_`
 [source,%unbreakable]
@@ -622,6 +646,15 @@ single-precision 3.1415927
 double-precision 3.141592653589793
 ----
 
+.Figure {counter:figure}: Encoding of `_null.float_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: float
+│  │
+EB 02
+----
+
 [[decimals]]
 === Decimals
 
@@ -635,7 +668,9 @@ of the coefficient. It is possible for the exponent to have a width of zero, ind
 Decimal values that require more than 14 bytes can be encoded using the variable-length decimal opcode: `0xF6`.
 
 A decimal with a coefficient of `-0` (which cannot be encoded as a `VarInt`) is encoded using opcode `6F`.
-The opcode is followed by a `VarUInt` representing the byte length and a `FixedInt` representing the exponent.
+The opcode is followed by a `VarInt` representing the exponent.
+
+`0xEB 0x03` represents `null.decimal`.
 
 .Figure {counter:figure}: Encoding of decimal `_0d0_`
 [source,%unbreakable]
@@ -646,7 +681,17 @@ The opcode is followed by a `VarUInt` representing the byte length and a `FixedI
 60
 ----
 
-.Figure {counter:figure}: Encoding of decimal `_1.27_`
+.Figure {counter:figure}: Encoding of decimal `_7d0_`
+[source,%unbreakable]
+----
+┌──── Opcode in range 60-6F indicates a decimal
+│┌─── Low nibble 1 indicates a 1-byte decimal
+││
+60 0F
+   └─── Coefficient: VarInt 7; no more bytes follow, so exponent is implicitly 0
+----
+
+.Figure {counter:figure}: Encoding of decimal `1.27`
 [source,%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
@@ -668,14 +713,22 @@ F6 07 FD 01 FE
    └───────── Decimal length: VarUInt 3
 ----
 
-==== Example variable-length encoding of `-0d3`
-[source]
+.Figure {counter:figure}: Encoding of `_-0d3_`, which has a coefficient of negative zero
+[source,%unbreakable]
 ----
 ┌──── Opcode 6F indicates a variable-length decimal with a coefficient of -0
 │
-6F 03 03
-   │  └────── Exponent: FixedInt 3
-   └───────── Decimal length: VarUInt 1
+6F 07
+   └────── Exponent: VarInt 3
+----
+
+.Figure {counter:figure}: Encoding of `_null.decimal_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: decimal
+│  │
+EB 03
 ----
 
 [[timestamps]]
@@ -684,6 +737,23 @@ F6 07 FD 01 FE
 NOTE: In Ion 1.0, text timestamp fields were encoded using the local time while binary timestamp fields were encoded
 using UTC time. This required applications to perform conversion logic when transcribing from one format to the other.
 *In Ion 1.1, all binary timestamp fields are encoded in local time.*
+
+Timestamps have two encodings:
+
+Short-form timestamps:: A compact representation optimized for the most commonly used precisions and date ranges.
+
+Long-form timestamps:: A less compact representation capable of representing any timestamp in the Ion data model.
+
+`0xEB x04` represents `null.timestamp`.
+
+.Figure {counter:figure}: Encoding of `_null.timestamp_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: timestamp
+│  │
+EB 04
+----
 
 [[short_form_timestamp]]
 === Short-form Timestamp
@@ -829,7 +899,7 @@ consume only enough bits to represent the fractional precision supported by the 
 | Unused
 |===
 
-Timestamps are encoded in Little Endian byte order. In the diagrams below, the first byte shows the leading opcode
+Timestamps are encoded in little-endian byte order. In the diagrams below, the first byte shows the leading opcode
 in hexadecimal; the trailing bytes show the meaning and layout of their respective bits using the letter codes defined
 in the table above.
 
@@ -1044,7 +1114,8 @@ decimal numbers greater than `1.0`. Note that validation is still required; name
 * If `coefficient * 10^-exponent > 1.0`, that `(coefficient, exponent)` pair is illegal.
 
 If the timestamp's length is `3`, the most significant bit in the final byte (`h`) is a flag
-that indicates month (`0`) or day (`1`) precision.
+that indicates month (`0`) or day (`1`) precision. If the timestamp's length is greater than `3`, the (`h`) bit is
+treated as the least-significant bit of the hour (`H`) bits.
 
 .Figure {counter:figure}: Encoding of the body of a long-form timestamp
 [source,%unbreakable]
@@ -1066,6 +1137,8 @@ indicates how many UTF-8 bytes follow. Opcode `0x80` represents a string with em
 
 Strings longer than 15 bytes can be encoded with the `F8` opcode, which takes a <<varuint, `VarUInt`>>-encoded length
 after the opcode.
+
+`0xEB x05` represents `null.string`.
 
 .Figure {counter:figure}: Encoding of the empty string, `_""_`
 [source,%unbreakable]
@@ -1097,11 +1170,22 @@ F8 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
                                   UTF-8 bytes
 ----
 
+.Figure {counter:figure}: Encoding of `_null.string_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: string
+│  │
+EB 05
+----
+
 [[symbols_with_inline_text]]
 === Symbols With Inline Text
 
 If the high nibble of the opcode is `0x9_`, it represents a symbol whose text follows the opcode. The low nibble of the
 opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol with empty text (`''`).
+
+`0xEB x06` represents `null.symbol`.
 
 .Figure {counter:figure}: Encoding of a symbol with empty text (`_''_`)
 [source,%unbreakable]
@@ -1131,6 +1215,15 @@ opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol 
 F9 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
       └────────────────────────────────┬────────────────────────────────────┘
                                   UTF-8 bytes
+----
+
+.Figure {counter:figure}: Encoding of `_null.symbol_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: symbol
+│  │
+EB 06
 ----
 
 [[symbols_with_symbol_address]]
@@ -1170,7 +1263,9 @@ address that is decoded is biased by the number of addresses that can be encoded
 [[blobs]]
 === Blobs
 
-Opcode `FE` indicates a blob of binary data.
+Opcode `FE` indicates a blob of binary data. A `VarUInt` follows that represents the blob's byte-length.
+
+`0xEB x07` represents `null.blob`.
 
 .Figure {counter:figure}: Encoding of a blob with 24 bytes of data
 [source,%unbreakable]
@@ -1183,11 +1278,23 @@ FE 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
                             24 bytes of binary data
 ----
 
+.Figure {counter:figure}: Encoding of `_null.blob_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: blob
+│  │
+EB 07
+----
+
 
 [[clobs]]
 === Clobs
 
-Opcode `FF` indicates a clob--character data of an unspecified encoding.
+Opcode `FF` indicates a clob--character data of an unspecified encoding. A `VarUInt` follows that represents the clob's
+byte-length.
+
+`0xEB x08` represents `null.clob`.
 
 .Figure {counter:figure}: Encoding of a clob with 24 bytes of data
 [source,%unbreakable]
@@ -1198,6 +1305,15 @@ Opcode `FF` indicates a clob--character data of an unspecified encoding.
 FF 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
       └────────────────────────────────┬────────────────────────────────────┘
                             24 bytes of binary data
+----
+
+.Figure {counter:figure}: Encoding of `_null.clob_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: clob
+│  │
+EB 08
 ----
 
 [[containers]]
@@ -1221,6 +1337,8 @@ opcode indicates how many bytes were used to encode the child values that the li
 If the list's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFA` opcode
 to write a variable-length list. The `0xFA` opcode is followed by a
 <<varuint, `VarUInt`>> that indicates the list's byte length.
+
+`0xEB 0x09` represents `null.list`.
 
 .Figure {counter:figure}: Length-prefixed encoding of an empty list (`_[]_`)
 [source,%unbreakable]
@@ -1251,6 +1369,15 @@ A6 51 01 51 02 51 03
 FA 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 6c 69 73 74
       └─────────────────────────────┬─────────────────────────────────┘
                           Nested string element
+----
+
+.Figure {counter:figure}: Encoding of `_null.list_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: list
+│  │
+EB 09
 ----
 
 ==== Delimited Encoding
@@ -1295,14 +1422,23 @@ F1 51 01 F1 51 02 F0 51 03 F0
 [[s_expressions]]
 === S-Expressions
 
-==== Length-prefixed Encoding
+S-expressions use the same encodings as <<lists, lists>>, but with different opcodes.
 
-An opcode with a high nibble of `0xB_` indicates a length-prefixed S-expression. The lower nibble of the
-opcode indicates how many bytes were used to encode the child values that the S-expression contains.
+[cols="^.^1a,4a"]
+|===
+|Opcode |Encoding
 
-If the S-expression's encoded byte-length is too large to be encoded in a nibble, writers may use
-the `0xFB` opcode to write a variable-length S-expression. The `0xFB` opcode is followed by a
-<<varuint, `VarUInt`>> that indicates the S-expression's byte length.
+|`0xB0`-`0xBF`
+|Length-prefixed S-expression; low nibble of the opcode represents the byte-length.
+
+|`0xFB`
+|Variable-length prefixed S-expression; a `VarUInt` following the opcode represents the byte-length.
+
+|`0xF2`
+|Starts a delimited S-expression; `0xF0` closes the most recently opened delimited container.
+|===
+
+`0xEB 0x0A` represents `null.sexp`.
 
 .Figure {counter:figure}: Length-prefixed encoding of an empty S-expression (`_()_`)
 [source,%unbreakable]
@@ -1334,11 +1470,6 @@ FB 2D F8 29 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 73 65 78 70
       └─────────────────────────────┬─────────────────────────────────┘
                           Nested string element
 ----
-
-==== Delimited Encoding
-
-Opcode `0xF2` begins a delimited S-expression, while opcode `0xF0` closes the most recently opened
-delimited container that has not yet been closed.
 
 .Figure {counter:figure}: Delimited encoding of an empty S-expression (`_()_`)
 [source,%unbreakable]
@@ -1374,6 +1505,15 @@ F2 51 01 F2 51 02 F0 51 03 F0
      1        2        3
 ----
 
+.Figure {counter:figure}: Encoding of `_null.sexp_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: sexp
+│  │
+EB 0A
+----
+
 [[structs]]
 === Structs
 
@@ -1382,6 +1522,17 @@ Structs have 3 available encodings:
 . <<structs_with_symbol_address_field_names, Structs with symbol address field names>>
 . <<structs_with_varsym_field_names, Structs with `VarSym` field names>>
 . <<delimited_structs, Delimited structs with `VarSym` field names>>
+
+`0xEB 0x0B` represents `null.struct`.
+
+.Figure {counter:figure}: Encoding of `_null.struct_`
+[source,%unbreakable]
+----
+┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+│  ┌─── Null type: struct
+│  │
+EB 0B
+----
 
 [[structs_with_symbol_address_field_names]]
 ==== Structs With Symbol Address Field Names
@@ -1444,21 +1595,20 @@ An opcode with a high nibble of `0xD_` indicates a struct with <<varsym, `VarSym
 nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)`
 pairs.
 
-WARNING: Empty length-prefixed structs MUST be written using `0xC0`. `0xD0` is a reserved opcode. Empty
-<<delimited_structs, delimited structs>> have their own encoding.
+WARNING: This form cannot be used to encode an empty struct; `0xD0` is a reserved opcode. Empty structs can be written
+using either the length-prefixed form `0xC0` or the <<delimited_structs, delimited form>> `0xF3 0xF0`.
 
 If the struct's encoded byte-length is too large to be encoded in a nibble, writers may use the `0xFD` opcode
 to write a variable-length struct with <<varsym, `VarSym`>> field names. The `0xFD` opcode is followed by a
 <<varuint, `VarUInt`>> that indicates the byte length.
 
-Each field in the struct is encoded as a  <<varsym, `VarSym`>> field name, followed by an
-opcode-prefixed value.
+Each field in the struct is encoded as a  <<varsym, `VarSym`>> field name, followed by an opcode-prefixed value.
 
 .Figure {counter:figure}: Length-prefixed encoding of `_{"foo": 1, $11: 2}_`
 [source,%unbreakable]
 ----
 ┌─── Opcode with high nibble `D` indicates a struct with VarSym field names
-│┌── Length: 7
+│┌── Length: 9
 ││ ┌─ VarSym -3      ┌─ VarSym: 11 ($11)
 ││ │   f  o  o       │
 D9 FD 66 6F 6F 51 01 17 91 02
@@ -1483,7 +1633,7 @@ delimited structs always use `VarSym`-encoded field names.
 .Figure {counter:figure}: Delimited encoding of the empty struct (`_{}_`)
 [source,%unbreakable]
 ----
-┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.│
+┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.
 │  ┌─── VarSym escape code 0x00: an opcode follows
 │  │  ┌─── Opcode 0xF0 indicates the end of the most
 │  │  │    recently opened delimited container
@@ -1506,7 +1656,7 @@ F3 FD 66 6F 6F 51 01 17 91 02 00 F0
 ----
 
 [[nulls]]
-=== Nulls
+== Nulls
 
 The opcode `0xEA` indicates an untyped null (that is: `null`, or its alias `null.null`).
 
@@ -1539,10 +1689,10 @@ mapping is as follows:
 |`null.symbol`
 
 |`0x07`
-|`null.clob`
+|`null.blob`
 
 |`0x08`
-|`null.blob`
+|`null.clob`
 
 |`0x09`
 |`null.list`
@@ -1566,25 +1716,23 @@ EA
 ----
 ┌──── The opcode `0xEB` indicates a typed null; a byte indicating the type follows
 │  ┌──── Byte 0x05 indicates the type `string`
-EB 0x5
+EB 05
 ----
 
 [[annotations]]
-=== Annotations
+== Annotations
 
 Annotations can be encoded either <<annotations_with_symbol_addresses, as symbol addresses>>
 or <<annotations_with_varsym_text, as ``VarSym``s>>. In both encodings, the annotations sequence appears
 just before the value that it decorates.
 
-If an annotations sequence appears before one or more additional annotations sequences, the sequences
-are concatenated.
-
 It is illegal for an annotations sequence to appear before any of the following:
 
+* Another annotations sequence
 * The end of the stream
 * A <<nops, `NOP`>>
 // TODO: Links
-* An E-expression (that is: a macro invocation). To add annotations to a macro invocation, see the
+* An E-expression (that is: a macro invocation). To add annotations to the expansion of a macro invocation, see the
 `annotate` macro.
 
 [[annotations_with_symbol_addresses]]
@@ -1699,7 +1847,7 @@ E9 0D 15 FD 66 6F 6F 17 5F
 ----
 
 [[nops]]
-=== ``NOP``s
+== ``NOP``s
 
 A `NOP` (short for "no-operation") is the binary equivalent of whitespace. `NOP` bytes have no meaning,
 but can be used as padding to achieve a desired alignment.
