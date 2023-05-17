@@ -680,7 +680,7 @@ The opcode is followed by a `FlexInt` representing the exponent.
 ┌──── Opcode in range 60-6F indicates a decimal
 │┌─── Low nibble 1 indicates a 1-byte decimal
 ││
-60 0F
+61 0F
    └─── Coefficient: FlexInt 7; no more bytes follow, so exponent is implicitly 0
 ----
 
