@@ -86,11 +86,11 @@ Upon encountering the `$ion_1_1` IVM, the environment is reset to the default st
   * The macro table is empty.
   * The symbol table is the Ion 1.1 system symbol table.
 
-To customize this environment, we use an _encoding directive_: a
-top-level struct annotated with `$ion_encoding`. Like `$ion_symbol_table`, this directive defines a
-new encoding environment that goes into effect immediately after the struct closes.
+To customize this environment, we use an _encoding directive_: a top-level S-expression annotated
+with `$ion_encoding`. Like `$ion_symbol_table`, this directive defines a new encoding environment
+that goes into effect immediately after the directive closes.
 
-NOTE: We use the term "encoding directive" to refer to the `$ion_encoding` struct, and "local
+NOTE: We use the term "encoding directive" to refer to the `$ion_encoding` S-expression, and "local
 symbol table directive" to refer to the `$ion_symbol_table` struct.  Both forms are valid in
 Ion 1.1.
 
@@ -111,6 +111,9 @@ $ion_encoding::(
 Each syntactic form affects one of the main components of the environment.
 The `*symbol_table*` and `*macro_table*` clauses specify the layout of those tables, while the
 preceding clauses enumerate the available modules that may be installed into them.
+
+NOTE: Using an S-expression instead of a struct constrains the order in which
+clauses are encountered, making it both more code-like and easier to parse.
 
 Let’s look at some examples illustrating the relation between `$ion_symbol_table` and
 `$ion_encoding`.
