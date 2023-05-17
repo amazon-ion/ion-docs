@@ -1,0 +1,208 @@
+[[sec:grammar]]
+== Domain Grammar
+
+:nrm: subs="+normal"
+:bnf: cols="10,^2,40",frame=none,grid=none,stripes=none,options="noheader"
+:sp2: {nbsp}{nbsp}{nbsp}{nbsp}
+
+This chapter presents Ion 1.1's _domain grammar_, by which we mean the grammar of the domain
+of values that drive Ion's encoding features.
+
+We use a BNF-like notation for describing various syntactic parts of a document,
+including Ion data structures. In such cases, the BNF should be interpreted loosely to
+accommodate Ion-isms like commas and unconstrained ordering of struct fields.
+
+All `()[]{}` below are literal tokens of Ion syntax.  Single-quoted `*'?'*` and `*'{asterisk}'*`
+denote literal Ion symbols, while unquoted |, ?, and {asterisk} are BNF notation.
+
+
+=== Documents
+
+TODO this section needs much work.
+
+[{bnf}]
+|===
+|document  |::=| _segment_*
+|segment   |::=| _ivm_?  _value_* _directive_?
+|directive |::=| _symtab-directive_ \| _encoding-directive_
+|===
+
+
+=== Encoding Directives
+
+[{bnf}]
+|===
+|encoding-directive |::=| `$ion_encoding::(` _retention_? _module-decl_*
+                                             _symtab_? _top-mactab_? `)`
+
+|retention |::=|  `(` `*retain*` _retainees_ `)`
+|retainees |::=|  `*'{asterisk}'*`  \|  _module-name_*
+
+|module-decl |::=| _dependency_  \|  _inline-module-def_
+|dependency  |::=| _load-decl_  \|  _use-decl_  \|  _import-decl_
+
+|use-decl    |::=|  `(` `*use*` _use-item_* `)`
+|use-item    |::=| _module-name_  \|  _load-decl_
+
+|symtab      |::=|  `(` `*symbol_table*` _symtab-item_* `)`
+|symtab-item |::=|  _module-name_  \|  `[` _text_* `]`
+
+|top-mactab  |::=|  `(` `*macro_table*` _module-name_* )
+
+|===
+
+
+==== Catalog Access
+
+[{bnf}]
+|===
+|load-decl       |::=|  `(` `*load*` _load-body_ `)`
+|import-decl     |::=|  `(` `*import*` _load-body_ `)`
+|load-body       |::=| _module-name_ _catalog-name_ _catalog-version_ _symbol-maxid_?
+
+|catalog-name    |::=|  _unannotated-string_
+|catalog-version |::=|  _unannotated-uint_
+|symbol-maxid    |::=|  _unannotated-uint_
+|===
+
+
+=== Macro References
+
+[{bnf}]
+|===
+|macro-ref     |::=|  _macro-name_  \|  _local-ref_  \|  _qualified-ref_
+
+|local-ref     |::=|  < symbol of the form ``':``_name-or-address_``'`` >
+|qualified-ref |::=|  < symbol of the form ``':``_module-name_``:``_name-or-address_``'`` >
+
+|module-name     |::=|  _unannotated-identifier-symbol_
+|macro-name      |::=|  _unannotated-identifier-symbol_
+|macro-address   |::=|  _unannotated-uint_
+|name-or-address |::=|  _macro-name_  \|  _macro-address_
+|===
+
+
+=== Module Definitions
+
+[{bnf}]
+|===
+|inline-module-def   |::=| `(` `*module*` _module-name_ _module-body_ `)`
+|shared-module-def   |::=| ``$ion_shared_module::``__ion-version-marker__``::(`` _catalog-key_
+_module-body_ `)`
+|catalog-key         |::=| `(` `*catalog_key*` _catalog-name_ _catalog-version_ `)`
+|===
+
+
+==== Module Bodies
+
+[{bnf}]
+|===
+|module-body |::=|  _dependency_* _symtab_? _macro-alias_* _module-mactab_?
+
+|macro-alias |::=|  `(` `*alias*` _macro-name_ _macro-ref_ `)`
+
+|module-mactab   |::=|  `(` `*macro_table*` _macro-or-export_* `)`
+|macro-or-export |::=|  _macro-defn_  \|  _export_
+
+|export      |::=|  `(` `*export*` _export-item_* `)`
+|export-item |::=|  _macro-ref_                                         +
+                \|  `(` `*from*` _module-name_ _name-or-address_* `)`   +
+                \|  `(` `*all_from*` _module-name_ `)`
+|===
+
+
+=== Macro Definitions
+
+[{bnf}]
+|===
+|macro-defn |::=|  `(` `*macro*` _macro-name_? _signature_ _template_ `)`
+
+|signature   |::=|  _param-specs_ _result-spec_?
+|param-specs |::=|  `(` _param-spec_* _rest-spec_? `)`  \|  `[` _param-spec_* _rest-spec_? `]`
+|param-spec  |::=|  _param-name_  \|  _simple-param-spec_  \|  _grouped-param-spec_
+|param-name  |::=|  _unannotated-identifier-symbol_
+
+|simple-param-spec  |::=|  `(` _param-name_  _base-shape_ _simple-cardinality_ `)`
+|base-shape         |::=| _tagged-type_  \|  _primitive-type_  \|  _macro-ref_
+|simple-cardinality |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
+
+|grouped-param-spec  |::=|  `(` _param-name_ `[` _base-shape_ `]` _grouped-cardinality_ `)`
+|grouped-cardinality |::=|  `*+*`  \|  `*'{asterisk}'*`
+
+|rest-spec        |::=|  `(` _param-name_ _base-shape_ _rest-cardinality_  `)`
+|rest-cardinality |::=|   `*\...*`  \|  `*\...+*`
+
+|tagged-type   |::=| _abstract-type_ \| _concrete-type_
+|abstract-type |::=| `*any*` \| `*number*` \| `*exact*` \| `*text*` \| `*lob*` \| `*sequence*`
+|concrete-type |::=|  `*'null'*`  \|  `*bool*`  \|  `*timestamp*`  \|  `*int*`  \|  `*decimal*`
+                  \|  `*float*`  \|  `*string*`  \|  `*symbol*`  \|  `*blob*`  \|  `*clob*`
+                  \|  `*list*`  \|  `*sexp*`  \|  `*struct*`
+
+|primitive-type |::=|  `*var_symbol*`  \|  `*var_string*`
+                   \|  `*var_int*`  \|  `*var_uint*`
+                   \|  `*uint8*`    \|  `*uint16*`   \|  `*uint32*`  \|  `*uint64*`
+                   \|  `*int8*`     \|  `*int16*`    \|  `*int32*`   \|  `*int64*`
+                   \|  `*float16*`  \|  `*float32*`  \|  `*float64*`
+
+|result-spec |::=|  `*\->*` _tagged-type_ _simple-cardinality_
+|===
+
+
+=== Template Expression Language
+
+[{bnf}]
+|===
+|template |::=|  _identifier_  \|  _literal_  \|  _quasi-literal_
+             \|  _special-form_  \|  _macro-invocation_
+
+|literal       |::=|  _null_  \|  _bool_  \|  _int_  \|  _float_  \|  _decimal_  \| _timestamp_
+                  \|  _string_  \|  _blob_  \|  _clob_
+
+|quasi-literal |::=|  `[` _template_* `]`  \|  `{` _quasi-field_* `}`
+|quasi-field   |::=| _text_ `:` _template_
+
+|special-form |::=|  `(` `*literal*` _datum_ `)`                             +
+                 \|  `(` `*if_void*`   _template_ _template_ _template_ `)`  +
+                 \|  `(` `*if_single*` _template_ _template_ _template_ `)`  +
+                 \|  `(` `*if_many*`   _template_ _template_ _template_ `)`  +
+                 \|  `(` `*when*`   _param-name_ _template_ `)`              +
+                 \|  `(` `*unless*` _param-name_ _template_ `)`              +
+                 \|  `(` `*for*` `[` _for-clause_* `]` _template_ `)`
+
+|for-clause       |::=| `(` _identifier_ _template_ `)`
+
+|macro-invocation |::=|  `(` _macro-ref_ _macro-arg_* `)`
+|macro-arg        |::=|  _template_  \|  `[` _template_* `]`        // _Very_ roughly
+
+|===
+
+IMPORTANT: The syntax of __macro-arg__s is constrained by the macro expander, based on the
+signature of the invoked macro.
+
+
+=== Backwards Compatibility
+
+==== Symbol Table Directives
+
+[{bnf}]
+|===
+|symtab-directive |::=| TODO
+|===
+
+
+==== Tunneled Modules
+
+[{bnf}]
+|===
+|shared-symtab |::=|  `$ion_shared_symbol_table::{`         +
+{sp2} `name` `:` _catalog-name_           +
+{sp2} `version` `:` _catalog-version_     +
+{sp2} `symbols` `:` `[` string* `]`       +
+{sp2} `module` `:` _tunneled-module-def_  +
+`}`
+|tunneled-module-def |::=|  _ion-version-marker_ `::(` _module-body_ `)`
+|module-body |::=|  _dependency_* _macro-alias_* _module-mactab_?
+|===
+
+TIP: A tunneled module may not have a `symbol_table` clause; symbols must be defined
+in the legacy `symbols` field.
