@@ -74,23 +74,23 @@ In Ion 1.1, the encoding environment includes:
 
   * The current Ion version, because a document may have segments using different Ion versions.
   * The _available modules_, a name to module mapping.
-  * The local symbol table, assembled from a subset of the available modules.
-  * The local macro table, assembled from a subset of the available modules.
+  * The current symbol table, assembled from a subset of the available modules.
+  * The current macro table, assembled from a subset of the available modules.
 
 NOTE: In Ion 1.0, the local symbol table _is_ the encoding environment.
 
 Upon encountering the `$ion_1_1` IVM, the environment is reset to the default state, in which:
 
-  * The current Ion version is 1.1.
+  * The Ion version is 1.1.
   * The available modules contains only the `$ion` module, version 2 (v1 being Ion 1.0).
-  * The current local macro table is empty.
-  * The current symbol table is the Ion 1.1 system symbol table.
+  * The macro table is empty.
+  * The symbol table is the Ion 1.1 system symbol table.
 
-To customize this environment, we use an _encoding directive_: a
-top-level struct annotated with `$ion_encoding`. Like `$ion_symbol_table`, this directive defines a
-new encoding environment that goes into effect immediately after the struct closes.
+To customize this environment, we use an _encoding directive_: a top-level S-expression annotated
+with `$ion_encoding`. Like `$ion_symbol_table`, this directive defines a new encoding environment
+that goes into effect immediately after the directive closes.
 
-NOTE: We use the term "encoding directive" to refer to the `$ion_encoding` struct, and "local
+NOTE: We use the term "encoding directive" to refer to the `$ion_encoding` S-expression, and "local
 symbol table directive" to refer to the `$ion_symbol_table` struct.  Both forms are valid in
 Ion 1.1.
 
@@ -98,16 +98,22 @@ The general syntax of an encoding directive is as follows:
 
 [{nrm}]
 ----
-**$ion_encoding**::{
-  modules:         [ /* module declarations \*/ ],
-  install_symbols: [ /* names declared in 'modules' field \*/ ],
-  install_macros:  [ /* names declared in 'modules' field */ ]
-}
+$ion_encoding::(
+  (*retain* ...)        // Reuse selected modules from the current segment
+  (*load* ...)          // Get a shared module from the catalog
+  (*module* ...)        // Define a new module inline
+  ...
+  (*symbol_table* ...)  // Install modules into the symbol table
+  (*macro_table* ...)   // Install modules into the macro table
+)
 ----
 
-The three fields here correspond directly to the main components of the environment.
-The `modules` field enumerates the available modules, while the `install_symbols`
-and `install_macros` fields specify the layout of the local symbol and macro tables.
+Each syntactic form affects one of the main components of the environment.
+The `*symbol_table*` and `*macro_table*` clauses specify the layout of those tables, while the
+preceding clauses enumerate the available modules that may be installed into them.
+
+NOTE: Using an S-expression instead of a struct constrains the order in which
+clauses are encountered, making it both more code-like and easier to parse.
 
 Let’s look at some examples illustrating the relation between `$ion_symbol_table` and
 `$ion_encoding`.
@@ -132,42 +138,41 @@ same order. (The IDs will be different, though, due to new system symbols.)
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*module* local
-      (*symbols* [ "s1", "s2" ]))
-  ],
-  install_symbols: [ local ]
-}
+**$ion_encoding**::(
+  (*module* extracted
+    (*symbol_table* [ "s1", "s2" ]))
+  (*symbol_table* extracted)
+)
 ----
 
 The definition of the local symbol table has been refactored into two parts. First, the list of
-symbols is expressed inside a module named `local`. Then, the symbols from that module are
+symbols is expressed inside a module named `extracted`. Then, the symbols from that module are
 installed to form the new local symbol table. Compared to the behavior of `$ion_symbol_table`,
 this is akin to defining a named symbol table “inline” to hold local symbols, then defining the
 local symbol table only via `imports` and no `symbols` field.
 
-Let's look more closely at the definition of `local`:
+Let's look more closely at the definition of `extracted`:
 
 [{nrm}]
 ----
-(*module* local
-  (*symbols* ["s1", "s2"]))
+(*module* extracted
+  (*symbol_table* [ "s1", "s2" ]))
 ----
 
-The `*module*` keyword starts an S-expression that defines a new module with the given name.
-The `*symbols*` keyword starts a subform that defines the module's exported symbol table.
-This clause expects a list of strings, and both the syntax and semantics are the same as the
+The `*module*` keyword starts an S-expression that defines a new _inline module_ with the given
+name.
+The `*symbol_table*` keyword starts a subform that defines the module's exported symbol table.
+This clause accepts a list of strings, using the same syntax and semantics as the
 `symbols` field of `$ion_shared_symbol_table`.
 
-Once this module is defined, we can _install_ it into the local symbol table:
+Once this module is defined, we can install its symbols into the directive's symbol table:
 
 [{nrm}]
 ----
-  install_symbols: [ local ]
+  (*symbol_table* extracted)
 ----
 
-This field expects a list of symbols that match names declared in the `modules` field.  The
+This clause accepts a series of symbols that match names declared in the `modules` field.  The
 resulting local symbol table is simply the concatenation of the exported symbol tables of those
 modules.  This works the same way as the `imports` field of `$ion_symbol_table`.
 
@@ -175,7 +180,7 @@ modules.  This works the same way as the `imports` field of `$ion_symbol_table`.
 === Importing Symbols
 
 Given the equivalencies above, we could perform a naive round-trip of the preceding 1.1 document
-back to 1.0. First, turn the `local` module into the equivalent shared symbol table:
+back to 1.0. First, turn the `extracted` module into the equivalent shared symbol table:
 
 [{nrm}]
 ----
@@ -186,7 +191,7 @@ back to 1.0. First, turn the `local` module into the equivalent shared symbol ta
 }
 ----
 
-Then translate `install_symbols:[local]` into its 1.0 equivalent:
+Then translate `(*symbol_table* extracted)` into its 1.0 equivalent:
 
 [{nrm}]
 ----
@@ -201,21 +206,18 @@ new shared symbol table.
 
 The latter imports-only document has this 1.1 equivalent:
 
-
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*import* extracted "com.example.extracted" 1 2)
-  ],
-  install_symbols: [ extracted ]
-}
+**$ion_encoding**::(
+  (*load* extracted "com.example.extracted" 1 2)
+  (*symbol_table* extracted)
+)
 ----
 
 Here we see a new form inside the `modules` field that imports a module into the encoding
 environment and assigns it a name.
-The `*import*` keyword starts an S-expression that expects three or four arguments. The first is
+The `*load*` keyword starts an S-expression that expects three or four arguments. The first is
 a symbolic name that we can use later to refer to the imported module.  The remaining arguments
 are effectively the `name`, `version` and `max_id` fields of the 1.0 `imports` struct, with only
 the max_id being optional in this form.
@@ -242,12 +244,12 @@ Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [(*import* m1 "com.example.shared1" 1 10),
-            (*import* m2 "com.example.shared2" 2 20),
-            (*module* local (*symbols* ["s1", "s2"]))],
-  install_symbols: [m1, m2, local]
-}
+**$ion_encoding**::(
+  (*load* m1 "com.example.shared1" 1 10)
+  (*load* m2 "com.example.shared2" 2 20)
+  (*module* local_syms (*symbol_table* ["s1", "s2"]))
+  (*symbol_table* m1 m2 local_syms)
+)
 ----
 
 Just as in the 1.0 version, this allocates ten symbol IDs for `m1` (as requested by its
@@ -255,17 +257,17 @@ max_id argument), twenty symbol IDs for `m2`, then the two locally-defined symbo
 
 By decoupling symbol-table importing from installation, Ion 1.1 allows some encoding techniques
 that are not possible in 1.0.  For example, we can give local symbols smaller IDs than imported
-symbols by installing `local` first:
+symbols by installing `local_syms` first:
 
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [(*import* m1 "com.example.shared1" 1 10),
-            (*import* m2 "com.example.shared2" 2 20),
-            (*module* local (*symbols* ["s1", "s2"]))]
-  install_symbols: [local, m1, m2]                       // 'local' is first
-}
+**$ion_encoding**::(
+  (*load* m1 "com.example.shared1" 1 10)
+  (*load* m2 "com.example.shared2" 2 20)
+  (*module* local_syms (*symbol_table* ["s1", "s2"]))
+  (*symbol_table* local_syms m1 m2)                    // 'local_syms' is first
+)
 ----
 
 While there is little impact in this example, when imported tables are large this technique can
@@ -273,9 +275,9 @@ ensure that local symbols fit into the first 256 addresses, using only two bytes
 binary.
 
 
-=== Extending the Symbol Table
+=== Extending the Current Symbol Table
 
-The last 1.0 feature to examine is local symbol table extension:
+The last 1.0 feature to examine is adding symbols to the current symbol table:
 
 [{nrm}]
 ----
@@ -298,35 +300,33 @@ the next, while also defining a new module for the additional symbols.
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [(*module* local (*symbols* ["s1", "s2"]))],
-  install_symbols: [local]
-}
+**$ion_encoding**::(
+  (*module* syms (*symbol_table* ["s1", "s2"]))
+  (*symbol_table* syms)
+)
 
 // ... application data ...
 
-**$ion_encoding**::{
-  modules: [
-    (*retain* *{asterisk}*),
-    (*module* local2 (*symbols* ["s3", "s4"]))
-  ],
-  install_symbols: [local, local2]
-}
+**$ion_encoding**::(
+  (*retain* *{asterisk}*)
+  (*module* syms2 (*symbol_table* ["s3", "s4"]))
+  (*symbol_table* syms syms2)
+)
 ----
 
 The `*retain*` clause indicates that all (`*{asterisk}*`) of the available modules in the
 current encoding environment are to be reused in the new one. Alternatively, individual modules
 can be named, if only a subset is desired.
 
-Here again, Ion 1.1 enables a new technique: we can prepend new symbols to the existing LST.
+Here again, Ion 1.1 enables a new technique: we can prepend new symbols to the current symbol table.
 
 [{nrm}]
 ----
-**$ion_encoding**::{
-  modules:[ local,
-            (*module* local2 (*symbols* ["s3", "s4"]))],
-  install_symbols: [local2, local]                    // 'local2' is first
-}
+**$ion_encoding**::(
+  (*retain* *{asterisk}*)
+  (*module* syms2 (*symbol_table* ["s3", "s4"]))
+  (*symbol_table* syms2 syms)                    // 'syms2' is first
+)
 ----
 
 
@@ -343,16 +343,15 @@ in full context:
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*module* geo
-      (*macro* point [(int x), (int y)]
+**$ion_encoding**::(
+  (*module* geo
+    (*macro_table*
+      (*macro* point [(x *int!*), (y *int!*)]
         {x: x, y: y})
-      (*macro* line  [(point a), (point b)]
-        [a, b]))
-  ],
-  install_macros: [ geo ]
-}
+      (*macro* line  [(a *point!*), (b *point!*)]
+        [a, b])))
+  (*macro_table* geo)
+)
 (:point 17 28)
 (:line (1 2) (3 4))
 ----
@@ -360,7 +359,7 @@ in full context:
 This `geo` module defines macros instead of symbols, using the `*macro*` definition syntax
 explored throughout <<sec:macroexample>>.
 
-The `install_macros` field works much like `install_symbols`: it assembles a local macro
+The `macro_table` field works much like `symbol_table`: it assembles a macro
 table by concatenating the exported macro tables of the referenced modules, which must be
 declared within the adjacent `modules` field.
 
@@ -407,77 +406,85 @@ a generalization of Ion 1.0's shared symbol tables. As discussed in
 
 TIP: In Ion 1.1, a shared symbol table _is_ a shared module.
 
-NOTE: We intend to propose a new schema for shared modules, akin to the new `$ion_encoding` schema.
+[.line-through]##NOTE: We intend to propose a new schema for shared modules, akin to the new `$ion_encoding` schema.
 That should be easier to explain and understand than the format below.
+##
 
-For backwards compatibility purposes, shared modules are expressed using the legacy schema for
-shared symbol tables, adding a `module` field to hold macro definitions:
+[.line-through]#For backwards compatibility purposes, shared modules are expressed using the legacy schema for
+shared symbol tables, adding a `module` field to hold macro definitions:#
 
 [{nrm}]
 ----
 *$ion_1_0*
-**$ion_shared_symbol_table**::{
-  name: "com.example.graphics.3d",
-  version: 1,
-  symbols: ["x", "y", "z"],
-
-  // Schema addition follows:
-  module: $ion_1_1::(
-    (*macro* point [(int x), (int y), (int z)]
+**$ion_shared_module**::$ion_1_1::(
+  (*catalog_key* "com.example.graphics.3d" 1)
+  (*symbol_table* ["x", "y", "z"])
+  (*macro_table*
+    (*macro* point [(x *int!*), (y *int!*), (z *int!*)]
       {x: x, y: y, z: z})
-    (*macro* line  [(point a), (point b)]
+    (*macro* line  [(a *point!*), (b *point!*)]
       [a, b])
-    (*macro* poly  [(point first), (point... rest)]
-      [first, rest])
-  )
-}
+    (*macro* poly  [(first *point!*), (second *point!*), (rest *point\...+*)]
+      [first, second, rest]))
+)
 ----
 
-The `module` field here is very similar to the `*module*` S-expression inside `$ion_encoding`.
-Here, no symbolic name is declared, since one will be assigned when the module is ``*import*``ed.
+This S-expression is very similar to the `*module*` S-expression inside `$ion_encoding`.
+Here, no symbolic name is declared, since one will be assigned when the module is loaded.
 No `*symbols*` clause is allowed, since those are expected to be in the legacy `symbols` field.
-For comparison, here's a functionally-equivalent local definition:
+For comparison, here's a functionally-equivalent inline definition:
 
 [{nrm}]
 ----
-**$ion_encoding**::{
-  modules: [
-    (*module* g3d
-      (*symbols* ["x", "y", "z"])
-      (*macro* point [(int x), (int y), (int z)]
+**$ion_encoding**::(
+  (*module* g3d
+    (*symbol_table* ["x", "y", "z"])
+    (*macro_table*
+      (*macro* point [(x *int!*), (y *int!*), (z *int!*)]
         {x: x, y: y, z: z})
-      (*macro* line  [(point a), (point b)]
+      (*macro* line  [(a *point!*), (b *point!*)]
         [a, b])
-      (*macro* tri   [(point a), (point b), (point c)]
-        [a, b, c]))
+      (*macro* poly  [(first *point!*), (second *point!*), (rest *point\...+*)]
+        [first, second, rest])))
+  ...
 ----
 
-The `$ion_shared_symbol_table` document above is encoded in Ion 1.0 format, despite containing
+The `$ion_shared_module` document above is encoded in Ion 1.0 format, despite containing
 information that only applies to an Ion 1.1 implementation.  Shared symbol tables are
 communicated via the Ion data model, which is guaranteed consistent across all Ion 1.x
 specifications, so encoding modules can be expressed using any Ion version with no change in
-semantics.  To accomplish this, we require the IVM-like `$ion_1_1` annotation on the `module`
-field, denoting the <<spec-version,spec version>> that provides meaning to the module.
+semantics.  To accomplish this, we require the IVM-like `$ion_1_1` annotation on the definition,
+denoting the <<spec-version,spec version>> that provides meaning to the module.
 
 
 === Using Shared Macros
 
-With a shared module at hand, we can import it and install its macros:
+With a shared module at hand, we can load it and install its macros:
 
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*import* g3d "com.example.graphics.3d" 1),     // Import it
-    (*module* geo
-      (*macro* point [(int x), (int y)]
+**$ion_encoding**::(
+  (*load* g3d "com.example.graphics.3d" 1)  // Load it
+  (*macro_table* g3d)                       // Install it
+)
+----
+
+We can also combine shared and inline modules:
+
+[{nrm}]
+----
+*$ion_1_1*
+**$ion_encoding**::(
+  (*load* g3d "com.example.graphics.3d" 1)
+  (*module* geo
+    (*macro_table*
+      (*macro* point [(x *int!*), (y *int!*)]
         {x: x, y: y})
-      (*macro* line  [(point a), (point b)]
-        [a, b]))
-  ],
-  install_macros: [ geo, g3d ]                    // Install it
-}
+      (*macro* line  [(a point**!**), (b point**!**)]
+        [a, b])))
+  (*macro_table* geo g3d)
+)
 ----
 
 We now have a problem: the names `point` and `line` are ambiguous, referring to two different
@@ -496,12 +503,13 @@ the name is ambiguous, meaning that two installed modules map it to different ma
 (:point 17 28) ⇒ **error**: ':point' is ambiguous, exported by 'geo' and 'g3d'.
 ----
 
-Another thing to note in the directive used above is that the `**import** g3d` declaration
+Another thing to note in the directive used above is that the `**load** g3d` declaration
 includes a symbol table name and version, but no max_id argument.  As with imports in a local
 symbol table, absence of max_id forces
 the Ion implementation to acquire the symbol table entity with exactly the stated version.  While
 this is generally not best-practice for importing symbols, exact-match is a **requirement** for
-using the module in `install_macros`.  In other words, when a document is encoded using macros,
+using any macros in the module or installing it in a `*macro_table*`.  In other words,
+when a document is encoded using macros,
 the Ion decoder will always use the _exact_ version of those macros that was used when encoding
 the data.
 
@@ -522,47 +530,68 @@ First we take our basic geometric macros and package them in a shared module:
 
 [{nrm}]
 ----
-**$ion_shared_symbol_table**::{
-  name: "com.example.geometry",
-  version: 1,
-  module: $ion_1_1::(
-    (*macro* point [(int x), (int y)]
+**$ion_shared_module**::$ion_1_1::(
+  (*catalog_key* "com.example.geometry" 1)
+  (*macro_table*
+    (*macro* point [(x *int!*), (y *int!*)]
       {x: x, y: y})
-    (*macro* line  [(point a), (point b)]
-      [a, b])
-  )
-}
+    (*macro* line  [(a point**!**), (b point**!**)]
+      [a, b]))
+)
 ----
 
 Now we build another shared module using it:
 
 [{nrm}]
 ----
-**$ion_shared_symbol_table**::{
-  name: "com.example.charts",
-  version: 1,
-  module: $ion_1_1::(
-    (*import* geo "com.example.geometry" 1)
-    (*macro* scatterplot [(*point\...* points)]
-      [points])
-  )
-}
+**$ion_shared_module**::$ion_1_1::(
+  (*catalog_key* "com.example.charts" 1)
+  (*load* geo "com.example.geometry" 1)   // <1>
+  (*macro_table*
+    (*macro* scatterplot
+      [(points ':geo:point'**\...**)]        // <2>
+      [points]))
+)
 ----
 
-Here's another `*import*` clause, but this time it's inside a module rather than alongside them
-in an encoding directive.  This makes the geometry module visible only within this module, so we
+<1> Loading the `geo` module means...
+<2> ...we can access `point` by qualified reference.
+
+Here's another `*load*` clause, but this time it's inside a module rather than alongside them
+in an encoding directive.  This makes the `geo` module visible only within this module, so we
 can reference `point` as the argument shape of the `scatterplot` macro.  As before, we assign a
 symbolic name to the module for qualified references.
 
-We know how to use the macro:
+It's often preferable to avoid the clunky quoted qualified references by bringing into scope not
+just the `geo` module but also its macros, via `*use*`:
+
+[{nrm}]
+----
+**$ion_shared_module**::$ion_1_1::(
+  (*catalog_key* "com.example.charts" 1)
+  (*use* (*load* geo "com.example.geometry" 1))   // <1>
+  (*macro_table*
+    (*macro* scatterplot [(points point**\...**)]    // <2>
+      [points]))
+)
+----
+
+<1> Using the `geo` module means...
+<2> ...no qualification needed for `point`.
+
+The `*use*` clause accepts a series of modules, by name or by `*load*`, and makes their exported
+macros visible in the body of the importing module.  This is common, so there's a shorthand:
+`(*import* ...)` is equivalent to `(*use* (*load* ...))`.
+
+Regardless of how `scatterplot` is declared, we know how to invoke it in a document:
 
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [(*import* chart "com.example.charts" 1)],
-  install_macros: [chart]
-}
+**$ion_encoding**::(
+  (*load* chart "com.example.charts" 1)
+  (*macro_table* chart)
+)
 (:scatterplot (3 17) (395 23) (15 48) (2023 5))
 ----
 
@@ -582,14 +611,14 @@ imported into it:
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [(*import* chart "com.example.charts" 1)],
-  install_macros: [chart, geo]
-}
+**$ion_encoding**::(
+  (*load* chart "com.example.charts" 1)
+  (*macro_table* chart geo)
+)
   ⇒ **error**: no module named 'geo' is available for installation.
 ----
 
-When the Ion implementation loads the 'chart' module, it will transitively load the geometry
+When the Ion implementation loads the `chart` module, it will transitively load the geometry
 module as well, but the import of `com.example.geometry` by `com.example.charts` is
 _not visible by name_ to the importer.
 
@@ -598,20 +627,20 @@ You can do similar things within an encoding directive:
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*module* geo
-      (*macro* point [(int x), (int y)]
+**$ion_encoding**::(
+  (*module* geo
+    (*macro_table*
+      (*macro* point [(x *int!*), (y *int!*)]
         {x: x, y: y})
-      (*macro* line  [(point a), (point b)]
-        [a, b]))
-    (*module* chart
-      (*import* geo)                                 // <1>
-      (*macro* scatterplot [(point\... points)]
-        [points]))
-  ],
-  install_macros: [ chart ]                        // <2>
-}
+      (*macro* line  [(a point**!**), (b point**!**)]
+        [a, b])))
+  (*module* chart
+    (*import* geo)                                 // <1>
+    (*macro_table*
+      (*macro* scatterplot [(points point**\...**)]
+        [points])))
+  (*macro_table* chart)                            // <2>
+)
 ----
 
 <1> Importing `geo` makes its macros accessible within `chart`.
@@ -628,12 +657,12 @@ import both the 2d and 3d modules:
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*module* chart
-      (*import* geo "com.example.geometry" 1)
-      (*import* g3d "com.example.graphics.3d" 1)
-      (*macro* scatterplot [(point\... points)]
+**$ion_encoding**::(
+  (*module* chart
+    (*import* geo "com.example.geometry" 1)
+    (*import* g3d "com.example.graphics.3d" 1)
+    (*macro_table*
+      (*macro* scatterplot [(points point**\...**)]
 
   ⇒ **error**: 'point' is ambiguous, exported by 'geo' and 'g3d'.
 ----
@@ -644,7 +673,7 @@ smile syntax does not apply.  Instead, use a quoted symbol:
 
 [{nrm}]
 ----
-      (*macro* scatterplot [(':geo:point' \... points)]
+      (*macro* scatterplot [(points ':geo:point' **\...**)]
         [points]))
 ----
 
@@ -653,12 +682,12 @@ A more ergonomic approach is to introduce an alias to disambiguate:
 
 [{nrm}]
 ----
-  modules: [
-    (*module* chart
-      (*import* geo "com.example.geometry" 1)
-      (*import* g3d "com.example.graphics.3d" 1)
-      (*alias* point2 ':geo:point')               // <1>
-      (*macro* scatterplot [(point2 \... points)]  // <2>
+  (*module* chart
+    (*import* geo "com.example.geometry" 1)
+    (*import* g3d "com.example.graphics.3d" 1)
+    (*alias* point2 ':geo:point')                 // <1>
+    (*macro_table*
+      (*macro* scatterplot [(points point2 **\...**)]  // <2>
         [points])
       ...
 ----
@@ -680,22 +709,21 @@ available to consumers of the module, and for that they can be exported:
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*import* geo "com.example.geometry" 1),
-    (*import* g3d "com.example.graphics.3d" 1),
-    (*module* local
-      (*import* geo)
-      (*import* g3d)
-      (*alias* point2 ':geo:point')
-      (*alias* point3 ':g3d:point')
-      (*export* point2 point3))
-  ],
-  install_macros: [ local, geo, g3d ]
-}
+**$ion_encoding**::(
+  (*load* geo "com.example.geometry" 1)
+  (*load* g3d "com.example.graphics.3d" 1)
+  (*module* local
+    (*alias* point2 ':geo:point')  // <1>
+    (*alias* point3 ':g3d:point')
+    (*macro_table*
+      (*export* point2 point3)))
+  (*macro_table* local geo g3d)
+)
 (:point2 93 5)
 (:point3 0 12 33)
 ----
+
+<1> Modules loaded at the directive level are visible within inline module bodies.
 
 Exports can also be used to "pass through" selected macros from an imported module: `(*export*
 ':g2d:line')` exports the name `line` from the enclosing module.  The pass-through form is
@@ -704,10 +732,11 @@ _almost_ the same as the pair of clauses:
 [{nrm}]
 ----
 (*alias* line ':g2d:line')
+...
 (*export* line)
 ----
 
-..._except_ the latter declares a local name while the pass-through does not.
+\..._except_ the latter declares a local name while the pass-through does not.
 
 IMPORTANT: The macro names exported by a module must be unique, regardless of whether they are
 exported implicitly via `*macro*` or explicitly via `*export*`.
@@ -716,44 +745,43 @@ exported implicitly via `*macro*` or explicitly via `*export*`.
 === Extending the Macro Table
 
 Some Ion use cases benefit from defining macros "on the fly" in response to repeated content.
-The techniques we used to extend the symbol table in <<_extending_the_symbol_table>> work for
-the macro table as well:
+The techniques we used to extend the symbol table in <<_extending_the_current_symbol_table>> work
+for the macro table as well:
 
 
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [(*module* local
-              (*symbols* ["s1", "s2"])
-              (*macro* m1 ...))],
-  install_symbols: [local]
-  install_macros:  [local]
-}
+**$ion_encoding**::(
+  (*module* mod1
+    (*symbol_table* ["s1", "s2"])
+    (*macro_table (*macro* mac1 ...)))
+  (*symbol_table* mod1)
+  (*macro_table*  mod1)
+)
 
 // ... application data ...
 
-**$ion_encoding**::{
-  modules: [(*retain* *{asterisk}*),
-            (*module* local2
-              (*symbols* /{asterisk} new symbols {asterisk}/)
-              (*macro* m2 ...))
-  ],
-  install_symbols: [local, local2]
-  install_macros:  [local, local2]
-}
+**$ion_encoding**::(
+  (*retain* *{asterisk}*)
+  (*module* mod2
+    (*symbol_tables* ["s3", "s4"])
+    (*macro_table (*macro* mac2 ...)))
+  (*symbol_table* mod1 mod2)
+  (*macro_table*  mod1 mod2)
+)
 ----
 
 
 === Separate Installation
 
-The preceding example has some repetition between `install_symbols` and `install_macros`,
+The preceding example has some repetition between `*symbol_table*` and `*macro_table*`,
 illustrating that the symbol and macro tables are maintained independently.
 The following is legal:
 
 ----
-  install_symbols: [local, local2]
-  install_macros:  [local2, local]
+  (*symbol_table* mod1 mod2)
+  (*macro_table*  mod2 mod1)
 ----
 
 There's no
@@ -766,26 +794,26 @@ If we find this particularly bothersome, a macro can eliminate the repetition:
 
 [{nrm}]
 ----
-(*macro* install_both [(symbol\... module_names)]
-  {
-    install_symbols: [module_names],
-    install_macros:  [module_names]
-  })
+(*macro* both_tables [(module_names *symbol\...*)]
+  (values
+    (make_sexp (*literal* symbol_table) module_names)
+    (make_sexp (*literal* macro_table ) module_names)))
 ----
 
 Invoked as:
 
 [{nrm}]
 ----
-**$ion_encoding**::{
-  modules: [(*import* foo ...),
-            (*import* bar ...),
-            (*import* baz ...)],
-  (:install_both bar foo baz)
-}
+**$ion_encoding**::(
+  (*load* foo ...)
+  (*load* bar ...)
+  (*load* baz ...)
+  (:both_tables bar foo baz)
+)
 ----
 
-This leverages <<_splicing_in_encoded_data,splicing>> to add two fields to the enclosing struct.
+This leverages <<_splicing_in_encoded_data,splicing>> to add two S-expressions to the enclosing
+directive.
 
 
 === Prioritization
@@ -799,20 +827,18 @@ macros, far more than the 64 that can be invoked with a single-byte opcode.  If 
 document invokes, say, 3D `point` and `tri` more than anything else, we can grant them
 single-byte opcodes by ensuring they show up first among the installed macros:
 
-
 [{nrm}]
 ----
 *$ion_1_1*
-**$ion_encoding**::{
-  modules: [
-    (*import* geo "com.example.geometry" 1),
-    (*import* g3d "com.example.graphics.3d" 1),
-    (*module* priority
-      (*import* g3d)
-      (*export* point tri))
-  ],
-  install_macros: [priority, geo, g3d]
-}
+**$ion_encoding**::(
+  (*load* geo "com.example.geometry" 1)
+  (*load* g3d "com.example.graphics.3d" 1)
+  (*module* priority
+    (*use* g3d)
+    (*macro_table*
+      (*export* point tri)))
+  (*macro_table* priority geo g3d)
+)
 (:0 101 17 5)                            // invoke :g3d:point
 (:1 (101 17 5) (101 17 20) (100 17 20))  // invoke :g3d:tri
 ----
