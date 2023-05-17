@@ -7,7 +7,7 @@
 A variable-length unsigned integer.
 
 The bytes of a ``VarUInt``s are written in
-link:https://en.wikipedia.org/wiki/Endianness:[little-endian byte order]. This means that the first byte will contain
+link:https://en.wikipedia.org/wiki/Endianness:[little-endian byte order]. This means that the first bytes will contain
 the ``VarUInt``'s least significant bits.
 
 The least significant bits in the `VarUInt` indicate the number of bytes that were used to encode the integer.
