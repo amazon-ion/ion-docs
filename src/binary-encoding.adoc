@@ -73,7 +73,7 @@ as two's complement.
 .Figure {counter:figure}: `_VarInt_` encoding of `_14_`
 [source,%unbreakable]
 ----
-              ┌──── Lowest bit is 1 (`end`), indicating
+              ┌──── Lowest bit is 1 (end), indicating
               │     this is the only byte.
 0 0 0 1 1 1 0 1
 └─────┬─────┘
@@ -83,7 +83,7 @@ as two's complement.
 .Figure {counter:figure}: `_VarInt_` encoding of `_-14_`
 [source,%unbreakable]
 ----
-              ┌──── Lowest bit is 1 (`end`), indicating
+              ┌──── Lowest bit is 1 (end), indicating
               │     this is the only byte.
 1 1 1 0 0 1 0 1
 └─────┬─────┘
@@ -686,7 +686,7 @@ using UTC time. This required applications to perform conversion logic when tran
 *In Ion 1.1, all binary timestamp fields are encoded in local time.*
 
 [[short_form_timestamp]]
-=== Short-form timestamp
+=== Short-form Timestamp
 
 If an opcode has a high nibble of `0x7_`, it represents a short-form timestamp. This encoding focuses on making the
 most common timestamp precisions and ranges the most compact; less common precisions can still be expressed via
@@ -694,190 +694,297 @@ the variable-length <<long_form_timestamp, long form timestamp>> encoding.
 
 Timestamps may be encoded using the short form if they meet all of the following conditions:
 
-* *The year is between 1970 and 2097*. The year subfield is encoded as the number of years since 1970. 7 bits are
+The year is between 1970 and 2097.:: The year subfield is encoded as the number of years since 1970. 7 bits are
 dedicated to representing the biased year, allowing timestamps through the year 2097 to be encoded in this form.
-* *The local offset is either UTC, unknown, or falls between `-14:00` to `+14:00` and is divisible by 15 minutes.* 7
+The local offset is either UTC, unknown, or falls between `-14:00` to `+14:00` and is divisible by 15 minutes.:: 7
 bits are dedicated to representing the local offset as the number of quarter hours from -56 (that is: offset `-14:00`).
 The value `0b1111111` indicates an unknown offset. At the time of this writing (2023-05T),
-link:https://en.wikipedia.org/wiki/List_of_UTC_offsets[all real-world offsets fall between `-12:00` and `+14:00`].
-* *The timestamp's fractional second precision (if present) is either 3 digits (milliseconds), 6 digits (microseconds),
-or 9 digits (nanoseconds).*
+link:https://en.wikipedia.org/wiki/List_of_UTC_offsets[all real-world offsets fall between `-12:00` and `+14:00`
+and are multiples of 15 minutes].
+The fractional seconds are a common precision.::
+The timestamp's fractional second precision (if present) is either 3 digits (milliseconds), 6 digits (microseconds),
+or 9 digits (nanoseconds).
+
+==== Opcodes by precision and offset
+
+Each opcode with a high nibble of `0x7_` indicates a different precision and offset encoding pair.
+
+[cols="^1a,^1a,^1a,.^4a"]
+|===
+|Opcode | Precision | Serialized size in bytes{asterisk} | Offset encoding
+
+|`0x70`
+|Year
+|1
+.3+|Implicitly _Unknown offset_
+
+|`0x71`
+|Month
+|2
+
+|`0x72`
+|Day
+|2
+
+|`0x73`
+|Hour and minutes
+|4
+.5+|1 bit to indicate _UTC_ or _Unknown Offset_
+
+|`0x74`
+|Seconds
+|5
+
+|`0x75`
+|Milliseconds
+|6
+
+|`0x76`
+|Microseconds
+|7
+
+|`0x77`
+|Nanoseconds
+|8
+
+|`0x78`
+|Hour and minutes
+|5
+.5+|7 bits to represent a known offset. +
+ +
+This encoding can also represent _UTC_ and _Unknown Offset_,
+though it is less compact than opcodes `0x73`-`0x77` above.
+
+|`0x79`
+|Seconds
+|5
+
+|`0x7A`
+|Milliseconds
+|7
+
+|`0x7B`
+|Microseconds
+|8
+
+|`0x7C`
+|Nanoseconds
+|9
+
+|`0x7D`
+3.3+^.^|_Reserved_
+|`0x7E`
+|`0x7F`
+|===
+_{asterisk} Serialized size in bytes does not include the opcode._
 
 The following letters to are used to denote bits in each subfield in diagrams that follow. Subfields occur in the same
 order in all encoding variants, and consume the same number of bits, with the exception of the fractional bits, which
 consume only enough bits to represent the fractional precision supported by the opcode being used.
 
-[cols="^1, ^1, 4"]
+[cols="^.^1a, ^.^1a, .^4a"]
 |===
 |Letter code | Number of bits | Subfield
 
-| *Y*
+| `Y`
 | 7
 | Year
 
-| *M*
+| `M`
 | 4
 | Month
 
-| *D*
+| `D`
 | 5
 | Day
 
-| *H*
+| `H`
 | 5
 | Hour
 
-| *m*
+| `m`
 | 6
 | Minute
 
-| *o*
+| `o`
 | 7
 | Offset
 
-| *U*
+| `U`
 | 1
 | Unknown or UTC offset
 
-| *s*
+| `s`
 |6
 | Second
 
-| *f*
+| `f`
 | 10 (ms) +
-20(μs) +
-30(ns) +
+20 (μs) +
+30 (ns) +
 | Fractional second
 
-| *-*
+| `-`
 | n/a
 | Unused
 |===
 
-NOTE: Timestamps are encoded in Little Endian byte order. In the diagrams below, the bytes are read from left to right
-(least significant to most significant), while the bits within each byte should be read from right to left. (Again
-least significant to most significant.) +
- +
-While this encoding may complicate human reading, it guarantees that the timestamp's subfields (`year`, `month`,
-etc.) occupy the same bit indexes regardless of how many bytes there are overall. (The last subfield,
+Timestamps are encoded in Little Endian byte order. In the diagrams below, the first byte shows the leading opcode
+in hexadecimal; the trailing bytes show the meaning and layout of their respective bits using the letter codes defined
+in the table above.
+
+[source,%unbreakable]
+----
+  byte 1           byte 2                         byte N
++========+========================+=====+========================+
+| OPCODE | high nibble:low nibble | ... | high nibble:low nibble |
++========+========================+=====+========================+
+----
+
+The bytes are read from left to right (least significant to most significant), while the bits within each byte should be
+read from right to left (also least significant to most significant.)
+
+NOTE: While this encoding may complicate human reading, it guarantees that the timestamp's subfields (`year`, `month`,
+etc.) occupy the same bit contiguous indexes regardless of how many bytes there are overall. (The last subfield,
 `fractional_seconds`, always begins at the same bit index when present, but can vary in length according to the
-precision.) This allows processors to read the Little-Endian bytes into an integer and then mask the appropriate
-bit ranges to access the subfields.
+precision.) This arrangement allows processors to read the Little-Endian bytes into an integer and then mask the
+appropriate bit ranges to access the subfields.
 
-==== Opcode `0x70`: Year (1 byte)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with year precision
+[source,%unbreakable]
 ----
-+=========+
-|-YYY:YYYY|
-+=========+
-----
-
-==== Opcode `0x71`: Month (2 bytes)
-[source]
-----
-+=========+=========+
-|MYYY:YYYY|----:-MMM|
-+=========+=========+
+            1
++======+=========+
+| 0x70 |-YYY:YYYY|
++======+=========+
 ----
 
-==== Opcode `0x72`: Day (2 bytes)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with month precision
+[source,%unbreakable]
 ----
-+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|
-+=========+=========+
-----
-
-==== Opcode `0x73`: Hour+Minutes @ UTC or Unknown (4 bytes)
-
-NOTE: Each encoding for a precision greater than or equal to `Hour+Minutes` comes in two flavors: one that uses a single
-bit (`U`) to indicate UTC versus Unknown offset, and another that uses 7 bits (`o`) to encode the number of quarter-hours
-offset from `-14:00`.
-
-[source]
-----
-+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|----:Ummm|
-+=========+=========+=========+=========+
+            1         2
++======+=========+=========+
+| 0x71 |MYYY:YYYY|----:-MMM|
++======+=========+=========+
 ----
 
-==== Opcode `0x74`: Hour+Minutes @ Offset (5 bytes)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with day precision
+[source,%unbreakable]
+----
+    1       2         3
++======+=========+=========+
+| 0x72 |MYYY:YYYY|DDDD:DMMM|
++======+=========+=========+
 ----
 
-+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|----:--oo|
-+=========+=========+=========+=========+=========+
+.Figure {counter:figure}: Encoding of a timestamp with hour-and-minutes precision at UTC or unknown offset
+[source,%unbreakable]
+----
+            1         2         3         4
++======+=========+=========+=========+=========+
+| 0x73 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|----:Ummm|
++======+=========+=========+=========+=========+
 ----
 
-==== Opcode `0x75`: Seconds @ UTC or Unknown (5 bytes)
-[source]
-----
-+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|----:--ss|
-+=========+=========+=========+=========+=========+
+.Figure {counter:figure}: Encoding of a timestamp with seconds precision at UTC or unknown offset
+[source,%unbreakable]
 ----
 
-==== Opcode `0x76`: Seconds @ Offset (5 bytes)
-[source]
-----
-+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|
-+=========+=========+=========+=========+=========+
+            1         2         3         4         5
++======+=========+=========+=========+=========+=========+
+| 0x74 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|----:--ss|
++======+=========+=========+=========+=========+=========+
 ----
 
-==== Opcode `0x77`: Milliseconds @ UTC or Unknown (6 bytes)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with milliseconds precision at UTC or unknown offset
+[source,%unbreakable]
 ----
-+=========+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|----:ffff|
-+=========+=========+=========+=========+=========+=========+
-----
-
-==== Opcode `0x78`: Milliseconds @ Offset (7 bytes)
-[source]
-----
-+=========+=========+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|----:--ff|
-+=========+=========+=========+=========+=========+=========+=========+
+            1         2         3         4         5         6
++======+=========+=========+=========+=========+=========+=========+
+| 0x75 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|----:ffff|
++======+=========+=========+=========+=========+=========+=========+
 ----
 
-==== Opcode `0x79`: Microseconds @ UTC or Unknown (7 bytes)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with microseconds precision at UTC or unknown offset
+[source,%unbreakable]
 ----
-+=========+=========+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|ffff:ffff|--ff:ffff|
-+=========+=========+=========+=========+=========+=========+=========+
-----
-
-==== Opcode `0x7A`: Microseconds @ Offset (8 bytes)
-[source]
-----
-+=========+=========+=========+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|ffff:ffff|----:ffff|
-+=========+=========+=========+=========+=========+=========+=========+=========+
+            1         2         3         4         5         6         7
++======+=========+=========+=========+=========+=========+=========+=========+
+| 0x76 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|ffff:ffff|--ff:ffff|
++======+=========+=========+=========+=========+=========+=========+=========+
 ----
 
-==== Opcode `0x7B`: Nanoseconds @ UTC or Unknown (8 bytes)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with nanoseconds precision at UTC or unknown offset
+[source,%unbreakable]
 ----
-+=========+=========+=========+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|ffff:ffff|ffff:ffff|ffff:ffff|
-+=========+=========+=========+=========+=========+=========+=========+=========+
+            1         2         3         4         5         6         7         8
++======+=========+=========+=========+=========+=========+=========+=========+=========+
+| 0x77 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|ssss:Ummm|ffff:ffss|ffff:ffff|ffff:ffff|ffff:ffff|
++======+=========+=========+=========+=========+=========+=========+=========+=========+
 ----
 
-==== Opcode `0x7B`: Nanoseconds @ Offset (9 bytes)
-[source]
+.Figure {counter:figure}: Encoding of a timestamp with hour-and-minutes precision at known offset
+[source,%unbreakable]
 ----
-+=========+=========+=========+=========+=========+=========+=========+=========+=========+
-|MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|ffff:ffff|ffff:ffff|--ff:ffff|
-+=========+=========+=========+=========+=========+=========+=========+=========+=========+
+
+            1         2         3         4         5
++======+=========+=========+=========+=========+=========+
+| 0x78 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|----:--oo|
++======+=========+=========+=========+=========+=========+
+----
+
+.Figure {counter:figure}: Encoding of a timestamp with seconds precision at known offset
+[source,%unbreakable]
+----
+            1         2         3         4         5
++======+=========+=========+=========+=========+=========+
+| 0x79 |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|
++======+=========+=========+=========+=========+=========+
+----
+
+.Figure {counter:figure}: Encoding of a timestamp with milliseconds precision at known offset
+[source,%unbreakable]
+----
+            1       2         3         4         5         6         7
++======+=========+=========+=========+=========+=========+=========+=========+
+| 0x7A |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|----:--ff|
++======+=========+=========+=========+=========+=========+=========+=========+
+----
+
+.Figure {counter:figure}: Encoding of a timestamp with microseconds precision at known offset
+[source,%unbreakable]
+----
+            1         2         3         4         5         6         7         8
++======+=========+=========+=========+=========+=========+=========+=========+=========+
+| 0x7B |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|ssss:ssoo|ffff:ffff|ffff:ffff|----:ffff|
++======+=========+=========+=========+=========+=========+=========+=========+=========+
+----
+
+.Figure {counter:figure}: Encoding of a timestamp with nanoseconds precision at known offset
+[source,%unbreakable]
+----
+            1         2         3         4
++======+=========+=========+=========+=========+
+| 0x7C |MYYY:YYYY|DDDD:DMMM|mmmH:HHHH|oooo:ommm|
++======+=========+=========+=========+=========+
+
+           5         6         7         8
+       +=========+=========+=========+=========+
+       |ssss:ssoo|ffff:ffff|ffff:ffff|ffff:ffff|
+       +=========+=========+=========+=========+
+
+           9
+       +=========+
+       |--ff:ffff|
+       +=========+
+
+
 ----
 
 WARNING: Opcodes `0x7D`, `0x7E`, and `7F` are illegal; they are reserved for future use.
 
 [[long_form_timestamp]]
-=== Long-form timestamp
+=== Long-form Timestamp
 
 Unlike the <<short_form_timestamp, Short-form timestamp encoding>>, which is limited to encoding
 timestamps in the most commonly referenced timestamp ranges and precisions for which it optimizes,
@@ -939,10 +1046,10 @@ decimal numbers greater than `1.0`. Note that validation is still required; name
 If the timestamp's length is `3`, the most significant bit in the final byte (`h`) is a flag
 that indicates month (`0`) or day (`1`) precision.
 
-==== Opcode `0xF7`: Long-form timestamp
-[source]
+.Figure {counter:figure}: Encoding of the body of a long-form timestamp
+[source,%unbreakable]
 ----
-     1         2         3         4         5         6         7       8         n
+     1         2         3         4         5         6         7         8           n
 +=========+=========+=========+=========+=========+=========+=========+=======+   +=========+
 |YYYY:YYYY|MMYY:YYYY|hDDD:DDMM|mmmm:HHHH|oooo:oomm|ssoo:oooo|----|ssss|VarUInt|...|FixedUInt|...
 +=========+=========+=========+=========+=========+=========+=========+=======+   +=========+
