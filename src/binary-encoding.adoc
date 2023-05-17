@@ -905,7 +905,7 @@ respective bits are denoted using the letter codes defined in the table above.
           |       |
          +=========+
 byte 0   |  0xNN   | <-- hex notation for constants like opcodes
-         +=========+ <-- boundary between some encoding primitive (e.g., opcode/`FlexUInt`)
+         +=========+ <-- boundary between encoding primitives (e.g., opcode/`FlexUInt`)
      1   |nnnn:nnnn| <-- bits denoted with a `:` as a delimeter to aid in reading
          +---------+ <-- octet boundary within an encoding primitive
          ...
