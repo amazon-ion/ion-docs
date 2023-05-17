@@ -1,5 +1,3 @@
-:toc:
-
 [[encoding_primitives]]
 == Encoding Primitives
 
