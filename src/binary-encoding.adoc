@@ -1,8 +1,7 @@
-= Binary Encoding
 :toc:
 
 [[encoding_primitives]]
-== Encoding primitives
+== Encoding Primitives
 
 [[varuint]]
 === `VarUInt`
@@ -18,18 +17,18 @@ If a `VarUInt` is `_N_` bytes long, its `_N-1_` least significant bits will be `
 in the next most significant position.
 All bits that are more significant than the terminal `1` represent the magnitude of the `VarUInt`.
 
-==== Example encoding of VarUInt 14 ====
-[source]
+.Figure {counter:figure}: `_VarUInt_` encoding of `_14_`
+[source,%unbreakable]
 ----
-              ┌──── Lowest bit is 1 (`end`), indicating
+              ┌──── Lowest bit is 1 (end), indicating
               │     this is the only byte.
 0 0 0 1 1 1 0 1
 └─────┬─────┘
 unsigned int 14
 ----
 
-==== Example encoding of VarUInt 729 ====
-[source]
+.Figure {counter:figure}: `_VarUInt_` encoding of `_729_`
+[source,%unbreakable]
 ----
              ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
@@ -41,8 +40,8 @@ of the unsigned  of the unsigned
 integer          integer
 ----
 
-==== Example encoding of VarUInt 21,043 ====
-[source]
+.Figure {counter:figure}: `_VarUInt_` encoding of `_21,043_`
+[source,%unbreakable]
 ----
             ┌───── There are 2 zeros in the least significant bits, so this
             │      integer is three bytes wide.
@@ -73,8 +72,8 @@ link:https://en.wikipedia.org/wiki/Two%27s_complement[two's complement notation]
 TIP: An implementation could choose to read a `VarInt` by instead reading a `VarUInt` and then reinterpreting its bits
 as two's complement.
 
-==== Example encoding of VarInt 14 ====
-[source]
+.Figure {counter:figure}: `_VarInt_` encoding of `_14_`
+[source,%unbreakable]
 ----
               ┌──── Lowest bit is 1 (`end`), indicating
               │     this is the only byte.
@@ -83,8 +82,8 @@ as two's complement.
  2's comp. 14
 ----
 
-==== Example encoding of VarInt -14 ====
-[source]
+.Figure {counter:figure}: `_VarInt_` encoding of `_-14_`
+[source,%unbreakable]
 ----
               ┌──── Lowest bit is 1 (`end`), indicating
               │     this is the only byte.
@@ -93,8 +92,8 @@ as two's complement.
  2's comp. -14
 ----
 
-==== Example encoding of VarInt 729 ====
-[source]
+.Figure {counter:figure}: `_VarInt_` encoding of `_729_`
+[source,%unbreakable]
 ----
              ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
@@ -106,8 +105,8 @@ of the 2's       of the 2's
 comp. integer    comp. integer
 ----
 
-==== Example encoding of VarInt -729 ====
-[source]
+.Figure {counter:figure}: `_VarInt_` encoding of `_-729_`
+[source,%unbreakable]
 ----
              ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
@@ -124,8 +123,8 @@ comp. integer    comp. integer
 
 A fixed-width, little-endian, unsigned integer whose length is inferred from the context in which it appears.
 
-==== Example encoding of FixedUInt 3,954,261 ====
-[source]
+.Figure {counter:figure}: `_FixedUInt_` encoding of `_3,954,261_`
+[source,%unbreakable]
 ----
 
 0 1 0 1 0 1 0 1  0 1 0 1 0 1 1 0  0 0 1 1 1 1 0 0
@@ -141,8 +140,8 @@ integer          integer          integer
 A fixed-width, little-endian, signed integer whose length is known from the context in which it appears. Its bytes
 are interpreted as two's complement.
 
-==== Example encoding of FixedInt -3,954,261 ====
-[source]
+.Figure {counter:figure}: `_FixedInt_` encoding of `_-3,954,261_`
+[source,%unbreakable]
 ----
 
 1 0 1 0 1 0 1 1  1 0 1 0 1 0 0 1  1 1 0 0 0 0 1 1
@@ -173,8 +172,8 @@ Example usages of the opcode include:
 pairs are spliced into the parent struct (TODO: Link)
 ** In a <<delimited_structs, delimited struct>>, terminating the sequence of `(field name, value)` pairs with `0xF0`.
 
-==== Example encoding of a `VarSym` with symbol ID `$10` ====
-[source]
+.Figure {counter:figure}: `_VarSym_` encoding of symbol ID `_$10_`
+[source,%unbreakable]
 ----
               ┌─── The leading VarInt ends in a `1`,
               │    no more VarInt bytes follow.
@@ -185,8 +184,8 @@ pairs are spliced into the parent struct (TODO: Link)
   positive 10
 ----
 
-==== Example encoding of a `VarSym` with symbol text `hello` ====
-[source]
+.Figure {counter:figure}: `_VarSym_` encoding of symbol text `_'hello'_`
+[source,%unbreakable]
 ----
               ┌─── The leading VarInt ends in a `1`,
               │    no more VarInt bytes follow.
@@ -197,8 +196,8 @@ pairs are spliced into the parent struct (TODO: Link)
   negative 5
 ----
 
-==== Example encoding of `''` (symbol with empty text) using an opcode ====
-[source]
+.Figure {counter:figure}: `_VarSym_` encoding of `''` (empty text) using an opcode
+[source,%unbreakable]
 ----
               ┌─── The leading VarInt ends in a `1`,
               │    no more VarInt bytes follow.
@@ -212,10 +211,10 @@ pairs are spliced into the parent struct (TODO: Link)
 [[opcodes]]
 == Opcodes
 
-An _opcode_ is a 1-byte <<fixeduint, `FixedUInt`>> that tells the reader what the next expression represents and how the
-bytes that follow should be interpreted.
+An _opcode_ is a 1-byte <<fixeduint, `FixedUInt`>> that tells the reader what the next expression represents
+and how the bytes that follow should be interpreted.
 
-=== Overview table
+=== Overview Table
 
 The meanings of each opcode are organized loosely by their high and low nibbles.
 
@@ -224,11 +223,11 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |High nibble | Low nibble | Meaning
 
 |`0x0_` to `0x3_`
-|`*`
+|`A`-`F`
 |Single-byte macro invocations
 
 |`0x4_`
-|`*`
+|`A`-`F`
 |Multibyte macro invocations
 
 .4+|`0x5_`
@@ -236,7 +235,7 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |Integers up to 8 bytes wide
 
 |`9`
-<|Reserved
+<|_Reserved_
 
 |`A`-`D`
 <|Floats
@@ -245,27 +244,27 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 <|Booleans
 
 |`0x6_`
-|`*`
+|`A`-`F`
 |Decimals
 
 |`0x7_`
-|`*`
+|`A`-`F`
 |Timestamps
 
 |`0x8_`
-|`*`
+|`A`-`F`
 |Strings
 
 |`0x9_`
-|`*`
+|`A`-`F`
 |Symbols with inline text
 
 |`0xA_`
-|`*`
+|`A`-`F`
 |Lists
 
 |`0xB_`
-|`*`
+|`A`-`F`
 |S-expressions
 
 .3+|`0xC_`
@@ -273,14 +272,14 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |Empty struct
 
 |`1`
-<|Reserved
+<|_Reserved_
 
 |`2`-`F`
 <|Structs with symbol address field names
 
 .2+|`0xD_`
 |`0`-`1`
-|Reserved
+|_Reserved_
 
 |`2`-`F`
 <|Structs with `VarSym` field names
@@ -308,7 +307,7 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 <|NOP
 
 |`E`
-<|Reserved
+<|_Reserved_
 
 |`F`
 <|System macro invocation
@@ -366,24 +365,24 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 
 
 
-[[single_byte_macro_invocations]]
-=== Single-byte macro invocations
+[[macro_invocation_with_address_in_opcode]]
+=== Macro Invocation With Address in the Opcode
 
 // TODO: link to macros chapter
 
 If the value of the opcode is less than `64` (`0x40`), it represents an invocation of the macro at the corresponding
 __address__—an offset within the local macro table.
 
-==== Example encoding of a single-byte invocation of the macro at address `7`
-[source]
+.Figure {counter:figure}: Invocation of macro address `_7_`
+[source,%unbreakable]
 ----
 0 0 0 0 0 1 1 1
 └──────┬──────┘
   FixedUInt 7
 ----
 
-==== Example encoding of an invocation of the macro at address `31`
-[source]
+.Figure {counter:figure}: invocation of macro address `_31_`
+[source,%unbreakable]
 ----
 0 0 0 1 1 1 1 1
 └──────┬──────┘
@@ -394,14 +393,14 @@ __address__—an offset within the local macro table.
 
 Note that the opcode alone tells us which macro is being invoked, but it does not supply enough information for the
 reader to parse any arguments that may follow. The parsing of arguments is described in detail in the section _Macro
-calling conventions_.
+calling conventions_. (TODO: Link)
 
-[[multi_byte_macro_invocations]]
-=== Multibyte macro invocations
+[[macro_invocation_with_address_as_varuint]]
+=== Macro Invocation With Address as `VarUInt`
 
 While invocations of macro addresses in the range `[0, 63]` can be encoded in a single byte using
-<<single_byte_macro_invocations, single byte macro invocations>>, many applications will benefit from defining more than
-64 macros.
+<<macro_invocation_with_address_in_opcode, invocations where the address is found in the opcode>>,
+many applications will benefit from defining more than 64 macros.
 
 If the high nibble of the opcode is `0x4_`, then the low nibble represents the four least significant bits of the macro
 address. A <<varuint, `VarUInt`>> follows that contains the remaining, more significant bits.
@@ -434,8 +433,8 @@ needed to encode invocations of macro addresses in various ranges.
 |25
 |===
 
-==== Example encoding of an invocation of the macro at address `131`
-[source]
+.Figure {counter:figure}: Invocation of macro address `_131_`
+[source,%unbreakable]
 ----
                                ┌─── The address VarUInt ends in a `1`,
                                │    no more VarUInt bytes follow.
@@ -452,8 +451,8 @@ Decoded value : 67
 Biased value  : 131
 ----
 
-==== Example encoding of an invocation of the macro at address `1211`
-[source]
+.Figure {counter:figure}: Invocation of macro address `_1,211_`
+[source,%unbreakable]
 ----
 
                                ┌─── The address VarUInt ends in a `1`,
@@ -471,8 +470,8 @@ Decoded value : 1,147
 Biased value  : 1,211
 ----
 
-==== Example encoding of an invocation of the macro at address `71376`
-[source]
+.Figure {counter:figure}: Invocation of macro address `_71,376_`
+[source,%unbreakable]
 ----
 
                               ┌─── The address VarUInt ends in `10`; the zero in the least significant
@@ -500,16 +499,16 @@ NOTE: From this point on in the document, example encodings are given in hexadec
 
 `0x5E` represents boolean `true`, while `0x5F` represents boolean `false`.
 
-=== Example encoding of `true`
-[source]
+.Figure {counter:figure}: Encoding of boolean `_true_`
+[source,%unbreakable]
 ----
-5e
+5E
 ----
 
-=== Example encoding of `false`
-[source]
+.Figure {counter:figure}: Encoding of boolean `_false_`
+[source,%unbreakable]
 ----
-5f
+5F
 ----
 
 [[numbers]]
@@ -526,8 +525,8 @@ Integers that require more than 8 bytes are encoded using the variable-length in
 followed by a
 <<varuint, VarUInt>> indicating how many bytes of representation data follow.
 
-==== Example encoding of `0`
-[source]
+.Figure {counter:figure}: Encoding of integer `_0_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in 50-58 range indicates integer
 │┌─── Low nibble 0 indicates
@@ -535,8 +534,8 @@ followed by a
 50
 ----
 
-==== Example encoding of `17`
-[source]
+.Figure {counter:figure}: Encoding of integer `_17_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in 50-58 range indicates integer
 │┌─── Low nibble 1 indicates
@@ -545,24 +544,24 @@ followed by a
     └── FixedInt 17
 ----
 
-==== Example encoding of `-944`
-[source]
+.Figure {counter:figure}: Encoding of integer `_-944_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in 50-58 range indicates integer
 │┌─── Low nibble 2 indicates
 ││    that two bytes follow.
-52 50 fc
+52 50 FC
    └─┬─┘
 FixedInt -944
 ----
 
-==== Example variable-length encoding of `-944`
-[source]
+.Figure {counter:figure}: Encoding of integer `_-944_`
+[source,%unbreakable]
 ----
 ┌──── Opcode F5 indicates a variable-length integer, VarUInt length follows
 │   ┌─── VarUInt 2; a 2-byte FixedInt follows
 │   │
-F5 05 50 fc
+F5 05 50 FC
       └─┬─┘
    FixedInt -944
 ----
@@ -583,8 +582,8 @@ indicated by opcode `0x5D`
 Note that in the Ion data model, float values are always 64 bits. However, if a value can be losslessly serialized
 in fewer than 64 bits, applications may choose to do so.
 
-==== Example encoding of `0e0`
-[source]
+.Figure {counter:figure}: Encoding of float `_0e0_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble A indicates
@@ -592,8 +591,8 @@ in fewer than 64 bits, applications may choose to do so.
 5A
 ----
 
-==== Example encoding of `3.14`
-[source]
+.Figure {counter:figure}: Encoding of float `_3.14e0_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble B indicates a 2-byte float
@@ -603,8 +602,8 @@ in fewer than 64 bits, applications may choose to do so.
 half-precision 3.14
 ----
 
-==== Example encoding of `3.1415927`
-[source]
+.Figure {counter:figure}: Encoding of float `_3.1415927e0_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble C indicates a 4-byte,
@@ -614,12 +613,12 @@ half-precision 3.14
 single-precision 3.1415927
 ----
 
-==== Example encoding of `3.141592653589793`
-[source]
+.Figure {counter:figure}: Encoding of float `_3.141592653589793e0_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
-│┌─── Low nibble C indicates a 4-byte,
-││    single-precision value.
+│┌─── Low nibble D indicates an 8-byte,
+││    double-precision value.
 5D 40 09 21 FB 54 44 2D 18
    └──────────┬──────────┘
 double-precision 3.141592653589793
@@ -640,8 +639,8 @@ Decimal values that require more than 14 bytes can be encoded using the variable
 A decimal with a coefficient of `-0` (which cannot be encoded as a `VarInt`) is encoded using opcode `6F`.
 The opcode is followed by a `VarUInt` representing the byte length and a `FixedInt` representing the exponent.
 
-==== Example encoding of `0d0`
-[source]
+.Figure {counter:figure}: Encoding of decimal `_0d0_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
 │┌─── Low nibble 0 indicates a zero-byte
@@ -649,8 +648,8 @@ The opcode is followed by a `VarUInt` representing the byte length and a `FixedI
 60
 ----
 
-==== Example encoding of `1.27`
-[source]
+.Figure {counter:figure}: Encoding of decimal `_1.27_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
 │┌─── Low nibble 3 indicates a 3-byte decimal
@@ -660,8 +659,8 @@ The opcode is followed by a `VarUInt` representing the byte length and a `FixedI
      └────── Coefficient: VarInt 127
 ----
 
-==== Example variable-length encoding of `1.27`
-[source]
+.Figure {counter:figure}: Variable-length encoding of decimal `_1.27_`
+[source,%unbreakable]
 ----
 ┌──── Opcode F6 indicates a variable-length decimal
 │
@@ -760,10 +759,12 @@ consume only enough bits to represent the fractional precision supported by the 
 NOTE: Timestamps are encoded in Little Endian byte order. In the diagrams below, the bytes are read from left to right
 (least significant to most significant), while the bits within each byte should be read from right to left. (Again
 least significant to most significant.) +
-While this encoding may complicate the diagrams somewhat, it guarantees that the timestamp's subfields (`year`, `month`,
+ +
+While this encoding may complicate human reading, it guarantees that the timestamp's subfields (`year`, `month`,
 etc.) occupy the same bit indexes regardless of how many bytes there are overall. (The last subfield,
 `fractional_seconds`, always begins at the same bit index when present, but can vary in length according to the
-precision.)
+precision.) This allows processors to read the Little-Endian bytes into an integer and then mask the appropriate
+bit ranges to access the subfields.
 
 ==== Opcode `0x70`: Year (1 byte)
 [source]
@@ -894,10 +895,10 @@ precision as follows:
 |Length | Corresponding precision
 
 | 0
-| illegal
+| _Illegal_
 
 | 1
-| illegal
+| _Illegal_
 
 | 2
 | Year
@@ -906,10 +907,10 @@ precision as follows:
 | Month or Day (see below)
 
 | 4
-| Illegal. The hour cannot be specified without also specifying minutes.
+| _Illegal; the hour cannot be specified without also specifying minutes_
 
 | 5
-| Illegal
+| _Illegal_
 
 | 6
 | Minutes
@@ -956,76 +957,79 @@ that indicates month (`0`) or day (`1`) precision.
 === Strings
 
 If the high nibble of the opcode is `0x8_`, it represents a string. The low nibble of the opcode
-indicates how many UTF-8 bytes follow. Opcode 0x80 represents a string with empty text ("").
+indicates how many UTF-8 bytes follow. Opcode `0x80` represents a string with empty text (`""`).
 
 Strings longer than 15 bytes can be encoded with the `F8` opcode, which takes a <<varuint, `VarUInt`>>-encoded length
 after the opcode.
 
-==== Example encoding of the empty string (`""`)
-[source]
+.Figure {counter:figure}: Encoding of the empty string, `_""_`
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 80-8F indicates a string
 │┌─── Low nibble 0 indicates that no UTF-8 bytes follow
 80
 ----
 
-==== Example encoding of a 14-byte string
-[source]
+.Figure {counter:figure}: Encoding of a 14-byte string
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 80-8F indicates a string
 │┌─── Low nibble E indicates that 14 UTF-8 bytes follow
 ││  f  o  u  r  t  e  e  n     b  y  t  e  s
-8E 66 6f 75 72 74 65 65 6e 20 62 79 74 65 73
+8E 66 6F 75 72 74 65 65 6E 20 62 79 74 65 73
    └──────────────────┬────────────────────┘
                  UTF-8 bytes
 ----
 
-==== Example encoding of a 24-byte string
-[source]
+.Figure {counter:figure}: Encoding of a 24-byte string
+[source,%unbreakable]
 ----
 ┌──── Opcode F8 indicates a variable-length string
 │  ┌─── Length: VarUInt 24
 │  │   v  a  r  i  a  b  l  e     l  e  n  g  t  h     e  n  c  o  d  i  n  g
-F8 31 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 65 6e 63 6f 64 69 6e 67
+F8 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
       └────────────────────────────────┬────────────────────────────────────┘
                                   UTF-8 bytes
 ----
 
 [[symbols_with_inline_text]]
-=== Symbols with inline text
+=== Symbols With Inline Text
 
-==== Example encoding of a symbol with empty text (`''`)
-[source]
+If the high nibble of the opcode is `0x9_`, it represents a symbol whose text follows the opcode. The low nibble of the
+opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol with empty text (`''`).
+
+.Figure {counter:figure}: Encoding of a symbol with empty text (`_''_`)
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 90-9F indicates a symbol with inline text
 │┌─── Low nibble 0 indicates that no UTF-8 bytes follow
 90
 ----
 
-==== Example encoding of a symbol with 14 bytes of inline text
-[source]
+.Figure {counter:figure}: Encoding of a symbol with 14 bytes of inline text
+[source,%unbreakable]
 ----
 ┌──── Opcode in range 90-9F indicates a symbol with inline text
 │┌─── Low nibble E indicates that 14 UTF-8 bytes follow
 ││  f  o  u  r  t  e  e  n     b  y  t  e  s
-9E 66 6f 75 72 74 65 65 6e 20 62 79 74 65 73
+9E 66 6F 75 72 74 65 65 6E 20 62 79 74 65 73
    └──────────────────┬────────────────────┘
                  UTF-8 bytes
 ----
 
-==== Example encoding of a symbol with 24 bytes of inline text
-[source]
+.Figure {counter:figure}: Encoding of a symbol with 24 bytes of inline text
+[source,%unbreakable]
 ----
 ┌──── Opcode F9 indicates a variable-length symbol with inline text
 │  ┌─── Length: VarUInt 24
 │  │   v  a  r  i  a  b  l  e     l  e  n  g  t  h     e  n  c  o  d  i  n  g
-F9 31 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 65 6e 63 6f 64 69 6e 67
+F9 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
       └────────────────────────────────┬────────────────────────────────────┘
                                   UTF-8 bytes
 ----
 
-[[symbols_with_symbol_table_addresses]]
-=== Symbols with text in the symbol table
+[[symbols_with_symbol_address_text]]
+=== Symbols With Symbol Address Text
 
 Symbol values whose text can be found in the local symbol table are encoded using opcodes `0xE1` through `0xE3`:
 
@@ -1056,15 +1060,15 @@ address that is decoded is biased by the number of addresses that can be encoded
 |===
 
 [[binary_data]]
-== Binary data
+== Binary Data
 
 [[blobs]]
 === Blobs
 
 Opcode `FE` indicates a blob of binary data.
 
-==== Example encoding of a 24-byte blob
-[source]
+.Figure {counter:figure}: Encoding of a blob with 24 bytes of data
+[source,%unbreakable]
 ----
 ┌──── Opcode FE indicates a blob, VarUInt length follows
 │   ┌─── Length: VarUInt 24
@@ -1080,8 +1084,8 @@ FE 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
 
 Opcode `FF` indicates a clob--character data of an unspecified encoding.
 
-==== Example encoding of a 24-byte clob
-[source]
+.Figure {counter:figure}: Encoding of a clob with 24 bytes of data
+[source,%unbreakable]
 ----
 ┌──── Opcode FF indicates a clob, VarUInt length follows
 │   ┌─── Length: VarUInt 24
@@ -1113,16 +1117,16 @@ If the list's encoded byte-length is too large to be encoded in a nibble, writer
 to write a variable-length list. The `0xFA` opcode is followed by a
 <<varuint, `VarUInt`>> that indicates the list's byte length.
 
-===== Example length-prefixed encoding of an empty list (`[]`)
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of an empty list (`_[]_`)
+[source,%unbreakable]
 ----
 ┌──── An Opcode in the range 0xA0-0xAF indicates a list.
 │┌─── A low nibble of 0 indicates that the child values of this list took zero bytes to encode.
 A0
 ----
 
-===== Example encoding of `[1, 2, 3]`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_[1, 2, 3]_`
+[source,%unbreakable]
 ----
 ┌──── An Opcode in the range 0xA0-0xAF indicates a list.
 │┌─── A low nibble of 0 indicates that the child values of this list took zero bytes to encode.
@@ -1131,8 +1135,8 @@ A6 51 01 51 02 51 03
      1     2     3
 ----
 
-===== Example encoding of `["variable length list"]`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_["variable length list"]_`
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xFA indicates a variable-length list. A VarUInt length follows.
 │  ┌───── Length: VarUInt 22
@@ -1144,21 +1148,21 @@ FA 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 6c 69 73 74
                           Nested string element
 ----
 
-==== Delimited encoding
+==== Delimited Encoding
 
 Opcode `0xF1` begins a delimited list, while opcode `0xF0` closes the most recently opened delimited container
 that has not yet been closed.
 
-===== Example delimited encoding of an empty list (`[]`)
-[source]
+.Figure {counter:figure}: Delimited encoding of an empty list (`_[]_`)
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xF1 indicates a delimited list
 │  ┌─── Opcode 0xF0 indicates the end of the most recently opened container
 F1 F0
 ----
 
-===== Example encoding of `[1, 2, 3]`
-[source]
+.Figure {counter:figure}: Delimited encoding of `_[1, 2, 3]_`
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xF1 indicates a delimited list
 │                    ┌─── Opcode 0xF0 indicates the end of
@@ -1168,8 +1172,8 @@ F1 51 01 51 02 51 03 F0
      1     2     3
 ----
 
-===== Example encoding of `[1, [2], 3]`
-[source]
+.Figure {counter:figure}: Delimited encoding of `_[1, [2], 3]_`
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xF1 indicates a delimited list
 │        ┌─── Opcode 0xF1 begins a nested delimited list
@@ -1184,9 +1188,9 @@ F1 51 01 F1 51 02 F0 51 03 F0
 ----
 
 [[s_expressions]]
-=== S-expressions
+=== S-Expressions
 
-==== Length-prefixed encoding
+==== Length-prefixed Encoding
 
 An opcode with a high nibble of `0xB_` indicates a length-prefixed S-expression. The lower nibble of the
 opcode indicates how many bytes were used to encode the child values that the S-expression contains.
@@ -1195,16 +1199,16 @@ If the S-expression's encoded byte-length is too large to be encoded in a nibble
 the `0xFB` opcode to write a variable-length S-expression. The `0xFB` opcode is followed by a
 <<varuint, `VarUInt`>> that indicates the S-expression's byte length.
 
-===== Example length-prefixed encoding of an empty S-expression (`()`)
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of an empty S-expression (`_()_`)
+[source,%unbreakable]
 ----
 ┌──── An Opcode in the range 0xB0-0xBF indicates an S-expression.
 │┌─── A low nibble of 0 indicates that the child values of this S-expression took zero bytes to encode.
 B0
 ----
 
-===== Example encoding of `(1 2 3)`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_(1 2 3)_`
+[source,%unbreakable]
 ----
 ┌──── An Opcode in the range 0xB0-0xBF indicates an S-expression.
 │┌─── A low nibble of 6 indicates that the child values of this S-expression took six bytes to encode.
@@ -1213,34 +1217,34 @@ B6 51 01 51 02 51 03
      1     2     3
 ----
 
-===== Example encoding of `("variable length sexp")`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_("variable length sexp")_`
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xFB indicates a variable-length list. A VarUInt length follows.
 │  ┌───── Length: VarUInt 22
 │  │  ┌────── Opcode 0xF8 indicates a variable-length string. A VarUInt length follows.
 │  │  │  ┌─────── Length: VarUInt 20
 │  │  │  │   v  a  r  i  a  b  l  e     l  e  n  g  t  h     s  e  x  p
-FB 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 73 65 78 70
+FB 2D F8 29 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 73 65 78 70
       └─────────────────────────────┬─────────────────────────────────┘
                           Nested string element
 ----
 
-==== Delimited encoding
+==== Delimited Encoding
 
 Opcode `0xF2` begins a delimited S-expression, while opcode `0xF0` closes the most recently opened
 delimited container that has not yet been closed.
 
-===== Example delimited encoding of an empty S-expression (`()`)
-[source]
+.Figure {counter:figure}: Delimited encoding of an empty S-expression (`_()_`)
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xF2 indicates a delimited S-expression
 │  ┌─── Opcode 0xF0 indicates the end of the most recently opened container
 F2 F0
 ----
 
-===== Example encoding of `(1 2 3)`
-[source]
+.Figure {counter:figure}: Delimited encoding of `_(1 2 3)_`
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xF2 indicates a delimited S-expression
 │                    ┌─── Opcode 0xF0 indicates the end of
@@ -1250,8 +1254,8 @@ F2 51 01 51 02 51 03 F0
      1     2     3
 ----
 
-===== Example encoding of `(1 (2) 3)`
-[source]
+.Figure {counter:figure}: Delimited encoding of `_(1 (2) 3)_`
+[source,%unbreakable]
 ----
 ┌──── Opcode 0xF2 indicates a delimited S-expression
 │        ┌─── Opcode 0xF2 begins a nested delimited S-expression
@@ -1275,7 +1279,7 @@ Structs have 3 available encodings:
 . <<delimited_structs, Delimited structs with `VarSym` field names>>
 
 [[structs_with_symbol_address_field_names]]
-==== Structs with symbol address field names
+==== Structs With Symbol Address Field Names
 
 An opcode with a high nibble of `0xC_` indicates a struct with symbol address field names. The lower
 nibble of the opcode indicates how many bytes were used to encode all of its nested `(field name, value)`
@@ -1288,16 +1292,16 @@ to write a variable-length struct with symbol address field names. The `0xFC` op
 Each field in the struct is encoded as a <<varuint, `VarUInt`>> representing the address of the field name's
 text in the symbol table, followed by an opcode-prefixed value.
 
-===== Example encoding of an empty struct (`{}`)
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of an empty struct (`_{}_`)
+[source,%unbreakable]
 ----
 ┌──── An opcode in the range 0xC0-0xCF indicates a struct with symbol address field names
 │┌─── A lower nibble of 0 indicates that the struct's fields took zero bytes to encode
 C0
 ----
 
-===== Example encoding of `{$10: 1, $11: 2}`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_{$10: 1, $11: 2}_`
+[source,%unbreakable]
 ----
 ┌──── An opcode in the range 0xC0-0xCF indicates a struct with symbol address field names
 │  ┌─── Field name: VarUInt 10 ($10)
@@ -1308,8 +1312,8 @@ C6 15 51 01 17 51 02
         1        2
 ----
 
-===== Example encoding of `{$10: "variable length struct"}`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_{$10: "variable length struct"}_`
+[source,%unbreakable]
 ----
  ┌───────────── Opcode `FC` indicates a variable length struct with symbol address field names
  │  ┌────────── Length: VarUInt 25
@@ -1323,7 +1327,7 @@ FC 33 15 F8 2D 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 73 74 72 75 63 74
 ----
 
 [[structs_with_varsym_field_names]]
-==== Structs with `VarSym` field names
+==== Structs With `VarSym` Field Names
 
 NOTE: This encoding is very similar to <<structs_with_symbol_address_field_names, structs with symbol address
 field names>>, but allows writers to choose between representing each field name as a symbol address
@@ -1345,8 +1349,8 @@ to write a variable-length struct with <<varsym, `VarSym`>> field names. The `0x
 Each field in the struct is encoded as a  <<varsym, `VarSym`>> field name, followed by an
 opcode-prefixed value.
 
-===== Example encoding of `{"foo": 1, $11: 2}`
-[source]
+.Figure {counter:figure}: Length-prefixed encoding of `_{"foo": 1, $11: 2}_`
+[source,%unbreakable]
 ----
 ┌─── Opcode with high nibble `D` indicates a struct with VarSym field names
 │┌── Length: 7
@@ -1358,10 +1362,11 @@ D9 FD 66 6F 6F 51 01 17 91 02
        bytes
 ----
 
+[sidebar]
 TODO: Demonstrate splicing macro values into the struct via VarSym escape code `0x00`.
 
 [[delimited_structs]]
-==== Delimited structs
+==== Delimited Structs
 
 Opcode `0xF3` indicates the beginning of a delimited struct with <<varsym, `VarSym`>> field names,
 while opcode `0xF0` closes the most recently opened delimited container that has not yet been closed.
@@ -1370,8 +1375,8 @@ NOTE: While length-prefixed structs can choose between <<structs_with_symbol_add
 symbol address field names>> and <<structs_with_varsym_field_names, structs with `VarSym` field names>>,
 delimited structs always use `VarSym`-encoded field names.
 
-===== Example encoding of the empty struct (`{}`)
-[source]
+.Figure {counter:figure}: Delimited encoding of the empty struct (`_{}_`)
+[source,%unbreakable]
 ----
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.│
 │  ┌─── VarSym escape code 0x00: an opcode follows
@@ -1380,8 +1385,8 @@ delimited structs always use `VarSym`-encoded field names.
 F3 00 F0
 ----
 
-===== Example encoding of `{"foo": 1, $11: 2}`
-[source]
+.Figure {counter:figure}: Delimited encoding of `_{"foo": 1, $11: 2}_`
+[source,%unbreakable]
 ----
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `VarSym` field names.
 │
@@ -1444,15 +1449,15 @@ mapping is as follows:
 |`null.struct`
 |===
 
-==== Example encoding of `null`
-[source]
+.Figure {counter:figure}: Encoding of `_null_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xEA` represents a null (null.null)
 EA
 ----
 
-==== Example encoding of `null.string`
-[source]
+.Figure {counter:figure}: Encoding of `_null.string_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xEB` indicates a typed null; a byte indicating the type follows
 │  ┌──── Byte 0x05 indicates the type `string`
@@ -1478,7 +1483,7 @@ It is illegal for an annotations sequence to appear before any of the following:
 `annotate` macro.
 
 [[annotations_with_symbol_addresses]]
-==== Annotations with symbol addresses
+==== Annotations With Symbol Addresses
 Opcodes `0xE4` through `0xE6` indicate one or more annotations encoded as symbol addresses. If the opcode is:
 
 * `0xE4`, a single <<varuint, `VarUInt`>>-encoded symbol address follows.
@@ -1486,8 +1491,8 @@ Opcodes `0xE4` through `0xE6` indicate one or more annotations encoded as symbol
 * `0xE6`, a <<varuint, `VarUInt`>> follows that represents the number of bytes needed to encode
 the annotations sequence, which can be made up of any number of `VarUInt` symbol addresses.
 
-==== Example encoding of `$10::false`
-[source]
+.Figure {counter:figure}: Encoding of `_$10::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE4` indicates a single annotation encoded as a symbol address follows
 │  ┌──── Annotation with symbol address: VarUInt 10
@@ -1495,8 +1500,8 @@ E4 15 5F
       └── The annotated value: `false`
 ----
 
-==== Example encoding of `$10::$11::false`
-[source]
+.Figure {counter:figure}: Encoding of `_$10::$11::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE5` indicates that two annotations encoded as symbol addresses follow
 │  ┌──── Annotation with symbol address: VarUInt 10 ($10)
@@ -1505,8 +1510,8 @@ E5 15 17 5F
          └── The annotated value: `false`
 ----
 
-==== Example encoding of `$10::$11::$12::false`
-[source]
+.Figure {counter:figure}: Encoding of `_$10::$11::$12::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE6` indicates a variable-length sequence of symbol address annotations;
 │     a VarUInt follows representing the length of the sequence.
@@ -1519,9 +1524,9 @@ E5 07 15 17 19 5F
 ----
 
 [[annotations_with_varsym_text]]
-==== Annotations with `VarSym` text
+==== Annotations With `VarSym` Text
 
-Opcodes 0xE7 through 0xE9 indicate one or more annotations encoded as <<varsym, `VarSym`>>s.
+Opcodes `0xE7` through `0xE9` indicate one or more annotations encoded as <<varsym, `VarSym`>>s.
 
 If the opcode is:
 
@@ -1534,8 +1539,8 @@ While this encoding is more flexible than <<annotations_with_symbol_addresses, a
 symbol addresses>>, it can be slightly less compact when all the annotations are encoded as symbol
 addresses.
 
-==== Example encoding of `$10::false`
-[source]
+.Figure {counter:figure}: Encoding of `_$10::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE7` indicates a single annotation encoded as a VarSym follows
 │  ┌──── Annotation with symbol address: VarSym 10 ($10)
@@ -1545,6 +1550,8 @@ E7 15 5F
 
 ==== Example encoding of `foo::false`
 [source]
+.Figure {counter:figure}: Encoding of `_foo::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE7` indicates a single annotation encoded as a VarSym follows
 │  ┌──── Annotation: VarSym -3; 3 bytes of UTF-8 text follow
@@ -1555,12 +1562,11 @@ E7 FD 66 6F 6F 5F
        bytes
 ----
 
-==== Example encoding of `$10::foo::false`
-
 Note that `VarSym` annotation sequences can switch between symbol address and inline text
 on a per-annotation basis.
 
-[source]
+.Figure {counter:figure}: Encoding of `_$10::foo::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE8` indicates two annotations encoded as VarSyms follow
 │  ┌──── Annotation: VarSym 10 ($10)
@@ -1572,9 +1578,8 @@ E8 15 FD 66 6F 6F 5F
           bytes
 ----
 
-==== Example encoding of `$10::foo::$11::false`
-
-[source]
+.Figure {counter:figure}: Encoding of `_$10::foo::$11::false_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xE9` indicates a variable-length sequence of VarSym-encoded annotations
 │  ┌──── Length: VarUInt 6
@@ -1597,16 +1602,16 @@ but can be used as padding to achieve a desired alignment.
 An opcode of `0xEC` indicates a single-byte `NOP` pad. An opcode of `0xED` indicates that a
 <<varuint, `VarUInt`>> follows that represents the number of additional bytes to skip.
 
-==== Example encoding of a 1-byte `NOP`
-[source]
+.Figure {counter:figure}: Encoding of a 1-byte `_NOP_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xEC` represents a 1-byte NOP pad
 │
 EC
 ----
 
-==== Example encoding of a 4-byte `NOP`
-[source]
+.Figure {counter:figure}: Encoding of a 4-byte `_NOP_`
+[source,%unbreakable]
 ----
 ┌──── The opcode `0xED` represents a variable-length NOP pad; a VarUInt length follows
 │  ┌──── Length: VarUInt 2; two more bytes of NOP follow
