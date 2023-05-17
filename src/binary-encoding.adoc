@@ -841,8 +841,8 @@ though it is less compact than opcodes `0x73`-`0x77` above.
 |===
 _{asterisk} Serialized size in bytes does not include the opcode._
 
-The body of short-form timestamps are encoded as a `FixedUInt` of the specified size of the op-code.  This integer is
-then partitioned in bit-fields for the timestamp's subfields.  Note that endian does not apply here because the
+The body of short-form timestamps are encoded as a `FixedUInt` of the size specified by the opcode.  This integer is
+then partitioned into bit-fields representing the timestamp's subfields.  Note that endianness does not apply here because the
 bit-fields are defined over the body interpreted as an _integer_.
 
 The following letters to are used to denote bits in each subfield in diagrams that follow. Subfields occur in the same
@@ -896,7 +896,7 @@ consume only enough bits to represent the fractional precision supported by the 
 | Unused
 |===
 
-We will denote the timestamp encoding as follows with each byte ordered from vertically from top to bottom.  The
+We will denote the timestamp encoding as follows with each byte ordered vertically from top to bottom.  The
 respective bits are denoted using the letter codes defined in the table above.
 
 [%unbreakable,source]
@@ -914,7 +914,7 @@ byte 0   |  0xNN   | <-- hex notation for constants like opcodes
          +=========+
 ----
 
-The bytes are read from top to down (least significant to most significant), while the bits within each byte should be
+The bytes are read from top to bottom (least significant to most significant), while the bits within each byte should be
 read from right to left (also least significant to most significant.)
 
 NOTE: While this encoding may complicate human reading, it guarantees that the timestamp's subfields (`year`, `month`,
