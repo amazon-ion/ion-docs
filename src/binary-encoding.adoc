@@ -2109,7 +2109,7 @@ arguments.
 )
 ----
 
-.Figure {counter:figure}: Encoding of E-expression `_(:foo 9)_`
+.Figure {counter:figure}: Encoding of E-expression `_(:foo 3.14e)_`
 [%unbreakable,source]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
@@ -2188,7 +2188,7 @@ arguments.
 │     address 0, `foo`. `foo` takes a tagged int as a parameter (`x`), so an opcode follows.
 │  ┌──── Opcode 0x85 indicates a 5-byte string. 5 UTF-8 bytes follow.
 │  │  h  e  l  l  o
-00 83 68 65 6C 6C 6F
+00 85 68 65 6C 6C 6F
       └──────┬─────┘
         UTF-8 bytes
 
