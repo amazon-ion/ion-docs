@@ -126,7 +126,7 @@ _module-body_ `)`
 |base-shape         |::=| _tagged-type_  \|  _primitive-type_  \|  _macro-ref_
 |simple-cardinality |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
 
-|grouped-param-spec  |::=|  `(` _param-name_ `[` _base-shape_ `]` _grouped-cardinality_ `)`
+|grouped-param-spec  |::=|  `(` _param-name_ `[` _base-shape_ `]` _grouped-cardinality_? `)`
 |grouped-cardinality |::=|  `*+*`  \|  `*'{asterisk}'*`
 
 |rest-spec        |::=|  `(` _param-name_ _base-shape_ _rest-cardinality_  `)`
