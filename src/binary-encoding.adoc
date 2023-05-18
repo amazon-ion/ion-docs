@@ -1,8 +1,11 @@
+[[sec:binary_encoding]]
+== Ion 1.1 Binary Encoding
+
 [[encoding_primitives]]
-== Encoding Primitives
+=== Encoding Primitives
 
 [[flexuint]]
-=== `FlexUInt`
+==== `FlexUInt`
 
 A variable-length unsigned integer.
 
@@ -52,7 +55,7 @@ integer          integer          integer
 ----
 
 [[flexint]]
-=== `FlexInt`
+==== `FlexInt`
 
 A variable-length signed integer.
 
@@ -112,7 +115,7 @@ comp. integer    comp. integer
 ----
 
 [[fixeduint]]
-=== `FixedUInt`
+==== `FixedUInt`
 
 A fixed-width, little-endian, unsigned integer whose length is inferred from the context in which it appears.
 
@@ -128,7 +131,7 @@ integer          integer          integer
 ----
 
 [[fixedint]]
-=== `FixedInt`
+==== `FixedInt`
 
 A fixed-width, little-endian, signed integer whose length is known from the context in which it appears. Its bytes
 are interpreted as two's complement.
@@ -145,7 +148,7 @@ comp. integer    integer          integer
 ----
 
 [[flexsym]]
-=== `FlexSym`
+==== `FlexSym`
 
 A variable-length symbol token whose UTF-8 bytes can be inline, found in the symbol table, or derived from a macro
 expansion.
@@ -202,12 +205,10 @@ pairs are spliced into the parent struct (TODO: Link)
 ----
 
 [[opcodes]]
-== Opcodes
+=== Opcode Overview
 
 An _opcode_ is a 1-byte <<fixeduint, `FixedUInt`>> that tells the reader what the next expression represents
 and how the bytes that follow should be interpreted.
-
-=== Overview Table
 
 The meanings of each opcode are organized loosely by their high and low nibbles.
 
@@ -357,9 +358,10 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |===
 
 
+=== Encoding Expressions
 
 [[e_expression_with_the_address_in_the_opcode]]
-=== E-expression With the Address in the Opcode
+==== E-expression With the Address in the Opcode
 
 // TODO: link to macros chapter
 
@@ -387,7 +389,7 @@ reader to parse any arguments that may follow. The parsing of arguments is descr
 calling conventions_. (TODO: Link)
 
 [[e_expression_with_the_address_as_a_trailing_flexuint]]
-=== E-expression With the Address as a Trailing `FlexUInt`
+==== E-expression With the Address as a Trailing `FlexUInt`
 
 While E-expressions invoking macro addresses in the range `[0, 63]` can be encoded in a single byte using
 <<e_expression_with_the_address_in_the_opcode, E-expressions with the address in the opcode>>,
@@ -486,7 +488,7 @@ Biased value  : 71,376
 NOTE: From this point on in the document, example encodings are given in hexadecimal notation.
 
 [[booleans]]
-== Booleans
+=== Booleans
 
 `0x5E` represents boolean `true`, while `0x5F` represents boolean `false`.
 
@@ -514,10 +516,10 @@ EB 00
 ----
 
 [[numbers]]
-== Numbers
+=== Numbers
 
 [[integers]]
-=== Integers
+==== Integers
 
 Opcodes in the range `0x50` to `0x58` represent an integer. The opcode is followed by a <<fixedint, `FixedInt`>> that
 represents the integer value. The low nibble of the opcode (`0x_0` to `0x_8`) indicates the size of the `FixedInt`.
@@ -580,7 +582,7 @@ EB 01
 ----
 
 [[floats]]
-=== Floats
+==== Floats
 
 Float values are encoded using the IEEE-754 specification, and can be serialized in four sizes:
 
@@ -649,7 +651,7 @@ EB 02
 ----
 
 [[decimals]]
-=== Decimals
+==== Decimals
 
 If an opcode has a high nibble of `0x6_`, it represents a decimal. Low nibble values `0x_E` and below indicate
 the number of trailing bytes used to encode the decimal.
@@ -725,7 +727,7 @@ EB 03
 ----
 
 [[timestamps]]
-== Timestamps
+=== Timestamps
 
 NOTE: In Ion 1.0, text timestamp fields were encoded using the local time while binary timestamp fields were encoded
 using UTC time. This required applications to perform conversion logic when transcribing from one format to the other.
@@ -749,7 +751,7 @@ EB 04
 ----
 
 [[short_form_timestamp]]
-=== Short-form Timestamp
+==== Short-form Timestamp
 
 If an opcode has a high nibble of `0x7_`, it represents a short-form timestamp. This encoding focuses on making the
 most common timestamp precisions and ranges the most compact; less common precisions can still be expressed via
@@ -768,7 +770,7 @@ The fractional seconds are a common precision.::
 The timestamp's fractional second precision (if present) is either 3 digits (milliseconds), 6 digits (microseconds),
 or 9 digits (nanoseconds).
 
-==== Opcodes by precision and offset
+===== Opcodes by precision and offset
 
 Each opcode with a high nibble of `0x7_` indicates a different precision and offset encoding pair.
 
@@ -1168,7 +1170,7 @@ byte 0   |  0x7C   |
 WARNING: Opcodes `0x7D`, `0x7E`, and `7F` are illegal; they are reserved for future use.
 
 [[long_form_timestamp]]
-=== Long-form Timestamp
+==== Long-form Timestamp
 
 Unlike the <<short_form_timestamp, Short-form timestamp encoding>>, which is limited to encoding
 timestamps in the most commonly referenced timestamp ranges and precisions for which it optimizes,
@@ -1263,10 +1265,10 @@ byte 0   |YYYY:YYYY|
 ----
 
 [[text]]
-== Text
+=== Text
 
 [[strings]]
-=== Strings
+==== Strings
 
 If the high nibble of the opcode is `0x8_`, it represents a string. The low nibble of the opcode
 indicates how many UTF-8 bytes follow. Opcode `0x80` represents a string with empty text (`""`).
@@ -1316,7 +1318,7 @@ EB 05
 ----
 
 [[symbols_with_inline_text]]
-=== Symbols With Inline Text
+==== Symbols With Inline Text
 
 If the high nibble of the opcode is `0x9_`, it represents a symbol whose text follows the opcode. The low nibble of the
 opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol with empty text (`''`).
@@ -1363,7 +1365,7 @@ EB 06
 ----
 
 [[symbols_with_symbol_address]]
-=== Symbols With a Symbol Address
+==== Symbols With a Symbol Address
 
 Symbol values whose text can be found in the local symbol table are encoded using opcodes `0xE1` through `0xE3`:
 
@@ -1394,10 +1396,10 @@ address that is decoded is biased by the number of addresses that can be encoded
 |===
 
 [[binary_data]]
-== Binary Data
+=== Binary Data
 
 [[blobs]]
-=== Blobs
+==== Blobs
 
 Opcode `FE` indicates a blob of binary data. A `FlexUInt` follows that represents the blob's byte-length.
 
@@ -1425,7 +1427,7 @@ EB 07
 
 
 [[clobs]]
-=== Clobs
+==== Clobs
 
 Opcode `FF` indicates a clob--binary character data of an unspecified encoding. A `FlexUInt` follows that represents
 the clob's byte-length.
@@ -1453,7 +1455,7 @@ EB 08
 ----
 
 [[containers]]
-== Containers
+=== Containers
 
 Each of the container types (list, s-expression, and struct) has both a length-prefixed encoding and a delimited
 encoding.
@@ -1463,9 +1465,9 @@ over uninteresting values in the data stream. In contrast, the delimited encodin
 writers, but requires the reader to visit each child value in turn to skip over the container.
 
 [[lists]]
-=== Lists
+==== Lists
 
-==== Length-prefixed encoding
+===== Length-prefixed encoding
 
 An opcode with a high nibble of `0xA_` indicates a length-prefixed list. The lower nibble of the
 opcode indicates how many bytes were used to encode the child values that the list contains.
@@ -1516,7 +1518,7 @@ FA 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 6c 69 73 74
 EB 09
 ----
 
-==== Delimited Encoding
+===== Delimited Encoding
 
 Opcode `0xF1` begins a delimited list, while opcode `0xF0` closes the most recently opened delimited container
 that has not yet been closed.
@@ -1556,7 +1558,7 @@ F1 51 01 F1 51 02 F0 51 03 F0
 ----
 
 [[s_expressions]]
-=== S-Expressions
+==== S-Expressions
 
 S-expressions use the same encodings as <<lists, lists>>, but with different opcodes.
 
@@ -1651,7 +1653,7 @@ EB 0A
 ----
 
 [[structs]]
-=== Structs
+==== Structs
 
 Structs have 3 available encodings:
 
@@ -1671,7 +1673,7 @@ EB 0B
 ----
 
 [[structs_with_symbol_address_field_names]]
-==== Structs With Symbol Address Field Names
+===== Structs With Symbol Address Field Names
 
 An opcode with a high nibble of `0xC_` indicates a struct with symbol address field names (which is similar to the
 link:https://amazon-ion.github.io/ion-docs/docs/binary.html#0xd-struct[only available encoding of structs in Ion 1.0].
@@ -1719,7 +1721,7 @@ FC 33 15 F8 2D 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 73 74 72 75 63 74
 ----
 
 [[structs_with_flexsym_field_names]]
-==== Structs With `FlexSym` Field Names
+===== Structs With `FlexSym` Field Names
 
 NOTE: This encoding is very similar to <<structs_with_symbol_address_field_names, structs with symbol address
 field names>>, but allows writers to choose between representing each field name as a symbol address
@@ -1757,7 +1759,7 @@ D9 FD 66 6F 6F 51 01 17 91 02
 TODO: Demonstrate splicing macro values into the struct via FlexSym escape code `0x00`.
 
 [[delimited_structs]]
-==== Delimited Structs
+===== Delimited Structs
 
 Opcode `0xF3` indicates the beginning of a delimited struct with <<flexsym, `FlexSym`>> field names.
 
@@ -1795,7 +1797,7 @@ F3 FD 66 6F 6F 51 01 17 91 02 00 F0
 ----
 
 [[nulls]]
-== Nulls
+=== Nulls
 
 The opcode `0xEA` indicates an untyped null (that is: `null`, or its alias `null.null`).
 
@@ -1862,7 +1864,7 @@ EB 05
 ----
 
 [[annotations]]
-== Annotations
+=== Annotations
 
 [sidebar]
 TODO: Decide whether we want an Ion 1.0-style double-length-prefixed sequence.
@@ -1991,7 +1993,7 @@ E9 0D 15 FD 66 6F 6F 17 5F
 ----
 
 [[nops]]
-== ``NOP``s
+=== ``NOP``s
 
 A `NOP` (short for "no-operation") is the binary equivalent of whitespace. `NOP` bytes have no meaning,
 but can be used as padding to achieve a desired alignment.
@@ -2021,4 +2023,3 @@ ED 05 93 C6
       └─┬─┘
 NOP bytes, values ignored
 ----
-
