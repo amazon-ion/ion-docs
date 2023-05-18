@@ -217,11 +217,11 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |High nibble | Low nibble | Meaning
 
 |`0x0_` to `0x3_`
-|`A`-`F`
+|`0`-`F`
 |E-expression with the address in the opcode
 
 |`0x4_`
-|`A`-`F`
+|`0`-`F`
 |E-expression with the address as a trailing `FlexUInt`
 
 .4+|`0x5_`
@@ -238,27 +238,27 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 <|Booleans
 
 |`0x6_`
-|`A`-`F`
+|`0`-`F`
 |Decimals
 
 |`0x7_`
-|`A`-`F`
+|`0`-`F`
 |Timestamps
 
 |`0x8_`
-|`A`-`F`
+|`0`-`F`
 |Strings
 
 |`0x9_`
-|`A`-`F`
+|`0`-`F`
 |Symbols with inline text
 
 |`0xA_`
-|`A`-`F`
+|`0`-`F`
 |Lists
 
 |`0xB_`
-|`A`-`F`
+|`0`-`F`
 |S-expressions
 
 .3+|`0xC_`
