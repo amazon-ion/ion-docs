@@ -4,6 +4,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/ruby,visualstudiocode,vim,emacs
 # Edit at https://www.toptal.com/developers/gitignore?templates=ruby,visualstudiocode,vim,emacs
 
+# JetBrains
+
+.idea/
+
 ### Emacs ###
 # -*- mode: gitignore; -*-
 *~
