@@ -2062,7 +2062,7 @@ The _core types_ are the 13 types in the Ion data model:
 [[abstract_types]]
 ===== Abstract types
 
-The _abstract types_ are unions of one or more of the <<core_types, core types>>.
+The _abstract types_ are unions of two or more of the <<core_types, core types>>.
 
 [cols="^.^1a, 6a"]
 |===
