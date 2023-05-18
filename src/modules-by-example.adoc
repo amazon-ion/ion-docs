@@ -765,7 +765,7 @@ for the macro table as well:
 **$ion_encoding**::(
   (*retain* *{asterisk}*)
   (*module* mod2
-    (*symbol_tables* ["s3", "s4"])
+    (*symbol_table* ["s3", "s4"])
     (*macro_table (*macro* mac2 ...)))
   (*symbol_table* mod1 mod2)
   (*macro_table*  mod1 mod2)

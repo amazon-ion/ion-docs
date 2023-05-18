@@ -122,9 +122,9 @@ expression.  Here’s a silly macro to illustrate:
 ----
 
 The sub-expressions in these templates demonstrate that the expression language treats symbols as
-variable references.  Each `a`, `b`, and `c` in the templates above refer to the parameters of the
-surrounding macro, and during expansion they are “filled in” with the values supplied by
-the invocation of the macro.
+variable references.  The symbols in the templates above (`a` and `c` in `price`; `a` and `b`
+in `reverse`) refer to the parameters of their respective surrounding macros, and during
+expansion they are “filled in” with the values supplied by the invocation of the macro.
 
 These names are part of the macro language that have no relation to data encoded using the macro:
 
@@ -307,7 +307,7 @@ TIP: These types also serve a second purpose: they can allow the binary encoding
 avoiding type tags or using fixed-width values.
 
 
-=== Cardinality: Rest Parameters
+=== Rest Parameters
 
 Sometimes we want a macro to accept an arbitrary number of arguments, in particular _all the rest
 of them_.  The `make_string` macro is one of those, concatenating all of its arguments into a
@@ -556,7 +556,7 @@ TIP: While `void` and `values` both produce the empty stream, the former is pref
 clarity of intent and terminology.
 
 
-=== Other Cardinalities
+=== Cardinality
 
 As described earlier, parameters are all streams of values, but the number of values can be
 controlled by the parameter's cardinality.  So far we have seen the `*!*` (exactly-one) and `*\...*`
