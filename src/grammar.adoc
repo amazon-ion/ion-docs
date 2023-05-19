@@ -102,12 +102,11 @@ _module-body_ `)`
 |macro-alias |::=|  `(` `*alias*` _macro-name_ _macro-ref_ `)`
 
 |module-mactab   |::=|  `(` `*macro_table*` _macro-or-export_* `)`
-|macro-or-export |::=|  _macro-defn_  \|  _export_
+|macro-or-export |::=|  _macro-defn_  \|  _export_  \|  _module-name_
 
 |export      |::=|  `(` `*export*` _export-item_* `)`
 |export-item |::=|  _macro-ref_                                         +
-                \|  `(` `*from*` _module-name_ _name-or-address_* `)`   +
-                \|  `(` `*all_from*` _module-name_ `)`
+                \|  `(` `*from*` _module-name_ _name-or-address_* `)`
 |===
 
 
@@ -165,8 +164,6 @@ _module-body_ `)`
                  \|  `(` `*if_void*`   _template_ _template_ _template_ `)`  +
                  \|  `(` `*if_single*` _template_ _template_ _template_ `)`  +
                  \|  `(` `*if_many*`   _template_ _template_ _template_ `)`  +
-                 \|  `(` `*when*`   _param-name_ _template_ `)`              +
-                 \|  `(` `*unless*` _param-name_ _template_ `)`              +
                  \|  `(` `*for*` `[` _for-clause_* `]` _template_ `)`
 
 |for-clause       |::=| `(` _identifier_ _template_ `)`
@@ -175,6 +172,9 @@ _module-body_ `)`
 |macro-arg        |::=|  _template_  \|  `[` _template_* `]`        // _Very_ roughly
 
 |===
+
+IMPORTANT: Special forms take precedence over macro invocations.
+Use a _local-ref_ or _qualified-ref_ to invoke a macro whose name shadows a special-form keyword.
 
 IMPORTANT: The syntax of __macro-arg__s is constrained by the macro expander, based on the
 signature of the invoked macro.
