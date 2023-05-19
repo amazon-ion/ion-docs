@@ -37,6 +37,8 @@ include::modules-by-example.adoc[]
 
 include::binary-encoding.adoc[]
 
+include::grammar.adoc[]
+
 // TODO very much a WIP
 //include::semantics-intro.adoc[]
 
