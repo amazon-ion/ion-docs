@@ -2161,6 +2161,17 @@ arguments.
 // The macro expander confirms that `null.int` matches the expected type: `number`.
 ----
 
+.Figure {counter:figure}: Encoding of E-expression `_(:foo null)_`
+[%unbreakable,source]
+----
+┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
+│     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
+│  ┌──── Opcode 0xEA represents an untyped null (aka `null.null`)
+00 EA
+
+// The macro expander confirms that `null` matches the expected type: `number`
+----
+
 .Figure {counter:figure}: Encoding of E-expression `_(:foo (:bar))_`
 [%unbreakable,source]
 ----
