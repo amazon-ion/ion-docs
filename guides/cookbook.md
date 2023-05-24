@@ -465,6 +465,7 @@ The following example shows how Ion data can be written:
 ```javascript
 let ion = require('ion-js');
 let IonTypes = require('ion-js').IonTypes;
+const utf8Decoder = new TextDecoder("utf-8");
 
 let writer = ion.makeTextWriter();
 writer.stepIn(IonTypes.STRUCT);      // step into a struct
@@ -472,7 +473,8 @@ writer.writeFieldName("hello");      // set the field name for the next value to
 writer.writeString("world");         // write the next value
 writer.stepOut();                    // step out of the struct
 writer.close();                      // close the writer
-console.log(String.fromCharCode.apply(null, writer.getBytes()));  // prints:  {hello:"world"}
+// Beware - JavaScript strings are UTF-16, so we must explictly decode from UTF-8 bytes
+console.log(utf8Decoder.decode(writer.getBytes()));  // prints:  {hello:"world"}
 ```
 
 If Ion binary encoding is desired, use `ion.makeBinaryWriter()` instead of `ion.makeTextWriter()`.
@@ -888,6 +890,7 @@ Ion data can be pretty-printed using a `Writer` returned by `makePrettyWriter()`
 
 ```javascript
 let ion = require('ion-js');
+const utf8Decoder = new TextDecoder("utf-8");
 
 let unformatted = '{level1: {level2: {level3: "foo"}, x: 2}, y: [a,b,c]}';
 
@@ -895,7 +898,8 @@ let reader = ion.makeReader(unformatted);
 let writer = ion.makePrettyWriter();
 writer.writeValues(reader);
 writer.close();
-console.log(String.fromCharCode.apply(null, writer.getBytes()));
+// Beware - JavaScript strings are UTF-16, so we must explictly decode from UTF-8 bytes
+console.log(utf8Decoder.decode(writer.getBytes()));
 ```
 </div>
 

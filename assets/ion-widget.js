@@ -34,12 +34,14 @@
     parse(source, out);
   });
 
+  const utf8Decoder = new TextDecoder("utf-8");
+
   var parse = function (source, out) {
     try {
       var reader = ion.makeReader(source);
       var writer = ion.makePrettyWriter();
       writer.writeValues(reader);
-      out.append(String.fromCharCode.apply(null, writer.getBytes()));
+      out.append(utf8Decoder.decode(writer.getBytes()));
       writer.close();
     } catch (e) {
       var errorSpan = document.createElement("span");
