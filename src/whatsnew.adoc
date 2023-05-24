@@ -146,8 +146,8 @@ delimited form that ends with the `0xF0` opcode.
 
 Struct values have link:binary-encoding.adoc#structs[three encodings]: a length-prefixed encoding which uses symbol IDs
 for its field names, a length-prefixed encoding which uses `FlexSym` for its field names (allowing for inline symbol text
-as needed), and a delimited form which encodes its field names with `FlexSym` ends with an escape (`0x00`) followed by
-the `0xF0` opcode. (There is no delimited form with symbol ID field names).
+as needed), and a delimited form which encodes its field names with `FlexSym` and ends with an escape (`0x00`) followed
+by the `0xF0` opcode. (There is no delimited form with symbol ID field names).
 
 Symbol values have link:binary-encoding.adoc#symbols_with_inline_text[two encodings]: one is the Ion 1.0-style
 encoding using the symbol ID, and the other one is structurally identical to the encoding of strings, supplying its
@@ -255,7 +255,7 @@ E-expressions.
 
 The *module* is a new concept in Ion 1.1.  It contains:
 
-* A list of of strings representing the symbol table of the module.
+* A list of strings representing the symbol table of the module.
 
 * A list of macro definitions.
 
