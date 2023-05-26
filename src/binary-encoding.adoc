@@ -2359,7 +2359,7 @@ parameter can have 0, 1, or 2 bits.
 |===
 |Grouping Mode|Cardinality|Example parameter signature|Number of bits|Bit(s) value|Encoding
 
-.7+|Ungrouped
+.6+|Ungrouped
 |Exactly-one
 |`(x int!)`
 |0
@@ -2368,7 +2368,7 @@ parameter can have 0, 1, or 2 bits.
 
 .2+|Zero-or-one
 .2+|`(x int?)`
-.6+|1
+.4+|1
 |`0`
 <|No expression; equivalent to `(:void)`
 
@@ -2383,12 +2383,10 @@ parameter can have 0, 1, or 2 bits.
 |`1`
 <|One expression
 
-.2+|One-or-more
-.2+|`(x int+)`
-|`0`
-<|No expression; equivalent to `(:void)`
-
-|`1`
+|One-or-more
+|`(x int+)`
+|0
+|_n/a_
 <|One expression
 
 .8+|Grouped
