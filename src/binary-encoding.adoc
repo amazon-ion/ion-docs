@@ -2424,8 +2424,8 @@ parameter can have 0, 1, or 2 bits.
 |===
 
 The total number of bits in the AEB can be calculated by analyzing the signature of the macro being invoked.
-If the macro has no parameters or all of its parameters have a cardinality of exactly-one, no bits are required; the
-AEB will be omitted altogether.
+If the macro has no parameters or all of its parameters have a cardinality of either exactly-one or one-or-more,
+no bits are required; the AEB will be omitted altogether.
 If the macro has many parameters with a cardinality other than exactly-one, it is possible for the AEB to require more
 than one byte to encode; in such cases, the bytes are written in little-endian order.
 AEB bytes can contain unused bits.
@@ -2588,8 +2588,8 @@ the end of the sequence of pages.
 │  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
 │  │     as a delimited expression group. Count-prefixed pages of `compact_int`
 │  │     expressions follow.
-│  │   ┌──── Count prefix: FlexUInt 2; 3 `compact_int`s follow.
-│  │   │        ┌──── Count prefix: FlexUInt 1; a single `compact_int`s follow.
+│  │   ┌──── Count prefix: FlexUInt 2; 2 `compact_int`s follow.
+│  │   │        ┌──── Count prefix: FlexUInt 1; a single `compact_int` follows.
 │  │   │        │    ┌──── Count prefix: FlexUInt 0; no more pages follow.
 │  │   │        │    │
 00 03 05 03 05 03 07 01
