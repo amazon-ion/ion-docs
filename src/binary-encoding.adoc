@@ -2302,8 +2302,7 @@ See the link:macros-by-example.adoc#macro_shapes[Macro Shapes] section of _Macro
 
 === Encoding E-expressions With Multiple Arguments
 
-If a macro has more than one parameter, the E-expression arguments corresponding to each parameter are encoded one
-after the other moving from left to right.
+E-expression arguments corresponding to each parameter are encoded one after the other moving from left to right.
 
 .Figure {counter:figure}: Definition of macro `_foo_` at address `_0_`
 [%unbreakable,source]
@@ -2392,7 +2391,7 @@ parameter can have 0, 1, or 2 bits.
 .8+|Grouped
 .4+|Zero-or-more
 .4+|`(x [int])` +
-`(x int...)`
+`(x int\...)`
 .8+|2
 |`00`
 |No expression; equivalent to `(:void)`
@@ -2408,7 +2407,7 @@ parameter can have 0, 1, or 2 bits.
 
 .4+|One-or-more
 .4+|`(x [int]+)` +
-`(x int...+)`
+`(x int\...+)`
 |`00`
 <|_Illegal._ One-or-more forbids `(:void)`.
 
