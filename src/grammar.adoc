@@ -1,9 +1,7 @@
 [[sec:grammar]]
 == Domain Grammar
 
-:nrm: subs="+normal"
-:bnf: cols="10,^2,40",frame=none,grid=none,stripes=none,options="noheader"
-:sp2: {nbsp}{nbsp}{nbsp}{nbsp}
+include::styles.adoc[]
 
 This chapter presents Ion 1.1's _domain grammar_, by which we mean the grammar of the domain
 of values that drive Ion's encoding features.

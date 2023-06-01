@@ -1,7 +1,7 @@
 [[sec:moduleexample]]
 == Modules by Example
 
-:nrm: subs="+normal"
+include::styles.adoc[]
 
 The prior chapter explored macro definitions while ignoring the contexts
 within which those definitions exist.  This chapter covers that context top-down.

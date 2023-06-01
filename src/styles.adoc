@@ -1,0 +1,10 @@
+// Common style attributes
+
+// Allow inclusion from multiple sub-documents.
+ifndef::bnf[]
+
+:bnf: cols="10,^2,40",frame=none,grid=none,stripes=none,options="noheader"
+:nrm: subs="+normal"
+:sp2: {nbsp}{nbsp}{nbsp}{nbsp}
+
+endif::[]
