@@ -346,9 +346,9 @@ in full context:
 **$ion_encoding**::(
   (*module* geo
     (*macro_table*
-      (*macro* point [(x *int!*), (y *int!*)]
+      (*macro* point [(x *int*), (y *int*)]
         {x: x, y: y})
-      (*macro* line  [(a *point!*), (b *point!*)]
+      (*macro* line  [(a *point*), (b *point*)]
         [a, b])))
   (*macro_table* geo)
 )
@@ -420,11 +420,11 @@ shared symbol tables, adding a `module` field to hold macro definitions:#
   (*catalog_key* "com.example.graphics.3d" 1)
   (*symbol_table* ["x", "y", "z"])
   (*macro_table*
-    (*macro* point [(x *int!*), (y *int!*), (z *int!*)]
+    (*macro* point [(x *int*), (y *int*), (z *int*)]
       {x: x, y: y, z: z})
-    (*macro* line  [(a *point!*), (b *point!*)]
+    (*macro* line  [(a *point*), (b *point*)]
       [a, b])
-    (*macro* poly  [(first *point!*), (second *point!*), (rest *point\...+*)]
+    (*macro* poly  [(first *point*), (second *point*), (rest *point\...+*)]
       [first, second, rest]))
 )
 ----
@@ -440,11 +440,11 @@ For comparison, here's a functionally-equivalent inline definition:
   (*module* g3d
     (*symbol_table* ["x", "y", "z"])
     (*macro_table*
-      (*macro* point [(x *int!*), (y *int!*), (z *int!*)]
+      (*macro* point [(x *int*), (y *int*), (z *int*)]
         {x: x, y: y, z: z})
-      (*macro* line  [(a *point!*), (b *point!*)]
+      (*macro* line  [(a *point*), (b *point*)]
         [a, b])
-      (*macro* poly  [(first *point!*), (second *point!*), (rest *point\...+*)]
+      (*macro* poly  [(first *point*), (second *point*), (rest *point\...+*)]
         [first, second, rest])))
   ...
 ----
@@ -479,9 +479,9 @@ We can also combine shared and inline modules:
   (*load* g3d "com.example.graphics.3d" 1)
   (*module* geo
     (*macro_table*
-      (*macro* point [(x *int!*), (y *int!*)]
+      (*macro* point [(x *int*), (y *int*)]
         {x: x, y: y})
-      (*macro* line  [(a point**!**), (b point**!**)]
+      (*macro* line  [(a point), (b point)]
         [a, b])))
   (*macro_table* geo g3d)
 )
@@ -533,9 +533,9 @@ First we take our basic geometric macros and package them in a shared module:
 **$ion_shared_module**::$ion_1_1::(
   (*catalog_key* "com.example.geometry" 1)
   (*macro_table*
-    (*macro* point [(x *int!*), (y *int!*)]
+    (*macro* point [(x *int*), (y *int*)]
       {x: x, y: y})
-    (*macro* line  [(a point**!**), (b point**!**)]
+    (*macro* line  [(a point), (b point)]
       [a, b]))
 )
 ----
@@ -630,9 +630,9 @@ You can do similar things within an encoding directive:
 **$ion_encoding**::(
   (*module* geo
     (*macro_table*
-      (*macro* point [(x *int!*), (y *int!*)]
+      (*macro* point [(x *int*), (y *int*)]
         {x: x, y: y})
-      (*macro* line  [(a point**!**), (b point**!**)]
+      (*macro* line  [(a point), (b point)]
         [a, b])))
   (*module* chart
     (*import* geo)                                 // <1>

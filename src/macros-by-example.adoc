@@ -283,14 +283,13 @@ To detect problems close to their source, macro signatures can declare type cons
 [{mrk}]
 ----
 (*macro* detail_page_url
-  [(asin *string* *!*)]
+  [(asin *string*)]
   (website_url (make_string "dp/" asin)))
 ----
 
 This example reveals additional syntax for parameter declarations.  So far, a parameter was
-declared by a symbol denoting its name, now we have an S-expression containing a name, a type,
-and a _cardinality_. Here the parameter's name is `asin`, its type is `string`, and its cardinality
-is `*!*` meaning that a single value is expected.
+declared by a symbol denoting its name, now we have an S-expression containing a name and a type.
+Here the parameter's name is `asin`, its type is `string`.
 The intended input domain is now clear and the Ion parser can emit an error sooner:
 
 [{mrk}]
@@ -300,8 +299,8 @@ The intended input domain is now clear and the Ion parser can emit an error soon
 
 In this context the types include all the normal “concrete” Ion types, abstract
 supertypes like `*number*`, `*text*`, and `*lob*`, and the unconstrained “top type” `*any*`.
-The latter is the default type, and the signature `[foo]` is equivalent to `[(foo *any* *{asterisk}*)]`
-meaning that the parameter `foo` accepts zero or more values of any type.
+The latter is the default type, and the signature `[foo]` is equivalent to `[(foo *any*)]`
+meaning that the parameter `foo` accepts one value of any type.
 
 TIP: These types also serve a second purpose: they can allow the binary encoding to be more compact by
 avoiding type tags or using fixed-width values.
@@ -396,7 +395,7 @@ returns too-few or too-many values.
 
 [{mrk}]
 ----
-(*macro* reverse [(a *any!*), (b *any!*)] // Recall that ! means "exactly one value"
+(*macro* reverse [(a *any*), (b *any*)]
   [b, a])
 ----
 
@@ -487,7 +486,7 @@ created and bound to the next value on the stream.
 [{mrk}]
 ----
 (*macro* prices
-  [(currency *symbol!*), (amounts *number\...*)]
+  [(currency *symbol*), (amounts *number\...*)]
   (*for* [(amt amounts)]                          // <1>
     (price amt currency)))
 ----
@@ -559,7 +558,8 @@ clarity of intent and terminology.
 === Cardinality
 
 As described earlier, parameters are all streams of values, but the number of values can be
-controlled by the parameter's cardinality.  So far we have seen the `*!*` (exactly-one) and `*\...*`
+controlled by the parameter's cardinality.  So far we have seen the default exactly-one
+and the `*\...*`
 (zero-or-more) cardinality modifiers, and in total there are six:
 
 [cols="1,1"]
@@ -577,7 +577,7 @@ controlled by the parameter's cardinality.  So far we have seen the `*!*` (exact
 ==== Exactly-One
 
 Many parameters expect exactly one value and thus have _exactly-one cardinality_.
-We've seen that his is expressed by writing the `*!*` modifier after the parameter type.
+This is the default for ungrouped parameters, but the `*!*` modifier can be used for clarity.
 
 This cardinality means that the parameter requires a stream producing a single value, so one
 might refer to them as _singleton streams_ or just _singletons_ colloquially.
@@ -592,7 +592,7 @@ argument as a way to denote an absent parameter.
 [{mrk}]
 ----
 (*macro* temperature
-  [(degrees *decimal!*), (scale *symbol?*)]
+  [(degrees *decimal*), (scale *symbol?*)]
   {degrees: degrees, scale: scale})
 ----
 
@@ -610,7 +610,7 @@ detect void:
 [{mrk}]
 ----
 (*macro* temperature
-  [(degrees *decimal!*), (scale *symbol?*)]
+  [(degrees *decimal*), (scale *symbol?*)]
   {degrees: degrees, scale: (*if_void* scale (*literal* K) scale)})
 ----
 ----
@@ -642,7 +642,7 @@ just last place.
 [{mrk}]
 ----
 (*macro* prices
-  [(amount *number{asterisk}*), (currency *symbol!*)]
+  [(amount *number{asterisk}*), (currency *symbol*)]
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -667,7 +667,7 @@ the resulting stream must produce at least one value.  To continue using our `pr
 [{mrk}]
 ----
 (*macro* prices
-  [(amount *number+*), (currency *symbol!*)]
+  [(amount *number+*), (currency *symbol*)]
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -715,7 +715,7 @@ applicable sub-expressions.  This is denoted by wrapping the parameter's type in
 ----
 (*macro* prices
   [(amount [*number*]),      // <1>
-   (currency *symbol!*)]
+   (currency *symbol*)]
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -759,13 +759,13 @@ intended to be void or a singleton empty-list value.
 
 Grouping says whether multiple _arguments_ can be provided, while cardinality describes the
 number of _values_ those argument(s) must produce.
-The parameter declaration `(amount [*number*])` makes grouping explicit, but has a default
-cardinality modifier of `*{asterisk}*`.
+The parameter declaration `(amount [*number*])` makes grouping explicit, with a default
+cardinality of zero-or-more.
 The declaration `(amount *[number]+*)` is also valid,
 indicating that the sequence of arguments must produce at least one value.
 
-TIP: Grouped parameters cannot use the `*?*` and `*!*` cardinalities; there's no point in
-requiring a list when no more than one value can be produced.
+TIP: Grouped parameters cannot use the `*?*` and `*!*` modifiers; there's no point in
+requiring a list when no more than one value is allowed.
 
 TIP: Rest parameters are effectively another grouping mode, so they cannot be combined with `[]`.
 
@@ -858,12 +858,12 @@ The following primitive types are available:
 |===
 
 
-To define a tagless parameter, add the `*tagless*` modifier to any of the concrete types:
+To define a tagless parameter, just declare one of the primitive types:
 
 [{mrk}]
 ----
 (*macro* point
-  [(x *var_int!*), (y *var_int!*)]
+  [(x *var_int*), (y *var_int*)]
   {x: x, y: y})
 ----
 ----
@@ -887,7 +887,11 @@ While Ion text syntax doesn’t use tags—the types are built into the syntax�
 that a text E-expression may only express things that can also be expressed using an equivalent
 binary E-expression.
 
-For more impact, use one of the fixed-width types, which are binary-encoded with no per-value
+For the same reasons, tagless types with cardinalities of zero-or-more and one-or-more can only be
+expressed by grouping or rest parameters, not by ungrouped forms.  For example,
+`(v *var_int+*)` and `(v *int32{asterisk}*)` are not accepted.
+
+A subset of the tagless types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
 
 [{mrk}]
@@ -979,15 +983,15 @@ parameter produces a stream of structs.
 The binary encoding of macro-shaped parameters are similarly tagless, eliding any opcodes
 mentioning `point` and just writing its arguments with minimal delimiting.
 
-Macro types can be grouped and/or combined with any cardinality, following the same rules as
-before.  Note that grouped macro shapes require callers to use two layers of delimiting
+Macro types can be grouped and/or combined with cardinality modifiers, following the same rules as
+tagless types.  Note that grouped macro shapes require callers to use two layers of delimiting
 containers: and outer list for the group, and an inner S-expression for
 each macro instance:
 
 [{mrk}]
 ----
 (*macro* scatterplot
-  [(points [point] *+*), (x_label *string!*), (y_label *string!*)]
+  [(points [point] *+*), (x_label *string*), (y_label *string*)]
   { points: [points], x_label: x_label, y_label: y_label })
 ----
 ----
@@ -1018,7 +1022,7 @@ Further, you can't use a macro invocation as an _element_ of the delimiting-list
 This limitation mirrors the binary encoding, where both the delimiting list and the individual
 macro invocations are tagless and there's no way to express a macro invocation.
 
-TIP: The primary goal of macro-shaped arguments, and primitive types in general, is to increase
+TIP: The primary goal of macro-shaped arguments, and tagless types in general, is to increase
 density by tightly constraining the inputs.
 
 
