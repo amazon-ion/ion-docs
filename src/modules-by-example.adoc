@@ -755,7 +755,7 @@ for the macro table as well:
 **$ion_encoding**::(
   (*module* mod1
     (*symbol_table* ["s1", "s2"])
-    (*macro_table (*macro* mac1 ...)))
+    (*macro_table* (*macro* mac1 ...)))
   (*symbol_table* mod1)
   (*macro_table*  mod1)
 )
@@ -766,7 +766,7 @@ for the macro table as well:
   (*retain* *{asterisk}*)
   (*module* mod2
     (*symbol_table* ["s3", "s4"])
-    (*macro_table (*macro* mac2 ...)))
+    (*macro_table* (*macro* mac2 ...)))
   (*symbol_table* mod1 mod2)
   (*macro_table*  mod1 mod2)
 )
@@ -779,6 +779,7 @@ The preceding example has some repetition between `*symbol_table*` and `*macro_t
 illustrating that the symbol and macro tables are maintained independently.
 The following is legal:
 
+[{nrm}]
 ----
   (*symbol_table* mod1 mod2)
   (*macro_table*  mod2 mod1)
