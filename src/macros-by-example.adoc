@@ -507,13 +507,17 @@ becomes empty.
 
 [{mrk}]
 ----
-(*macro* zip [(front *any{asterisk}*), (back *any{asterisk}*)]
+(*macro* zip [(front *any{asterisk}*), (back *any{asterisk}*)]  // <1>
   (*for* [(f front),
         (b back)]
     [f, b]))
 ----
+
+<1> The `*{asterisk}*` means that the parameter accepts any number of values; see
+<<eg:zero-or-more>>.
+
 ----
-(:zip [1, 2, 3] [a, b])
+(:zip (:values 1 2 3) (:values a b))
   ⇒ [1, a] [2, b]
 ----
 
@@ -633,6 +637,7 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 ----
 
 
+[#eg:zero-or-more]
 ==== Zero-or-More
 
 A parameter with the modifier `***` has _zero-or-more cardinality_.  This modifier behaves the
