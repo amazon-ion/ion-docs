@@ -145,8 +145,9 @@ _module-body_ `)`
 |===
 
 
-=== Template Expression Language
+=== Template Expressions
 
+// tag::templexpr[]
 [{bnf}]
 |===
 |template |::=|  _identifier_  \|  _literal_  \|  _quasi-literal_
@@ -170,6 +171,7 @@ _module-body_ `)`
 |macro-arg        |::=|  _template_  \|  `[` _template_* `]`        // _Very_ roughly
 
 |===
+// end::templexpr[]
 
 IMPORTANT: Special forms take precedence over macro invocations.
 Use a _local-ref_ or _qualified-ref_ to invoke a macro whose name shadows a special-form keyword.
