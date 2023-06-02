@@ -1,0 +1,257 @@
+[[sec:sysmod]]
+== The System Module
+
+include::styles.adoc[]
+
+The symbols and macros of the system module `$ion` is available everywhere within an Ion document,
+with the version of that module being determined by the spec-version of each segment.
+
+The specific system symbols are largely uninteresting to users since they don't affect the text
+content that they interact with.
+The system macros are more visible, especially to authors of macros.
+
+This chapter catalogs the system-provided macros.
+The examples below use unqualified names, which works assuming no other module exports the same
+name, but the unambiguous form `:$ion:__macro-name__` is always correct.
+
+
+IMPORTANT: This list is not complete. We expect it to grow and evolve as we gain experience
+writing macros.
+
+
+=== Primitive Operators
+
+This section describes operators that cannot be defined as macros.
+
+
+==== Stream Constructors
+
+===== `void`
+
+[{nrm}]
+----
+(void) \-> any?
+----
+
+Produces an empty stream.
+The most common use of this operator is to supply “no value” to a voidable parameter.
+To make such use more readable, the special-case E-expression `(:)` is synonymous to `(:void)`.
+
+
+===== `values`
+
+[{nrm}]
+----
+(values (v any\...)) \-> any*
+----
+
+Produces a stream from any number of arguments, concatenating the streams produced by the nested
+expressions.
+Used to aggregate multiple values or sub-streams to pass to a single argument, or to return
+multiple results. Generally only useful with more than one subexpression.
+
+
+==== Value Constructors
+
+===== `make_string`
+
+[{nrm}]
+----
+(make_string (content text\...)) \-> string
+----
+
+Produces a non-null, unannotated string containing the concatenated content produced by the
+arguments. Nulls and annotations are discarded.
+
+TODO Probably useful to allow some other Ion scalars (at least) to allow type conversion.
+I think this would be most useful for ints, since the binary representation is more compact than
+as characters. Lobs wouldn’t work well, though.
+
+
+===== `make_symbol`
+
+[{nrm}]
+----
+(make_symbol (content text\...)) \-> symbol
+----
+
+Like `make_string` but produces a symbol.
+
+
+===== `make_list`
+
+[{nrm}]
+----
+(make_list (vals any\...)) \-> list
+----
+
+Produces a non-null, unannotated list from any number of inputs.
+Template expressions of the form `[E~1~, …, E~n~]` are equivalent to `(make_list E~1~ … E~n~)`.
+
+
+===== `make_sexp`
+
+[{nrm}]
+----
+(make_sexp (vals any\...)) \-> sexp
+----
+
+Like make_list but produces a sexp.
+
+[{nrm}]
+----
+(:make_sexp)      ⇒ ()
+(:make_sexp null) ⇒ (null)
+----
+
+
+===== `make_struct`
+
+[{nrm}]
+----
+(make_struct (kv any\...)) \-> struct
+----
+
+Produces a non-null, unannotated struct from any number of elements.
+The ``kv``s are processed in order, incrementally adding fields to an initially-empty struct.
+Various forms of ``kv``s are allowed:
+
+* A (non-null) string or symbol is treated as a field name, and MUST be followed by another value
+to comprise a key-value pair in the result. Annotations on the field name are discarded.
+* A (non-null) struct is merged into the result as-is, after discarding annotations.
+* Any other type of value evokes an expansion error.
+
+Template expressions of the form `{T~1~:E~1~, …, T~n~:E~n~}` are equivalent to
+`(make_struct (*literal* T~1~) E~1~ … (*literal* T~n~) E~n~)`, assuming that no expression E
+produces more than one value.
+In that case, the `make_struct` variant would misbehave: the second value produced by E would be
+treated as the next key.
+
+
+===== `make_decimal`
+
+[{nrm}]
+----
+(make_decimal (coefficient int) (exponent int)) \-> decimal
+----
+
+Since decimal is already compact, this is perhaps most useful in conjunction with packed arrays.
+
+TODO if the coefficient were decimal, this could re-scale values. Useful?
+
+
+===== `make_float` ❓
+
+[{nrm}]
+----
+(make_float ieee) \-> float
+----
+
+Included for completeness, but of unclear utility.
+
+TODO coerce an int or decimal to float?  Perhaps useful to use fixed-width ints to encode various float widths? This may not be useable to convert “IEEE bits” to float, since they would be converted to int before arriving here.
+
+
+===== `make_timestamp`
+
+[{nrm}]
+----
+(make_timestamp
+  (year int) (month int) (day int?)
+  (hour int?)  (minute int?) (second decimal?)
+  (offset int?))
+  -> timestamp
+----
+Produces a non-null, unannotated timestamp at various levels of precision.
+When `offset` is absent, the result has unknown local offset; offset `0` denotes UTC.
+
+TODO Reconsider offset semantics, perhaps default should be UTC.
+
+Example:
+
+[{nrm}]
+----
+(*macro* ts_today
+  \((hour uint8) (minute uint8) (seconds_millis uint32))
+  (make_timestamp 2022 04 28 hour minute
+    (decimal seconds_millis -3) 0))
+----
+
+
+===== `annotate`
+
+[{nrm}]
+----
+(annotate (ann [text]*) value) \-> any
+----
+
+Produces the `value` prefixed with the annotations ``ann``s.
+Each `ann` must be a non-null, unannotated string or symbol.
+
+[{nrm}]
+----
+(:annotate ["a2"] a1::true) => a2::a1::true
+----
+
+
+=== Derived Operators
+
+These operators can be defined in terms of the primitives, using the macro language.
+
+==== Symbol Table Management
+
+===== Local Symtab Declaration
+
+This macro is optimized for representing symbols-list with minimal space.
+
+[{nrm}]
+----
+(*macro* import
+  \((name *string*) (version uint**?**) (max_id uint**?**)) \-> struct
+  { name:name, version:version, max_id:max_id })
+
+(*macro* local_symtab
+  \((imports [import]) (symbols string**\...**))
+  $ion_symbol_table::{
+    imports:(*if_void* imports (void) [imports]),
+    symbols:(*if_void* symbols (void) [symbols]),
+  })
+----
+
+[{nrm}]
+----
+(:local_symtab [("my.symtab" 4)] "newsym" "another")
+  =>
+  $ion_symbol_table::{ imports:[{name:"my.symtab", version:4}],
+                       symbols:["newsym", "another"] }
+----
+
+
+===== Local Symtab Appending
+
+[{nrm}]
+----
+(*macro* lst_append
+  \((symbols string\...))
+  (*if_void* symbols
+    (void)                  // Produce nothing if no symbols provided.
+    $ion_symbol_table::{
+      imports: (*literal* $ion_symbol_table),
+      symbols: [symbols]}))
+----
+
+[{nrm}]
+----
+(:lst_append "newsym" "another")
+  =>
+  $ion_symbol_table::{ imports:$ion_symbol_table,
+                       symbols:["newsym", "another"] }
+----
+
+===== Embedded Documents (aka Local Scopes)
+
+TODO
+
+==== Compact Module Definitions
+
+TODO
