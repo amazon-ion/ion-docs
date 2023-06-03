@@ -2298,16 +2298,301 @@ considered "shapes" rather than types because while their encoding is always sta
 produced by their expansion is not. A single macro can produce streams of varying length and containing values of
 different Ion types depending on the arguments provided in the invocation.
 
-TODO: Examples
+See the link:macros-by-example.adoc#macro_shapes[Macro Shapes] section of _Macros by Example_ for more information.
 
 === Encoding E-expressions With Multiple Arguments
 
-TODO
+E-expression arguments corresponding to each parameter are encoded one after the other moving from left to right.
 
-=== Grouped Parameter Encodings
+.Figure {counter:figure}: Definition of macro `_foo_` at address `_0_`
+[%unbreakable,source]
+----
+(macro foo             // Macro name
+  [                    // Parameters
+    (a string!),
+    (b compact_symbol!),
+    (c uint16!)
+  ]
+  /* ... */            // Body (elided)
+)
+----
 
-TODO
+.Figure {counter:figure}: Encoding of E-expression for macro with multiple parameters: `_(:0 "hello" baz 512)_`
+[%unbreakable,source]
+----
+┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
+│     address 0, `foo`. `foo`'s first parameter is a string, so an opcode follows.
+│
+│  ┌──── Opcode 0x85 indicates a 5-byte string. 5 UTF-8 bytes follow.
+│  │
+│  │                 ┌──── `foo`'s second parameter is a compact_symbol, so a `FlexSym` follows.
+│  │                 │     FlexSym -3: 3 bytes of UTF-8 text follow.
+│  │                 │
+│  │                 │           ┌──── `foo`'s third parameter is a uint16, so a 2-byte
+│  │                 │           │     2-byte `FixedUInt` follows.
+│  │                 │           │     FixedUInt: 512
+│  │  h  e  l  l  o  │   b  a  z │
+00 85 68 65 6C 6C 6F FD 62 61 7A 00 20
+      └──────┬─────┘    └───┬──┘
+        UTF-8 bytes    UTF-8 bytes
+----
 
-=== Voidable Parameter Encodings
+[[argument_encoding_bitmap]]
+=== Argument Encoding Bitmap (AEB)
 
-TODO
+The examples in previous sections have only shown how to encode invocations of macros which have either no parameters
+at all (aka _constants_) or whose parameters all have
+link:macros-by-example.adoc#exactly_one[a cardinality of exactly-one].
+
+If a macro has any parameters with a cardinality of zero-or-one (`?`), zero-or-more (`*`), or one-or-more (`+`),
+then E-expressions invoking that macro will begin with an _argument encoding bitmap_ (AEB).
+An AEB is a series of bits that correspond to a macro parameter and communicate additional
+information about how the arguments corresponding to that parameter have been encoded in the current E-expression.
+In particular, the AEB indicates whether a parameter that accepts `(:void)` has any arguments at all, and how a
+grouped parameter's arguments have been delimited.
+
+The number of bits allotted to each parameter is determined by its cardinality, as shown in the table below; each
+parameter can have 0, 1, or 2 bits.
+
+[cols="^.^2a,^.^2a,^.^2a,^.^1a,^.^1a,.^6a"]
+|===
+|Grouping Mode|Cardinality|Example parameter signature|Number of bits|Bit(s) value|Encoding
+
+.6+|Ungrouped
+|Exactly-one
+|`(x int!)`
+|0
+|_n/a_
+|One expression
+
+.2+|Zero-or-one
+.2+|`(x int?)`
+.4+|1
+|`0`
+<|No expression; equivalent to `(:void)`
+
+|`1`
+<|One expression
+
+.2+|Zero-or-more
+.2+|`(x int*)`
+|`0`
+<|No expression; equivalent to `(:void)`
+
+|`1`
+<|One expression
+
+|One-or-more
+|`(x int+)`
+|0
+|_n/a_
+<|One expression
+
+.8+|Grouped
+.4+|Zero-or-more
+.4+|`(x [int])` +
+`(x int\...)`
+.8+|2
+|`00`
+|No expression; equivalent to `(:void)`
+
+|`01`
+<|One expression
+
+|`10`
+<|Length-prefixed expression group
+
+|`11`
+<|Delimited expression group
+
+.4+|One-or-more
+.4+|`(x [int]+)` +
+`(x int\...+)`
+|`00`
+<|_Illegal._ One-or-more forbids `(:void)`.
+
+|`01`
+<|One expression
+
+|`10`
+<|<<length_prefixed_expression_groups, Length-prefixed expression group>>
+
+|`11`
+<|<<delimited_expression_groups, Delimited expression group>>
+
+|===
+
+The total number of bits in the AEB can be calculated by analyzing the signature of the macro being invoked.
+If the macro has no parameters or all of its parameters have a cardinality of either exactly-one or one-or-more,
+no bits are required; the AEB will be omitted altogether.
+If the macro has many parameters with a cardinality other than exactly-one, it is possible for the AEB to require more
+than one byte to encode; in such cases, the bytes are written in little-endian order.
+AEB bytes can contain unused bits.
+
+Bits are assigned to the parameters in a macro's signature from left to right.
+Bits are assigned from least significant to most significant (commonly: right-to-left).
+
+[cols="<.^8a,^.^3a,^.^2a"]
+|===
+|Example parameter sequence |Bit assignments |Total bits
+
+| `()`
+|_No AEB_
+|0
+
+| `\((a int!) (b string!) (c float!))`
+|_No AEB_
+|0
+
+| `\((a int!) (b string!) (c float?))`
+| `-------c`
+| 1
+
+| `\((a int!) (b string?) (c float!))`
+| `-------b`
+| 1
+
+| `\((a int!) (b string*) (c float?))`
+| `------cb`
+| 2
+
+| `\((a int*) (b string!) (c [float]))`
+| `-----cca`
+| 3
+
+| `\((a int*) (b [string]) (c [float]))`
+| `---ccbba`
+| 5
+
+| `\((a [int]) (b [string]) (c [float]+))`
+| `--ccbbaa`
+| 6
+
+| `\((a int*) (b [string]) (c [float]) (d [bool]) (e blob...))`
+| `eddccbba` +
+`-------e`
+| 9
+
+|===
+
+[#expression_groups]
+=== Expression Groups
+
+Grouped parameters can be encoded using either a <<length_prefixed_expression_groups, length-prefixed>> or
+<<delimited_expression_groups, delimited>> expression group encoding.
+
+The example encodings in the following sections refer to this macro definition:
+
+.Figure {counter:figure}: Definition of macro `_foo_` at address `_0_`
+[%unbreakable,source]
+----
+(macro
+    foo          // Macro name
+    [(x [int])]  // Parameters; `x` is a grouped parameter
+    /*...*/      // Body (elided)
+)
+----
+
+[#length_prefixed_expression_groups]
+==== Length-prefixed Expression Groups
+
+If a grouped parameter's <<argument_encoding_bitmap, AEB bits>> are `0b10`, then the argument expressions belonging
+to that parameter will be prefixed by a `FlexUInt` indicating the number of bytes used to encode them.
+
+.Figure {counter:figure}: Length-prefixed encoding of `_(:foo [1, 2, 3])_`
+[%unbreakable,source]
+----
+┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
+│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
+│     so an argument encoding bitmap (AEB) follows.
+│  ┌──── AEB: 0b0000_0010; the arguments for grouped parameter `x` have been encoded
+│  │     as a length-prefixed expression group. A FlexUInt length prefix follows.
+│  │  ┌──── FlexUInt: 6; the next 6 bytes are an `int` expression group.
+│  │  │
+00 02 0D 51 01 51 02 51 03
+         └─┬─┘ └─┬─┘ └─┬─┘
+           1     2     3
+----
+
+[#delimited_expression_groups]
+==== Delimited Expression Groups
+
+If a grouped parameter's <<argument_encoding_bitmap, AEB bits>> are `0b11`, then the argument expressions belonging
+to that parameter will be encoded in a delimited sequence.
+Delimited sequences are encoded differently for <<tagged_encodings,tagged types>> and
+<<tagless_encodings, tagless types>>.
+
+===== Delimited Tagged Expression Groups
+
+Tagged type encodings begin with an <<opcodes, opcode>>; a delimited sequence of tagged arguments is terminated by
+the closing delimiter opcode, `0xF0`.
+
+.Figure {counter:figure}: Delimited encoding of `_(:foo [1, 2, 3])_`
+[%unbreakable,source]
+----
+┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
+│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
+│     so an argument encoding bitmap (AEB) follows.
+│  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
+│  │     as a delimited expression group. A series of tagged `int` expressions follow.
+│  │                    ┌──── Opcode 0xF0 ends the expression group.
+│  │                    │
+00 03 51 01 51 02 51 03 F0
+      └─┬─┘ └─┬─┘ └─┬─┘
+        1     2     3
+----
+
+===== Delimited Tagless Expression Groups
+
+Tagless type encodings do not have an opcode, and so cannot use the closing delimiter opcode--`0xF0` is a valid first
+byte for many tagless encodings.
+
+Instead, tagless expressions are grouped into 'pages', each of which is prefixed by a <<flexuint, `FlexUInt`>>
+representing a count (not a byte-length) of the expressions that follow. If a prefix has a count of zero, that marks
+the end of the sequence of pages.
+
+.Figure {counter:figure}: Definition of macro `_compact_foo_` at address `_1_`
+[%unbreakable,source]
+----
+(macro
+    compact_foo          // Macro name
+    [(x [compact_int])]  // Parameters; `x` is a grouped parameter
+    /*...*/              // Body (elided)
+)
+----
+
+.Figure {counter:figure}: Delimited encoding of `_(:compact_foo [1, 2, 3])_` using a single page
+[%unbreakable,source]
+----
+┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
+│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
+│     so an argument encoding bitmap (AEB) follows.
+│  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
+│  │     as a delimited expression group. Count-prefixed pages of `compact_int`
+│  │     expressions follow.
+│  │   ┌──── Count prefix: FlexUInt 3; 3 `compact_int`s follow.
+│  │   │          ┌──── Count prefix: FlexUInt 0; no more pages follow.
+│  │   │          │
+00 03 07 03 05 07 01
+         └──┬───┘
+         First page: 1, 2, 3
+----
+
+.Figure {counter:figure}: Delimited encoding of `_(:compact_foo [1, 2, 3])_` using two pages
+[%unbreakable,source]
+----
+┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
+│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
+│     so an argument encoding bitmap (AEB) follows.
+│  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
+│  │     as a delimited expression group. Count-prefixed pages of `compact_int`
+│  │     expressions follow.
+│  │   ┌──── Count prefix: FlexUInt 2; 2 `compact_int`s follow.
+│  │   │        ┌──── Count prefix: FlexUInt 1; a single `compact_int` follows.
+│  │   │        │    ┌──── Count prefix: FlexUInt 0; no more pages follow.
+│  │   │        │    │
+00 03 05 03 05 03 07 01
+         └─┬─┘    └─ Second page: 3
+           │
+         First page: 1, 2
+----

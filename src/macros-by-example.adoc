@@ -574,6 +574,7 @@ controlled by the parameter's cardinality.  So far we have seen the `*!*` (exact
 |===
 
 
+[#exactly_one]
 ==== Exactly-One
 
 Many parameters expect exactly one value and thus have _exactly-one cardinality_.
@@ -704,6 +705,7 @@ Thank you to my Patreon supporters:
 ----
 
 
+[#grouped_parameters]
 === Grouped Parameters
 
 The non-rest versions of multi-value parameters can be annoying to invoke, since they require the
@@ -916,6 +918,7 @@ Primitive types have inherent tradeoffs and require careful consideration, but i
 the right circumstances the density wins can be significant.
 
 
+[#macro_shapes]
 === Macro Shapes
 
 We can now introduce the final kind of input constraint, macro-shaped parameters.  To understand
