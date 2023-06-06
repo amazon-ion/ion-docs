@@ -23,8 +23,8 @@ operator invocations, and other Ion types denote values of that type.
 ==== Symbols are Variable References
 
 When a template is an Ion symbol, it denotes a reference to a variable, either a macro parameter
-or a local binding from for.
-The result of this template is the stream of values produced by that variable.
+or a local binding from a `for` expression.
+The result of this template is the stream of values referred to by that variable.
 
 The symbols used for variable names must be _identifiers_ as defined by the Ion specification:
 a sequence of ASCII letters, digits, or the characters `$` (dollar sign) or `_`
@@ -124,7 +124,7 @@ values.
 (*if_void* _template1_ _template2_ _template3_)
 ----
 
-Evaluates templates conditionally based on cardinality of a stream.
+Evaluates templates conditionally based on the cardinality of a stream.
 
 The _template1_ is expanded to see if it produces any values.
 If and only if it produces no values, then _template2_ is expanded and its results returned.
