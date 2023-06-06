@@ -121,36 +121,36 @@ values.
 
 [{nrm}]
 ----
-(*if_void* _template1_ _template2_ _template3_)
+(*if_void* _template~cond~_ _template~then~_ _template~else~_)
 ----
 
 Evaluates templates conditionally based on the cardinality of a stream.
 
-The _template1_ is expanded to see if it produces any values.
-If and only if it produces no values, then _template2_ is expanded and its results returned.
-Otherwise, _template3_ is expanded and its results returned.
+The _template~cond~_ is expanded to see if it produces any values.
+If and only if it produces no values, then _template~then~_ is expanded and its results returned.
+Otherwise, _template~else~_ is expanded and its results returned.
 
 
 ===== `*if_single*`
 
 [{nrm}]
 ----
-(*if_single* _template1_ _template2_ _template3_)
+(*if_single* _template~cond~_ _template~then~_ _template~else~_)
 ----
 
-Like `*if_void*`, but expands _template2_ if and only if _template1_ produces exactly one value,
-otherwise expands _template3_.
+Like `*if_void*`, but expands _template~then~_ if and only if _template~cond~_ produces exactly one
+value, otherwise expands _template~else~_.
 
 
 ===== `*if_many*`
 
 [{nrm}]
 ----
-(*if_many* _template1_ _template2_ _template3_)
+(*if_many* _template~cond~_ _template~then~_ _template~else~_)
 ----
 
-Like `*if_void*`, but expands _template2_ if and only if _template1_ produces more than one
-value, otherwise expands _template3_.
+Like `*if_void*`, but expands _template~then~_ if and only if _template~cond~_ produces more than
+one value, otherwise expands _template~else~_.
 
 [{nrm}]
 ----
@@ -180,15 +180,15 @@ These special forms produce repeated output mapped across elements of a stream.
 
 [{nrm}]
 ----
-(*for* [(_id_ _in-template_), ...] _body-template_)
+(*for* [(_id_ _template~in~_), ...] _template~body~_)
 ----
 
-Iteratively expands the _body-template_ using individual values from the _in-templates_.
+Iteratively expands the _template~body~_ using individual values from the _in-templates_.
 
-Each iteration takes the next value from each _in-template_ stream; iteration stops when any
+Each iteration takes the next value from each _template~in~_ stream; iteration stops when any
 stream ends.
 Local variables are created for each identifier _id_, bound to the current value from their stream.
-The _body-template_ is then expanded in that environment, and iteration proceeds.
+The _template~body~_ is then expanded in that environment, and iteration proceeds.
 The result of the `*for*` expression is the concatenated results of the body expansions.
 
 NOTE: The termination rule is under discussion; see
@@ -245,6 +245,8 @@ provided explicitly.
 TODO Allow macro invocations where grouping list is expected?
 
 TODO Clarify when/where range checks are applied for fixed-width types.
+
+TODO Examples
 
 === Type Checking
 
