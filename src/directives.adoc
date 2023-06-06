@@ -1,0 +1,308 @@
+[[sec:directives]]
+== Encoding Directives
+
+include::styles.adoc[]
+
+[NOTE]
+.TODO
+====
+This intro section is probably misplaced in the context of the larger book.
+Move or integrate elsewhere.
+====
+
+Ion 1.0 uses symbol tables to capture and compress repeated symbol text.
+At all points in an Ion document, there exists an _encoding environment_ that contains the _current
+symbol table_ mapping symbol IDs to text.
+The encoding environment of a document is controlled by directives embedded in the document.
+These directives are encoding artifacts and not part of the application data model.
+Ion 1.0 has two of directive forms:
+
+* An Ion Version Marker (IVM) resets the environment to the default provided by that version of
+Ion.
+* An `$ion_symbol_table` struct defines a new environment that takes effect immediately after the
+struct closes.
+
+The latter form includes a feature that allows the new environment to be specified in terms of
+the current one in a limited fashion: the current symbol table can be imported as if it were
+shared, so that new symbols can be appended to it.
+
+To increase compression across many documents that have similar content (for example, they use the
+same schema), Ion 1.0 has _shared symbol tables_ that capture a portion of an encoding context—a
+list of symbols—that can be imported into many local symbol tables.
+
+Ion 1.1 generalizes and refactors these features:
+
+* _Macros_ are a generalization of symbols in the sense that they are a feature to enable increased
+density. The Ion parser expands integer symbol IDs to symbol text, it now also expands macro
+expressions into data of arbitrary type and cardinality.
+* The encoding context is extended to contain a _local macro table_ alongside the local symbol
+table. In much the same way that the local symbol table defines an address-space for identifying
+symbols, the local macro table defines an address-space for macros.
+* Symbols and macros are defined and collected inside _encoding modules_.
+Modules subsume shared symbol tables while remaining backwards-compatible with their current data
+model and catalog semantics.
+Any existing Ion shared symbol table is a valid encoding module, albeit one that only declares
+symbols and not macros.
+* The `$ion_symbol_table` struct and its behavior are subsumed by a new `$ion_encoding` top-level
+S-expression that imports and defines modules, then separately assembles the local symbol and
+macro tables.
+
+This chapter focuses on the new components of the top-level context, the `$ion_encoding`
+S-expression that controls it, and the new parts of shared symbol tables that effect shared
+modules.
+// TODO The inner workings of modules are covered by TODO and macros by TODO
+
+=== Document Structure
+
+TODO Cover document segmentation, environment components, etc.
+
+TODO The below should probably move elsewhere
+
+As we’ve seen, encoding directives manipulate the global context, managing modules and installing
+(some of) them into the local symbol and macro tables.
+To clarify this behavior, we should first discuss the lifecycle of modules.
+An Ion 1.1 implementation must manage a few distinct sets of modules:
+
+* The _loaded modules_ are those that have been defined or loaded by an encoding directive, or
+transitively loaded from another loaded module.
+* The _available modules_ are loaded modules that have been assigned a name via a `load` or
+`import` clause.
+* The _installed modules_ are available modules that have been listed in an encoding directive's
+`symbol_table` or `macro_table` field.
+Technically, modules are installed immediately following termination of the `$ion_encoding` directive.
+
+Each encoding directive on the stream fully replaces the prior context.
+A user module becomes unavailable when a succeeding directive fails to retain it explicitly.
+A loaded module can be unloaded (garbage collected) when its no longer reachable from an
+available module.
+
+=== Ion Version Markers
+
+The bootstrap directive, required at the start of all Ion 1.1 segments, and acceptable
+mid-stream, is the Ion version marker:
+
+[{nrm}]
+----
+*$ion_1_1*
+----
+
+This keyword has the effect of resetting the encoding context to the default modules, symbols, and
+macros provided by the Ion specification.
+More precisely, the default context has a single available module named `$ion`, installed for
+both symbols and macros.
+This ensures that the system symbols and system macros provided by Ion 1.1 are available by
+default.
+
+The system module and its macros are in fact available everywhere in the document, and cannot be
+removed or redefined by `$ion_encoding`: to a large degree, it's as if the `*retain*`,
+`*symbol_table*`, and `*macro_table*` clauses all have `$ion` as their implicit first element.
+As a result, system macros can always be invoked by `(:$ion:__name__ …)`.
+
+System macros have one additional bit of special handling: they are binary-encoded using a
+dedicated opcode, using a dedicated address space that’s independent of the explicitly-enumerated
+modules in `*macro_table*`.
+This means that the initial range of unqualified numeric macro references like `(:3 …)` don’t
+inherently refer to system macros.
+User-level macros get priority to those precious single-byte opcodes.
+
+=== `$ion_encoding` Directives
+
+The `$ion_encoding` directive declares a set of available modules, then assembles some subset of
+those into the local symbol and macro tables.
+The general shape of an encoding directive is as follows:
+
+[{nrm}]
+----
+$ion_encoding::(
+  (*retain* ...)        // Reuse selected modules from the current segment
+  (*load* ...)          // Get a shared module from the catalog
+  (*module* ...)        // Define a new module inline
+  ...
+  (*symbol_table* ...)  // Install modules into the symbol table
+  (*macro_table* ...)   // Install modules into the macro table
+)
+----
+
+More formally, here's the relevant portion of the <<sec:grammar,domain grammar>>:
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=encoding-directive]
+|===
+
+The directive has four sections: declare currently available modules to retain, declare
+additional modules to make available, define the new symbol table, define the new macro table.
+
+
+==== Retaining Available Modules
+
+An encoding directive defines a new encoding environment in terms of the current environment
+(that is, the encoding environment for the segment containing the directive).
+By default, the new environment starts with an empty set of available modules, and if any modules
+are to be reused by the new segment, they must be explicitly retained.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=retention]
+|===
+
+Before declaring new names, the directive can selectively `*retain*` available modules (that is,
+modules declared in the preceding directive.
+This is done either by using the keyword `*{asterisk}*` to copy
+all available modules from the current encoding environment into the new one, or by enumerating specific names to copy.
+
+
+==== Declaring Modules
+
+After possibly retaining modules from the current environment, the directive can make additional
+modules available, either loading them from the implementation’s catalog, or defining them inline.
+Either way, an entry is added (or updated) in the directive’s map of available modules.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=module-decl]
+|===
+
+The names of available modules can be remapped: if a name is reused, the earlier declaration is
+shadowed through the rest of the directive (including upcoming inline modules).
+
+
+===== Loading Shared Modules
+
+To make a shared module available, it must first be _loaded_, which gives the module a symbolic
+name that can be used to reference the module’s components.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=load]
+|===
+
+This works like an `import` struct in `$ion_symbol_table` in that it acquires an entity from the
+implementation’s catalog, though here there is no direct effect on the symbol table.
+The _catalog-name_, _catalog-version_, and _symbol-maxid_ arguments have the same meaning as the
+corresponding fields of an `imports` struct, but only the latter is optional.
+Resolving the name and version to a shared module is the same as for shared symbol tables, using
+the same algorithm for inexact match on the version.
+
+TIP: A primary design tenet of Ion 1.1 is to remain compatible with existing catalog APIs and
+services that vend shared symbol tables.
+Existing shared symbol tables are shared modules that export no macros.
+
+As suggested by its name, the _symbol-maxid_ argument only affects symbol allocation, not macros.
+Use of macros from a shared module requires exact match of the _shared-version_, and a module that
+was imported inexactly will trigger an error if its name appears within a local module or
+`*macro_table*`.
+
+
+===== Defining Inline Modules
+
+Along with loading shared modules, a directive can define local modules.
+From the perspective of the rest of the encoding directive, and the data that follows, there’s no
+meaningful distinction in the result.
+Either way, there’s another module available for use.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=inline-module]
+|===
+
+TODO import and link to the module reference.
+
+Note that module names are lexically scoped: an inline module’s body can access modules
+previously made available by the enclosing directive.
+That is, their macros can be accessed by qualified references, but unqualified references require
+a `*use*` clause in the module of directive.
+
+
+==== Using Modules
+
+In the context of an encoding directive, a `*use*` clause makes macros visible within upcoming
+inline modules, so they can be referenced without qualification (assuming no ambiguity).
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=use-decl]
+|===
+
+You can use a module by name, referring to a previously retained, loaded, or inline module, or in
+combination with `*load*`.
+In the latter case, `(*use* (*load* _module_ ...))` is equivalent to
+`(*load* _module_ ...)(*use* _module_)`.
+
+TODO This is incorrect:
+An Ion parser must signal a fatal error if a directive uses a shared module that cannot be
+acquired by exact match to the declared catalog version.
+
+The `*import*` clause is simply a shorthand for “load and use”.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=import]
+|===
+
+That is, `(*import* _module_ ...)` is equivalent to `(*load* _module_ ...)(*use* _module_)`.
+
+
+==== Assembling the Symbol Table
+
+Modules must be installed into the symbol table affect encoding of symbols.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=symtab]
+|===
+
+TODO update this
+
+The `*symbol_table*` field is simply a list of module names, with no duplicates allowed.
+The `$ion` module is implicitly first in the list and cannot be named explicitly.
+All names must be in the declared earlier in the directive, including implicit inclusion via
+`(*retain {asterisk}*)`
+
+The effect of this field is to allocate addresses to symbol text, in a manner identical to Ion
+1.0 imports, allocating contiguous ranges to each installed module.
+The width of each range is the number of symbols exported by the corresponding module, or the
+_symbol-maxid_ argument of the associated `*load*` clause, when provided.
+
+In encoded data numeric symbol references (in text, using the form `$_d_+`) work the same way as
+in Ion 1.0: the first system symbol is `$1` and the first user-installed module starts where the
+system symbols end.
+
+
+==== Assembling the Macro Table
+
+TODO This needs work.
+
+Modules must be installed into the macro table to enable their use in the document's E-expressions.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=mactab]
+|===
+
+The meaning is nearly identical to that of `*symbol_table*` in that it allocates macro addresses
+by effectively concatenating the exported macro tables of the listed modules.
+
+The differences versus symbols are:
+
+* The names of modules installed for macros are part of the “macro environment” of the new
+encoding context, and are used to resolve qualified macro references.
+The names of modules in `*symbol_table*` are not added to the context’s visible environment
+and cannot be used to reference symbols.
+* Shared modules that are in `*macro_table*` must have exactly the version requested.
+* There’s no corollary to _symbol-maxid_ for macro imports.
+
+
+=== `$ion_symbol_table` Directives
+
+TODO This content is very old and needs much attention.
+
+Ion 1.1 still supports the legacy `$ion_symbol_table` directive, internally transforming it into
+an equivalent `$ion_encoding` form.
+
+This is generally not detectable by users, except when followed by an `$ion_encoding` directive
+that retains the current modules.
+In that case, the imported symbol tables, and the synthetic local module, are visible to the new
+encoding context, so we must TODO define what those names are.
+
+TODO define the transformation formally
