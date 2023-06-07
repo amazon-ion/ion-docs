@@ -10,7 +10,7 @@ A macro can be _fixed arity_ or _variable arity_.
 
 argument::
 A single sub-expression within a macro invocation, corresponding to one of the macro’s
-parameters.  This is by default a one-to-one relation, but a parameter's grouping mode
+parameters.  This is by default a one-to-one relation, but a parameter’s grouping mode
 can change this to a many-to-one relation.
 
 argument group::
@@ -63,7 +63,7 @@ compact.
 
 fixed arity::
 Describes a macro without optional or rest parameters, so invocations must have actual arity that
-equals the macro's formal arity.
+equals the macro’s formal arity.
 
 formal arity::
 The number of parameters declared by a macro.  Due to _optional parameters_ and _rest parameters_,
@@ -77,7 +77,7 @@ See also _grouping mode_.
 grouping mode::
 One of three ways that a macro parameter is given arguments. A _simple parameter_ accepts one
 argument, a _grouped parameter_ accepts a list of arguments, and a _rest parameter_ accepts
-"all the rest" of the trailing arguments without a grouping list.
+“all the rest” of the trailing arguments without a grouping list.
 
 Ion version marker::
 A keyword directive that denotes the start of a new segment encoded with a specific Ion version.
@@ -110,6 +110,13 @@ qualified macro reference::
 A macro reference that consists of a module name and either a macro name exported by that module,
 or a numeric address within the range of the module’s exported macro table. In text, these look
 like `:__module-name__:__name-or-address__`.
+
+quasi-literal::
+A template, denoted as a list or struct, that is _partly_ (“quasi-”) literal.
+List-shaped templates treat the elements as nested templates.
+Struct-shaped templates treat the field names as literal, but the corresponding values as
+templates.
+S-expressions denote operator invocations and are not treated quasi-literally.
 
 rest parameter::
 A macro parameter—always the final parameter—declared with the `*\...*` or `*\...+*` modifier,
@@ -161,7 +168,7 @@ module name. These are resolved using lexical scope and must always be unambiguo
 
 variable arity::
 Describes a macro with optional and/or rest parameters, so invocations may have actual arity
-different from the macro's formal arity.
+different from the macro’s formal arity.
 
 void::
 An empty stream of values. Produced by the system macro `void` as in the E-expression `(:void)`.
