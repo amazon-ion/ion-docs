@@ -35,6 +35,8 @@ include::macros-by-example.adoc[]
 
 include::modules-by-example.adoc[]
 
+include::template-expr.adoc[]
+
 include::binary-encoding.adoc[]
 
 include::grammar.adoc[]

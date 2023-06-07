@@ -1,0 +1,257 @@
+[[sec:templexpr]]
+== Template Expressions
+
+include::styles.adoc[]
+
+The behavior of a macro is defined in terms of an expression language.
+Like encoding directives and modules, this language is expressed as Ion data, and
+the meaning of templates is defined structurally and recursively based on the Ion data model.
+
+
+=== Grammar
+
+Here's the relevant portion of the <<sec:grammar,domain grammar>>:
+
+include::grammar.adoc[tag=templexpr]
+
+An expression in this language is called a _template_, and the expansion of a template (that is,
+its evaluation) produces a stream of Ion values.
+The central design concept is that symbols denote variable references, S-expressions denote
+operator invocations, and other Ion types denote values of that type.
+
+
+==== Symbols are Variable References
+
+When a template is an Ion symbol, it denotes a reference to a variable, either a macro parameter
+or a local binding from a `for` expression.
+The result of this template is the stream of values referred to by that variable.
+
+The symbols used for variable names must be _identifiers_ as defined by the Ion specification:
+a sequence of ASCII letters, digits, or the characters `$` (dollar sign) or `_`
+(underscore), not starting with a digit.
+
+When a template is expected, the symbols `$0` and `null.symbol` evoke a syntax error, as does any
+annotated symbol.
+
+TIP: To denote the literal symbol `foo`, use the template `(*literal* foo)`.
+
+
+==== Other Scalars are Literals
+
+When a template is a non-symbol Ion scalar, it denotes a literal value, and the template expands
+into that value. Any annotations on the template are included in the output.
+
+
+==== Lists and Structs are Quasi-Literals
+
+When a template is an Ion list or struct, it denotes a quasi-literal of the same type.
+We say “quasi” literal because the elements of the container are treated as templates, not
+literal values.
+
+When a template is a list, it expands into a list with the same annotations.
+The elements of the list-template are each treated as templates themselves.
+Each sub-template may produce any number of values, and the resulting streams are all
+concatenated to produce the output list.
+
+----
+[1, [2, 3], 4]       ⇒ [1, [2, 3], 4]
+[1, (values 2 3), 4] ⇒ [1, 2, 3, 4]
+[1, (values), 3]     ⇒ [1, 3]
+----
+
+When a template is a struct, it expands into a struct with the same annotations.
+The struct-template’s field names are treated as literals, and field values are treated as
+sub-templates, and the output struct contains the given names and their associated sub-template
+expansions.
+
+Field-value sub-templates MAY produce multiple values.
+When a sub-template produces more than one result, then the output struct will have more than one
+field with the same name.
+When a sub-template produces no results, then nothing is added to the output.
+
+----
+{a:(values 1 2)} ⇒ {a:1, a:2}   // or, equivalently, {a:2, a:1}
+{f:(values)}     ⇒ {}
+----
+
+
+==== S-expressions are Operator Invocations
+
+The template language uses S-expressions to denote operations using Lisp-style prefix notation.
+The first element of the S-expression must be a symbol that identifies the operator, and the
+meaning of subsequent elements depends on the operator.
+
+Operators come in two varieties: special forms and macro invocations.
+
+
+=== Special Forms
+
+Special forms are operators that cannot be expressed as macros, because some parts of their
+syntax are not recursively-expanded templates, as all macro arguments are.
+
+We use `*bold monospace*` when naming these special forms, to distinguish them from macro names.
+
+In the descriptions below, `_template_` subforms accept any template-language form.
+In all such cases, sub-templates are expanded only when indicated.
+
+
+==== Preventing Evaluation
+
+===== `*literal*`
+
+[{nrm}]
+----
+(*literal* _datum_)
+----
+
+Produces _datum_ as-is, preventing the operand from being evaluated as a template.
+
+For example, `(*literal* [1, (values 2 3), 4])` produces `[1, (values 2 3), 4]`; both the list
+and the S-expression are treated as literal, constant data, not as template expressions to be
+expanded.
+
+
+==== Conditionals
+
+These special forms allow output to vary based on whether a template produces zero, one, or more
+values.
+
+
+===== `*if_void*`
+
+[{nrm}]
+----
+(*if_void* _template~cond~_ _template~then~_ _template~else~_)
+----
+
+Evaluates templates conditionally based on the cardinality of a stream.
+
+The _template~cond~_ is expanded to see if it produces any values.
+If and only if it produces no values, then _template~then~_ is expanded and its results returned.
+Otherwise, _template~else~_ is expanded and its results returned.
+
+
+===== `*if_single*`
+
+[{nrm}]
+----
+(*if_single* _template~cond~_ _template~then~_ _template~else~_)
+----
+
+Like `*if_void*`, but expands _template~then~_ if and only if _template~cond~_ produces exactly one
+value, otherwise expands _template~else~_.
+
+
+===== `*if_many*`
+
+[{nrm}]
+----
+(*if_many* _template~cond~_ _template~then~_ _template~else~_)
+----
+
+Like `*if_void*`, but expands _template~then~_ if and only if _template~cond~_ produces more than
+one value, otherwise expands _template~else~_.
+
+[{nrm}]
+----
+(*macro* decimal_constraint
+    [(precision *int{asterisk}*), (exponent *int{asterisk}*)]
+    {
+        precision: (*if_many* precision range::[precision] precision),
+        exponent:  (*if_many* exponent  range::[exponent]  exponent),
+    })
+----
+
+[{nrm}]
+----
+(:decimal_constraint (3) (-1))     ⇒ { precision: 3, exponent: -1 }
+(:decimal_constraint (1 5) (-5 0)) ⇒ { precision: range::[1, 5],
+                                       exponent: range::[-5, 0] }
+(:decimal_constraint (:) (3 max))  ⇒ { exponent: range::[3, max] }
+(:decimal_constraint (1) (:))      ⇒ { precision: 1 }
+----
+
+
+==== Mapping
+
+These special forms produce repeated output mapped across elements of a stream.
+
+===== `*for*`
+
+[{nrm}]
+----
+(*for* [(_id_ _template~in~_), ...] _template~body~_)
+----
+
+Iteratively expands the _template~body~_ using individual values from the _in-templates_.
+
+Each iteration takes the next value from each _template~in~_ stream; iteration stops when any
+stream ends.
+Local variables are created for each identifier _id_, bound to the current value from their stream.
+The _template~body~_ is then expanded in that environment, and iteration proceeds.
+The result of the `*for*` expression is the concatenated results of the body expansions.
+
+NOTE: The termination rule is under discussion; see
+https://github.com/amazon-ion/ion-docs/issues/201
+
+
+=== Macro Invocation
+
+A macro definition can express its output in terms of other macros. Quite often, these will be
+macros provided by the Ion implementation,
+// —everything in System Macros 2023-05 is available by default—
+but they can also be acquired from other modules.
+
+// TODO link to system-macro chapter
+
+The S-expression syntax for macro invocation is similar to that of E-expressions.
+When a template is an S-expression and the first element is not the name of a special form, that
+element must instead be a _macro-ref_ and the template denotes a macro invocation.
+There are multiple sources of macros: the defining module’s internal environment (which is being
+incrementally extended with each definition), and the exported macros of modules loaded by the
+enclosing module or `$ion_encoding` directive.
+
+// TODO See Resolving Macro References: Encoding Modules 2023-05 for the relevant algorithm.
+
+The remaining elements of the S-expression are subforms that denote the inputs to the macro.
+These use normal Ion notation, but what’s syntactically acceptable is defined by the macro’s
+signature.
+
+The number of such subforms (that is, the invocation’s actual arity) must be equal to or greater
+than the macro’s minimum arity, and at most its maximum arity, when one exists.
+In other words, an invocation must contain one subform for each required parameter, followed by
+optional subforms for the remaining optional parameters.
+
+Within an invocation expression, the syntax of each subform is defined first by its parameter’s
+grouping form, then its base type:
+
+* The subform for a simple parameter must match the base type below.
+* The subform for a grouped parameter must be a list containing elements that each match the base
+type.
+* A rest parameter captures all remaining subforms of the invocation, each of which must match
+the base type.
+
+The base types match as follows:
+
+* For tagged types, the subform may be any template that produces acceptable values.
+* For primitive types, the subform may be any template that produces values accepted by the
+corresponding concrete type.
+* For macro types, the subform must be an S-expression containing subforms acceptable to that
+macro’s signature.  These are implicit invocations of the macro, and the macro name cannot be
+provided explicitly.
+
+// NOTE: Removed the ability to explicitly invoke "the same macro".
+
+TODO Allow macro invocations where grouping list is expected?
+
+TODO Clarify when/where range checks are applied for fixed-width types.
+
+TODO Examples
+
+=== Type Checking
+
+TODO
+
+=== Error Handling
+
+TODO
