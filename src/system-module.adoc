@@ -3,7 +3,7 @@
 
 include::styles.adoc[]
 
-The symbols and macros of the system module `$ion` is available everywhere within an Ion document,
+The symbols and macros of the system module `$ion` are available everywhere within an Ion document,
 with the version of that module being determined by the spec-version of each segment.
 
 The specific system symbols are largely uninteresting to users since they don't affect the text
