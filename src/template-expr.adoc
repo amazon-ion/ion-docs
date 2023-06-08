@@ -42,6 +42,7 @@ When a template is a non-symbol Ion scalar, it denotes a literal value, and the 
 into that value. Any annotations on the template are included in the output.
 
 
+[#ref:quasi-literals]
 ==== Lists and Structs are Quasi-Literals
 
 When a template is an Ion list or struct, it denotes a quasi-literal of the same type.

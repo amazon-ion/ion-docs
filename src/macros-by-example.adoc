@@ -374,6 +374,7 @@ The `values` macro accepts any number of arguments and returns their values, eff
 multi-value identity function.  We can use this to explore how streams combine in E-expressions.
 
 
+[#eg:splicing]
 ==== Splicing in Encoded Data
 
 When an E-expression occurs at top-level or within a list or S-expression, the results are
