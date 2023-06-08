@@ -1,0 +1,361 @@
+[[sec:directives]]
+== Encoding Modules
+
+include::styles.adoc[]
+
+=== Overview
+
+==== Module Interface
+
+The interface to a module consists of:
+
+* its _spec version_, denoting the Ion version used to define the module
+* its _exported symbols_, an array of strings denoting symbol content
+* its _exported macros_, an array of <name, macro> pairs, where all names are unique identifiers
+(or null).
+
+The spec version for an inline module is implicitly derived from the Ion version of its
+containing segment. The spec version for a shared module is denoted via a required annotation.
+
+The exported symbol array is denoted by the `*symbol_table*` clause of a module definition, and
+by the `symbols` field of a shared symbol table.
+
+The exported macro array is denoted by the module’s `*macro_table*` clause, with addresses
+allocated to bindings in the order they are declared.
+One address is allocated per `*macro*` definition, while `*export*` clause allocates one address
+for each listed macro.
+
+
+==== Internal Environment
+
+The body of a module tracks an internal environment by which macro references are resolved.
+This environment is constructed incrementally by each clause in the definition and consists of:
+
+* the _visible modules_, a map from identifier to module
+* the _imported macros_, a map from identifier to macro (or to an ambiguity sentinel)
+* the _local macros_, a map from identifier to a macro and optional exported address.
+* the _exported macros_, an array containing name/module pairs
+
+Before any clauses of the module definition are examined, the initial environment is as follows:
+
+* The visible modules maps `$ion` to the system module for the appropriate spec version.
+An inline module also gets the modules previously made available by the enclosing encoding
+directive (via `*retain*`, `*load*`, or `*import*`).
+* The imported macros contain the exported macros from that system module.
+An inline module also gets the exported macros from modules previously ``*use*``d or
+``*import*``ed by the enclosing encoding directive.
+* The exported macros and local macros are empty.
+
+The first section of a module definition consists dependency declarations in the form of `*use*`,
+`*load*`, and `*import*` clauses.
+This section affects the environment as follows:
+
+* A `*load*` declaration retrieves a shared module from the implementation’s catalog and assigns
+it a name in the visible modules.
+An error must be signaled if the name already appears in the visible modules.
+* A `*use*` declaration adds its arguments to the visible modules, and adds their exported macros
+to the imported macros.
+When a name is exported from more than one module, and refers to different macros, its mapping
+points to a sentinel value recording the ambiguity.
+* An `*import*` declaration is shorthand for loading a shared module and immediately using it.
+
+After these dependencies are declared, a `*symbol_table*` definition may follow.
+//TODO sequence of module names, or lists of text values.
+
+Next, any number of `*alias*` declarations.
+
+* An `*alias*` clause associates a (presumably) new name with an existing macro.
+An error must be signaled if the name exists in the local macros.
+Otherwise, the name is added to the local macros.
+
+Finally, there’s the `*macro_table*` definition, affecting the local macros and the exported
+macros.
+
+* An `*export*` clause exports imported and aliased macros.
+Each entry in the clause is handled in order.
+If the given reference is anonymous, the macro is appended to the exported macro array without a
+name.
+When the reference uses a name, an error must be signaled if it already appears in the exported
+macro array.
+Otherwise, the name and macro are appended to the exported macro array.
+* A `*macro*` clause defines a new, exported macro.
+An error must be signaled if the definition uses a name that exists in the local macros.
+Otherwise, the name and macro are appended to the exported macro array, and (when not anonymous)
+the name, macro, and address are added to the local macros.
+* A module name TODO
+
+[#spec:resolve-macro]
+=== Resolving Macro References
+
+Within a module definition, macros can be referenced in several contexts using the following
+_macro-ref_ syntax:
+
+include::grammar.adoc[tag=macro-ref]
+
+Macro references are resolved to a specific macro as follows:
+
+* An unqualified _macro-name_ is looked up within the local macros, and if not found then the
+imported macros.
+If it maps to a macro, that’s the resolution of the reference.
+Otherwise, if the name maps to the ambiguity sentinel, a syntax error is signaled due to an
+ambiguous reference. Otherwise, a syntax error is signaled due to an unbound reference.
+* A named local reference (`':__name__'`) is looked up within the local macros.
+If there’s no entry, a syntax error is signaled due to an unbound reference.
+* An anonymous local reference  (`':__address__'`) is resolved by index in the exported macro
+array.
+If the address exceeds the array boundary, a syntax error is signaled due to an invalid reference.
+* A qualified reference (`':__module__:__name-or-address__'`) resolves solely against the
+referenced module.
+If the module name does not exist in the visible modules, a syntax error is signaled due to an
+unbound reference.
+Otherwise, the name or address is resolved within that module’s exported macro array.
+
+NOTE: An unqualified macro name can change meaning in the middle of a module: it could be
+imported and used with that meaning, then a declaration shadows that name and gives it a new
+meaning.
+
+=== Module Versioning
+
+Every module definition has a _spec version_ that gives the definition its meaning in terms of
+acceptable syntax, available features, and so on.
+A module’s spec version is expressed in terms of a specific Ion version; the meaning of the
+module is as defined by that version of the Ion specification.
+
+The spec version of a shared or tunneled module must be declared explicitly using an annotation
+of the form `$ion_1___N__`.
+This allows the module to be serialized using any version of Ion, and its meaning will not change.
+
+[{nrm}]
+----
+$ion_shared_module::$ion_1_1::(
+  (*catalog_key* "com.example.symtab" 3)
+  (*symbol_table* ...)
+  (*macro_table* ...)
+)
+
+$ion_shared_symbol_table::{
+  name: "com.example.symtab", version: 3,
+  symbols: […],
+  module: $ion_1_1::(      // Spec version is 1.1
+    // Semantics of this module are specified by Ion 1.1, regardless of the
+    // enclosing document's Ion version.
+    ...
+  )
+}
+----
+
+The spec version of an inline module is always the same as the Ion version of its enclosing
+segment.
+
+[{nrm}]
+----
+*$ion_1_1*
+$ion_encoding::(
+  (*module* M1 ...)    // Module semantics specified by Ion 1.1
+  ...
+}
+...
+$ion_1_3
+$ion_encoding::(
+  (*module* M2 ...)    // Module semantics specified by Ion 1.3
+  ...
+}
+...                  // Assuming no IVM
+$ion_encoding::(
+  (*module* M3 ...)    // Module semantics specified by Ion 1.3
+  ...
+}
+----
+
+To ensure that all consumers of a module can properly understand it, a module can only import
+shared modules defined with the same or earlier spec version.
+
+=== Inline, Shared, and Tunneled Modules
+
+Inline modules are defined within an `$ion_encoding` directive, and are available only within the
+enclosing document.
+Their scope is lexical; they can be used immediately following their definition, up until the
+next directive, at which point they’ll either be retained by the new encoding environment, or
+made unavailable.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=inline-module]
+|===
+
+Inline modules always have a symbolic name given at the point of definition.
+They inherit their spec version from the surrounding document, and they have no content version.
+
+Shared modules exist independently of the documents that use them.
+They are identified by a _catalog key_ consisting of a string name and an integer version.
+When consumed by a document or another module, they are given a local identifier.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=shared-module]
+|===
+
+Tunneled modules are shared modules that are defined within a shared symbol table definition.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=tunneled-module]
+|===
+
+Shared and tunneled modules have self-declared catalog-names that are generally long, since they
+must be more-or-less globally unique.
+That’s not usable as a namespace qualifier, so they are given local symbolic names by load and
+import declarations.
+They have a spec version that’s explicit via annotation, and a content version derived from the
+catalog version.
+
+=== Module Bodies
+
+The body of a module is a sequence of elements following this grammar:
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=module-body]
+|===
+
+==== Dependencies
+
+Inline modules automatically have access to modules previously declared in the enclosing
+directive using `retain`, `module`, `load`, or `import`.
+Macro names are also visible as declared by directive-level `use` and `import` clauses.
+Shared and tunneled modules lie outside an encoding directive and have no such automatic
+visibility into other modules.
+
+To extend any such automatic names within a module body, you can write the same `load`, `use`, and
+`import` clauses that are acceptable within an `$ion_encoding` directive.
+The difference is one of scope: the module and macro names introduced by these forms only affect
+the enclosing module, not the overall encoding environment.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=dependency]
+|===
+
+
+==== The Symbol Table
+
+A module can define a list of exported symbols by copy symbols from other modules and/or
+declaring new symbols.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=symtab]
+|===
+
+NOTE: This clause is not allowed in tunneled modules.
+
+This clause builds a list of symbol-texts by concatenating the elements (the symbol tables of
+named modules, and the lists of symbol/string values).
+
+Where a module name occurs, that module must have been previously loaded in the enclosing module
+or encoding directive, and its symbol table is appended.
+If a _symbol-maxid_ was given when loaded, the list is truncated or padded to that length.
+
+Where a list occurs, it follows the syntax and semantics to the symbols field of
+`$ion_shared_symbol_table`.
+In addition, it allows symbols as well as strings.
+
+TODO: "inline" the specified behavior of such lists.
+
+
+==== Declaring Macros
+
+Macros are declared after symbols, in two parts.
+First, a set of aliases, then the macro table itself.
+
+A macro name is a symbol that can be used to reference a macro, both inside and (if public or
+exported) outside the module.
+Macro names are optional, and improve legibility when using, writing, and debugging macros.
+
+When a name is used, it must be an identifier per Ion’s syntax for symbols.
+If the name is also exported by any visible module, the import is shadowed by the declaration.
+A syntax error must be signaled if the same macro name occurs more than once among the declarations.
+
+TODO: the above repeats content from elsewhere.
+
+
+===== Macro Aliases
+
+Aliases simply create a new name bound to an existing macro.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=macro-alias]
+|===
+
+[{nrm}]
+----
+(*alias* s some_long_name)
+(*alias* t ':some_module:23')               // Give name to an anonymous macro
+----
+
+The effect of an alias is to <<spec:resolve-macro, resolve the reference>> to determine the
+corresponding macro, and to assign a name for it in the local macro map.
+
+Unlike `*macro*` definitions, aliases are not implicitly exported, do not have addresses allocated,
+and cannot be referenced using `:__address__` syntax.
+If an alias is later exported, an address is allocated at that time.
+
+
+===== Macro Definitions
+
+After aliases, a macro table can be defined.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=module-mactab]
+|===
+
+Most commonly, a macro table entry is a definition of a new macro expansion function, following
+this general shape:
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=macro-defn]
+|===
+
+When no name is given, this defines an anonymous macro that can be referenced by its numeric
+address (that is, its index in the enclosing macro table).
+Inside the defining module, that uses a local reference like `':12'`.
+
+The _signature_ defines the syntactic shape of expressions invoking the macro;
+see TODO for details.
+The _template_ defines the expansion of the macro, in terms of the signature’s parameters;
+see <<sec:templexpr>> for details.
+
+
+===== Exporting Macros
+
+Aliases and ``*use*``d or ``*import*``ed macros and aliases must be explicitly exported if so
+desired.
+Export clauses can be intermingled with `*macro*` definitions inside the `*macro_table*`;
+together, they determine the bindings that make up the module’s exported macro array.
+
+Exports are expressed in two ways: `*export*` clauses and module names:
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=export]
+|===
+
+An `*export*` clause contains a sequence of macro references, using the normal single-symbol
+syntax, or an S-expression variant that exports multiple macros from the same module.
+Each entry in the clause is handled in order.
+
+Where a macro-ref appears, the referenced macro is appended to the macro table.
+When the reference uses an address, the macro is exported without a name.
+When the reference uses a name, an error must be signaled if it already appears in the
+macro table.
+
+A `*from*` clause is shorthand for a series of qualified references from within a single module.
+
+The _module-name_ export form is shorthand for referencing all exported macro from that module,
+in their original order.
+
+TIP: No name can be repeated among the exported macros, including macro definitions.
+Name conflicts must be resolved by aliases.
