@@ -63,7 +63,8 @@ multiple results. Generally only useful with more than one subexpression.
 Produces a non-null, unannotated string containing the concatenated content produced by the
 arguments. Nulls and annotations are discarded.
 
-TODO Probably useful to allow some other Ion scalars (at least) to allow type conversion.
+TODO https://github.com/amazon-ion/ion-docs/issues/255
+Probably useful to allow some other Ion scalars (at least) to allow type conversion.
 I think this would be most useful for ints, since the binary representation is more compact than
 as characters. Lobs wouldn’t work well, though.
 
@@ -96,7 +97,9 @@ Template expressions of the form `[E~1~, …, E~n~]` are equivalent to `(make_li
 (make_sexp (vals any\...)) \-> sexp
 ----
 
-Like make_list but produces a sexp.
+Like `make_list` but produces a sexp.
+This is the only way to produce an S-expression from a template: unlike lists, S-expressions in
+templates are not <<ref:quasi-literals, quasi-literals>>.
 
 [{nrm}]
 ----
@@ -127,6 +130,21 @@ produces more than one value.
 In that case, the `make_struct` variant would misbehave: the second value produced by E would be
 treated as the next key.
 
+[{nrm}]
+----
+(:make_struct k1 1 k2 2 {k3:3} k4 4)  ⇒  {k1:1, k2:2, k3:3, k4:4}
+----
+
+Because rest-parameters receive the concatenated argument result-streams, `make_struct`’s
+key-value pairs may not align with the actual arguments.  This is different from
+<<eg:splicing, splicing>> of macro results into structs, causing the key to repeat:
+
+[{nrm}]
+----
+{ k1: (:values 1 k2) }              ⇒  { k1: 1, k1: k2 }
+(:make_struct k1 (:values 1 k2) 2)  ⇒  { k1: 1, k2: 2 }
+----
+
 
 ===== `make_decimal`
 
@@ -135,9 +153,11 @@ treated as the next key.
 (make_decimal (coefficient int) (exponent int)) \-> decimal
 ----
 
-Since decimal is already compact, this is perhaps most useful in conjunction with packed arrays.
+Since decimal is already compact, this is perhaps most useful in conjunction with packed arrays,
+or when the exponent is repeated and can be baked into a macro.
 
-TODO if the coefficient were decimal, this could re-scale values. Useful?
+TODO https://github.com/amazon-ion/ion-docs/issues/253
+If the coefficient were decimal, this could re-scale values. Useful?
 
 
 ===== `make_float` ❓
@@ -149,7 +169,11 @@ TODO if the coefficient were decimal, this could re-scale values. Useful?
 
 Included for completeness, but of unclear utility.
 
-TODO coerce an int or decimal to float?  Perhaps useful to use fixed-width ints to encode various float widths? This may not be useable to convert “IEEE bits” to float, since they would be converted to int before arriving here.
+TODO https://github.com/amazon-ion/ion-docs/issues/252
+Coerce an int or decimal to float?
+Perhaps useful to use fixed-width ints to encode various float widths?
+This may not be useable to convert “IEEE bits” to float, since they would be converted to int
+before arriving here.
 
 
 ===== `make_timestamp`
@@ -157,7 +181,7 @@ TODO coerce an int or decimal to float?  Perhaps useful to use fixed-width ints 
 [{nrm}]
 ----
 (make_timestamp
-  (year int) (month int) (day int?)
+  (year int) (month? int) (day int?)
   (hour int?)  (minute int?) (second decimal?)
   (offset int?))
   -> timestamp
@@ -165,7 +189,8 @@ TODO coerce an int or decimal to float?  Perhaps useful to use fixed-width ints 
 Produces a non-null, unannotated timestamp at various levels of precision.
 When `offset` is absent, the result has unknown local offset; offset `0` denotes UTC.
 
-TODO Reconsider offset semantics, perhaps default should be UTC.
+TODO https://github.com/amazon-ion/ion-docs/issues/256
+Reconsider offset semantics, perhaps default should be UTC.
 
 Example:
 
