@@ -765,7 +765,7 @@ The declaration `(amount *[number]+*)` is also valid,
 indicating that the sequence of arguments must produce at least one value.
 
 TIP: Grouped parameters cannot use the `*?*` and `*!*` modifiers; there's no point in
-requiring a list when no more than one value is allowed.
+requiring a grouping list when no more than one value is allowed.
 
 TIP: Rest parameters are effectively another grouping mode, so they cannot be combined with `[]`.
 
@@ -887,8 +887,8 @@ While Ion text syntax doesn’t use tags—the types are built into the syntax�
 that a text E-expression may only express things that can also be expressed using an equivalent
 binary E-expression.
 
-For the same reasons, tagless types with cardinalities of zero-or-more and one-or-more can only be
-expressed by grouping or rest parameters, not by ungrouped forms.  For example,
+For the same reasons, a parameter accepting more than one tagless argument can only be
+expressed by grouped or rest parameters, not by ungrouped forms.  For example,
 `(v *var_int+*)` and `(v *int32{asterisk}*)` are not accepted.
 
 A subset of the tagless types are _fixed-width_: they are binary-encoded with no per-value
@@ -984,7 +984,7 @@ The binary encoding of macro-shaped parameters are similarly tagless, eliding an
 mentioning `point` and just writing its arguments with minimal delimiting.
 
 Macro types can be grouped and/or combined with cardinality modifiers, following the same rules as
-tagless types.  Note that grouped macro shapes require callers to use two layers of delimiting
+tagless types.  Note that grouped macro types require callers to use two layers of delimiting
 containers: and outer list for the group, and an inner S-expression for
 each macro instance:
 
