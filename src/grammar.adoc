@@ -116,20 +116,24 @@ _module-body_ `)`
 
 |signature   |::=|  _param-specs_ _result-spec_?
 |param-specs |::=|  `(` _param-spec_* _rest-spec_? `)`  \|  `[` _param-spec_* _rest-spec_? `]`
-|param-spec  |::=|  _param-name_  \|  _simple-param-spec_  \|  _grouped-param-spec_
+|param-spec  |::=|  _param-name_  \|  `(` _param-name_ _param-shape_ `)`
 |param-name  |::=|  _unannotated-identifier-symbol_
 
-|simple-param-spec  |::=|  `(` _param-name_  _base-shape_ _simple-cardinality_ `)`
-|base-shape         |::=| _tagged-type_  \|  _primitive-type_  \|  _macro-ref_
-|simple-cardinality |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
+|param-shape        |::=|  _simple-shape_  \|  _grouped-shape_
 
-|grouped-param-spec  |::=|  `(` _param-name_ `[` _base-shape_ `]` _grouped-cardinality_? `)`
-|grouped-cardinality |::=|  `*+*`  \|  `*'{asterisk}'*`
+|simple-shape       |::=|  _tagless-type_ `*?*`?
+                       \|  _tagged-type_? _any-cardinality_?
+|any-cardinality    |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
 
-|rest-spec        |::=|  `(` _param-name_ _base-shape_ _rest-cardinality_  `)`
+|grouped-shape      |::=|   `[` _any-type_? `]` `*+*`?
+
+|rest-spec        |::=|  `(` _param-name_ _any-type_? _rest-cardinality_  `)`
 |rest-cardinality |::=|   `*\...*`  \|  `*\...+*`
 
+|any-type      |::=| _tagged-type_  \|  _tagless-type_
 |tagged-type   |::=| _abstract-type_ \| _concrete-type_
+|tagless-type  |::=| _primitive-type_  \|  _macro-ref_
+
 |abstract-type |::=| `*any*` \| `*number*` \| `*exact*` \| `*text*` \| `*lob*` \| `*sequence*`
 |concrete-type |::=|  `*'null'*`  \|  `*bool*`  \|  `*timestamp*`  \|  `*int*`  \|  `*decimal*`
                   \|  `*float*`  \|  `*string*`  \|  `*symbol*`  \|  `*blob*`  \|  `*clob*`
@@ -141,7 +145,7 @@ _module-body_ `)`
                    \|  `*int8*`     \|  `*int16*`    \|  `*int32*`   \|  `*int64*`
                    \|  `*float16*`  \|  `*float32*`  \|  `*float64*`
 
-|result-spec |::=|  `*\->*` _tagged-type_ _simple-cardinality_
+|result-spec |::=|  `*\->*` _tagged-type_ _any-cardinality_
 |===
 
 
