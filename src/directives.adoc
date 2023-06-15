@@ -15,7 +15,7 @@ At all points in an Ion document, there exists an _encoding environment_ that co
 symbol table_ mapping symbol IDs to text.
 The encoding environment of a document is controlled by directives embedded in the document.
 These directives are encoding artifacts and not part of the application data model.
-Ion 1.0 has two of directive forms:
+Ion 1.0 has two directive forms:
 
 * An Ion Version Marker (IVM) resets the environment to the default provided by that version of
 Ion.
@@ -33,7 +33,7 @@ list of symbols—that can be imported into many local symbol tables.
 Ion 1.1 generalizes and refactors these features:
 
 * _Macros_ are a generalization of symbols in the sense that they are a feature to enable increased
-density. The Ion parser expands integer symbol IDs to symbol text, it now also expands macro
+density. The Ion parser expands integer symbol IDs to symbol text; it now also expands macro
 expressions into data of arbitrary type and cardinality.
 * The encoding context is extended to contain a _local macro table_ alongside the local symbol
 table. In much the same way that the local symbol table defines an address-space for identifying
@@ -245,7 +245,7 @@ That is, `(*import* _module_ ...)` is equivalent to `(*load* _module_ ...)(*use*
 
 ==== Assembling the Symbol Table
 
-Modules must be installed into the symbol table affect encoding of symbols.
+Modules must be installed into the symbol table to affect the encoding of symbols.
 
 [{bnf}]
 |===
