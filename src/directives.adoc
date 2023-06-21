@@ -47,9 +47,8 @@ symbols and not macros.
 S-expression that imports and defines modules, then separately assembles the local symbol and
 macro tables.
 
-This chapter focuses on the new components of the top-level context, the `$ion_encoding`
-S-expression that controls it, and the new parts of shared symbol tables that effect shared
-modules.
+This chapter focuses on the new components of the top-level context and the `$ion_encoding`
+S-expression that controls it.
 // TODO The inner workings of modules are covered by TODO and macros by TODO
 
 === Document Structure
