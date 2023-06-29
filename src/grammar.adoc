@@ -26,27 +26,34 @@ TODO this section needs much work.
 |===
 
 
+[#gram:encoding-directive]
 === Encoding Directives
 
 [{bnf}]
 |===
+// tag::encoding-directive[]
 |encoding-directive |::=| `$ion_encoding::(` _retention_? _module-decl_*
                                              _symtab_? _top-mactab_? `)`
-
+// end::encoding-directive[]
+// tag::retention[]
 |retention |::=|  `(` `*retain*` _retainees_ `)`
 |retainees |::=|  `*'{asterisk}'*`  \|  _module-name_*
-
+// end::retention[]
+// tag::module-decl[]
 |module-decl |::=| _dependency_  \|  _inline-module-def_
 |dependency  |::=| _load-decl_  \|  _use-decl_  \|  _import-decl_
-
+// end::module-decl[]
+// tag::use-decl[]
 |use-decl    |::=|  `(` `*use*` _use-item_* `)`
 |use-item    |::=| _module-name_  \|  _load-decl_
-
+// end::use-decl[]
+// tag::symtab[]
 |symtab      |::=|  `(` `*symbol_table*` _symtab-item_* `)`
 |symtab-item |::=|  _module-name_  \|  `[` _text_* `]`
-
+// end::symtab[]
+// tag::mactab[]
 |top-mactab  |::=|  `(` `*macro_table*` _module-name_* )
-
+// end::mactab[]
 |===
 
 
@@ -54,13 +61,18 @@ TODO this section needs much work.
 
 [{bnf}]
 |===
+// tag::load[]
 |load-decl       |::=|  `(` `*load*` _load-body_ `)`
+// end::load[]
+// tag::import[]
 |import-decl     |::=|  `(` `*import*` _load-body_ `)`
+// end::import[]
+// tag::load[]
 |load-body       |::=| _module-name_ _catalog-name_ _catalog-version_ _symbol-maxid_?
-
 |catalog-name    |::=|  _unannotated-string_
 |catalog-version |::=|  _unannotated-uint_
 |symbol-maxid    |::=|  _unannotated-uint_
+// end::load[]
 |===
 
 
@@ -84,7 +96,9 @@ TODO this section needs much work.
 
 [{bnf}]
 |===
+// tag::inline-module[]
 |inline-module-def   |::=| `(` `*module*` _module-name_ _module-body_ `)`
+// end::inline-module[]
 |shared-module-def   |::=| ``$ion_shared_module::``__ion-version-marker__``::(`` _catalog-key_
 _module-body_ `)`
 |catalog-key         |::=| `(` `*catalog_key*` _catalog-name_ _catalog-version_ `)`
