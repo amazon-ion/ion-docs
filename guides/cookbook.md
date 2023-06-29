@@ -1172,7 +1172,8 @@ int main(int argc, char **argv) {
     ION_INT *value_ion_int;
     ION_OK(ion_int_alloc(NULL, &value_ion_int));
     ION_OK(ion_reader_read_ion_int(reader, value_ion_int));
-    ION_STRING istring;
+
+    ION_STRING istring = {0}
     ION_OK(ion_int_to_string(value_ion_int, NULL, &istring));
     char *string_int = ion_string_strdup(&istring);
     printf("    ion_int: %s\n", string_int);
@@ -1602,7 +1603,9 @@ int main(int argc, char **argv) {
 
     ION_OK(ion_reader_close(reader));
 
-    return sum;
+    printf("sum: %d\n", sum);
+
+    return 0;
 }
 ```
 </div>
