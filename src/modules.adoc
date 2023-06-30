@@ -22,7 +22,7 @@ by the `symbols` field of a shared symbol table.
 
 The exported macro array is denoted by the module’s `*macro_table*` clause, with addresses
 allocated to bindings in the order they are declared.
-One address is allocated per `*macro*` definition, while `*export*` clause allocates one address
+One address is allocated per `*macro*` definition, while the `*export*` clause allocates one address
 for each listed macro.
 
 
@@ -34,11 +34,11 @@ This environment is constructed incrementally by each clause in the definition a
 * the _visible modules_, a map from identifier to module
 * the _imported macros_, a map from identifier to macro (or to an ambiguity sentinel)
 * the _local macros_, a map from identifier to a macro and optional exported address.
-* the _exported macros_, an array containing name/module pairs
+* the _exported macros_, an array containing name/macro pairs
 
 Before any clauses of the module definition are examined, the initial environment is as follows:
 
-* The visible modules maps `$ion` to the system module for the appropriate spec version.
+* The visible modules map `$ion` to the system module for the appropriate spec version.
 An inline module also gets the modules previously made available by the enclosing encoding
 directive (via `*retain*`, `*load*`, or `*import*`).
 * The imported macros contain the exported macros from that system module.
@@ -46,7 +46,7 @@ An inline module also gets the exported macros from modules previously ``*use*``
 ``*import*``ed by the enclosing encoding directive.
 * The exported macros and local macros are empty.
 
-The first section of a module definition consists dependency declarations in the form of `*use*`,
+The first section of a module definition consists of dependency declarations in the form of `*use*`,
 `*load*`, and `*import*` clauses.
 This section affects the environment as follows:
 
@@ -239,7 +239,7 @@ include::grammar.adoc[tag=dependency]
 
 ==== The Symbol Table
 
-A module can define a list of exported symbols by copy symbols from other modules and/or
+A module can define a list of exported symbols by copying symbols from other modules and/or
 declaring new symbols.
 
 [{bnf}]
