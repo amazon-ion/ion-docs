@@ -1,4 +1,4 @@
-[[sec:directives]]
+[[sec:modules]]
 == Encoding Modules
 
 include::styles.adoc[]
@@ -39,10 +39,10 @@ This environment is constructed incrementally by each clause in the definition a
 Before any clauses of the module definition are examined, the initial environment is as follows:
 
 * The visible modules map `$ion` to the system module for the appropriate spec version.
-An inline module also gets the modules previously made available by the enclosing encoding
-directive (via `*retain*`, `*load*`, or `*import*`).
+For an inline module, it also includes the modules previously made available by the enclosing
+encoding directive (via `*retain*`, `*load*`, or `*import*`).
 * The imported macros contain the exported macros from that system module.
-An inline module also gets the exported macros from modules previously ``*use*``d or
+For an inline module, it also contains the exported macros from modules previously ``*use*``d or
 ``*import*``ed by the enclosing encoding directive.
 * The exported macros and local macros are empty.
 
@@ -97,16 +97,16 @@ Macro references are resolved to a specific macro as follows:
 * An unqualified _macro-name_ is looked up within the local macros, and if not found then the
 imported macros.
 If it maps to a macro, that’s the resolution of the reference.
-Otherwise, if the name maps to the ambiguity sentinel, a syntax error is signaled due to an
-ambiguous reference. Otherwise, a syntax error is signaled due to an unbound reference.
+Otherwise, if the name maps to the ambiguity sentinel, an error is signaled due to an
+ambiguous reference. Otherwise, an error is signaled due to an unbound reference.
 * A named local reference (`':__name__'`) is looked up within the local macros.
-If there’s no entry, a syntax error is signaled due to an unbound reference.
+If there’s no entry, an error is signaled due to an unbound reference.
 * An anonymous local reference  (`':__address__'`) is resolved by index in the exported macro
 array.
-If the address exceeds the array boundary, a syntax error is signaled due to an invalid reference.
+If the address exceeds the array boundary, an error is signaled due to an invalid reference.
 * A qualified reference (`':__module__:__name-or-address__'`) resolves solely against the
 referenced module.
-If the module name does not exist in the visible modules, a syntax error is signaled due to an
+If the module name does not exist in the visible modules, an error is signaled due to an
 unbound reference.
 Otherwise, the name or address is resolved within that module’s exported macro array.
 
@@ -274,7 +274,7 @@ Macro names are optional, and improve legibility when using, writing, and debugg
 
 When a name is used, it must be an identifier per Ion’s syntax for symbols.
 If the name is also exported by any visible module, the import is shadowed by the declaration.
-A syntax error must be signaled if the same macro name occurs more than once among the declarations.
+An error must be signaled if the same macro name occurs more than once among the declarations.
 
 TODO: the above repeats content from elsewhere.
 
