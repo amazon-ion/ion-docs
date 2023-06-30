@@ -1,0 +1,194 @@
+[[sec:signatures]]
+== Macro Signatures
+
+include::styles.adoc[]
+
+A macro's _signature_ define the syntax of expressions that invoke it, and the set of input values
+it acceptable.
+Signatures apply to both E-expressions and macro-language invocations.
+Because they denote the interface for users of macros, we describe them independently of macro
+definitions.
+
+A signature consists of a sequence of named parameter specifications, followed by an option result
+specification.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=signature]
+|===
+
+Each parameter in a signature has a name, expressed as a Ion identifier symbol.
+Restricting names to Java-style identifiers enables use of operator characters (like `?` and
+`{asterisk}`) for the syntax surrounding names, including qualified macro references.
+
+
+=== Parameter Shapes
+
+A macro’s “wire format”—the sequence of acceptable tokens in an E-expression—is determined by its
+parameters’ shapes.
+The shape of a parameter has two dimensions: its _base type_ and its grouping.
+The base type constrains the expression forms that can be used for each argument supplied to the
+parameter.
+Independently, a parameter is either _simple_, _grouped_, or a _rest parameter_; this dimension
+determines how the arguments supplied to the parameter are delimited within the overall invocation.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=param-shape]
+|===
+
+
+=== Base Types
+
+The core of a parameter specification is its base type, which constrains the syntax of each
+argument (that is, the acceptable expression forms that can be used).
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=param-types]
+|===
+
+The _concrete types_ correspond to the usual Ion data types, from `null` and `bool` through
+`list` and `struct`.
+These have the obvious meanings, with the caveat that annotations are allowed, as are
+appropriately-typed _and untyped_ nulls.
+For example, the inputs `null.int` and `null.null` are acceptable to an `int`-typed argument,
+as are arbitrary annotations on either.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=concrete-type]
+|===
+
+The _abstract types_ are select supertypes of the concrete types: `text` accepts both `symbol`
+and `string`; `number` accepts `int`, `decimal`, and `float`; `lob` accepts `blob` and `clob`;
+`sequence` accepts `list` and `sexp`; `any` accepts any value.
+Nulls and annotations are accepted as with the concrete types.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=abstract-type]
+|===
+
+Collectively, the abstract and concrete types are the _tagged types_.
+Parameters of these types can use macro invocations in place of normal values.
+
+The _primitive types_ are subtypes of various concrete types that have particularly compact
+binary encodings.
+These include variable-length strings, symbols, signed ``int``s, unsigned ``uint``s,
+as well as fixed-width ``int``s, ``uint``s, and ``float``s, all of various widths between 8 and
+64 bits.
+These types are untagged, so they do not accept nulls, annotations, or macro invocations.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=primitive-type]
+|===
+
+Finally, any visible macro can be used as a type, in which case the argument is written (in text)
+as an S-expression with elements matching that macro’s signature.
+As with tagless arguments, these arguments are serialized without any explicit indication of
+their type, since that’s implied by context.
+(Zero-parameter macros—constants—are acceptable but pointless.)
+
+
+=== Cardinality
+
+Each parameter specification includes a _cardinality_ that indicates the number of values that it
+expects its argument(s) to produce.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=cardinality]
+|===
+
+The following cardinality modifiers are available:
+
+* `?` denotes a parameter that accepts zero or one value.
+* `!` denotes a parameter that accepts exactly one value.
+* `{asterisk}` denotes a parameter that accepts zero or more values.
+* `+` denotes a parameter that accepts one or more values.
+
+Cardinality is verified by the Ion implementation: the expansion system will signal an expansion
+error if the number of values produced by the argument(s) is not aligned with the declared
+cardinality.
+
+Some combinations of type and cardinality are inherently erroneous: a primitive type cannot
+produce more than one value.
+
+
+=== Grouped Parameters
+
+A parameter may be _grouped_, in which case its invocation shape is a sequence of arguments.
+In text invocations, this sequence is written as an Ion list containing the arguments.
+In binary E-expressions, the sequence uses a dedicated encoding.
+In all cases, each element of the group must match the parameter’s declared type.
+
+TODO expansion splicing semantics
+
+To declare a grouped parameter, write the parameter specification with a list around the base type.
+Grouped parameters may declare the `+` cardinality, otherwise `*` is implied.
+No other cardinalities are allowed; there’s no point in grouping a parameter that accepts at most
+one value.
+
+Examples:
+
+[{nrm}]
+----
+(counts [int])         // Accepts zero or more ints
+(points [point]+)      // Accepts one or more points
+----
+
+
+=== Rest Parameters
+
+The last parameter may be a _rest parameter_, which is effectively an implicitly grouped
+parameter.
+In text invocations, these parameters don’t use a grouping sequence, but instead take “all the
+rest” of the argument expressions.
+
+To declare a rest parameter, use one of the two special cardinality modifiers:
+
+* `\...` denotes a parameter that accepts zero or more values.
+* `\...+` denotes a parameter that accepts one or more values.
+
+Examples:
+
+[{nrm}]
+----
+(counts int \...)      // Accepts zero or more ints
+(points point \...+)   // Accepts one or more points
+----
+
+
+=== Voidable and Optional Parameters
+
+Parameters with cardinality accepting zero values (declared with modifiers `?`, `*`, or `\...`)
+are called _voidable_ because their resulting value streams can be void.
+A parameter is _optional_ when it is voidable and all following parameters are voidable.
+
+Optional parameters are given special treatment in text invocations: their arguments can be
+omitted entirely (as long as all following arguments are also omitted).
+
+
+=== Arity
+
+The _minimum arity_ of a macro is equal to the number of leading non-optional parameters.
+Assuming no rest-parameter, the _maximum arity_ of the macro is the total number of declared
+parameters.
+A macro with a rest-parameter has no maximum arity.
+A macro with equal minimum and maximum arity is _fixed arity_; other templates are _variable
+arity_.
+
+
+=== Result Specification
+
+To enable more robust and easier-to debug templates, a signature can express a _result
+specification_ that constraints the data that it produces.
+Results are specified by their type (abstract or concrete) and cardinality.
+Both factors are verified by the macro expander when the macro is invoked.
+
+[{bnf}]
+|===
+include::grammar.adoc[tag=result-spec]
+|===

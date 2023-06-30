@@ -141,38 +141,57 @@ _module-body_ `)`
 // tag::macro-defn[]
 |macro-defn |::=|  `(` `*macro*` _macro-name_? _signature_ _template_ `)`
 // end::macro-defn[]
+// tag::signature[]
 |signature   |::=|  _param-specs_ _result-spec_?
 |param-specs |::=|  `(` _param-spec_* _rest-spec_? `)`  \|  `[` _param-spec_* _rest-spec_? `]`
 |param-spec  |::=|  _param-name_  \|  `(` _param-name_ _param-shape_ `)`
+|rest-spec   |::=|  `(` _param-name_ _rest-shape_  `)`
 |param-name  |::=|  _unannotated-identifier-symbol_
-
+// end::signature[]
+// tag::param-shape[]
 |param-shape        |::=|  _simple-shape_  \|  _grouped-shape_
-
-|simple-shape       |::=|  _tagless-type_ `*?*`?
-                       \|  _tagged-type_? _any-cardinality_?
-|any-cardinality    |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
-
-|grouped-shape      |::=|   `[` _any-type_? `]` `*+*`?
-
-|rest-spec        |::=|  `(` _param-name_ _any-type_? _rest-cardinality_  `)`
+|simple-shape       |::=|  _tagged-type_? _tagged-cardinality_?    +
+                       \|  _tagless-type_ _tagless-cardinality_?
+// end::param-shape[]
+// tag::cardinality[]
+|tagged-cardinality  |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
+|tagless-cardinality |::=|  `*'?'*`
+// end::cardinality[]
+// tag::param-shape[]
+|grouped-shape      |::=|   `[` _any-type_? `]` _grouped-cardinality_?
+// end::param-shape[]
+// tag::cardinality[]
+|grouped-cardinality |::=|  `*'+'*`
+// end::cardinality[]
+// tag::param-shape[]
+|rest-shape       |::=|  _any-type_? _rest-cardinality_
+// end::param-shape[]
+// tag::cardinality[]
 |rest-cardinality |::=|   `*\...*`  \|  `*\...+*`
-
+// end::cardinality[]
+// tag::param-types[]
 |any-type      |::=| _tagged-type_  \|  _tagless-type_
 |tagged-type   |::=| _abstract-type_ \| _concrete-type_
 |tagless-type  |::=| _primitive-type_  \|  _macro-ref_
-
+// end::param-types[]
+// tag::abstract-type[]
 |abstract-type |::=| `*any*` \| `*number*` \| `*exact*` \| `*text*` \| `*lob*` \| `*sequence*`
+// end::abstract-type[]
+// tag::concrete-type[]
 |concrete-type |::=|  `*'null'*`  \|  `*bool*`  \|  `*timestamp*`  \|  `*int*`  \|  `*decimal*`
                   \|  `*float*`  \|  `*string*`  \|  `*symbol*`  \|  `*blob*`  \|  `*clob*`
                   \|  `*list*`  \|  `*sexp*`  \|  `*struct*`
-
+// end::concrete-type[]
+// tag::primitive-type[]
 |primitive-type |::=|  `*var_symbol*`  \|  `*var_string*`
                    \|  `*var_int*`  \|  `*var_uint*`
                    \|  `*uint8*`    \|  `*uint16*`   \|  `*uint32*`  \|  `*uint64*`
                    \|  `*int8*`     \|  `*int16*`    \|  `*int32*`   \|  `*int64*`
                    \|  `*float16*`  \|  `*float32*`  \|  `*float64*`
-
-|result-spec |::=|  `*\->*` _tagged-type_ _any-cardinality_
+// end::primitive-type[]
+// tag::result-spec[]
+|result-spec |::=|  `*\->*` _tagged-type_ _tagged-cardinality_
+// end::result-spec[]
 |===
 
 
