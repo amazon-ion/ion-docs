@@ -41,7 +41,9 @@ TODO this section needs much work.
 // end::retention[]
 // tag::module-decl[]
 |module-decl |::=| _dependency_  \|  _inline-module-def_
+// tag::dependency[]
 |dependency  |::=| _load-decl_  \|  _use-decl_  \|  _import-decl_
+// end::dependency[]
 // end::module-decl[]
 // tag::use-decl[]
 |use-decl    |::=|  `(` `*use*` _use-item_* `)`
@@ -78,18 +80,20 @@ TODO this section needs much work.
 
 === Macro References
 
+// tag::macro-ref[]
 [{bnf}]
 |===
 |macro-ref     |::=|  _macro-name_  \|  _local-ref_  \|  _qualified-ref_
 
-|local-ref     |::=|  < symbol of the form ``':``_name-or-address_``'`` >
-|qualified-ref |::=|  < symbol of the form ``':``_module-name_``:``_name-or-address_``'`` >
+|local-ref     |::=|  ⟨symbol of the form ``':``_name-or-address_``'``⟩
+|qualified-ref |::=|  ⟨symbol of the form ``':``_module-name_``:``_name-or-address_``'``⟩
 
 |module-name     |::=|  _unannotated-identifier-symbol_
 |macro-name      |::=|  _unannotated-identifier-symbol_
 |macro-address   |::=|  _unannotated-uint_
 |name-or-address |::=|  _macro-name_  \|  _macro-address_
 |===
+// end::macro-ref[]
 
 
 === Module Definitions
@@ -99,9 +103,11 @@ TODO this section needs much work.
 // tag::inline-module[]
 |inline-module-def   |::=| `(` `*module*` _module-name_ _module-body_ `)`
 // end::inline-module[]
+// tag::shared-module[]
 |shared-module-def   |::=| ``$ion_shared_module::``__ion-version-marker__``::(`` _catalog-key_
 _module-body_ `)`
 |catalog-key         |::=| `(` `*catalog_key*` _catalog-name_ _catalog-version_ `)`
+// end::shared-module[]
 |===
 
 
@@ -109,16 +115,22 @@ _module-body_ `)`
 
 [{bnf}]
 |===
+// tag::module-body[]
 |module-body |::=|  _dependency_* _symtab_? _macro-alias_* _module-mactab_?
-
+// end::module-body[]
+// tag::macro-alias[]
 |macro-alias |::=|  `(` `*alias*` _macro-name_ _macro-ref_ `)`
-
+// end::macro-alias[]
+// tag::module-mactab[]
 |module-mactab   |::=|  `(` `*macro_table*` _macro-or-export_* `)`
-|macro-or-export |::=|  _macro-defn_  \|  _export_  \|  _module-name_
-
-|export      |::=|  `(` `*export*` _export-item_* `)`
+|macro-or-export |::=|  _macro-defn_  \|  _export_
+// end::module-mactab[]
+// tag::export[]
+|export      |::=|  `(` `*export*` _export-item_* `)`                   +
+                \|  _module-name_
 |export-item |::=|  _macro-ref_                                         +
                 \|  `(` `*from*` _module-name_ _name-or-address_* `)`
+// end::export[]
 |===
 
 
@@ -126,8 +138,9 @@ _module-body_ `)`
 
 [{bnf}]
 |===
+// tag::macro-defn[]
 |macro-defn |::=|  `(` `*macro*` _macro-name_? _signature_ _template_ `)`
-
+// end::macro-defn[]
 |signature   |::=|  _param-specs_ _result-spec_?
 |param-specs |::=|  `(` _param-spec_* _rest-spec_? `)`  \|  `[` _param-spec_* _rest-spec_? `]`
 |param-spec  |::=|  _param-name_  \|  `(` _param-name_ _param-shape_ `)`
@@ -212,14 +225,16 @@ signature of the invoked macro.
 
 [{bnf}]
 |===
+// tag::tunneled-module[]
 |shared-symtab |::=|  `$ion_shared_symbol_table::{`         +
 {sp2} `name` `:` _catalog-name_           +
 {sp2} `version` `:` _catalog-version_     +
 {sp2} `symbols` `:` `[` string* `]`       +
 {sp2} `module` `:` _tunneled-module-def_  +
 `}`
-|tunneled-module-def |::=|  _ion-version-marker_ `::(` _module-body_ `)`
-|module-body |::=|  _dependency_* _macro-alias_* _module-mactab_?
+|tunneled-module-def |::=|  _ion-version-marker_ `::(` _tunneled-module-body_ `)`
+|tunneled-module-body |::=|  _dependency_* _macro-alias_* _module-mactab_
+// end::tunneled-module[]
 |===
 
 TIP: A tunneled module may not have a `symbol_table` clause; symbols must be defined

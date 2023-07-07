@@ -37,6 +37,8 @@ include::modules-by-example.adoc[]
 
 include::directives.adoc[]
 
+include::modules.adoc[]
+
 include::system-module.adoc[]
 
 include::template-expr.adoc[]
