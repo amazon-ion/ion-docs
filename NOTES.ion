@@ -1,0 +1,112 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+'''
+
+TODOs
+-----
+* Multiple arguments in define_func_domain to enable (dom T = (-> I1 I2 O))
+* Sequence domains like Val*
+* Sequence domains like Val+
+* fn/define_fn should accept a named function domain and a "lambda".
+* Singleton domains (replace dummy domains?)
+* display_model should print functions (and denoters)
+* TOP domain
+* BOTTOM domain
+* Delay and memoize component domains (enable recursive types)
+
+
+Requires Fusion features:
+* Better `display` of domains and values.
+* Use record guardians to type-check values.
+
+
+Library Functions
+-----------------
+append : T* x T* -> T*
+index  : T* x I  -> T
+<>     :         -> T*
+
+
+Denoters
+--------
+
+Denoter function must cover all inputs.
+Opaque denoter can just type-check
+Everything is a function!
+
+What do we want a denoter to do?
+* Have input type  -- form of match-cases based on domain type (union vs product vs tuple)
+* have output type
+* apply
+  - type-check inputs upon receipt
+  - type-check results before return
+
+'''
+
+(define_fn (E (v RVal) (r Environment) -> Value)
+  (case v (Symbolic "foo")))
+
+
+(define_denoter (Ev [RVal] Environment::r Continuation::k -> 'Value*')
+  '''
+Resolves symbols in a single raw value.
+  '''
+  (match
+    [RSym::sym]    (k r (lift_to Symbol (symbolize r sym)))    // E[[sym]]rk = k r symbolize(r sym)
+    [RStruct::str] (k r (new_struct))
+    [RList::l]     ('Ev*' (lower_to 'RVal*' l) r
+                     (Continuation (r1 vs)
+                       (k r1 (lift_to 'RList' vs))))
+    [SafeVal::s]   (k r (lift_to Value s))))
+'''
+^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^^^^
+This is syntax in   This is "real code" as in define_fn
+define_denoter
+
+
+HARD: type-check match patterns at compile time if they recurse!
+'''
+
+(define_fn (Ev RVal::rv Environment::r Continuation::k -> 'Value*')
+  (assert (is_union_domain RVal))
+  (lets [(subdomain (domain_value_domain (domain_value_rep rv))),
+         (subvalue  (lower_to subdomain rv)),
+         (subfn     (case
+                      ((ident subdomain RSym)    Ev_Rsym   )
+                      ((ident subdomain RStruct) Ev_RStruct)
+                      ((ident subdomain RList)   Ev_Rlist  )
+                      ((ident subdomain SafeVal) Ev_SafeVal)
+                      (true (wrong ...))))]
+      (subfn subvalue r k)))
+
+'''
+Factoring out new top-level functions will make it easier to debug, I think.
+
+    Name mangled      First arg lowered to one "match pattern" type
+           vvvvvvv  vvvvvvvvv
+'''
+(define_fn Ev_RSym (RSym::sym Environment::r Continuation::k -> 'Value*')
+  (k r (lift_to Symbol (symbolize r sym))))
+(define_fn Ev_RStruct
+  ...)
+(define_fn Ev (RVal::rv Environment::r Continuation::k -> 'Value*')
+  (...))
+
+
+(define_denoter ('Ev*' 'RVal*'::rvs Environment::r Continuation::k -> 'Value*')
+  '''
+Resolves symbols in a sequence of raw values.
+  '''
+  (match rvs
+    []                        (k r <>)
+    [RVal::rv1, 'RVal*'::rvs] (Ev rv1 r
+                               (Continuation (r1 vs1)
+                                 ('Ev*' r1
+                                   (Continuation (r2 vs2)
+                                     (k r2 (append vs1 vs2))))))))
+
+
+(define_denoter ('Etop*' 'TopVal*' Env Cont -> Value*) ...)
+
+
+(Etop* ( make TopVal* ... )   Env0 Cont0)

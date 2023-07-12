@@ -1,0 +1,243 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation")
+
+(expect_syntax_error
+  (define_model Bad
+    (dom T = "T")
+    (dom TT = (+ T T))))  // Duplicate subdomain in +
+
+(expect_syntax_error
+  (define_model Bad
+    (dom T = "T")
+    (dom Tx = (* T))))    // Must have more than one in product
+
+(expect_syntax_error
+  (define_model Bad
+    (dom T = "T")
+    (dom Tx = (-> T))))    // Must have more than one in function
+
+(expect_syntax_error
+  (define_model Bad
+    (dom T = "T")
+    (dom Tx = (- T T))))    // Undefined operator
+
+
+(define_model M1
+  (dom Dummy = "dummy")
+
+  (dom B = (^ is_bool)      "Booleans")
+  (dom Z = (^ is_int)       "Integers")
+  (dom D = (^ is_decimal)   "Decimals")
+  (dom F = (^ is_float)     "Floats")
+  (dom S = (^ is_string)    "Strings")
+  (dom T = (^ is_timestamp) "Timestamps")
+
+  (dom Exact = (+ Z D))
+  (dom Num   = (+ Z D F))
+  (dom Any   = (+ B Z D F S T) "All Values")
+
+  (dom Stamped = (* T Any) "A timestamped value")
+
+  (dom Any2Any = (-> Any Any))
+  (dom Pred    = (-> Any B)  "A predicate function")
+
+  (dom Point2d = (* Z Z))
+  (dom Projection = (-> Point2d Z))  // Single argument of product domain
+
+
+  (fn id ((a Any) -> Any)
+    a)
+  (fn stamp ((t T) (v Any) -> Stamped)
+    (tuple Stamped t v))
+)
+
+(check_pred is_model  M1)
+(check_pred is_domain Z)
+(check_pred is_domain D)
+(check_pred is_domain Exact)
+(check_pred is_domain Stamped)
+(check_pred is_domain Any2Any)
+
+(check === "dummy" (domain_description Dummy))
+(check === "Integers" (domain_description Z))
+(check === "All Values" (domain_description Any))
+(check === "A timestamped value" (domain_description Stamped))
+(check === "A predicate function" (domain_description Pred))
+
+
+// Base domain values
+
+(define true_val (inject_into B true))
+
+(define z_rep 1456)
+(check_false (element_of z_rep Z))
+
+(define z_val (inject_into Z z_rep))
+(check_true (element_of z_val Z))
+(check === z_rep (eject z_val))
+
+(define d_val (inject_into D 1.23))
+(define f_val (inject_into F 4.56e0))
+(define s_val (inject_into S "an S"))
+(define t_val (inject_into T 1776T))
+
+
+(check_false (element_of t_val Any))
+(check_true  (element_of t_val T))
+
+
+// Union domain values
+
+(define int_exact_val (lift_to Exact z_val))
+(define dec_exact_val (lift_to Exact d_val))
+(define int_num_val   (lift_to Num z_val))
+(define flt_num_val   (lift_to Num f_val))
+
+(define int_any_val (lift_to Any z_val))
+
+(check_true (element_of int_exact_val Exact))
+(check_true (element_of dec_exact_val Exact))
+(check_true (element_of int_any_val Any))
+
+// Invalid lifting
+(expect_argument_error (lift_to Exact z_rep))
+(expect_argument_error (lift_to Exact s_val))
+
+
+// Product domain values
+
+(define stamped_int_val (tuple Stamped t_val int_any_val))
+(check_true (element_of stamped_int_val Stamped))
+
+(expect_argument_error (tuple Stamped int_any_val))        // Arity mismatch
+(expect_argument_error (tuple Stamped t_val))
+(expect_argument_error (tuple Stamped stamped_int_val))
+(expect_argument_error (tuple Stamped int_any_val int_any_val))  // int_any_val ∉ T
+(expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
+
+(check ident t_val (product_domain_element Stamped stamped_int_val 0))
+(check ident int_any_val (product_domain_element Stamped stamped_int_val 1))
+
+
+
+// Function domains
+
+(define_check (check_argdomains expected_args func_dom)
+  (let [(arg_doms (func_domain_argdomains func_dom))]
+    (check_pred is_list arg_doms)
+    (check === expected_args arg_doms)))
+
+// Single argument (union)
+(check_argdomains [Exact] (make_func_domain null.string "desc" Exact  T))
+(check_argdomains [Exact] (make_func_domain null.string "desc" [Exact] T))
+
+// Single argument (product)
+(check_argdomains [Stamped] (make_func_domain null.string "desc"  Stamped  T))
+(check_argdomains [Stamped] (make_func_domain null.string "desc" [Stamped] T))
+
+// Multiple arguments
+(check_argdomains [Z, Any] (make_func_domain null.string "desc" [Z, Any] Stamped))
+
+// Anonymous product domain not allowed.
+(expect_argument_error
+  (make_func_domain null.string "desc"
+    (make_product_domain null.string "desc" (|| [T, Any])) T))
+
+
+//==========
+// Functions
+
+(check_pred is_fn id)
+(check_same int_any_val (id int_any_val))
+(expect_argument_error (id 21))       // Wrong argument type
+(expect_argument_error (id t_val))    // Wrong argument type
+
+(check_pred is_fn stamp)
+(expect_arity_error (stamp))
+(check_true (element_of (stamp t_val int_any_val) Stamped))
+
+
+// We can turn a plain Fusion function into a type-checked domain function.
+// TODO Support this in `fn` syntax.
+(define identity_fn (make_fn "identity" Any2Any identity))
+(check_pred is_fn identity_fn)
+(check_same int_any_val (identity_fn int_any_val))
+
+(expect_argument_error (identity_fn 21))       // Wrong argument type
+(expect_argument_error (identity_fn t_val))    // Wrong argument type
+(expect_result_error ((make_fn "x" Pred identity) int_any_val)) // Returns an Any, not a B
+
+
+// Now a real-ish function
+(define convert_Num_to_Exact
+  (make_fn (quote convert_Num_to_Exact)
+    (make_func_domain null.string "desc" Num Exact)  // Assumes v ∈ Exact
+    (lambda (v)
+      (lift_to Exact (lower_to Z v)))))        // TODO handle D as well
+
+(let [(converted (convert_Num_to_Exact int_num_val))]
+  (check_true (element_of converted Exact))
+  (check_same z_val (lower_to Z converted)))
+(expect_argument_error (convert_Num_to_Exact flt_num_val))
+
+
+// Syntax-form variant of the same thing.
+(define_fn convert_Num_to_Exact ((v Num) -> Exact)
+  (lift_to Exact (lower_to Z v)))
+
+(let [(converted (convert_Num_to_Exact int_num_val))]
+  (check_true (element_of converted Exact))
+  (check_same z_val (lower_to Z converted)))
+(expect_argument_error (convert_Num_to_Exact flt_num_val))
+
+(expect_syntax_error (fn bad_identity Any2Any identity))
+
+
+// Functions over product domains require one argument in that domain.
+
+(define project_x
+  (make_fn (quote project_x) Projection
+    (lambda (point) (product_domain_element Point2d point 0))))
+(let [(p (tuple Point2d (inject_into Z 17) (inject_into Z 39)))]
+  (check === 17 (eject (project_x p))))
+
+(define stamped_time
+  (make_fn (quote stamped_time)
+    (make_func_domain null.string "desc" Stamped T)
+    (lambda (stamped) (product_domain_element Stamped stamped 0))))
+(check_same t_val (stamped_time stamped_int_val))
+
+// Even though <T, Any> matches Stamped, we need a proper domain value for strong typing.
+(expect_arity_error (stamped_time t_val int_any_val))
+
+
+// Multi-arg function
+
+(define make_point2d
+  (make_fn (quote make_point2d)
+    (make_func_domain null.string "desc" [Z, Z] Point2d)
+    (lambda (x y) (tuple Point2d x y))))
+(lets [(x (inject_into Z 18)),
+       (y (inject_into Z 50)),
+       (p (make_point2d x y))]
+  (check ident x (product_domain_element Point2d p 0))
+  (check ident y (product_domain_element Point2d p 1)))
+
+
+//==========
+// Misc cases
+
+(expect_argument_error (element_of t_val int_any_val))     // 2nd arg not a domain
+
+(expect_argument_error (lower_to t_val t_val))   // 1st arg is not a domain
+(expect_argument_error (lower_to Any 12))        // 2nd arg isn't a domain value at all
+(expect_argument_error (lower_to Any t_val))     // 2nd arg isn't a union-domain value
+(expect_argument_error (lower_to S int_num_val)) // 2nd arg is a union value, but wrong subdomain
+
+// TODO ditto for lift_to
+
+
+"SUCCESS (denotation.test)"

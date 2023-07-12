@@ -1,0 +1,796 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module densem "/fusion"
+  '''
+Tools for writing and testing denotational semantic models.
+
+A model consists of a set of definitions of domains, functions, and denoters.
+Each such element has a name to which a Fusion value is bound.
+
+
+_Domains_ denote sets of values in the model space.
+
+_Domain values_ denote individual values in a specific domain.
+
+_Functions_ are higher-level domains that operate over domain values.
+
+_Donaters_ are special functions expressed as a set of cases that together
+cover a full domain.
+
+
+Domains come in several types:
+  * _Base domains_ are the primitives of the model space.
+    Base domain values wrap Fusion values that match a given predicate, lifting
+    them into the model.
+  * _Union domains_ model tagged unions of other domains.
+    They are "tagged" in the sense that elements of a subdomain must be
+    explicitly lifted into the union, and lowered back out of the union.
+  * _Product domains_ model ordered tuples of values.
+  * _Sequence domains_ model sequences of zero or more values from a given
+    domain.
+
+  '''
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    (rename_in "/fusion/experimental/syntax"
+      (quote_syntax QS))
+    (rename_in "/fusion/base"
+      (quote Q) (quasiquote QQ) (unquote UQ)))
+
+  (provide
+    define_model
+    is_model
+    display_model
+
+    dom
+    is_domain
+    domain_description
+    display_domain
+    element_of
+
+    // Base domain value operators
+    inject_into
+    eject
+
+    // Union domain value operators
+    lift_to
+    lower_to
+
+    // Product domain operators
+    make_product_domain
+    is_product_domain
+    product_domain_subdomains
+
+    // Product domain value operators
+    tuple
+    product_domain_element
+
+    fn
+    make_func_domain
+    func_domain_argdomains
+    func_domain_output
+
+    define_fn
+    make_fn
+    is_fn
+
+    denoter
+    )
+
+  (define_syntax REM (|stx| (QS (void))))
+
+  (define CTX (quote_syntax lexical_context))
+
+  (define (is_text v)
+    (or (is_symbol v) (is_string v)))
+
+  (define (text_to_symbol t)
+    (if (is_symbol t)
+      t
+      (if (is_string t)
+        (string_to_symbol t)
+        (raise_argument_error "text_to_symbol" "string or symbol" 0 t))))
+
+
+  // Basically the class metaobject/vtable for domain objects.
+  // Instances include BaseDomain, UnionDomain, ProductDomain, FuncDomain.
+  (record domain_meta (name display_fn))
+
+  // The "classes" from which domain values can be created.
+  (record domain (type name checker description data))
+  // * The `type` is the category of domain: base, union, product, etc.
+  //   We can't name this field "meta" b/c its accessor would clash with
+  //   the `domain_meta` constructor.
+  // * The `checker` is a procedure that accepts the domain and a value,
+  //   returning true when the value can be lifted into the domain.
+  // * The shape of `data` is controlled by the type.
+  //   TODO We could probably use record subtypes instead.
+
+  (define (make_domain type name checker description data)
+    (unless (is_domain_meta type)
+      (raise_argument_error "make_domain" "domain type" 0
+        type name checker description data))
+    (unless (is_text name)
+      (raise_argument_error "make_domain" "symbol or string" 1
+        type name checker description data))
+    (unless (is_procedure checker)
+      (raise_argument_error "make_domain" "type-check procedure" 2
+        type name checker description data))
+    (unless (is_string description)
+      (raise_argument_error "make_domain" "string" 3
+        type name checker description data))
+    (let [(namesym (text_to_symbol name))]
+      (domain type namesym checker description data)))
+
+  (define (is_domain_of_type d v)
+    (and (is_domain v)
+         (ident d (domain_type v))))
+
+  (define (domain_accepts d v)
+    (unless (is_domain d)
+      (raise_argument_error "domain_accepts" "domain" 0 d v))
+    ((domain_checker d) d v))
+
+  (define (display_domain_rhs d)
+    ((domain_meta_display_fn (domain_type d)) d))
+
+  (define (display_domain d)
+    (unless (is_domain d)
+      (raise_argument_error "display_domain" "domain" 0 d))
+    (display (domain_name d) " = ")
+    (display_domain_rhs d)
+    (displayln))
+
+  (define (domain_to_string d)
+    (display_to_string (display_domain d)))
+
+  (define (is_list_of_domains v)
+    (and (is_list v) (every is_domain v)))
+
+
+  //-------------------
+  // Domain Values
+
+  // TODO display these in a readable way!
+
+  (record domain_value (domain rep))  // TODO guardian to typecheck
+
+  (define (make_value domain v)
+    (unless (is_domain domain)
+      (raise_argument_error "make_value" "domain" 0 domain v))
+    (unless (domain_accepts domain v)
+      (raise_argument_error "make_value"
+        (string_append "value in domain " (domain_name domain))
+        1 domain v))
+    (domain_value domain v))
+
+  (define (element_of v domain)  // i.e., ∈
+    (unless (is_domain domain)
+      (raise_argument_error "element_of" "domain" 1 v domain))
+    (and (is_domain_value v)
+         (ident domain (domain_value_domain v))))
+
+
+  //-------------------
+  // Dummy Domains
+
+  (define DummyDomain
+    (domain_meta "DummyDomain"
+      (|d| (display "<" (domain_description d) ">"))))
+
+  (define (make_dummy_domain name desc)
+    (make_domain DummyDomain name (always true) desc null))
+
+
+  (define_syntax define_dummy_domain
+    '''
+    (define_dummy_domain name description)
+    '''
+    (lambda (stx)
+      (unless (=== (syntax_size stx) 3)
+        (wrong_syntax stx "Bad syntax for define_dummy_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2))]  // TODO typecheck
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_dummy_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx))))
+          (quote_syntax context)
+          stx))))
+
+
+  //-------------------
+  // Base Domains
+
+  (define BaseDomain
+    (domain_meta "BaseDomain"
+      (|d| (display "<" (domain_description d) ">"))))
+
+  (define (make_base_domain name desc pred)
+    (let [(pred (or pred (always true)))]
+      // TODO add DummyDomain that doesn't have a predicate
+      // TODO type check args
+      (make_domain BaseDomain name
+        (|d v| (pred v))
+        desc
+        pred)))
+
+  (define (is_base_domain d)
+    (and (is_domain d) (ident BaseDomain (domain_type d))))
+
+  (define (base_domain_predicate d)
+    (domain_data d))
+
+  (define (inject_into d v)
+    '''
+Lifts a Fusion value into a base domain.
+    '''
+    (unless (is_base_domain d) (raise "not a base domain"))
+    (make_value d v))
+
+  (define (eject v)
+      // TODO type-check v is base domain value
+    (domain_value_rep v))
+
+  (define_syntax define_base_domain
+    '''
+    (define_base_domain name description predicate)
+    '''
+    (lambda (stx)
+      (unless (=== (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for define_base_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2)),  // TODO typecheck
+            (pred_stx (syntax_get stx 3))]
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_base_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                (UQ pred_stx))))
+          (quote_syntax context)
+          stx))))
+
+
+  //-------------------
+  // Union Domains
+
+  (define UnionDomain
+    (domain_meta "UnionDomain"
+      (|d| (display (apply string_join " + "
+                      (map domain_name (union_domain_subdomains d)))))))
+
+  (define (make_union_domain name description domain_producer)
+    // TODO Memoize domain production
+    (make_domain UnionDomain name union_domain_checker description domain_producer))
+
+  (define (is_union_domain d)
+    (and (is_domain d) (ident UnionDomain (domain_type d))))
+
+  (define (union_domain_subdomains d)  // Returns list of domains
+    (let [(domains ((domain_data d)))]
+      (unless (and (is_list domains)
+                   (every is_domain domains))
+        (raise_result_error "union_domain_subdomains" "list of domains" domains))
+      domains))
+
+  (define (union_domain_checker d v)
+    (any (|sub| (element_of v sub))
+      (union_domain_subdomains d)))
+
+  (define_syntax define_union_domain
+    '''
+    (define_union_domain name description domain ...)
+    '''
+    (lambda (stx)
+      (unless (> (syntax_size stx) 3)
+        (wrong_syntax stx "Bad syntax for define_union_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2)),  // TODO typecheck
+            (domains (tail (tail (tail (syntax_unwrap stx)))))]
+        (let [(dupe (check_duplicate_identifier domains))]
+          (when dupe
+            (wrong_syntax dupe
+              "Duplicate domain identifier in specification of domain " name_stx)))
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_union_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                // Delay evaluation of the domains, so they can recurse
+                (thunk (UQ (pair (quote list) domains))))))
+          (quote_syntax context)
+          stx))))
+
+  (define (lift_to d v)
+    '''
+Lifts a subdomain value into a union domain.
+    '''
+    (unless (is_union_domain d)
+      // TODO improve rendering of d
+      (raise_argument_error "lift_to" "union domain" 0 d v))
+    (make_value d v))
+
+  (define (lower_to d v)
+    (unless (is_domain d)
+      (raise_argument_error "lower_to" "domain" 0 d v))
+    (unless (and (is_domain_value v)
+                 (is_union_domain (domain_value_domain v)))
+      (raise_argument_error "lower_to" "union-domain value" 1 d v))
+    (let [(rep (domain_value_rep v))]
+      (unless (element_of rep d)
+        (raise_argument_error "lower_to"
+          (string_append "element of domain " (domain_name d))
+          1 d v))
+      rep))
+
+
+  //-------------------
+  // Product Domains
+
+  (define ProductDomain
+    (domain_meta "ProductDomain"
+      (|d| (display (apply string_join " * "
+                      (map domain_name (product_domain_subdomains d)))))))
+
+  (define (make_product_domain name description domain_producer)  // Ugh
+    // TODO Memoize domain production
+    (make_domain ProductDomain name product_domain_checker description domain_producer))
+
+  (define (is_product_domain d)
+    (and (is_domain d) (ident ProductDomain (domain_type d))))
+
+  (define (product_domain_subdomains d)
+    '''
+Returns the list of component domains.
+    '''
+    (let [(domains ((domain_data d)))]
+      (unless (and (is_list domains)
+                   (every is_domain domains))
+        (raise_result_error "product_domain_subdomains" "list of domains" domains))
+      domains))
+
+  (define tuple
+    '''
+    (tuple domain elt0 elt1 ...+)
+
+Constructs a product-domain value.
+    '''
+    (lambda rest
+      (let [(domain (head rest))]
+        // TODO typecheck domain
+        (make_value domain (apply list (tail rest))))))
+
+  (define (product_domain_element d v i)
+    '''
+Access component i of domain value v in domain d.
+    '''
+    // TODO type-check v
+    (list_element (domain_value_rep v) i))
+
+
+  (define (product_domain_checker d values)
+    (let [(subdomains (product_domain_subdomains d))]
+      (and (is_list values)
+           (== (size values) (size subdomains))
+        (for_fold [(all_are_good true)]
+                  [(v values), (s subdomains)]
+          (and all_are_good (element_of v s))))))
+
+  (define_syntax define_product_domain
+    '''
+    (define_product_domain name description domain0 domain1 ...+)
+    '''
+    (lambda (stx)
+      (when (< (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for define_product_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2)),  // TODO typecheck
+            (domains (tail (tail (tail (syntax_unwrap stx)))))]
+        (when (< (size domains) 2)
+          (wrong_syntax stx "define_product_domain requires at least two elements"))
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_product_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                // Delay evaluation of the domains, so they can recurse
+                (thunk (UQ (pair (quote list) domains))))))
+          (quote_syntax context)
+          stx))))
+
+
+  //-------------------
+  // Function Domains
+
+  (define FuncDomain
+    (domain_meta "FuncDomain"
+      (|d| (display_name_else_spec (func_domain_input d))
+           (display " -> ")
+           (display_name_else_spec (func_domain_output d)))))
+
+  (define (make_func_domain name description input output)
+    '''
+`input` can be a named domain, a list of named domains for multi-arg,
+or null for TOP (accept any one value).
+    '''
+    (unless (or (is_domain input)
+                (is_list_of_domains input)
+                (is_null input))               // TODO model TOP properly
+      (raise_argument_error "make_func_domain" "input domain or domains" 1
+        name description input output))
+    (when (and (is_product_domain input) (is_null (domain_name input)))
+      (raise_argument_error "make_func_domain"
+        "singular product-domain arg must be named" 0
+        name description input output))
+    (unless (is_domain output)
+      (raise_argument_error "make_func_domain" "output domain" 2
+        name description input output))
+    (let [(input (if (is_list_of_domains input)
+                   (if (=== 1 (size input))
+                     (. input 0)
+                     (make_product_domain null.string null.string (|| input)))
+                   input))]
+      // FIXME proper checker
+      (make_domain FuncDomain name (always true) description [input, output])))
+
+  (define (is_func_domain v) (is_domain_of_type FuncDomain v))
+
+  (define (func_domain_input  d) (list_element (domain_data d) 0))
+  (define (func_domain_output d) (list_element (domain_data d) 1))
+
+  (define (func_domain_argdomains d)
+    (let [(in_dom (func_domain_input d))]
+      (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
+        (product_domain_subdomains in_dom)
+        [in_dom])))
+
+  (define (display_name_else_spec d)
+    (let [(name (domain_name d))]
+      (if name (display name) (display_domain d))))
+
+
+  (define_syntax define_func_domain
+    '''
+    (define_func_domain name description inDomain outDomain)
+    '''
+    (lambda (stx)
+      (unless (== (syntax_size stx) 5)
+        (wrong_syntax stx "Bad syntax for define_func_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2)),  // TODO typecheck
+            (domains (tail (tail (tail (syntax_unwrap stx)))))]
+        (datum_to_syntax
+          (QQ (define (UQ name_stx)
+                (apply make_func_domain
+                  (quote (UQ name_stx))
+                  (UQ desc_stx)
+                  // TODO Delay evaluation of the domains, so they can recurse
+                  (UQ (pair (quote list) domains)))))
+          CTX stx))))
+
+
+  //===================
+  // Functions
+
+  '''
+At present, domain functions are implemented as Fusion functions.
+This makes "interpretation" of domain functions trivial; it's just Fusion execution.
+However, it means that it's harder to analyze the model because the bindings point
+to opaque objects.
+
+Ideally, domain fns would be implemented by records that can be applied as procedures.
+
+Until Fusion supports that, we could instead use records that have a `fn_applier` field
+that returns its implementation.
+In that case, we can "compile" the modeled function by replacing (f e ...) with
+((fn_applier f) e ...) while also doing arity- and type-checking using the record bound to `f`.
+
+Domain functions are denoted using an expression language, something like:
+
+e ::= v           // local variable / argument
+    | (F e ...)
+    | (eltof D v)
+    | (lift_to D e)
+    | (lower_to D e)
+    | (case v (D e) ...)  // where v:DD and DD = D + ...
+    | (index v i)         // where v:D*
+
+Remember that _everything is functional here_, even things like IF.
+
+  '''
+
+  (define (make_fn name domain impl)
+    '''
+The `domain` must be a func_domain, the `impl` a Fusion procedure.
+
+Type-checking of function application:
+  * If input domain is named (even a product domain), then the function requires
+    one domain value of that domain.
+  * If the input domain is an anonymous product domain, then the function requires
+    arguments of the same number and type of the subdomains.
+    '''
+      // TODO validate name
+    (unless (is_func_domain domain)
+      (raise_argument_error "make_fn" "function domain" 0
+        domain impl))
+    (unless (is_procedure impl)
+      (raise_argument_error "make_fn" "procedure" 1
+        domain impl))
+    (lets [(in_dom  (func_domain_input  domain)),
+           (out_dom (func_domain_output domain)),
+           (applier (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
+                      (let [(argdomains (product_domain_subdomains in_dom))]
+                        (lambda args
+                          (unless (== (size argdomains) (size args))
+                            (apply raise_arity_error name (size argdomains) args))
+                          (for [(dom argdomains), (arg args)]
+                            (unless (element_of arg dom)
+                              (raise_argument_error name
+                                (symbol_to_string (domain_name dom)) -1 arg)))
+                           (let [(r (apply impl args))]
+                             (unless (element_of r out_dom)
+                               (raise_result_error name
+                                 (symbol_to_string (domain_name out_dom)) r))
+                             r)))  // FIXME proper arg position
+                      (|v| (unless (or (not in_dom) (element_of v in_dom))  // FIXME model TOP
+                             (raise_argument_error name
+                               (symbol_to_string (domain_name in_dom)) 0 v))
+                         (let [(r (impl v))]
+                           (unless (element_of r out_dom)
+                             (raise_result_error name
+                               (symbol_to_string (domain_name out_dom)) v))  // FIXME should be r?
+                           r))))]
+      applier))
+
+  (define is_fn is_procedure)
+
+  (define (xform_fn_sig sig_stx)
+    '''
+Returns:
+  * A sexp denoting syntax that constructs the function domain, as per `make_fn`.
+  * A sexp holding identifiers binding the formal argument names.
+    '''
+    (let_values [((domains argnames codomain) (split_fn_sig sig_stx))]
+      // TODO check for absent codomain
+      (values (sexp (Q make_func_domain) null.string null.string (apply list domains) codomain)
+              argnames)))
+
+
+  (define (split_fn_sig sig_stx)
+    '''
+Returns:
+  * A sexp holding identifiers bound to the argument domains.
+  * A sexp holding identifiers binding the formal argument names.
+  * An identifier bound to the codomain.
+    '''
+    (for_fold [(arg_domains (sexp)),
+               (arg_names   (sexp)),
+               (codomain    (void))]
+              [(entry_stx sig_stx)]
+      (when (is_domain codomain)
+        (wrong_syntax entry_stx "unexpected element in signature after codomain"))
+      (if (is_void codomain)
+        // We are still processing arguments
+        (if (= "->" (syntax_unwrap entry_stx))
+          (values arg_domains arg_names "->")  // Signal next round to grab codomain
+          (if (is_identifier entry_stx)
+            (values (pair null arg_domains) // TODO use TOP domain
+              (pair entry_stx arg_names)
+              codomain)
+            (if (is_pair (syntax_unwrap entry_stx))
+              (let [(name (syntax_get entry_stx 0)),
+                    (dom  (syntax_get entry_stx 1))]
+                // TODO typecheck name
+                // TODO typecheck dom
+                (values
+                  (pair dom  arg_domains)
+                  (pair name arg_names)
+                  codomain))
+              (wrong_syntax entry_stx "Expected identifier, sexp, or ->"))))
+        // Time to find the codomain
+        // TODO assert codomain === "->"
+        // TODO typecheck entry_stx
+        (values (reverse arg_domains) (reverse arg_names) entry_stx))))
+
+
+// Alt syntax to consider:
+//   (define_fn (name (Domain arg) ... Domain) denot_expr)
+
+  (define_syntax define_fn
+    '''
+    (define_fn name <signature> <expr>)
+
+Defines a function in a semantic model.
+
+<signature> ::= ( <arg>* -> <domain-name> )
+<arg> ::= var-name  |  ( <var-name> <domain-name> )
+    '''
+    (lambda (stx)
+      (unless (== (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for fn"))
+      (let [(name_stx (syntax_get stx 1)),
+            (sig_stx  (syntax_get stx 2)),
+            (expr_stx (syntax_get stx 3))]
+        // TODO typecheck name
+        (unless (is_sexp (syntax_unwrap sig_stx))
+          (wrong_syntax stx "invalid fn signature: " sig_stx))
+        (let_values [((func_domain_stx argnames)
+                      (xform_fn_sig (syntax_unwrap sig_stx)))]
+          (datum_to_syntax
+            (QQ (define (UQ name_stx)
+                  (make_fn (quote (UQ name_stx))
+                    (UQ func_domain_stx)
+                    (lambda (UQ argnames)
+                      (UQ expr_stx)))))
+            CTX stx)))))
+
+// TODO (define_fn name dom-name expr)
+//   => (define name (make_fn name dom-name expr))
+//   Assumes expr is a function, not a body; we have no arg-names!
+
+
+  //===================
+  // TODO Denoters
+
+  (define (make_denoter name description lhs rhs)
+    (make_func_domain name description lhs rhs))
+
+
+  //===================
+  // Models
+
+  (record model (domains))
+
+  (define (make_model domains)
+    (unless (is_list_of_domains domains)
+      (raise_argument_error "make_model" "list of domains" 0
+        domains))
+    (model domains))
+
+
+  (define (parse_model model_stx body)
+    '''
+Generates definitions from the body of a model.
+
+Returns:
+  * sexp of element define-forms in reverse order defined
+  * sexp of domain identifiers in reverse order defined
+    '''
+    (for_fold [(define_forms (sexp)),
+               (domain_names (sexp))]
+              [(d body)]
+      (unless (is_sexp (syntax_unwrap d))
+        (wrong_syntax d "Expected sexp defining a denotational element"))
+      (lets [(type (syntax_get d 0)),
+             (name (syntax_get d 1))]
+        (cond
+          ((free_identifier_equal (QS dom) type)
+           (values
+            (pair (handle_domain_def d name) define_forms)
+            (pair name domain_names)))
+          ((free_identifier_equal (QS fn) type)
+           (values
+            (pair (handle_fn d name) define_forms)
+            domain_names))
+          (true (wrong_syntax type "Unexpected model type"))))))
+
+
+  (define (handle_domain_def dom_stx name)
+    (let [(result (|d| (datum_to_syntax d CTX dom_stx)))]
+      (lets [(eq   (syntax_get dom_stx 2)),  // TODO validate the `=`
+             (def  (syntax_get dom_stx 3)),
+             (def_val (syntax_unwrap def)),
+             (desc (if (< 4 (syntax_size dom_stx)) (syntax_get dom_stx 4) null.string))]
+        (if (is_string def_val)
+          (result (QQ (define_dummy_domain (UQ name) (UQ def))))
+          (if (is_sexp def_val)
+              (let [(op   (syntax_unwrap (head def_val))),
+                    (args (tail def_val))]
+                (cond
+                  ((=== (quote ^) op)
+                   (result
+                     (pair (quote define_base_domain) (pair name (pair desc args)))))
+                  ((=== (quote +) op)
+                   (result
+                     (pair (quote define_union_domain) (pair name (pair desc args)))))
+                  ((=== (quote *) op)
+                    (result
+                      (pair (quote define_product_domain) (pair name (pair desc args)))))
+                  ((=== (quote ->) op)
+                    (result
+                      (pair (quote define_func_domain) (pair name (pair desc args)))))
+                  (true (wrong_syntax def
+                          "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+              (wrong_syntax def "Expected string or sexp for domain definition"))))))
+
+
+  (define (handle_fn fn_stx name)
+    (lets [(result (|d| (datum_to_syntax d CTX fn_stx))),
+           (tail (tail (syntax_unwrap fn_stx)))]
+      (result (pair (quote_syntax define_fn) tail))))
+
+
+  (define_syntax dom
+    '''
+    (dom name = description)
+
+Defines a dummy domain with the given name and description.
+
+    (dom name = <domain-spec> description?)
+
+Defines a domain within a model.
+
+The <domain-spec> must have one of these forms:
+
+    (^ <pred-expr>)
+
+Defines a base domain, allowing injection of Fusion values that match the
+predicate.
+
+    (+ <dom-id> ...+)
+
+Defines a union of one or more domains.
+
+    (* <dom-id> <dom-id> ...+)
+
+Defines a product of two or more domains.
+
+    (-> <dom-id> <dom-id>)
+
+Defines a function from one domain to another.
+    '''
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
+
+  (define_syntax fn
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
+  (define_syntax denoter
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
+
+
+  (define_syntax define_model
+    '''
+    (define_model name
+      (dom <dom-id> = <domain-spec> <string>?) ...
+      (fn f ...) ...
+      (denoter e ...) ...)
+    '''
+    (lambda (stx)
+      (lets [//(wrong (|m| (wrong_syntax )),
+             (subforms     (tail (syntax_unwrap stx))),
+             (model_name   (head subforms)),
+             (body         (tail subforms))]
+        (let_values [((defines names) (parse_model stx body))]
+          (datum_to_syntax
+            (QQ (begin
+                  (UQ (pair (quote begin) (reverse defines)))
+                  (define (UQ model_name)
+                    (make_model
+                      (UQ (pair (quote list) (reverse names)))))))
+            (quote_syntax ctx)
+            stx)))))
+
+
+  (define (display_model m)
+    (displayln "Domains")
+    (displayln "=======")
+    (displayln)
+    (do display_domain (model_domains m)))
+
+
+  (define (parse_domain_spec spec_stx )
+    (void))
+
+'''
+'''
+)
