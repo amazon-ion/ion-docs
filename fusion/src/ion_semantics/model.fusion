@@ -1,0 +1,128 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module ion_semantic_model "/fusion"
+
+  (require
+    "/fusion/private/record"
+    "/fusioncontrib/denotation"
+    )
+
+  (provide (all_defined_out))
+
+
+  (define_values (SYM0 is_sym0)
+    (let_values [((rtd ctor pred accessor) (make_record_type (quote Sym0) null 0))]
+      (values (ctor) pred)))
+
+
+  (define_values (IVM_1_0 IVM_1_1 is_ivm)
+    (let_values [((rtd ctor pred accessor) (make_record_type (quote IVM) null 0))]
+      (values (ctor) (ctor) pred)))
+
+
+  (define_model Ion
+
+    (dom IVM = (^ is_ivm) "Ion version markers")
+
+    (dom Unicode = (^ is_string) "Sequence of Unicode code points")
+    (dom Sym0    = (^ is_sym0)   "The undefined symbol")
+
+    (dom B      = (^ is_bool)      "Booleans")
+    (dom I      = (^ is_int)       "Integers")
+    (dom D      = (^ is_decimal)   "Decimals")
+    (dom F      = (^ is_float)     "Floats")
+    (dom T      = (^ is_timestamp) "Timestamps")
+
+
+    //=============================
+    // Safe values cannot contain SIDs.
+    // Their 'raw' and 'application' values are the same.
+
+    (dom DotNull = "Sentinel for typed nulls")
+
+    (dom NullNull = (+ DotNull))
+    (dom Boolean  = (+ B DotNull))
+    (dom Int      = (+ I DotNull))
+
+    (dom SafeVal = (+ NullNull Boolean Int D F T String /*blob clob*/)
+      "Values that cannot contain SIDs")
+      // TODO Handle other nulls
+
+
+    //=============================
+    // Raw-layer Data Types, which can contain unresolved SIDs
+
+    (dom Symbolic = (+ Unicode Sym0))
+    (dom SymTok   = (+ Unicode I))
+
+    (dom RSym    = (+ SymTok DotNull))
+    (dom RList   = "RVal*")
+    (dom RStruct = "TBD")  // Unicode ->
+
+    // The "raw" data model
+    (dom RVal    = (+ SafeVal RSym RList RStruct))
+    (dom TRVal   = (+ RVal IVM))
+
+
+    //=============================
+    // Application-layer Data Types
+
+    (dom String  = (+ Unicode))
+    (dom Symbol  = (+ Symbolic DotNull))
+    (dom List    = "Value*")
+
+    (dom Struct  =  "Unicode -> Value+")  // Can $0 be a key?
+      // Or maybe KV* where KV = Unicode x Value
+
+    // The Ion data model, proper
+    (dom Value   = (+ SafeVal Symbol List Struct))
+      // Value = Annotation* x Content
+    (dom Values = (* Value Values))
+
+
+    //=======================
+    // Evaluation Functions
+
+    (dom Environment = (-> I Unicode))
+
+    // TODO I think this is TopContinuation;
+    //      intermediate continuations can't alter the environment!
+    // TODO should be Env x 'Value*' -> 'Value*'
+    (dom Continuation = (-> Value Value))
+
+
+    (fn string2symbol ((s String) -> Symbolic)
+      (lift_to Symbolic (lower_to Unicode s)))
+
+    (fn symbolize ((r Environment) (s RSym) -> Symbolic)
+      (if  // functional if!
+        (element_of s Unicode)
+        (lift_to Symbol (lower_to Unicode s))
+        (lift_to Symbol (r (lower_to I s)))))
+
+  /*
+    (fn e0 Environment // empty Environment
+      (|v| (raise (display_to_string "Unbound variable " v))))
+
+    (fn k0 Continuation // empty Continuation
+      (|v| v))
+
+
+    // Denotations
+
+    (den E "General value evaluation"
+      (RVal x Environment x Continuation -> 'Value*'))
+
+    (den TE "Top-level value evaluation"
+      ([TRVal] (e Environment) (k Continuation) -> 'Value*')
+      [IVM]  = (k e0 (seq Value))
+      [RVal::v] = (E v e (|e1 v1| (IF (= (annot v1) <$ion_symbol_table>)
+                                    (k <> (extend_env e1 (imports v1))
+                                    (k v1 e1)))))
+
+    (den 'TE*' "Top-level stream evaluation"
+      ('TRVal*' x Environment x Continuation -> 'Value*'))
+
+  */
+  )
+)

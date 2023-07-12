@@ -1,0 +1,33 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/ion_semantics/model"
+)
+
+
+(displayln)
+(display_model Ion)
+(displayln)
+
+
+(define identity
+  (make_fn "identity" Continuation
+    (|v| v)))
+
+(define e0 // empty Environment
+  (make_fn "e0" Environment
+    (|v| (raise (display_to_string "Unbound variable " v)))))
+
+(define k0 // empty Environment
+  (make_fn "e0" Continuation
+    (|v| v)))
+
+
+
+(lets [(content "text for symbol"),
+       (unicode (inject_into Unicode content)),
+       (string  (lift_to String unicode)),
+       (symbol  (string2symbol string))]
+  (check === content (eject (lower_to Unicode symbol))))
