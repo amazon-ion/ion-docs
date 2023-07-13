@@ -4,7 +4,6 @@
 
 TODOs
 -----
-* Multiple arguments in define_func_domain to enable (dom T = (-> I1 I2 O))
 * Sequence domains like Val*
 * Sequence domains like Val+
 * fn/define_fn should accept a named function domain and a "lambda".

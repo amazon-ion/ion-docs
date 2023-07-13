@@ -87,8 +87,8 @@
 
     // TODO I think this is TopContinuation;
     //      intermediate continuations can't alter the environment!
-    // TODO should be Env x 'Value*' -> 'Value*'
-    (dom Continuation = (-> Value Value))
+    // TODO should be Environment x 'Value*' -> 'Value*'
+    (dom Continuation = (-> Environment Value Value))
 
 
     (fn string2symbol ((s String) -> Symbolic)

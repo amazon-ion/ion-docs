@@ -47,6 +47,7 @@
   (dom Point2d = (* Z Z))
   (dom Projection = (-> Point2d Z))  // Single argument of product domain
 
+  (dom Stamper = (-> T Any Stamped)) // Two arguments (ie, anonymous product)
 
   (fn id ((a Any) -> Any)
     a)

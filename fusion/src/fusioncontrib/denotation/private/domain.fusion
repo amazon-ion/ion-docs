@@ -397,14 +397,15 @@ or null for TOP (accept any one value).
     (unless (or (is_domain input)
                 (is_list_of_domains input)
                 (is_null input))               // TODO model TOP properly
-      (raise_argument_error "make_func_domain" "input domain or domains" 1
+      (raise_argument_error "make_func_domain" "input domain or domains" 2
         name description input output))
     (when (and (is_product_domain input) (is_null (domain_name input)))
+      // FIXME This doesn't handle single-entry list
       (raise_argument_error "make_func_domain"
         "singular product-domain arg must be named" 0
         name description input output))
     (unless (is_domain output)
-      (raise_argument_error "make_func_domain" "output domain" 2
+      (raise_argument_error "make_func_domain" "output domain" 3
         name description input output))
     (let [(input (if (is_list_of_domains input)
                    (if (=== 1 (size input))
@@ -432,21 +433,25 @@ or null for TOP (accept any one value).
 
   (define_syntax define_func_domain
     '''
-    (define_func_domain name description inDomain outDomain)
+    (define_func_domain name description inDomain ...+ outDomain)
     '''
     (lambda (stx)
-      (unless (== (syntax_size stx) 5)
+      (when (< (syntax_size stx) 5)
         (wrong_syntax stx "Bad syntax for define_func_domain"))
-      (let [(name_stx (syntax_get stx 1)),
-            (desc_stx (syntax_get stx 2)),  // TODO typecheck
-            (domains (tail (tail (tail (syntax_unwrap stx)))))]
+      (lets [(name_stx (syntax_get stx 1)),
+             (desc_stx (syntax_get stx 2)),  // TODO typecheck
+             (domains (tail (tail (tail (syntax_unwrap stx))))),
+             (domains_rev (reverse domains)),
+             (out_domain (head domains_rev)),
+             (in_domains (reverse (tail domains_rev)))]
         (datum_to_syntax
           (QQ (define (UQ name_stx)
-                (apply make_func_domain
+                (make_func_domain
                   (quote (UQ name_stx))
                   (UQ desc_stx)
                   // TODO Delay evaluation of the domains, so they can recurse
-                  (UQ (pair (quote list) domains)))))
+                  (UQ (pair (quote list) in_domains))
+                  (UQ out_domain))))
           CTX stx))))
 
 )
