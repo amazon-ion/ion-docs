@@ -1,0 +1,182 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module function "/fusion"
+
+  '''
+At present, domain functions are implemented as Fusion functions.
+This makes "interpretation" of domain functions trivial; it's just Fusion execution.
+However, it means that it's harder to analyze the model because the bindings point
+to opaque objects.
+
+Ideally, domain fns would be implemented by records that can be applied as procedures.
+
+Until Fusion supports that, we could instead use records that have a `fn_applier` field
+that returns its implementation.
+In that case, we can "compile" the modeled function by replacing (f e ...) with
+((fn_applier f) e ...) while also doing arity- and type-checking using the record bound to `f`.
+
+Domain functions are denoted using an expression language, something like:
+
+e ::= v           // local variable / argument
+    | (F e ...)
+    | (eltof D v)
+    | (lift_to D e)
+    | (lower_to D e)
+    | (case v (D e) ...)  // where v:DD and DD = D + ...
+    | (index v i)         // where v:D*
+
+Remember that _everything is functional here_, even things like IF.
+
+  '''
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    (rename_in "/fusion/experimental/syntax"
+      (quote_syntax QS))
+    (rename_in "/fusion/base"
+      (quote Q) (quasiquote QQ) (unquote UQ))
+    "/fusioncontrib/denotation/private/domain"
+  )
+
+  (provide
+    define_fn
+    is_fn
+    make_fn
+  )
+
+
+  (define CTX (quote_syntax lexical_context))
+
+
+  (define (make_fn name domain impl)
+    '''
+The `domain` must be a func_domain, the `impl` a Fusion procedure.
+
+Type-checking of function application:
+  * If input domain is named (even a product domain), then the function requires
+    one domain value of that domain.
+  * If the input domain is an anonymous product domain, then the function requires
+    arguments of the same number and type of the subdomains.
+    '''
+      // TODO validate name
+    (unless (is_func_domain domain)
+      (raise_argument_error "make_fn" "function domain" 0
+        domain impl))
+    (unless (is_procedure impl)
+      (raise_argument_error "make_fn" "procedure" 1
+        domain impl))
+    (lets [(in_dom  (func_domain_input  domain)),
+           (out_dom (func_domain_output domain)),
+           (applier (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
+                      (let [(argdomains (product_domain_subdomains in_dom))]
+                        (lambda args
+                          (unless (== (size argdomains) (size args))
+                            (apply raise_arity_error name (size argdomains) args))
+                          (for [(dom argdomains), (arg args)]
+                            (unless (element_of arg dom)
+                              (raise_argument_error name
+                                (symbol_to_string (domain_name dom)) -1 arg)))
+                           (let [(r (apply impl args))]
+                             (unless (element_of r out_dom)
+                               (raise_result_error name
+                                 (symbol_to_string (domain_name out_dom)) r))
+                             r)))  // FIXME proper arg position
+                      (|v| (unless (or (not in_dom) (element_of v in_dom))  // FIXME model TOP
+                             (raise_argument_error name
+                               (symbol_to_string (domain_name in_dom)) 0 v))
+                         (let [(r (impl v))]
+                           (unless (element_of r out_dom)
+                             (raise_result_error name
+                               (symbol_to_string (domain_name out_dom)) v))  // FIXME should be r?
+                           r))))]
+      applier))
+
+  (define is_fn is_procedure)
+
+  (define (xform_fn_sig sig_stx)
+    '''
+Returns:
+  * A sexp denoting syntax that constructs the function domain, as per `make_fn`.
+  * A sexp holding identifiers binding the formal argument names.
+    '''
+    (let_values [((domains argnames codomain) (split_fn_sig sig_stx))]
+      // TODO check for absent codomain
+      (values (sexp (Q make_func_domain) null.string null.string (apply list domains) codomain)
+              argnames)))
+
+
+  (define (split_fn_sig sig_stx)
+    '''
+Returns:
+  * A sexp holding identifiers bound to the argument domains.
+  * A sexp holding identifiers binding the formal argument names.
+  * An identifier bound to the codomain.
+    '''
+    (for_fold [(arg_domains (sexp)),
+               (arg_names   (sexp)),
+               (codomain    (void))]
+              [(entry_stx sig_stx)]
+      (when (is_domain codomain)
+        (wrong_syntax entry_stx "unexpected element in signature after codomain"))
+      (if (is_void codomain)
+        // We are still processing arguments
+        (if (= "->" (syntax_unwrap entry_stx))
+          (values arg_domains arg_names "->")  // Signal next round to grab codomain
+          (if (is_identifier entry_stx)
+            (values (pair null arg_domains) // TODO use TOP domain
+              (pair entry_stx arg_names)
+              codomain)
+            (if (is_pair (syntax_unwrap entry_stx))
+              (let [(name (syntax_get entry_stx 0)),
+                    (dom  (syntax_get entry_stx 1))]
+                // TODO typecheck name
+                // TODO typecheck dom
+                (values
+                  (pair dom  arg_domains)
+                  (pair name arg_names)
+                  codomain))
+              (wrong_syntax entry_stx "Expected identifier, sexp, or ->"))))
+        // Time to find the codomain
+        // TODO assert codomain === "->"
+        // TODO typecheck entry_stx
+        (values (reverse arg_domains) (reverse arg_names) entry_stx))))
+
+
+// Alt syntax to consider:
+//   (define_fn (name (Domain arg) ... Domain) denot_expr)
+
+  (define_syntax define_fn
+    '''
+    (define_fn name <signature> <expr>)
+
+Defines a function in a semantic model.
+
+<signature> ::= ( <arg>* -> <domain-name> )
+<arg> ::= var-name  |  ( <var-name> <domain-name> )
+    '''
+    (lambda (stx)
+      (unless (== (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for fn"))
+      (let [(name_stx (syntax_get stx 1)),
+            (sig_stx  (syntax_get stx 2)),
+            (expr_stx (syntax_get stx 3))]
+        // TODO typecheck name
+        (unless (is_sexp (syntax_unwrap sig_stx))
+          (wrong_syntax stx "invalid fn signature: " sig_stx))
+        (let_values [((func_domain_stx argnames)
+                      (xform_fn_sig (syntax_unwrap sig_stx)))]
+          (datum_to_syntax
+            (QQ (define (UQ name_stx)
+                  (make_fn (quote (UQ name_stx))
+                    (UQ func_domain_stx)
+                    (lambda (UQ argnames)
+                      (UQ expr_stx)))))
+            CTX stx)))))
+
+// TODO (define_fn name dom-name expr)
+//   => (define name (make_fn name dom-name expr))
+//   Assumes expr is a function, not a body; we have no arg-names!
+
+)

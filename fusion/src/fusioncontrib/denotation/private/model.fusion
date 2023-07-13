@@ -1,0 +1,167 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module model "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    (rename_in "/fusion/experimental/syntax"
+      (quote_syntax QS))
+    (rename_in "/fusion/base"
+      (quote Q) (quasiquote QQ) (unquote UQ))
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/function"
+  )
+
+  (provide
+    define_model
+    display_model
+    dom
+    fn
+    is_model
+  )
+
+  (define CTX (quote_syntax lexical_context))
+
+
+  (record model (domains))
+
+  (define (make_model domains)
+    (unless (is_list_of_domains domains)
+      (raise_argument_error "make_model" "list of domains" 0
+        domains))
+    (model domains))
+
+
+  (define (parse_model model_stx body)
+    '''
+Generates definitions from the body of a model.
+
+Returns:
+  * sexp of element define-forms in reverse order defined
+  * sexp of domain identifiers in reverse order defined
+    '''
+    (for_fold [(define_forms (sexp)),
+               (domain_names (sexp))]
+              [(d body)]
+      (unless (is_sexp (syntax_unwrap d))
+        (wrong_syntax d "Expected sexp defining a denotational element"))
+      (lets [(type (syntax_get d 0)),
+             (name (syntax_get d 1))]
+        (cond
+          ((free_identifier_equal (QS dom) type)
+           (values
+            (pair (handle_domain_def d name) define_forms)
+            (pair name domain_names)))
+          ((free_identifier_equal (QS fn) type)
+           (values
+            (pair (handle_fn d name) define_forms)
+            domain_names))
+          (true (wrong_syntax type "Unexpected model type"))))))
+
+
+  (define (handle_domain_def dom_stx name)
+    (let [(result (|d| (datum_to_syntax d CTX dom_stx)))]
+      (lets [(eq   (syntax_get dom_stx 2)),  // TODO validate the `=`
+             (def  (syntax_get dom_stx 3)),
+             (def_val (syntax_unwrap def)),
+             (desc (if (< 4 (syntax_size dom_stx)) (syntax_get dom_stx 4) null.string))]
+        (if (is_string def_val)
+          (result (QQ (define_dummy_domain (UQ name) (UQ def))))
+          (if (is_sexp def_val)
+              (let [(op   (syntax_unwrap (head def_val))),
+                    (args (tail def_val))]
+                (cond
+                  ((=== (quote ^) op)
+                   (result
+                     (pair (quote define_base_domain) (pair name (pair desc args)))))
+                  ((=== (quote +) op)
+                   (result
+                     (pair (quote define_union_domain) (pair name (pair desc args)))))
+                  ((=== (quote *) op)
+                    (result
+                      (pair (quote define_product_domain) (pair name (pair desc args)))))
+                  ((=== (quote ->) op)
+                    (result
+                      (pair (quote define_func_domain) (pair name (pair desc args)))))
+                  (true (wrong_syntax def
+                          "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+              (wrong_syntax def "Expected string or sexp for domain definition"))))))
+
+
+  (define (handle_fn fn_stx name)
+    (lets [(result (|d| (datum_to_syntax d CTX fn_stx))),
+           (tail (tail (syntax_unwrap fn_stx)))]
+      (result (pair (quote_syntax define_fn) tail))))
+
+
+  (define_syntax dom
+    '''
+    (dom name = description)
+
+Defines a dummy domain with the given name and description.
+
+    (dom name = <domain-spec> description?)
+
+Defines a domain within a model.
+
+The <domain-spec> must have one of these forms:
+
+    (^ <pred-expr>)
+
+Defines a base domain, allowing injection of Fusion values that match the
+predicate.
+
+    (+ <dom-id> ...+)
+
+Defines a union of one or more domains.
+
+    (* <dom-id> <dom-id> ...+)
+
+Defines a product of two or more domains.
+
+    (-> <dom-id> <dom-id>)
+
+Defines a function from one domain to another.
+    '''
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
+
+  (define_syntax fn
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
+  (define_syntax denoter
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
+
+
+  (define_syntax define_model
+    '''
+    (define_model name
+      (dom <dom-id> = <domain-spec> <string>?) ...
+      (fn f ...) ...
+      (denoter e ...) ...)
+    '''
+    (lambda (stx)
+      (lets [//(wrong (|m| (wrong_syntax )),
+             (subforms     (tail (syntax_unwrap stx))),
+             (model_name   (head subforms)),
+             (body         (tail subforms))]
+        (let_values [((defines names) (parse_model stx body))]
+          (datum_to_syntax
+            (QQ (begin
+                  (UQ (pair (quote begin) (reverse defines)))
+                  (define (UQ model_name)
+                    (make_model
+                      (UQ (pair (quote list) (reverse names)))))))
+            CTX
+            stx)))))
+
+
+  (define (display_model m)
+    (displayln "Domains")
+    (displayln "=======")
+    (displayln)
+    (do display_domain (model_domains m)))
+)
