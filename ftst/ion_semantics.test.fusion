@@ -28,10 +28,25 @@
   (check === "$ion" (eject (lower_to Unicode expanded))))
 
 
+// Expand a safe value
+
 (define true_val (lift_to Boolean (inject_into B true)))
 
 (let [(v (expand (lift_to RVal (lift_to SafeVal true_val))))]
   (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
+
+
+// Expand a system SID
+
+(define rsym_1 (lift_to RSym (lift_to SymTok (inject_into I 1))))
+
+(let [(v (expand (lift_to RVal rsym_1)))]
+  (check === "$ion" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
+
+// Expand an out-of-range SID
+(lets [(rsym_huge (lift_to RSym (lift_to SymTok (inject_into I 9999999999999)))),
+       (v         (expand (lift_to RVal rsym_huge)))]
+  (check === Sym0 (subdomain (lower_to Symbolic (lower_to Symbol v)))))
 
 
 "SUCCESS (ion_semantics.test)"

@@ -80,7 +80,7 @@ Type-checking of function application:
                                 (symbol_to_string (domain_name dom)) -1 arg)))
                            (let [(r (apply impl args))]
                              (unless (element_of r out_dom)
-                               (raise_result_error name
+                               (raise_result_error (string_append "result of " name)
                                  (symbol_to_string (domain_name out_dom)) r))
                              r)))  // FIXME proper arg position
                       (|v| (unless (or (not in_dom) (element_of v in_dom))  // FIXME model TOP

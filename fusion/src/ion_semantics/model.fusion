@@ -7,6 +7,7 @@ A denotational semantic model of Ion.
 TODO
 ----
 Functional:
+* [NULL] Implement DotNull
 * `expand` should accept a stream of RVals
 
 Cleanup:
@@ -70,9 +71,8 @@ Cleanup:
     // Raw-layer Data Types, which can contain unresolved SIDs
 
     (dom SymTok   = (+ Unicode I))     // "Raw" symbol token
-    (dom Symbolic = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom RSym     = (+ SymTok DotNull))
 
-    (dom RSym    = (+ SymTok DotNull))
     (dom RList   = "RVal*")
     (dom RStruct = "TBD")  // Unicode ->
 
@@ -84,8 +84,10 @@ Cleanup:
     //=============================
     // Application-layer Data Types
 
+    (dom Symbolic = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom Symbol   = (+ Symbolic DotNull))
+
     (dom String  = (+ Unicode))
-    (dom Symbol  = (+ Symbolic DotNull))
     (dom List    = "Value*")
 
     (dom Struct  =  "Unicode -> Value+")  // Can $0 be a key?
@@ -126,7 +128,15 @@ Cleanup:
       // General value evaluation
       (if (= SafeVal (subdomain vr))
         (k r (lift_to Value (lower_to SafeVal vr)))
-        (raise "not implemented")))
+        (if (= RSym (subdomain vr))
+          (E_RSym (lower_to RSym vr) r k)
+          // TODO RList, RStruct
+          (raise "not implemented"))))
+
+    (fn E_RSym ((v RSym) (r Environment) (k Continuation) -> Value)
+      // [NULL] implement null.symbol
+      // TODO invoke continuation
+      (lift_to Value (lift_to Symbol (expand_SymTok r (lower_to SymTok v)))))
 
   /*
     (den TE "Top-level value evaluation"
