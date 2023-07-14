@@ -2,7 +2,8 @@
 
 (require
   "/fusion/experimental/check"
-  "/fusioncontrib/denotation")
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/domain")
 
 (expect_syntax_error
   (define_model Bad
@@ -25,35 +26,7 @@
     (dom Tx = (- T T))))    // Undefined operator
 
 
-(define_model M1
-  (dom Dummy = "dummy")
-
-  (dom B = (^ is_bool)      "Booleans")
-  (dom Z = (^ is_int)       "Integers")
-  (dom D = (^ is_decimal)   "Decimals")
-  (dom F = (^ is_float)     "Floats")
-  (dom S = (^ is_string)    "Strings")
-  (dom T = (^ is_timestamp) "Timestamps")
-
-  (dom Exact = (+ Z D))
-  (dom Num   = (+ Z D F))
-  (dom Any   = (+ B Z D F S T) "All Values")
-
-  (dom Stamped = (* T Any) "A timestamped value")
-
-  (dom Any2Any = (-> Any Any))
-  (dom Pred    = (-> Any B)  "A predicate function")
-
-  (dom Point2d = (* Z Z))
-  (dom Projection = (-> Point2d Z))  // Single argument of product domain
-
-  (dom Stamper = (-> T Any Stamped)) // Two arguments (ie, anonymous product)
-
-  (fn id ((a Any) -> Any)
-    a)
-  (fn stamp ((t T) (v Any) -> Stamped)
-    (tuple Stamped t v))
-)
+(require "/model1")
 
 (check_pred is_model  M1)
 (check_pred is_domain Z)
@@ -68,84 +41,6 @@
 (check === "A timestamped value" (domain_description Stamped))
 (check === "A predicate function" (domain_description Pred))
 
-
-// Base domain values
-
-(define true_val (inject_into B true))
-
-(define z_rep 1456)
-(check_false (element_of z_rep Z))
-
-(define z_val (inject_into Z z_rep))
-(check_true (element_of z_val Z))
-(check === z_rep (eject z_val))
-
-(define d_val (inject_into D 1.23))
-(define f_val (inject_into F 4.56e0))
-(define s_val (inject_into S "an S"))
-(define t_val (inject_into T 1776T))
-
-
-(check_false (element_of t_val Any))
-(check_true  (element_of t_val T))
-
-
-// Union domain values
-
-(define int_exact_val (lift_to Exact z_val))
-(define dec_exact_val (lift_to Exact d_val))
-(define int_num_val   (lift_to Num z_val))
-(define flt_num_val   (lift_to Num f_val))
-
-(define int_any_val (lift_to Any z_val))
-
-(check_true (element_of int_exact_val Exact))
-(check_true (element_of dec_exact_val Exact))
-(check_true (element_of int_any_val Any))
-
-// Invalid lifting
-(expect_argument_error (lift_to Exact z_rep))
-(expect_argument_error (lift_to Exact s_val))
-
-
-// Product domain values
-
-(define stamped_int_val (tuple Stamped t_val int_any_val))
-(check_true (element_of stamped_int_val Stamped))
-
-(expect_argument_error (tuple Stamped int_any_val))        // Arity mismatch
-(expect_argument_error (tuple Stamped t_val))
-(expect_argument_error (tuple Stamped stamped_int_val))
-(expect_argument_error (tuple Stamped int_any_val int_any_val))  // int_any_val ∉ T
-(expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
-
-(check ident t_val (product_domain_element Stamped stamped_int_val 0))
-(check ident int_any_val (product_domain_element Stamped stamped_int_val 1))
-
-
-
-// Function domains
-
-(define_check (check_argdomains expected_args func_dom)
-  (let [(arg_doms (func_domain_argdomains func_dom))]
-    (check_pred is_list arg_doms)
-    (check === expected_args arg_doms)))
-
-// Single argument (union)
-(check_argdomains [Exact] (make_func_domain null.string "desc" Exact  T))
-(check_argdomains [Exact] (make_func_domain null.string "desc" [Exact] T))
-
-// Single argument (product)
-(check_argdomains [Stamped] (make_func_domain null.string "desc"  Stamped  T))
-(check_argdomains [Stamped] (make_func_domain null.string "desc" [Stamped] T))
-
-// Multiple arguments
-(check_argdomains [Z, Any] (make_func_domain null.string "desc" [Z, Any] Stamped))
-
-// Anonymous product domain not allowed.
-(expect_argument_error
-  (make_func_domain null.string "desc"
-    (make_product_domain null.string "desc" (|| [T, Any])) T))
 
 
 //==========
@@ -232,13 +127,6 @@
 // Misc cases
 
 (expect_argument_error (element_of t_val int_any_val))     // 2nd arg not a domain
-
-(expect_argument_error (lower_to t_val t_val))   // 1st arg is not a domain
-(expect_argument_error (lower_to Any 12))        // 2nd arg isn't a domain value at all
-(expect_argument_error (lower_to Any t_val))     // 2nd arg isn't a union-domain value
-(expect_argument_error (lower_to S int_num_val)) // 2nd arg is a union value, but wrong subdomain
-
-// TODO ditto for lift_to
 
 
 "SUCCESS (denotation.test)"

@@ -1,0 +1,68 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module model1 "/fusion"
+
+  (require "/fusioncontrib/denotation")
+
+  (provide (all_defined_out))
+
+
+  (define_model M1
+    (dom Dummy = "dummy")
+
+    (dom B = (^ is_bool)      "Booleans")
+    (dom Z = (^ is_int)       "Integers")
+    (dom D = (^ is_decimal)   "Decimals")
+    (dom F = (^ is_float)     "Floats")
+    (dom S = (^ is_string)    "Strings")
+    (dom T = (^ is_timestamp) "Timestamps")
+
+    (dom Exact = (+ Z D))
+    (dom Num   = (+ Z D F))
+    (dom Any   = (+ B Z D F S T) "All Values")
+
+    (dom Stamped = (* T Any) "A timestamped value")
+
+    (dom Any2Any = (-> Any Any))
+    (dom Pred    = (-> Any B)  "A predicate function")
+
+    (dom Point2d = (* Z Z))
+    (dom Projection = (-> Point2d Z))  // Single argument of product domain
+
+    (dom Stamper = (-> T Any Stamped)) // Two arguments (ie, anonymous product)
+
+    (fn id ((a Any) -> Any)
+      a)
+    (fn stamp ((t T) (v Any) -> Stamped)
+      (tuple Stamped t v))
+  )
+
+
+  // Base domain values
+
+  (define true_val (inject_into B true))
+
+  (define z_rep 1456)
+  (define z_val (inject_into Z z_rep))
+
+  (define d_val (inject_into D 1.23))
+  (define f_val (inject_into F 4.56e0))
+  (define s_val (inject_into S "an S"))
+  (define t_val (inject_into T 1776T))
+
+
+  // Union domain values
+
+  (define int_exact_val (lift_to Exact z_val))
+  (define dec_exact_val (lift_to Exact d_val))
+  (define int_num_val   (lift_to Num z_val))
+  (define flt_num_val   (lift_to Num f_val))
+
+  (define int_any_val (lift_to Any z_val))
+
+
+  // Product domain values
+
+  (define stamped_int_val (tuple Stamped t_val int_any_val))
+
+)
