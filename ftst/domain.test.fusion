@@ -68,7 +68,7 @@
 (check ident int_any_val (product_domain_element Stamped stamped_int_val 1))
 
 
-
+//======================
 // Function domains
 
 (define_check (check_argdomains expected_args func_dom)

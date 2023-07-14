@@ -19,6 +19,7 @@ TODOs
 Requires Fusion features:
 * [FNREC] Domain functions should be records, so they can be type-checked.
 * Better `display` of domains and values.
+* Better testing of display output requires `with_output_to_String` or something.
 * Use record guardians to type-check values.
 
 

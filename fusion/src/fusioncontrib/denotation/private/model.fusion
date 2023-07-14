@@ -163,5 +163,6 @@ Defines a function from one domain to another.
     (displayln "Domains")
     (displayln "=======")
     (displayln)
-    (do display_domain (model_domains m)))
+    (do (|d| (display_domain d) (displayln))
+      (model_domains m)))
 )

@@ -34,6 +34,4 @@
   (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
 
 
-(displayln)
-(display_model Ion)
-(displayln)
+"SUCCESS (ion_semantics.test)"

@@ -108,6 +108,11 @@
       (raise_argument_error "domain_accepts" "domain" 0 d v))
     ((domain_checker d) d v))
 
+
+  (define (display_domain_name_else_rhs d)
+    (let [(name (domain_name d))]
+      (if name (display name) (display_domain_rhs d))))
+
   (define (display_domain_rhs d)
     ((domain_meta_display_fn (domain_type d)) d))
 
@@ -115,11 +120,8 @@
     (unless (is_domain d)
       (raise_argument_error "display_domain" "domain" 0 d))
     (display (domain_name d) " = ")
-    (display_domain_rhs d)
-    (displayln))
+    (display_domain_rhs d))
 
-  (define (domain_to_string d)
-    (display_to_string (display_domain d)))
 
   (define (is_list_of_domains v)
     (and (is_list v) (every is_domain v)))
@@ -423,11 +425,15 @@ Access component i of domain value v in domain d.
   //-------------------
   // Function Domains
 
+  (define (display_func_domain d)
+    (display_domain_name_else_rhs (func_domain_input d))
+    (display " -> ")
+    (display_domain_name_else_rhs (func_domain_output d)))
+
+
   (define FuncDomain
-    (domain_meta "FuncDomain"
-      (|d| (display_name_else_spec (func_domain_input d))
-           (display " -> ")
-           (display_name_else_spec (func_domain_output d)))))
+    (domain_meta "FuncDomain" display_func_domain))
+
 
   (define (make_func_domain name description input output)
     '''
@@ -465,10 +471,6 @@ or null for TOP (accept any one value).
       (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
         (product_domain_subdomains in_dom)
         [in_dom])))
-
-  (define (display_name_else_spec d)
-    (let [(name (domain_name d))]
-      (if name (display name) (display_domain d))))
 
 
   (define_syntax define_func_domain
