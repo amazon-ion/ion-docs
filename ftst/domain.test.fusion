@@ -34,6 +34,18 @@
 (expect_argument_error (lift_to Exact s_val))  // 2nd arg isn't a subdomain value
 
 
+// subdomain
+(check_same Z  (subdomain int_exact_val))
+
+(expect_argument_error (subdomain z_val))
+
+
+// unwrap
+(check_same z_val (unwrap int_exact_val))
+
+(expect_argument_error (unwrap z_val))
+
+
 // lower_to
 (expect_argument_error (lower_to t_val t_val))   // 1st arg is not a domain
 (expect_argument_error (lower_to Any 12))        // 2nd arg isn't a domain value at all

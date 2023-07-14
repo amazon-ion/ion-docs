@@ -57,6 +57,8 @@ Domains come in several types:
 
     // Union domain value operators
     lift_to
+    subdomain
+//  unwrap     // Considered unsafe
     lower_to
 
     // Product domain operators

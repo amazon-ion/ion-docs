@@ -31,6 +31,8 @@
 
     // Union domain value operators
     lift_to
+    subdomain
+    unwrap
     lower_to
 
     // Product domain operators
@@ -300,11 +302,30 @@ Lifts a subdomain value into a union domain.
         1 d v))
     (make_value d v))
 
+
+  (define (is_union_domain_value v)
+    (and (is_domain_value v)
+         (is_union_domain (domain_value_domain v))))
+
+
+  (define (unwrap v)
+    "Extracts the subdomain value from a union value"
+    (unless (is_union_domain_value v)
+      (raise_argument_error "unwrap" "union-domain value" 0 v))
+    (domain_value_rep v))
+
+
+  (define (subdomain v)
+    "Extracts the subdomain type from a union value"
+    (unless (is_union_domain_value v)
+      (raise_argument_error "subdomain" "union-domain value" 0 v))
+    (domain_value_domain (domain_value_rep v)))
+
+
   (define (lower_to d v)
     (unless (is_domain d)
       (raise_argument_error "lower_to" "domain" 0 d v))
-    (unless (and (is_domain_value v)
-                 (is_union_domain (domain_value_domain v)))
+    (unless (is_union_domain_value v)
       (raise_argument_error "lower_to" "union-domain value" 1 d v))
     (let [(rep (domain_value_rep v))]
       (unless (element_of rep d)
