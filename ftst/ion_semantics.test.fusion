@@ -7,27 +7,26 @@
 )
 
 
-(displayln)
-(display_model Ion)
-(displayln)
-
-
-(define identity
-  (make_fn "identity" Continuation
-    (|v| v)))
-
-(define e0 // empty Environment
-  (make_fn "e0" Environment
-    (|v| (raise (display_to_string "Unbound variable " v)))))
-
-(define k0 // empty Environment
-  (make_fn "e0" Continuation
-    (|v| v)))
-
-
-
 (lets [(content "text for symbol"),
        (unicode (inject_into Unicode content)),
        (string  (lift_to String unicode)),
        (symbol  (string2symbol string))]
   (check === content (eject (lower_to Unicode symbol))))
+
+
+(lets [(i        (inject_into I 0)),
+       (symtok   (lift_to SymTok i)),
+       (expanded (expand_SymTok e0 symtok))]
+  (check_true (element_of expanded Symbolic))
+  (check_same SYM0 (lower_to Sym0 expanded)))
+
+(lets [(i        (inject_into I 1)),
+       (symtok   (lift_to SymTok i)),
+       (expanded (expand_SymTok e0 symtok))]
+  (check_true (element_of expanded Symbolic))
+  (check === "$ion" (eject (lower_to Unicode expanded))))
+
+
+(displayln)
+(display_model Ion)
+(displayln)

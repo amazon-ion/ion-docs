@@ -1,7 +1,14 @@
 // Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
 
 (module ion_semantic_model "/fusion"
+  '''
+A denotational semantic model of Ion.
 
+TODO
+----
+* Streamline singleton domain values SYM0, IVMs via framework.
+
+  '''
   (require
     "/fusion/private/record"
     "/fusioncontrib/denotation"
@@ -10,7 +17,7 @@
   (provide (all_defined_out))
 
 
-  (define_values (SYM0 is_sym0)
+  (define_values (_SYM0 is_sym0)
     (let_values [((rtd ctor pred accessor) (make_record_type (quote Sym0) null 0))]
       (values (ctor) pred)))
 
@@ -52,8 +59,8 @@
     //=============================
     // Raw-layer Data Types, which can contain unresolved SIDs
 
-    (dom Symbolic = (+ Unicode Sym0))
-    (dom SymTok   = (+ Unicode I))
+    (dom SymTok   = (+ Unicode I))     // "Raw" symbol token
+    (dom Symbolic = (+ Unicode Sym0))  // "Expanded" symbol token
 
     (dom RSym    = (+ SymTok DotNull))
     (dom RList   = "RVal*")
@@ -83,7 +90,9 @@
     //=======================
     // Evaluation Functions
 
-    (dom Environment = (-> I Unicode))
+    // Environment returns Symbolic so it can represent SYM0 when the sid
+    // doesn't map to text.
+    (dom Environment = (-> I Symbolic))
 
     // TODO I think this is TopContinuation;
     //      intermediate continuations can't alter the environment!
@@ -94,11 +103,11 @@
     (fn string2symbol ((s String) -> Symbolic)
       (lift_to Symbolic (lower_to Unicode s)))
 
-    (fn symbolize ((r Environment) (s RSym) -> Symbolic)
+    (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
       (if  // functional if!
         (element_of s Unicode)
-        (lift_to Symbol (lower_to Unicode s))
-        (lift_to Symbol (r (lower_to I s)))))
+        (lift_to Symbolic (lower_to Unicode s))
+        (r (lower_to I s))))
 
   /*
     (fn e0 Environment // empty Environment
@@ -125,4 +134,12 @@
 
   */
   )
+
+  (define SYM0 (inject_into Sym0 _SYM0))
+
+  (define e0 // empty Environment
+    (make_fn "e0" Environment
+      (|i| (if (=== 1 (eject i))
+             (lift_to Symbolic (inject_into Unicode "$ion"))
+             (lift_to Symbolic SYM0)))))
 )
