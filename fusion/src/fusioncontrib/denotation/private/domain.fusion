@@ -198,16 +198,19 @@
   (define (base_domain_predicate d)
     (domain_data d))
 
+
   (define (inject_into d v)
     '''
 Lifts a Fusion value into a base domain.
     '''
-    (unless (is_base_domain d) (raise "not a base domain"))
+    (unless (is_base_domain d)
+      (raise_argument_error "inject_into" "base domain" 0 d v))
     (unless (domain_accepts d v)
       (raise_argument_error "inject_into"
         (string_append "value in domain " (domain_name d))
         1 d v))
     (make_value d v))
+
 
   (define (eject v)
       // TODO type-check v is base domain value
@@ -297,7 +300,7 @@ Lifts a subdomain value into a union domain.
 //    (raise_argument_error "lift_to" "a domain value" 1 d v))
     (unless (domain_accepts d v)
       (raise_argument_error (string_append "lift_to " (domain_name d))
-        (display_to_string "value in one of these domains: "
+        (display_to_string "value in one of "
           (map domain_name (union_domain_subdomains d)))
         1 d v))
     (make_value d v))

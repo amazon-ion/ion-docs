@@ -1,6 +1,7 @@
 // Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
 
 (require
+  "/fusion/exception"
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
   "/ion_semantics/model"
@@ -25,6 +26,12 @@
        (expanded (expand_SymTok e0 symtok))]
   (check_true (element_of expanded Symbolic))
   (check === "$ion" (eject (lower_to Unicode expanded))))
+
+
+(define true_val (lift_to Boolean (inject_into B true)))
+
+(let [(v (expand (lift_to RVal (lift_to SafeVal true_val))))]
+  (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
 
 
 (displayln)

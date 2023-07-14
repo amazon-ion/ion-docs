@@ -6,10 +6,20 @@ A denotational semantic model of Ion.
 
 TODO
 ----
+Functional:
+* `expand` should accept a stream of RVals
+
+Cleanup:
 * Streamline singleton domain values SYM0, IVMs via framework.
+* Remove use of non-functional features in modeled functions
+  * if
+  * raise
 
   '''
+
+
   (require
+    "/fusion/exception"               // Not functional, should not be needed
     "/fusion/private/record"
     "/fusioncontrib/denotation"
     )
@@ -109,19 +119,16 @@ TODO
         (lift_to Symbolic (lower_to Unicode s))
         (r (lower_to I s))))
 
-  /*
-    (fn e0 Environment // empty Environment
-      (|v| (raise (display_to_string "Unbound variable " v))))
-
-    (fn k0 Continuation // empty Continuation
-      (|v| v))
-
 
     // Denotations
 
-    (den E "General value evaluation"
-      (RVal x Environment x Continuation -> 'Value*'))
+    (fn E ((vr RVal) (r Environment) (k Continuation) -> Value)
+      // General value evaluation
+      (if (= SafeVal (subdomain vr))
+        (k r (lift_to Value (lower_to SafeVal vr)))
+        (raise "not implemented")))
 
+  /*
     (den TE "Top-level value evaluation"
       ([TRVal] (e Environment) (k Continuation) -> 'Value*')
       [IVM]  = (k e0 (seq Value))
@@ -131,15 +138,24 @@ TODO
 
     (den 'TE*' "Top-level stream evaluation"
       ('TRVal*' x Environment x Continuation -> 'Value*'))
-
   */
   )
 
   (define SYM0 (inject_into Sym0 _SYM0))
 
-  (define e0 // empty Environment
+  (define e0
+    "The bootstrap Environment"
     (make_fn "e0" Environment
       (|i| (if (=== 1 (eject i))
              (lift_to Symbolic (inject_into Unicode "$ion"))
              (lift_to Symbolic SYM0)))))
+
+  (define k0
+    "The bootstrap continuation"
+    (make_fn "k0" Continuation
+      (|e v| v)))
+
+
+  (define (expand rval)
+    (E rval e0 k0))
 )
