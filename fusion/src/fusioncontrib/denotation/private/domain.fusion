@@ -133,17 +133,15 @@
   (define (make_value domain v)
     (unless (is_domain domain)
       (raise_argument_error "make_value" "domain" 0 domain v))
-    (unless (domain_accepts domain v)
-      (raise_argument_error "make_value"
-        (string_append "value in domain " (domain_name domain))
-        1 domain v))
     (domain_value domain v))
 
   (define (element_of v domain)  // i.e., ∈
     (unless (is_domain domain)
       (raise_argument_error "element_of" "domain" 1 v domain))
-    (and (is_domain_value v)
-         (ident domain (domain_value_domain v))))
+    (if (is_func_domain domain)
+      (is_procedure v)           // [FNREC] tighten this
+      (and (is_domain_value v)
+           (ident domain (domain_value_domain v)))))
 
 
   //-------------------
@@ -203,6 +201,10 @@
 Lifts a Fusion value into a base domain.
     '''
     (unless (is_base_domain d) (raise "not a base domain"))
+    (unless (domain_accepts d v)
+      (raise_argument_error "inject_into"
+        (string_append "value in domain " (domain_name d))
+        1 d v))
     (make_value d v))
 
   (define (eject v)
@@ -245,7 +247,8 @@ Lifts a Fusion value into a base domain.
   (define (is_union_domain d)
     (and (is_domain d) (ident UnionDomain (domain_type d))))
 
-  (define (union_domain_subdomains d)  // Returns list of domains
+  (define (union_domain_subdomains d)
+    "Returns list of domains"
     (let [(domains ((domain_data d)))]
       (unless (and (is_list domains)
                    (every is_domain domains))
@@ -286,8 +289,15 @@ Lifts a Fusion value into a base domain.
 Lifts a subdomain value into a union domain.
     '''
     (unless (is_union_domain d)
-      // TODO improve rendering of d
       (raise_argument_error "lift_to" "union domain" 0 d v))
+    // [FNREC] The following isn't true for functions
+//  (unless (is_domain_value v)
+//    (raise_argument_error "lift_to" "a domain value" 1 d v))
+    (unless (domain_accepts d v)
+      (raise_argument_error (string_append "lift_to " (domain_name d))
+        (display_to_string "value in one of these domains: "
+          (map domain_name (union_domain_subdomains d)))
+        1 d v))
     (make_value d v))
 
   (define (lower_to d v)
@@ -336,9 +346,15 @@ Returns the list of component domains.
 Constructs a product-domain value.
     '''
     (lambda rest
-      (let [(domain (head rest))]
+      (let [(domain (head rest)),
+            (value  (apply list (tail rest)))]
         // TODO typecheck domain
-        (make_value domain (apply list (tail rest))))))
+        (unless (domain_accepts domain value)
+          // TODO Error message should identify the correct arg index.
+          (raise_argument_error "tuple"
+            (string_append "value in domain " (domain_name domain))
+            1 domain value))
+        (make_value domain value))))
 
   (define (product_domain_element d v i)
     '''

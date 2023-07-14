@@ -8,13 +8,16 @@ TODOs
 * Sequence domains like Val+
 * fn/define_fn should accept a named function domain and a "lambda".
 * Singleton domains (replace dummy domains?)
+* Fix element_of to work correctly for functions (they aren't records!)
 * display_model should print functions (and denoters)
 * TOP domain
 * BOTTOM domain
 * Delay and memoize component domains (enable recursive types)
+* Typecase to safely and completely lower a union domain value
 
 
 Requires Fusion features:
+* [FNREC] Domain functions should be records, so they can be type-checked.
 * Better `display` of domains and values.
 * Use record guardians to type-check values.
 
