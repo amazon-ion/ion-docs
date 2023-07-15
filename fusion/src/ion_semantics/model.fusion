@@ -116,8 +116,7 @@ Cleanup:
       (lift_to Symbolic (lower_to Unicode s)))
 
     (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
-      (if  // functional if!
-        (element_of s Unicode)
+      (if (= Unicode (subdomain s))
         (lift_to Symbolic (lower_to Unicode s))
         (r (lower_to I s))))
 

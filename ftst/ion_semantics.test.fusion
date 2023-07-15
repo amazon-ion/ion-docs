@@ -1,11 +1,46 @@
 // Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
 
+'''
+
+TODO
+----
+* Transform Values (expansion result) to Fusion data, to make result check straightforwards.
+
+'''
+
 (require
   "/fusion/exception"
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
   "/ion_semantics/model"
 )
+
+
+(define (mk_RSym c)
+  (cond
+    ((is_null   c) (lift_to_RSym (raise "[NULL]")))
+    ((is_string c) (lift_to RSym (lift_to SymTok (inject_into Unicode c))))
+    ((is_int    c) (lift_to RSym (lift_to SymTok (inject_into I c))))
+    (true (raise_argument_error "mk_RSym" "bad arg" 0 c))))
+
+(define (mk_Boolean c)
+  (cond
+    ((is_null c) (raise "[NULL]"))
+    ((is_bool c) (lift_to Boolean (inject_into B c)))
+    (true (raise_argument_error "mk_Boolean" "bad arg" 0 c))))
+
+(define (mk_SafeVal c)
+  (cond
+    ((is_null c) (raise "[NULL]"))
+    ((is_bool c) (lift_to SafeVal (mk_Boolean c)))
+    (true (raise_argument_error "mk_SafeVal" "bad arg" 0 c))))
+
+(define (mk_RVal c)
+  (cond
+    ((is_symbol c) (lift_to RVal (mk_RSym (symbol_to_string c))))
+    ((is_bool   c) (lift_to RVal (mk_SafeVal c)))
+    ((element_of c RSym) (lift_to RVal c))
+    (true (raise_argument_error "mk_RVal" "bad arg" 0 c))))
 
 
 (lets [(content "text for symbol"),
@@ -29,23 +64,19 @@
 
 
 // Expand a safe value
-
-(define true_val (lift_to Boolean (inject_into B true)))
-
-(let [(v (expand (lift_to RVal (lift_to SafeVal true_val))))]
+(let [(v (expand (mk_RVal true)))]
   (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
 
+// Expand a textual symbol
+(let [(v (expand (mk_RVal (quote danny))))]
+  (check === "danny" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
 
 // Expand a system SID
-
-(define rsym_1 (lift_to RSym (lift_to SymTok (inject_into I 1))))
-
-(let [(v (expand (lift_to RVal rsym_1)))]
+(let [(v (expand (mk_RVal (mk_RSym 1))))]
   (check === "$ion" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
 
 // Expand an out-of-range SID
-(lets [(rsym_huge (lift_to RSym (lift_to SymTok (inject_into I 9999999999999)))),
-       (v         (expand (lift_to RVal rsym_huge)))]
+(let [(v (expand (mk_RVal (mk_RSym 9999999999999))))]
   (check === Sym0 (subdomain (lower_to Symbolic (lower_to Symbol v)))))
 
 
