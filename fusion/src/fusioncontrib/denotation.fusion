@@ -34,6 +34,7 @@ Domains come in several types:
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
+    "/fusioncontrib/denotation/private/sequence"
   )
 
   (provide
@@ -70,6 +71,14 @@ Domains come in several types:
     tuple
     product_domain_element
 
+    // Sequence domain values
+    ith
+    seq
+    seq_append
+    seq_is_empty
+    seq_tail
+
+    // Function domains
     make_func_domain
     func_domain_argdomains
     func_domain_output

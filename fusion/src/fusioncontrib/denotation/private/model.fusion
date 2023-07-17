@@ -12,6 +12,7 @@
       (quote Q) (quasiquote QQ) (unquote UQ))
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
+    "/fusioncontrib/denotation/private/sequence"
   )
 
   (provide
@@ -82,6 +83,9 @@ Returns:
                   ((=== (quote *) op)
                     (result
                       (pair (quote define_product_domain) (pair name (pair desc args)))))
+                  ((=== (quote **) op)
+                    (result
+                      (pair (quote define_seq_domain) (pair name (pair desc args)))))
                   ((=== (quote ->) op)
                     (result
                       (pair (quote define_func_domain) (pair name (pair desc args)))))
@@ -120,6 +124,10 @@ Defines a union of one or more domains.
     (* <dom-id> <dom-id> ...+)
 
 Defines a product of two or more domains.
+
+    (** <dom-id>)
+
+Defines a sequence (zero or more elements) of a domain.
 
     (-> <dom-id> <dom-id>)
 

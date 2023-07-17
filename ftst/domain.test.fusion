@@ -4,6 +4,7 @@
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/private/sequence"
   "/model1")
 
 
@@ -66,6 +67,42 @@
 
 (check ident t_val (product_domain_element Stamped stamped_int_val 0))
 (check ident int_any_val (product_domain_element Stamped stamped_int_val 1))
+
+
+//======================
+// Sequence domains
+
+(define 'Z*' (make_seq_domain "Z*" "sequence of Z" Z))
+(check_pred is_seq_domain 'Z*')
+(check = "Z*" (domain_name 'Z*'))
+(check_same Z (seq_domain_subdomain 'Z*'))
+
+
+(define empty_Zs (seq 'Z*'))
+(check_pred is_seq       empty_Zs)
+(check_pred seq_is_empty empty_Zs)
+
+
+(lets [(z0 (inject_into Z 0)),
+       (z1 (inject_into Z 1)),
+       (z2 (inject_into Z 2)),
+       (s  (seq 'Z*' z0 z1 z2))]
+  (check_pred is_seq s)
+  (check_false (seq_is_empty s))
+  (check_same z0 (ith s 0))
+  (check_same z2 (ith s 2)))
+
+(expect_argument_error (seq Z))       // 1st arg isn't a seq domain
+(expect_argument_error (seq 'Z*' 0))  // 2nd arg isn't a domain value
+
+(expect_argument_error (seq_is_empty stamped_int_val))  // arg isn't a sequence
+
+(expect_argument_error (ith stamped_int_val 0))  // 1st arg isn't a sequence
+(expect_argument_error (ith empty_Zs 0))         // 2nd arg out of range
+
+(expect_argument_error (seq_tail Z))             // arg isn't a sequence
+
+
 
 
 //======================

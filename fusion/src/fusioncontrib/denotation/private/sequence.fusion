@@ -1,0 +1,145 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module sequence "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    (rename_in "/fusion/experimental/syntax"
+      (quote_syntax QS))
+    (rename_in "/fusion/base"
+      (quote Q) (quasiquote QQ) (unquote UQ))
+    "/fusioncontrib/denotation/private/domain"
+  )
+
+
+  (provide
+    define_seq_domain
+    is_seq
+    is_seq_domain
+    ith
+    make_seq_domain
+    seq
+    seq_append
+    seq_domain_subdomain
+    seq_is_empty
+    seq_tail
+  )
+
+
+
+  (define (display_seq_domain d)
+    (display (domain_name (seq_domain_subdomain d)))
+    (display "*"))
+
+
+  (define SeqDomain
+    (domain_meta "SeqDomain" display_seq_domain))
+
+
+  (define (make_seq_domain name description entry_domain)
+    '''
+`entry_domain` must be a named domain.
+    '''
+    (unless (is_domain entry_domain)
+      (raise_argument_error "make_seq_domain" "entry domain" 2
+        name description entry_domain))
+    (when (is_null (domain_name entry_domain))
+      (raise_argument_error "make_seq_domain" "entry domain must be named" 2
+        name description entry_domain))
+    (make_domain SeqDomain name seq_domain_checker description entry_domain))
+
+
+  (define (seq_domain_subdomain d)
+    '''
+Returns the domain of the seq's elements.
+    '''
+    (domain_data d))
+
+
+  (define (seq_domain_checker d values)
+    (let [(subdomain (seq_domain_subdomain d))]
+      (and (is_list values)
+           (every (|v| (element_of v subdomain))))))
+
+
+  (define (is_seq_domain d)
+    (and (is_domain d) (ident SeqDomain (domain_type d))))
+
+
+  (define_syntax define_seq_domain
+    '''
+    (define_seq_domain name description subdomain)
+    '''
+    (lambda (stx)
+      (unless (= (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for define_seq_domain"))
+      (let [(name_stx  (syntax_get stx 1)),
+            (desc_stx  (syntax_get stx 2)),  // TODO typecheck
+            (subdomain (syntax_get stx 3))]
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_seq_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                (UQ subdomain))))
+          (quote_syntax context)
+          stx))))
+
+
+  //================
+  // Sequence Values
+
+  (define seq
+    '''
+    (seq domain value ...)
+
+Constructs a sequence of type `domain` from the values, each of which must be
+within `domain`'s subdomain.
+    '''
+    (lambda rest
+      (let [(domain (head rest)),
+            (values (tail rest))]
+        (unless (is_seq_domain domain)
+          (apply raise_argument_error "seq" "seq domain" 0 rest))
+        (let [(subdomain (seq_domain_subdomain domain))]
+          (let loop [(i 1), (vs values)]
+            (when (is_pair vs)
+              (if (element_of (head vs) subdomain)
+                (loop (+ 1 i) (tail vs))
+                (apply raise_argument_error "seq"
+                  (string_append "value in domain " (domain_name subdomain))
+                  i rest)))))
+        (make_value domain values))))
+
+  (define (is_seq v)
+    (and (is_domain_value v)
+         (is_seq_domain (domain_value_domain v))))
+
+
+  (define (seq_is_empty seq)
+    (unless (is_seq seq)
+      (raise_argument_error "seq_is_empty" "seq value" 0 seq))
+    (is_empty (domain_value_rep seq)))
+
+
+  (define (ith seq i)
+    (unless (is_seq seq)
+      (raise_argument_error "ith" "seq value" 0 seq i))
+    // TODO typecheck/rangecheck i
+    (element (domain_value_rep seq) i))
+
+
+  (define (seq_tail seq)
+    (unless (is_seq seq)
+      (raise_argument_error "seq_tail" "seq value" 0 seq))
+    (make_value (domain_value_domain seq) (tail (domain_value_rep seq))))
+
+
+  (define (seq_append seq0 seq1)
+    // TODO verify same subdomain
+    (make_value (domain_value_domain seq0)
+      (append (domain_value_rep seq0) (domain_value_rep seq1))))
+)

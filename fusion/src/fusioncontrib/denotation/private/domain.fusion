@@ -13,9 +13,16 @@
   )
 
   (provide
+    // Domain meta-types
+    domain_meta
+    make_domain
+
+    // Domains
     is_domain
     domain_description
     domain_name
+    domain_data
+    domain_type
     display_domain
     element_of
 
@@ -24,6 +31,12 @@
     define_union_domain
     define_product_domain
     define_func_domain
+
+    // Domain Values
+    make_value
+    is_domain_value
+    domain_value_domain
+    domain_value_rep
 
     // Base domain value operators
     inject_into
