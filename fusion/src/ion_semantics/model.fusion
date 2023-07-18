@@ -8,7 +8,7 @@ TODO
 ----
 Functional:
 * [NULL] Implement DotNull
-* `expand` should accept a stream of RVals
+* `expand` should handle empty input. Prepend IVM_1_0 to the stream?
 
 Cleanup:
 * Streamline singleton domain values SYM0, IVMs via framework.
@@ -80,6 +80,9 @@ Cleanup:
     (dom RVal    = (+ SafeVal RSym RList RStruct))
     (dom TRVal   = (+ RVal IVM))
 
+    (dom 'RVal*'  = (** RVal))
+    (dom 'TRVal*' = (** TRVal))
+
 
     //=============================
     // Application-layer Data Types
@@ -96,7 +99,8 @@ Cleanup:
     // The Ion data model, proper
     (dom Value   = (+ SafeVal Symbol List Struct))
       // Value = Annotation* x Content
-    (dom Values = (* Value Values))
+
+    (dom 'Value*' = (** Value))
 
 
     //=======================
@@ -108,8 +112,7 @@ Cleanup:
 
     // TODO I think this is TopContinuation;
     //      intermediate continuations can't alter the environment!
-    // TODO should be Environment x 'Value*' -> 'Value*'
-    (dom Continuation = (-> Environment Value Value))
+    (dom Continuation = (-> Environment 'Value*' 'Value*'))
 
 
     (fn string2symbol ((s String) -> Symbolic)
@@ -123,19 +126,26 @@ Cleanup:
 
     // Denotations
 
-    (fn E ((vr RVal) (r Environment) (k Continuation) -> Value)
+    (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
       (if (= SafeVal (subdomain vr))
-        (k r (lift_to Value (lower_to SafeVal vr)))
+        (k r (seq 'Value*' (lift_to Value (lower_to SafeVal vr))))
         (if (= RSym (subdomain vr))
           (E_RSym (lower_to RSym vr) r k)
           // TODO RList, RStruct
           (raise "not implemented"))))
 
-    (fn E_RSym ((v RSym) (r Environment) (k Continuation) -> Value)
+    (fn E_RSym ((v RSym) (r Environment) (k Continuation) -> 'Value*')
       // [NULL] implement null.symbol
-      // TODO invoke continuation
-      (lift_to Value (lift_to Symbol (expand_SymTok r (lower_to SymTok v)))))
+      (k r (seq 'Value*' (lift_to Value (lift_to Symbol (expand_SymTok r (lower_to SymTok v)))))))
+
+
+    (fn 'E+' ((vr 'RVal') (vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
+      (if (seq_is_empty vrs)
+        (E vr r k)
+        (E vr r (|r1 vs1| // v1 is expansion of first raw value
+                  ('E+' (ith vrs 0) (seq_tail vrs) r1
+                    (|r2 vs2| (k r2 (seq_append vs1 vs2))))))))
 
   /*
     (den TE "Top-level value evaluation"
@@ -165,6 +175,6 @@ Cleanup:
       (|e v| v)))
 
 
-  (define (expand rval)
-    (E rval e0 k0))
+  (define (expand rvals) // Value* -> Value*
+    ('E+' (ith rvals 0) (seq_tail rvals) e0 k0))
 )

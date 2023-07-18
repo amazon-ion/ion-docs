@@ -15,32 +15,47 @@ TODO
   "/ion_semantics/model"
 )
 
+(define is_safe
+  (disjoin is_bool is_int))
+
 
 (define (mk_RSym c)
   (cond
     ((is_null   c) (lift_to_RSym (raise "[NULL]")))
     ((is_string c) (lift_to RSym (lift_to SymTok (inject_into Unicode c))))
     ((is_int    c) (lift_to RSym (lift_to SymTok (inject_into I c))))
-    (true (raise_argument_error "mk_RSym" "bad arg" 0 c))))
+    (true (raise_argument_error "mk_RSym" "null/string/int" 0 c))))
 
 (define (mk_Boolean c)
   (cond
     ((is_null c) (raise "[NULL]"))
     ((is_bool c) (lift_to Boolean (inject_into B c)))
-    (true (raise_argument_error "mk_Boolean" "bad arg" 0 c))))
+    (true (raise_argument_error "mk_Boolean" "null or bool" 0 c))))
+
+(define (mk_Int c)
+  (cond
+    ((is_null c) (raise "[NULL]"))
+    ((is_int  c) (lift_to Int (inject_into I c)))
+    (true (raise_argument_error "mk_Boolean" "null or int" 0 c))))
 
 (define (mk_SafeVal c)
   (cond
     ((is_null c) (raise "[NULL]"))
     ((is_bool c) (lift_to SafeVal (mk_Boolean c)))
-    (true (raise_argument_error "mk_SafeVal" "bad arg" 0 c))))
+    ((is_int  c) (lift_to SafeVal (mk_Int c)))
+    (true (raise_argument_error "mk_SafeVal" "null/bool/int" 0 c))))
 
 (define (mk_RVal c)
   (cond
+    ((is_safe   c) (lift_to RVal (mk_SafeVal c)))
     ((is_symbol c) (lift_to RVal (mk_RSym (symbol_to_string c))))
-    ((is_bool   c) (lift_to RVal (mk_SafeVal c)))
     ((element_of c RSym) (lift_to RVal c))
-    (true (raise_argument_error "mk_RVal" "bad arg" 0 c))))
+    (true (raise_argument_error "mk_RVal" "symbol/bool/int" 0 c))))
+
+
+(define parse
+  (lambda input
+    (apply seq 'RVal*' (map mk_RVal input))))
 
 
 (lets [(content "text for symbol"),
@@ -63,21 +78,66 @@ TODO
   (check === "$ion" (eject (lower_to Unicode expanded))))
 
 
+
+(define (expand1 input)
+  (lets [(vs (expand (parse input)))]
+    (check_pred seq_is_empty (seq_tail vs))
+    (ith vs 0)))
+
 // Expand a safe value
-(let [(v (expand (mk_RVal true)))]
+(let [(v (expand1 true))]
   (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
 
 // Expand a textual symbol
-(let [(v (expand (mk_RVal (quote danny))))]
+(let [(v (expand1 (quote danny)))]
   (check === "danny" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
 
 // Expand a system SID
-(let [(v (expand (mk_RVal (mk_RSym 1))))]
+(let [(v (expand1 (mk_RSym 1)))]
   (check === "$ion" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
 
 // Expand an out-of-range SID
-(let [(v (expand (mk_RVal (mk_RSym 9999999999999))))]
+(let [(v (expand1 (mk_RSym 9999999999999)))]
   (check === Sym0 (subdomain (lower_to Symbolic (lower_to Symbol v)))))
+
+
+(define_check (check_Int expected actual)
+  // TODO null.int
+  (check === expected (eject (lower_to I actual))))
+
+(define_check (check_SafeVal expected actual)
+  (cond
+    ((is_int expected) (check_Int expected (lower_to Int actual)))
+    (true (fail "Unhandled expected value"))))
+
+(define_check (check_Symbol expected actual)
+  // TODO $0, null.symbol
+  (check === (symbol_to_string expected)
+    (eject (lower_to Unicode (lower_to Symbolic actual)))))
+
+(define_check (check_Value expected actual)
+  (cond
+    ((is_safe   expected) (check_SafeVal expected (lower_to SafeVal actual)))
+    ((is_symbol expected) (check_Symbol  expected (lower_to Symbol  actual)))
+    (true (fail "Unhandled expected value"))))
+
+
+(define doc_matches
+  (lambda expecteds
+    (lambda (actuals)
+      (let loop [(es expecteds), (as actuals)]
+        (check_same (is_empty es) (seq_is_empty as))
+        (or (is_empty es)
+            (begin
+              (check_Value (head es) (ith as 0))
+              (loop (tail es) (seq_tail as))))))))
+
+// TODO (check_pred (doc_matches) (expand (seq 'RVal*')))
+
+(check_pred (doc_matches 1)
+  (expand (parse 1)))
+(check_pred (doc_matches (quote danny) (quote $ion))
+  (expand (parse (quote danny) (mk_RSym 1))))
 
 
 "SUCCESS (ion_semantics.test)"
