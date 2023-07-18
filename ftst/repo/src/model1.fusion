@@ -23,6 +23,8 @@
 
     (dom Stamped = (* T Any) "A timestamped value")
 
+    (dom 'Z*' = (** Z) "sequence of Z")
+
     (dom Any2Any = (-> Any Any))
     (dom Pred    = (-> Any B)  "A predicate function")
 

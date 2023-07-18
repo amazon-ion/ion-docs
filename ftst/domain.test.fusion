@@ -72,7 +72,6 @@
 //======================
 // Sequence domains
 
-(define 'Z*' (make_seq_domain "Z*" "sequence of Z" Z))
 (check_pred is_seq_domain 'Z*')
 (check = "Z*" (domain_name 'Z*'))
 (check_same Z (seq_domain_subdomain 'Z*'))

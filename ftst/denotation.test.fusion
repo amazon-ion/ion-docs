@@ -18,6 +18,11 @@
 (expect_syntax_error
   (define_model Bad
     (dom T = "T")
+    (dom Ts = (** T T)))) // Must have exactly one in sequence
+
+(expect_syntax_error
+  (define_model Bad
+    (dom T = "T")
     (dom Tx = (-> T))))    // Must have more than one in function
 
 (expect_syntax_error
