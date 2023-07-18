@@ -5,7 +5,6 @@
 TODOs
 -----
 * Sequence domains like Val+
-* fn/define_fn should accept a named function domain and a "lambda".
 * Singleton domains (replace dummy domains?)
 * Domain extension; pre-define B/Z/D/F/S/T
   * Or perhaps import desired features?

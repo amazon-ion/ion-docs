@@ -89,7 +89,7 @@ Type-checking of function application:
                          (let [(r (impl v))]
                            (unless (element_of r out_dom)
                              (raise_result_error name
-                               (symbol_to_string (domain_name out_dom)) v))  // FIXME should be r?
+                               (symbol_to_string (domain_name out_dom)) r))
                            r))))]
       applier))
 
@@ -144,21 +144,7 @@ Returns:
         (values (reverse arg_domains) (reverse arg_names) entry_stx))))
 
 
-// Alt syntax to consider:
-//   (define_fn (name (Domain arg) ... Domain) denot_expr)
-
-  (define_syntax define_fn
-    '''
-    (define_fn name <signature> <expr>)
-
-Defines a function in a semantic model.
-
-<signature> ::= ( <arg>* -> <domain-name> )
-<arg> ::= var-name  |  ( <var-name> <domain-name> )
-    '''
-    (lambda (stx)
-      (unless (== (syntax_size stx) 4)
-        (wrong_syntax stx "Bad syntax for fn"))
+  (define (define_fn_adhoc_domain stx)
       (let [(name_stx (syntax_get stx 1)),
             (sig_stx  (syntax_get stx 2)),
             (expr_stx (syntax_get stx 3))]
@@ -173,10 +159,40 @@ Defines a function in a semantic model.
                     (UQ func_domain_stx)
                     (lambda (UQ argnames)
                       (UQ expr_stx)))))
-            CTX stx)))))
+            CTX stx))))
 
-// TODO (define_fn name dom-name expr)
-//   => (define name (make_fn name dom-name expr))
-//   Assumes expr is a function, not a body; we have no arg-names!
+  (define (define_fn_named_domain stx)
+    (let [(name_stx (syntax_get stx 1)),
+          (type_stx (syntax_get stx 2)),
+          (args_stx (syntax_get stx 3)),
+          (expr_stx (syntax_get stx 4))]
+      // TODO typecheck name, type
+      (unless (is_sexp (syntax_unwrap args_stx))
+        (wrong_syntax args_stx "expected sexp of arguments"))
+      (datum_to_syntax
+        (QQ (define (UQ name_stx)
+              (make_fn (quote (UQ name_stx))
+                (UQ type_stx)
+                (lambda (UQ args_stx)
+                  (UQ expr_stx)))))
+        CTX stx)))
 
+  (define_syntax define_fn
+    '''
+    (define_fn name ( <arg>+ -> <domain-name> ) <expr>)
+    <arg> ::= var-name  |  ( <var-name> <domain-name> )
+
+Defines a function in a semantic model, typed via an ad-hoc domain.
+
+    (define_fn name <domain-name> ( <var-name>+ ) <expr>)
+
+Defines a function in a semantic model, typed via named domain.
+The `var-name`s must be identifiers and are bound in the body `expr` as if by
+`lambda`.
+    '''
+    (lambda (stx)
+      (cond
+        ((== (syntax_size stx) 4) (define_fn_adhoc_domain stx))
+        ((== (syntax_size stx) 5) (define_fn_named_domain stx))
+        (true (wrong_syntax stx "Bad syntax for fn")))))
 )

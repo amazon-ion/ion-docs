@@ -62,32 +62,20 @@
 
 
 // We can turn a plain Fusion function into a type-checked domain function.
-// TODO Support this in `fn` syntax.
-(define identity_fn (make_fn "identity" Any2Any identity))
+(define_fn identity_fn Any2Any (v) v)
 (check_pred is_fn identity_fn)
 (check_same int_any_val (identity_fn int_any_val))
 
 (expect_argument_error (identity_fn 21))       // Wrong argument type
 (expect_argument_error (identity_fn t_val))    // Wrong argument type
-(expect_result_error ((make_fn "x" Pred identity) int_any_val)) // Returns an Any, not a B
+
+(define_fn bad_pred Pred (v) v)
+(expect_result_error (bad_pred int_any_val))   // Returns an Any, not a B
 
 
 // Now a real-ish function
-(define convert_Num_to_Exact
-  (make_fn (quote convert_Num_to_Exact)
-    (make_func_domain null.string "desc" Num Exact)  // Assumes v ∈ Exact
-    (lambda (v)
-      (lift_to Exact (lower_to Z v)))))        // TODO handle D as well
-
-(let [(converted (convert_Num_to_Exact int_num_val))]
-  (check_true (element_of converted Exact))
-  (check_same z_val (lower_to Z converted)))
-(expect_argument_error (convert_Num_to_Exact flt_num_val))
-
-
-// Syntax-form variant of the same thing.
-(define_fn convert_Num_to_Exact ((v Num) -> Exact)
-  (lift_to Exact (lower_to Z v)))
+(define_fn convert_Num_to_Exact ((v Num) -> Exact)  // Assumes v ∈ Exact
+  (lift_to Exact (lower_to Z v)))                   // TODO handle D as well
 
 (let [(converted (convert_Num_to_Exact int_num_val))]
   (check_true (element_of converted Exact))
@@ -99,16 +87,13 @@
 
 // Functions over product domains require one argument in that domain.
 
-(define project_x
-  (make_fn (quote project_x) Projection
-    (lambda (point) (product_domain_element Point2d point 0))))
+(define_fn project_x Projection (point)
+  (product_domain_element Point2d point 0))
 (let [(p (tuple Point2d (inject_into Z 17) (inject_into Z 39)))]
   (check === 17 (eject (project_x p))))
 
-(define stamped_time
-  (make_fn (quote stamped_time)
-    (make_func_domain null.string "desc" Stamped T)
-    (lambda (stamped) (product_domain_element Stamped stamped 0))))
+(define_fn stamped_time ((stamped Stamped) -> T)
+  (product_domain_element Stamped stamped 0))
 (check_same t_val (stamped_time stamped_int_val))
 
 // Even though <T, Any> matches Stamped, we need a proper domain value for strong typing.
@@ -117,10 +102,8 @@
 
 // Multi-arg function
 
-(define make_point2d
-  (make_fn (quote make_point2d)
-    (make_func_domain null.string "desc" [Z, Z] Point2d)
-    (lambda (x y) (tuple Point2d x y))))
+(define_fn make_point2d ((x Z) (y Z) -> Point2d)
+  (tuple Point2d x y))
 (lets [(x (inject_into Z 18)),
        (y (inject_into Z 50)),
        (p (make_point2d x y))]

@@ -58,6 +58,10 @@ TODO
     (apply seq 'RVal*' (map mk_RVal input))))
 
 
+(define_check (check_Sym0 actual)
+  (check_same Sym0 (subdomain actual)))
+
+
 (lets [(content "text for symbol"),
        (unicode (inject_into Unicode content)),
        (string  (lift_to String unicode)),
@@ -69,7 +73,7 @@ TODO
        (symtok   (lift_to SymTok i)),
        (expanded (expand_SymTok e0 symtok))]
   (check_true (element_of expanded Symbolic))
-  (check_same SYM0 (lower_to Sym0 expanded)))
+  (check_Sym0 expanded))
 
 (lets [(i        (inject_into I 1)),
        (symtok   (lift_to SymTok i)),

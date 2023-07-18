@@ -124,6 +124,15 @@ Cleanup:
         (r (lower_to I s))))
 
 
+    (fn e0 Environment (i)                          // The bootstrap Environment
+      (if (=== 1 (eject i))
+        (lift_to Symbolic (inject_into Unicode "$ion"))
+        (lift_to Symbolic (inject_into Sym0 _SYM0))))
+
+    (fn k0 Continuation (e v)                      // The bootstrap continuation
+      v)
+
+
     // Denotations
 
     (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
@@ -158,23 +167,8 @@ Cleanup:
     (den 'TE*' "Top-level stream evaluation"
       ('TRVal*' x Environment x Continuation -> 'Value*'))
   */
+
+    (fn expand ((rvals 'RVal*') -> 'Value*')
+      ('E+' (ith rvals 0) (seq_tail rvals) e0 k0))
   )
-
-  (define SYM0 (inject_into Sym0 _SYM0))
-
-  (define e0
-    "The bootstrap Environment"
-    (make_fn "e0" Environment
-      (|i| (if (=== 1 (eject i))
-             (lift_to Symbolic (inject_into Unicode "$ion"))
-             (lift_to Symbolic SYM0)))))
-
-  (define k0
-    "The bootstrap continuation"
-    (make_fn "k0" Continuation
-      (|e v| v)))
-
-
-  (define (expand rvals) // Value* -> Value*
-    ('E+' (ith rvals 0) (seq_tail rvals) e0 k0))
 )

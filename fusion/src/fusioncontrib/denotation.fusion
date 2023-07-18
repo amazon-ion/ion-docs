@@ -63,7 +63,6 @@ Domains come in several types:
     lower_to
 
     // Product domain operators
-    make_product_domain
     is_product_domain
     product_domain_subdomains
 
@@ -79,12 +78,10 @@ Domains come in several types:
     seq_tail
 
     // Function domains
-    make_func_domain
     func_domain_argdomains
     func_domain_output
 
     define_fn
-    make_fn
     is_fn
   )
 )
