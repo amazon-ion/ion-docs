@@ -1,0 +1,32 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module testing "/fusion"
+
+  '''
+Utilities for testing denotational models.
+  '''
+
+  (require
+    "/fusion/exception"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/sequence"
+  )
+
+  (provide
+    seq_to_list
+    seq_to_sexp
+  )
+
+  (define (seq_to_sexp seq)
+    "Extract the content of a sequence into a sexp."
+    (unless (is_seq seq)
+      (raise_argument_error "seq_to_sexp" "seq value" 0 seq))
+    (domain_value_rep seq))
+
+  (define (seq_to_list seq)
+    "Extract the content of a sequence into a list."
+    (unless (is_seq seq)
+      (raise_argument_error "seq_to_list" "seq value" 0 seq))
+    (apply list (domain_value_rep seq)))
+
+)

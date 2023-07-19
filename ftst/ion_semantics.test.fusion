@@ -9,61 +9,11 @@ TODO
 '''
 
 (require
-  "/fusion/exception"
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
   "/ion_semantics/model"
+  "/ion_semantics/testing"
 )
-
-(define is_safe
-  (disjoin is_bool is_int))
-
-
-(define (mk_RSym c)
-  (cond
-    ((is_null   c) (lift_to_RSym (raise "[NULL]")))
-    ((is_string c) (lift_to RSym (lift_to SymTok (inject_into Unicode c))))
-    ((is_int    c) (lift_to RSym (lift_to SymTok (inject_into I c))))
-    (true (raise_argument_error "mk_RSym" "null/string/int" 0 c))))
-
-(define (mk_Boolean c)
-  (cond
-    ((is_null c) (raise "[NULL]"))
-    ((is_bool c) (lift_to Boolean (inject_into B c)))
-    (true (raise_argument_error "mk_Boolean" "null or bool" 0 c))))
-
-(define (mk_Int c)
-  (cond
-    ((is_null c) (raise "[NULL]"))
-    ((is_int  c) (lift_to Int (inject_into I c)))
-    (true (raise_argument_error "mk_Int" "null or int" 0 c))))
-
-(define (mk_SafeVal c)
-  (cond
-    ((is_null c) (raise "[NULL]"))
-    ((is_bool c) (lift_to SafeVal (mk_Boolean c)))
-    ((is_int  c) (lift_to SafeVal (mk_Int c)))
-    (true (raise_argument_error "mk_SafeVal" "null/bool/int" 0 c))))
-
-(define (mk_RList c)
-  (lift_to RList (apply seq 'RVal*' (map mk_RVal c))))
-
-(define (mk_RVal c)
-  (cond
-    ((is_safe   c) (lift_to RVal (mk_SafeVal c)))
-    ((is_symbol c) (lift_to RVal (mk_RSym (symbol_to_string c))))
-    ((is_list   c) (lift_to RVal (mk_RList c)))
-    ((element_of c RSym) (lift_to RVal c))
-    (true (raise_argument_error "mk_RVal" "symbol/bool/int/list" 0 c))))
-
-
-(define parse
-  (lambda input
-    (apply seq 'RVal*' (map mk_RVal input))))
-
-
-(define_check (check_Sym0 actual)
-  (check_same Sym0 (subdomain actual)))
 
 
 (lets [(content "text for symbol"),
@@ -86,12 +36,6 @@ TODO
   (check === "$ion" (eject (lower_to Unicode expanded))))
 
 
-
-(define (expand1 input)
-  (lets [(vs (expand (parse input)))]
-    (check_pred seq_is_empty (seq_tail vs))
-    (ith vs 0)))
-
 // Expand a safe value
 (let [(v (expand1 true))]
   (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
@@ -109,42 +53,6 @@ TODO
   (check === Sym0 (subdomain (lower_to Symbolic (lower_to Symbol v)))))
 
 
-(define_check (check_Int expected actual)
-  // TODO null.int
-  (check === expected (eject (lower_to I actual))))
-
-(define_check (check_SafeVal expected actual)
-  (cond
-    ((is_int expected) (check_Int expected (lower_to Int actual)))
-    (true (fail "Unhandled expected value"))))
-
-(define_check (check_Symbol expected actual)
-  // TODO $0, null.symbol
-  (check === (symbol_to_string expected)
-    (eject (lower_to Unicode (lower_to Symbolic actual)))))
-
-(define_check (check_List expected actual)
-  (check_Values (apply sexp expected) (lower_to 'Value*' actual)))
-
-(define_check (check_Value expected actual)
-  (cond
-    ((is_safe   expected) (check_SafeVal expected (lower_to SafeVal actual)))
-    ((is_symbol expected) (check_Symbol  expected (lower_to Symbol  actual)))
-    ((is_list   expected) (check_List    expected (lower_to List    actual)))
-    (true (fail "Unhandled expected value"))))
-
-(define (check_Values expecteds actuals) // sexp and Value*
-  (let loop [(es expecteds), (as actuals)]
-    (check_same (is_empty es) (seq_is_empty as))
-    (or (is_empty es)
-        (begin
-          (check_Value (head es) (ith as 0))
-          (loop (tail es) (seq_tail as))))))
-
-(define doc_matches
-  (lambda expecteds
-    (lambda (actuals)
-      (check_Values expecteds actuals))))
 
 // TODO (check_pred (doc_matches) (expand (seq 'RVal*')))
 
