@@ -7,6 +7,10 @@ A denotational semantic model of Ion.
 TODO
 ----
 Functional:
+* Implement structs
+* Implement annotations
+* Implement $ion_symbol_table
+* Implement IVMs
 * [NULL] Implement DotNull
 * `expand` should handle empty input. Prepend IVM_1_0 to the stream?
 
@@ -73,7 +77,7 @@ Cleanup:
     (dom SymTok   = (+ Unicode I))     // "Raw" symbol token
     (dom RSym     = (+ SymTok DotNull))
 
-    (dom RList   = "RVal*")
+    (dom RList   = (+ 'RVal*'))
     (dom RStruct = "TBD")  // Unicode ->
 
     // The "raw" data model
@@ -91,7 +95,7 @@ Cleanup:
     (dom Symbol   = (+ Symbolic DotNull))
 
     (dom String  = (+ Unicode))
-    (dom List    = "Value*")
+    (dom List    = (+ 'Value*'))
 
     (dom Struct  =  "Unicode -> Value+")  // Can $0 be a key?
       // Or maybe KV* where KV = Unicode x Value
@@ -141,12 +145,19 @@ Cleanup:
         (k r (seq 'Value*' (lift_to Value (lower_to SafeVal vr))))
         (if (= RSym (subdomain vr))
           (E_RSym (lower_to RSym vr) r k)
-          // TODO RList, RStruct
-          (raise "not implemented"))))
+          (if (= RList (subdomain vr))
+            (E_RList (lower_to RList vr) r k)
+            // TODO RStruct
+            (raise "not implemented")))))
 
     (fn E_RSym ((v RSym) (r Environment) (k Continuation) -> 'Value*')
       // [NULL] implement null.symbol
       (k r (seq 'Value*' (lift_to Value (lift_to Symbol (expand_SymTok r (lower_to SymTok v)))))))
+
+    (fn E_RList ((v RList) (r Environment) (k Continuation) -> 'Value*')
+      ('E*' (lower_to 'RVal*' v) r
+        (|r1 vs1|
+          (k r1 (seq 'Value*' (lift_to Value (lift_to List vs1)))))))
 
 
     (fn 'E+' ((vr 'RVal') (vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
@@ -155,6 +166,15 @@ Cleanup:
         (E vr r (|r1 vs1| // v1 is expansion of first raw value
                   ('E+' (ith vrs 0) (seq_tail vrs) r1
                     (|r2 vs2| (k r2 (seq_append vs1 vs2))))))))
+
+    (fn 'E*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
+      (if (seq_is_empty vrs)
+        (k r (seq 'Value*'))
+        (E (ith vrs 0) r
+          (|r1 vs1|
+            ('E*' (seq_tail vrs) r1
+              (|r2 vs2|
+                (k r2 (seq_append vs1 vs2))))))))
 
   /*
     (den TE "Top-level value evaluation"

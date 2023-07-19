@@ -36,7 +36,7 @@ TODO
   (cond
     ((is_null c) (raise "[NULL]"))
     ((is_int  c) (lift_to Int (inject_into I c)))
-    (true (raise_argument_error "mk_Boolean" "null or int" 0 c))))
+    (true (raise_argument_error "mk_Int" "null or int" 0 c))))
 
 (define (mk_SafeVal c)
   (cond
@@ -45,12 +45,16 @@ TODO
     ((is_int  c) (lift_to SafeVal (mk_Int c)))
     (true (raise_argument_error "mk_SafeVal" "null/bool/int" 0 c))))
 
+(define (mk_RList c)
+  (lift_to RList (apply seq 'RVal*' (map mk_RVal c))))
+
 (define (mk_RVal c)
   (cond
     ((is_safe   c) (lift_to RVal (mk_SafeVal c)))
     ((is_symbol c) (lift_to RVal (mk_RSym (symbol_to_string c))))
+    ((is_list   c) (lift_to RVal (mk_RList c)))
     ((element_of c RSym) (lift_to RVal c))
-    (true (raise_argument_error "mk_RVal" "symbol/bool/int" 0 c))))
+    (true (raise_argument_error "mk_RVal" "symbol/bool/int/list" 0 c))))
 
 
 (define parse
@@ -119,22 +123,28 @@ TODO
   (check === (symbol_to_string expected)
     (eject (lower_to Unicode (lower_to Symbolic actual)))))
 
+(define_check (check_List expected actual)
+  (check_Values (apply sexp expected) (lower_to 'Value*' actual)))
+
 (define_check (check_Value expected actual)
   (cond
     ((is_safe   expected) (check_SafeVal expected (lower_to SafeVal actual)))
     ((is_symbol expected) (check_Symbol  expected (lower_to Symbol  actual)))
+    ((is_list   expected) (check_List    expected (lower_to List    actual)))
     (true (fail "Unhandled expected value"))))
 
+(define (check_Values expecteds actuals) // sexp and Value*
+  (let loop [(es expecteds), (as actuals)]
+    (check_same (is_empty es) (seq_is_empty as))
+    (or (is_empty es)
+        (begin
+          (check_Value (head es) (ith as 0))
+          (loop (tail es) (seq_tail as))))))
 
 (define doc_matches
   (lambda expecteds
     (lambda (actuals)
-      (let loop [(es expecteds), (as actuals)]
-        (check_same (is_empty es) (seq_is_empty as))
-        (or (is_empty es)
-            (begin
-              (check_Value (head es) (ith as 0))
-              (loop (tail es) (seq_tail as))))))))
+      (check_Values expecteds actuals))))
 
 // TODO (check_pred (doc_matches) (expand (seq 'RVal*')))
 
@@ -142,6 +152,8 @@ TODO
   (expand (parse 1)))
 (check_pred (doc_matches (quote danny) (quote $ion))
   (expand (parse (quote danny) (mk_RSym 1))))
+(check_pred (doc_matches [[], 1, (quote danny), (quote $ion)])  // Lists
+  (expand (parse [[], 1, (quote danny), (mk_RSym 1)])))
 
 
 "SUCCESS (ion_semantics.test)"
