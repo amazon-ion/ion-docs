@@ -62,6 +62,8 @@ TODO
   (expand (parse (quote danny) (mk_RSym 1))))
 (check_pred (doc_matches [[], 1, (quote danny), (quote $ion)])  // Lists
   (expand (parse [[], 1, (quote danny), (mk_RSym 1)])))
+(check_pred (doc_matches {} (quote {a:$ion, c:{}, a:1, b:danny}))     // Structs
+  (expand (parse {} {a:1, b:(quote danny), a:(mk_RSym 1), c:{}})))
 
 
 "SUCCESS (ion_semantics.test)"

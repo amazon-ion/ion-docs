@@ -65,10 +65,10 @@ Cleanup:
     (dom NullNull = (+ DotNull))
     (dom Boolean  = (+ B DotNull))
     (dom Int      = (+ I DotNull))
+    (dom String   = (+ Unicode))
 
-    (dom SafeVal = (+ NullNull Boolean Int D F T String /*blob clob*/)
+    (dom SafeVal = (+ NullNull Boolean Int String /*decimal float blob clob*/)
       "Values that cannot contain SIDs")
-      // TODO Handle other nulls
 
 
     //=============================
@@ -78,7 +78,11 @@ Cleanup:
     (dom RSym     = (+ SymTok DotNull))
 
     (dom RList   = (+ 'RVal*'))
-    (dom RStruct = "TBD")  // Unicode ->
+
+//  (dom RStruct = (-> SymTok RVal))   // Currently can't recurse in ->
+    (dom RField    = (* SymTok RVal))
+    (dom 'RField*' = (** RField))
+    (dom RStruct   = (+ 'RField*'))
 
     // The "raw" data model
     (dom RVal    = (+ SafeVal RSym RList RStruct))
@@ -94,11 +98,11 @@ Cleanup:
     (dom Symbolic = (+ Unicode Sym0))  // "Expanded" symbol token
     (dom Symbol   = (+ Symbolic DotNull))
 
-    (dom String  = (+ Unicode))
     (dom List    = (+ 'Value*'))
 
-    (dom Struct  =  "Unicode -> Value+")  // Can $0 be a key?
-      // Or maybe KV* where KV = Unicode x Value
+    (dom Field    = (* Symbolic Value))
+    (dom 'Field*' = (** Field))
+    (dom Struct   = (+ 'Field*'))
 
     // The Ion data model, proper
     (dom Value   = (+ SafeVal Symbol List Struct))
@@ -127,6 +131,9 @@ Cleanup:
         (lift_to Symbolic (lower_to Unicode s))
         (r (lower_to I s))))
 
+    (fn rfield_name  ((f RField) -> SymTok) (ith f 0))
+    (fn rfield_value ((f RField) -> RVal)   (ith f 1))
+
 
     (fn e0 Environment (i)                          // The bootstrap Environment
       (if (=== 1 (eject i))
@@ -147,8 +154,9 @@ Cleanup:
           (E_RSym (lower_to RSym vr) r k)
           (if (= RList (subdomain vr))
             (E_RList (lower_to RList vr) r k)
-            // TODO RStruct
-            (raise "not implemented")))))
+            (if (= RStruct (subdomain vr))
+              (E_RStruct (lower_to RStruct vr) r k)
+              (raise "not implemented"))))))
 
     (fn E_RSym ((v RSym) (r Environment) (k Continuation) -> 'Value*')
       // [NULL] implement null.symbol
@@ -158,6 +166,26 @@ Cleanup:
       ('E*' (lower_to 'RVal*' v) r
         (|r1 vs1|
           (k r1 (seq 'Value*' (lift_to Value (lift_to List vs1)))))))
+
+    (dom FContinuation = (-> 'RField*' 'Value*'))
+    (fn 'E_RField*' ((rfs 'RField*') (r Environment) (k FContinuation) -> 'Value*')
+      (if (seq_is_empty rfs)
+        (k (seq 'Field*'))
+        (E (rfield_value (seq_head rfs)) r
+          (|r1 vs1|                            // Value(s) from head field
+            // TODO Verify that vs1 is singleton?
+            ('E_RField*' (seq_tail rfs) r1
+              (|fs2|                           // Field* from tail fields
+                (k (seq_append
+                     (seq 'Field*' (tuple Field
+                                     (expand_SymTok r1 (rfield_name (seq_head rfs)))
+                                     (seq_head vs1)))
+                     fs2))))))))
+
+    (fn E_RStruct ((v RStruct) (r Environment) (k Continuation) -> 'Value*')
+      ('E_RField*' (lower_to 'RField*' v) r
+        (|fs1|
+          (k r (seq 'Value*' (lift_to Value (lift_to Struct fs1)))))))
 
 
     (fn 'E+' ((vr 'RVal') (vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
