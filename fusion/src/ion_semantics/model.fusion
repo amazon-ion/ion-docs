@@ -7,12 +7,12 @@ A denotational semantic model of Ion.
 TODO
 ----
 Functional:
-* Implement structs
 * Implement annotations
 * Implement $ion_symbol_table
 * Implement IVMs
 * [NULL] Implement DotNull
 * `expand` should handle empty input. Prepend IVM_1_0 to the stream?
+* Struct denotations should be order-agnostic.
 
 Cleanup:
 * Streamline singleton domain values SYM0, IVMs via framework.
@@ -74,7 +74,9 @@ Cleanup:
     //=============================
     // Raw-layer Data Types, which can contain unresolved SIDs
 
-    (dom SymTok   = (+ Unicode I))     // "Raw" symbol token
+    (dom SymTok    = (+ Unicode I))     // "Raw" symbol token
+    (dom 'SymTok*' = (** SymTok))
+
     (dom RSym     = (+ SymTok DotNull))
 
     (dom RList   = (+ 'RVal*'))
@@ -85,17 +87,26 @@ Cleanup:
     (dom RStruct   = (+ 'RField*'))
 
     // The "raw" data model
-    (dom RVal    = (+ SafeVal RSym RList RStruct))
-    (dom TRVal   = (+ RVal IVM))
+    (dom RContent = (+ SafeVal RSym RList RStruct))
+    (dom RVal     = (* 'SymTok*' RContent))
+    (dom TRVal    = (+ RVal IVM))
 
     (dom 'RVal*'  = (** RVal))
     (dom 'TRVal*' = (** TRVal))
+
+    (fn rval_annots  ((v RVal) -> 'SymTok*')  (ith v 0))
+    (fn rval_content ((v RVal) -> 'RContent') (ith v 1))
+
+    (fn rfield_name  ((f RField) -> SymTok) (ith f 0))
+    (fn rfield_value ((f RField) -> RVal)   (ith f 1))
 
 
     //=============================
     // Application-layer Data Types
 
-    (dom Symbolic = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom Symbolic    = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom 'Symbolic*' = (** Symbolic))
+
     (dom Symbol   = (+ Symbolic DotNull))
 
     (dom List    = (+ 'Value*'))
@@ -105,10 +116,13 @@ Cleanup:
     (dom Struct   = (+ 'Field*'))
 
     // The Ion data model, proper
-    (dom Value   = (+ SafeVal Symbol List Struct))
-      // Value = Annotation* x Content
+    (dom Content   = (+ SafeVal Symbol List Struct))
+    (dom Value     = (* 'Symbolic*' Content))
 
     (dom 'Value*' = (** Value))
+
+    (fn value_annots  ((v Value) -> 'Symbolic*') (ith v 0))
+    (fn value_content ((v Value) -> 'Content')   (ith v 1))
 
 
     //=======================
@@ -131,8 +145,9 @@ Cleanup:
         (lift_to Symbolic (lower_to Unicode s))
         (r (lower_to I s))))
 
-    (fn rfield_name  ((f RField) -> SymTok) (ith f 0))
-    (fn rfield_value ((f RField) -> RVal)   (ith f 1))
+    (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
+      // TODO
+      (seq 'Symbolic*'))
 
 
     (fn e0 Environment (i)                          // The bootstrap Environment
@@ -148,8 +163,17 @@ Cleanup:
 
     (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
+      (E_RContent (rval_content vr) r
+        (|c1|
+          (k r (seq 'Value*' (tuple Value (expand_SymToks r (rval_annots vr)) c1))))))
+
+    (dom CContinuation = (-> Content 'Value*')
+      "Accepts results of value expansion, sans annotations")
+
+    (fn E_RContent ((vr RContent) (r Environment) (k CContinuation) -> 'Value*')
+      // General value evaluation
       (if (= SafeVal (subdomain vr))
-        (k r (seq 'Value*' (lift_to Value (lower_to SafeVal vr))))
+        (k (lift_to Content (lower_to SafeVal vr)))
         (if (= RSym (subdomain vr))
           (E_RSym (lower_to RSym vr) r k)
           (if (= RList (subdomain vr))
@@ -158,16 +182,16 @@ Cleanup:
               (E_RStruct (lower_to RStruct vr) r k)
               (raise "not implemented"))))))
 
-    (fn E_RSym ((v RSym) (r Environment) (k Continuation) -> 'Value*')
+    (fn E_RSym ((v RSym) (r Environment) (k CContinuation) -> 'Value*')
       // [NULL] implement null.symbol
-      (k r (seq 'Value*' (lift_to Value (lift_to Symbol (expand_SymTok r (lower_to SymTok v)))))))
+      (k (lift_to Content (lift_to Symbol (expand_SymTok r (lower_to SymTok v))))))
 
-    (fn E_RList ((v RList) (r Environment) (k Continuation) -> 'Value*')
+    (fn E_RList ((v RList) (r Environment) (k CContinuation) -> 'Value*')
       ('E*' (lower_to 'RVal*' v) r
         (|r1 vs1|
-          (k r1 (seq 'Value*' (lift_to Value (lift_to List vs1)))))))
+          (k (lift_to Content (lift_to List vs1))))))
 
-    (dom FContinuation = (-> 'RField*' 'Value*'))
+    (dom FContinuation = (-> 'RField*' 'Value*'))  // XXX Should be Field*
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) (k FContinuation) -> 'Value*')
       (if (seq_is_empty rfs)
         (k (seq 'Field*'))
@@ -182,10 +206,10 @@ Cleanup:
                                      (seq_head vs1)))
                      fs2))))))))
 
-    (fn E_RStruct ((v RStruct) (r Environment) (k Continuation) -> 'Value*')
+    (fn E_RStruct ((v RStruct) (r Environment) (k CContinuation) -> 'Value*')
       ('E_RField*' (lower_to 'RField*' v) r
         (|fs1|
-          (k r (seq 'Value*' (lift_to Value (lift_to Struct fs1)))))))
+          (k (lift_to Content (lift_to Struct fs1))))))
 
 
     (fn 'E+' ((vr 'RVal') (vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')

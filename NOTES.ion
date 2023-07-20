@@ -4,6 +4,8 @@
 
 TODOs
 -----
+* Higher-order fns should wrap fn-typed arguments with type-checkers.
+  * At present, continuations are not type-checked at all.
 * Sequence domains like Val+
 * Singleton domains (replace dummy domains?)
 * Domain extension; pre-define B/Z/D/F/S/T

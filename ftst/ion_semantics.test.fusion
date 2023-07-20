@@ -11,6 +11,7 @@ TODO
 (require
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
   "/ion_semantics/model"
   "/ion_semantics/testing"
 )
@@ -38,19 +39,19 @@ TODO
 
 // Expand a safe value
 (let [(v (expand1 true))]
-  (check_true (eject (lower_to B (lower_to Boolean (lower_to SafeVal v))))))
+  (check_true (eject (check_lower (value_content v) SafeVal Boolean B))))
 
 // Expand a textual symbol
 (let [(v (expand1 (quote danny)))]
-  (check === "danny" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
+  (check === "danny" (eject (check_lower (value_content v) Symbol Symbolic Unicode))))
 
 // Expand a system SID
 (let [(v (expand1 (mk_RSym 1)))]
-  (check === "$ion" (eject (lower_to Unicode (lower_to Symbolic (lower_to Symbol v))))))
+  (check === "$ion" (eject (check_lower (value_content v) Symbol Symbolic Unicode))))
 
 // Expand an out-of-range SID
 (let [(v (expand1 (mk_RSym 9999999999999)))]
-  (check === Sym0 (subdomain (lower_to Symbolic (lower_to Symbol v)))))
+  (check === Sym0 (subdomain (check_lower (value_content v) Symbol Symbolic))))
 
 
 

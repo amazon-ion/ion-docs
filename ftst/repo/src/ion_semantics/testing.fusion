@@ -97,13 +97,15 @@ Utilities for testing the Ion denotational model.
   // Values
 
   (define (mk_RVal c)
-    (cond
-      ((is_safe   c) (lift_to RVal (mk_SafeVal c)))
-      ((is_symbol c) (lift_to RVal (mk_RSym c)))
-      ((is_list   c) (lift_to RVal (mk_RList c)))
-      ((is_struct c) (lift_to RVal (mk_RStruct c)))
-      ((element_of c RSym) (lift_to RVal c))
-      (true (raise_argument_error "mk_RVal" "symbol/bool/int/list" 0 c))))
+    (tuple RVal (seq 'SymTok*')
+      (lift_to RContent
+        (cond
+          ((is_safe   c)       (mk_SafeVal c))
+          ((is_symbol c)       (mk_RSym    c))
+          ((is_list   c)       (mk_RList   c))
+          ((is_struct c)       (mk_RStruct c))
+          ((element_of c RSym) c)
+          (true (raise_argument_error "mk_RVal" "symbol/bool/int/list" 0 c))))))
 
 
   //============================================================================
@@ -138,7 +140,6 @@ Utilities for testing the Ion denotational model.
     (check_Values (apply sexp expected) (check_lower actual 'Value*')))
 
   (define_check (check_Struct expected actual)
-    // TODO OUCH DO I HAVE TO IMPLEMENT BAG COMPARISON?
     //   Perhaps we should be using Fusion equality to make this easier.
     //   Transform the modeled result into Fusion data and === to expected Fusion data.
     //   Not sure how to handle $0 since Fusion can't represent it.  We could use a
@@ -147,7 +148,7 @@ Utilities for testing the Ion denotational model.
     // Turn expected and actual structs into list of key/values pairs, then use bag_equal.
     (let [(exp_bag (for_list [((k v) expected)]
                      (pair (symbol_to_string k) v))),
-          (act_bag (for_list [(f (seq_to_sexp (check_lower actual Struct 'Field*')))]
+          (act_bag (for_list [(f (seq_to_sexp (check_lower actual 'Field*')))]
                      (pair (eject (check_lower (ith f 0) Unicode))
                            (ith f 1))))]
       (check (curry_left bag_equal (|e a| (and (=== (head e) (head a))
@@ -158,12 +159,13 @@ Utilities for testing the Ion denotational model.
   // Values
 
   (define_check (check_Value expected actual)
+    (let_values [((annot content) (tuple_values actual))]
     (cond
-      ((is_safe   expected) (check_SafeVal expected (check_lower actual SafeVal)))
-      ((is_symbol expected) (check_Symbol  expected (check_lower actual Symbol)))
-      ((is_list   expected) (check_List    expected (check_lower actual List)))
-      ((is_struct expected) (check_Struct  expected actual))
-      (true (fail "Unhandled expected value"))))
+      ((is_safe   expected) (check_SafeVal expected (check_lower content SafeVal)))
+      ((is_symbol expected) (check_Symbol  expected (check_lower content Symbol)))
+      ((is_list   expected) (check_List    expected (check_lower content List)))
+      ((is_struct expected) (check_Struct  expected (check_lower content Struct)))
+      (true (fail "Unhandled expected value")))))
 
   (define (check_Values expecteds actuals) // sexp and Value*
     (let loop [(es expecteds), (as actuals)]
