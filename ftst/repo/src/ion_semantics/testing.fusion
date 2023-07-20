@@ -113,11 +113,11 @@ Utilities for testing the Ion denotational model.
 
   (define_check (check_Int expected actual)
     // TODO null.int
-    (check === expected (eject (lower_to I actual))))
+    (check === expected (eject (check_lower actual I))))
 
   (define_check (check_SafeVal expected actual)
     (cond
-      ((is_int expected) (check_Int expected (lower_to Int actual)))
+      ((is_int expected) (check_Int expected (check_lower actual Int)))
       (true (fail "Unhandled expected value"))))
 
 
@@ -129,13 +129,13 @@ Utilities for testing the Ion denotational model.
   (define_check (check_Symbol expected actual)
     // TODO $0, null.symbol
     (check === (symbol_to_string expected)
-      (eject (lower_to Unicode (lower_to Symbolic actual)))))
+      (eject (check_lower actual Symbolic Unicode))))
 
 
   // Containers
 
   (define_check (check_List expected actual)
-    (check_Values (apply sexp expected) (lower_to 'Value*' actual)))
+    (check_Values (apply sexp expected) (check_lower actual 'Value*')))
 
   (define_check (check_Struct expected actual)
     // TODO OUCH DO I HAVE TO IMPLEMENT BAG COMPARISON?
@@ -147,8 +147,8 @@ Utilities for testing the Ion denotational model.
     // Turn expected and actual structs into list of key/values pairs, then use bag_equal.
     (let [(exp_bag (for_list [((k v) expected)]
                      (pair (symbol_to_string k) v))),
-          (act_bag (for_list [(f (seq_to_sexp (lower_to 'Field*' (lower_to Struct actual))))]
-                     (pair (eject (lower_to Unicode (ith f 0)))
+          (act_bag (for_list [(f (seq_to_sexp (check_lower actual Struct 'Field*')))]
+                     (pair (eject (check_lower (ith f 0) Unicode))
                            (ith f 1))))]
       (check (curry_left bag_equal (|e a| (and (=== (head e) (head a))
                                                (equals_Value (tail e) (tail a)))))
@@ -159,9 +159,9 @@ Utilities for testing the Ion denotational model.
 
   (define_check (check_Value expected actual)
     (cond
-      ((is_safe   expected) (check_SafeVal expected (lower_to SafeVal actual)))
+      ((is_safe   expected) (check_SafeVal expected (check_lower actual SafeVal)))
       ((is_symbol expected) (check_Symbol  expected (check_lower actual Symbol)))
-      ((is_list   expected) (check_List    expected (lower_to List    actual)))
+      ((is_list   expected) (check_List    expected (check_lower actual List)))
       ((is_struct expected) (check_Struct  expected actual))
       (true (fail "Unhandled expected value"))))
 
