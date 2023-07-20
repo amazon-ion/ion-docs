@@ -59,6 +59,7 @@
     is_tuple
     tuple
     tuple_ith
+    tuple_values
     product_domain_element
 
     // Function domains
@@ -410,6 +411,15 @@ Constructs a product-domain value.
   (define (is_tuple v)
     (and (is_domain_value v)
          (is_product_domain (domain_value_domain v))))
+
+
+  (define (tuple_values tuple)
+    '''
+Return the components of tuple `v` as multiple values.
+    '''
+    (unless (is_tuple tuple)
+      (raise_argument_error "tuple_values" "tuple value" 0 tuple))
+    (apply values (domain_value_rep tuple)))
 
 
   (define (tuple_ith v i)
