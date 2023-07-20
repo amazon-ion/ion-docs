@@ -8,11 +8,17 @@ Utilities for testing denotational models.
 
   (require
     "/fusion/exception"
+    "/fusion/experimental/check"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/sequence"
   )
 
   (provide
+    check_lower
+    is_base_domain_value
+    is_seq
+    is_tuple
+    is_union_domain_value
     seq_to_list
     seq_to_sexp
   )
@@ -28,5 +34,24 @@ Utilities for testing denotational models.
     (unless (is_seq seq)
       (raise_argument_error "seq_to_list" "seq value" 0 seq))
     (apply list (domain_value_rep seq)))
+
+
+  (define check_lower
+    '''
+    (check_lower value` domain ...)
+
+Successively lowers the `value` through the `domain`s, in order, returning a
+value in the final domain.
+A check error is raised if any step fails type-checking.
+    '''
+    (lambda args
+      (let loop [(val  (head args)),
+                 (doms (tail args))]
+        (if (is_empty doms)
+          val
+          (let [(dom (head doms))]
+            (check_pred is_union_domain_value val)
+            (check same dom (subdomain val))
+            (loop (lower_to dom val) (tail doms)))))))
 
 )

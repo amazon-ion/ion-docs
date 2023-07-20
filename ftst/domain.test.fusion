@@ -19,6 +19,9 @@
 (check_false (element_of t_val Any))
 (check_true  (element_of t_val T))
 
+(expect_argument_error (eject 1))              // not a domain value
+(expect_argument_error (eject int_exact_val))  // not a base domain value
+
 
 //====================
 // Union domain values
@@ -65,8 +68,8 @@
 (expect_argument_error (tuple Stamped int_any_val int_any_val))  // int_any_val ∉ T
 (expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
 
-(check ident t_val (product_domain_element Stamped stamped_int_val 0))
-(check ident int_any_val (product_domain_element Stamped stamped_int_val 1))
+(check ident t_val       (ith stamped_int_val 0))
+(check ident int_any_val (ith stamped_int_val 1))
 
 
 //======================
@@ -96,7 +99,7 @@
 
 (expect_argument_error (seq_is_empty stamped_int_val))  // arg isn't a sequence
 
-(expect_argument_error (ith stamped_int_val 0))  // 1st arg isn't a sequence
+(expect_argument_error (ith int_any_val 0))      // 1st arg isn't a sequence
 (expect_argument_error (ith empty_Zs 0))         // 2nd arg out of range
 
 (expect_argument_error (seq_tail Z))             // arg isn't a sequence

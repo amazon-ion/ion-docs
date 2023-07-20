@@ -31,6 +31,7 @@ Domains come in several types:
 
   '''
   (require
+    "/fusion/exception"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
@@ -74,6 +75,7 @@ Domains come in several types:
     ith
     seq
     seq_append
+    seq_head
     seq_is_empty
     seq_tail
 
@@ -84,4 +86,15 @@ Domains come in several types:
     define_fn
     is_fn
   )
+
+
+  // Functions that are polymorphic over multiple domain types
+
+  (define (ith v i)
+    "Extract the `i`th element from `v`, which must be a tuple or seq value."
+    (if (is_tuple v)
+      (tuple_ith v i)
+      (if (is_seq v)
+        (seq_ith v i)
+        (raise_argument_error "ith" "tuple or seq value" 0 v i))))
 )

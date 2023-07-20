@@ -18,11 +18,12 @@
     define_seq_domain
     is_seq
     is_seq_domain
-    ith
     make_seq_domain
     seq
     seq_append
     seq_domain_subdomain
+    seq_head
+    seq_ith
     seq_is_empty
     seq_tail
   )
@@ -125,12 +126,17 @@ within `domain`'s subdomain.
     (is_empty (domain_value_rep seq)))
 
 
-  (define (ith seq i)
+  (define (seq_ith seq i)
     (unless (is_seq seq)
       (raise_argument_error "ith" "seq value" 0 seq i))
     // TODO typecheck/rangecheck i
     (element (domain_value_rep seq) i))
 
+
+  (define (seq_head seq)
+    (unless (is_seq seq)
+      (raise_argument_error "seq_head" "seq value" 0 seq))
+    (head (domain_value_rep seq)))
 
   (define (seq_tail seq)
     (unless (is_seq seq)

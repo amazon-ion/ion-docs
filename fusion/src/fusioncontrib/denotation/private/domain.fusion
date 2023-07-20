@@ -39,10 +39,12 @@
     domain_value_rep
 
     // Base domain value operators
+    is_base_domain_value
     inject_into
     eject
 
     // Union domain value operators
+    is_union_domain_value
     lift_to
     subdomain
     unwrap
@@ -54,7 +56,9 @@
     product_domain_subdomains
 
     // Product domain value operators
+    is_tuple
     tuple
+    tuple_ith
     product_domain_element
 
     // Function domains
@@ -227,9 +231,17 @@ Lifts a Fusion value into a base domain.
     (make_value d v))
 
 
+  (define (is_base_domain_value v)
+    (and (is_domain_value v)
+         (is_base_domain (domain_value_domain v))))
+
+
   (define (eject v)
-      // TODO type-check v is base domain value
+    "Extracts the implementation datum from a base value"
+    (unless (is_base_domain_value v)
+      (raise_argument_error "eject" "base-domain value" 0 v))
     (domain_value_rep v))
+
 
   (define_syntax define_base_domain
     '''
@@ -394,6 +406,19 @@ Constructs a product-domain value.
             (string_append "value in domain " (domain_name domain))
             1 domain value))
         (make_value domain value))))
+
+  (define (is_tuple v)
+    (and (is_domain_value v)
+         (is_product_domain (domain_value_domain v))))
+
+
+  (define (tuple_ith v i)
+    '''
+Access component i of tuple v.
+    '''
+    // TODO type-check v
+    (list_element (domain_value_rep v) i))
+
 
   (define (product_domain_element d v i)
     '''
