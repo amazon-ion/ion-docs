@@ -7,8 +7,8 @@ A denotational semantic model of Ion.
 TODO
 ----
 Functional:
-* Implement annotations
 * Implement $ion_symbol_table
+* Implement system symbol table
 * Implement IVMs
 * [NULL] Implement DotNull
 * `expand` should handle empty input. Prepend IVM_1_0 to the stream?
@@ -149,8 +149,10 @@ Cleanup:
         (r (lower_to I s))))
 
     (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
-      // TODO
-      (seq 'Symbolic*'))
+      (if (seq_is_empty s)
+        (seq 'Symbolic*')
+        (seq_append (seq 'Symbolic*' (expand_SymTok r (seq_head s)))
+                    (expand_SymToks r (seq_tail s)))))
 
 
     (fn e0 Environment (i)                          // The bootstrap Environment

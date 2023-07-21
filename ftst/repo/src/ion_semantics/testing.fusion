@@ -102,9 +102,12 @@ Utilities for testing the Ion denotational model.
   // Values
 
   (define (mk_RVal c)
-    (tuple RVal (seq 'SymTok*')
+    (tuple RVal (apply seq 'SymTok*' (map mk_SymTok (annotations c)))
       (lift_to RContent
         (cond
+          // TODO Annotations are not stripped from c and are injected into the model.
+          //  This is confusing when debugging, at the very least.
+          //  Currently this is counterbalanced by how eject_Value applies annotations.
           ((is_safe   c)       (mk_SafeVal c))
           ((is_symbol c)       (mk_RSym    c))
           ((is_list   c)       (mk_RList   c))
@@ -259,6 +262,7 @@ Utilities for testing the Ion denotational model.
 
   (define (eject_Value value)
     (let_values [((annots content) (tuple_values value))]
+      // `annotate` replaces any existing annotations on the content.
       (apply annotate (eject_Content content) (eject_Symbolics annots))))
 
   (define (eject_Values values)

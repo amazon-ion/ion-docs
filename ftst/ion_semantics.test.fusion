@@ -28,29 +28,29 @@ TODO
 
 
 (check_expansion
-  (quote_top true false 1)   // Expected output
-  (quote_top true false 1))  // Input document
+  (quote_top true a::false 1 a::'#$0' ::2)   // Expected output
+  (quote_top true a::false 1 a::'#$99'::2))  // Input document
 
 
 // Symbols
 
 (check_expansion
-  (quote_top danny $ion  '#$0')
-  (quote_top danny '#$1' '#$999'))
+  (quote_top danny $ion   $ion::'#$0')
+  (quote_top danny '#$1' '#$1'::'#$999'))
 
 
 // Lists
 
 (check_expansion
-  (quote_top [] [[], 1, danny, $ion])
-  (quote_top [] [[], 1, danny, '#$1']))
+  (quote_top a::[] [[], 1, danny, $ion])
+  (quote_top a::[] [[], 1, danny, '#$1']))
 
 
 // Structs
 
 (check_expansion
-  (quote_top {} {a:$ion, c:{}, a:1, b:danny})
-  (quote_top {} {a:1, b: danny, a:'#$1', c:{}}))
+  (quote_top g::{} {a:$ion, c:{}, a:1, b:danny})
+  (quote_top g::{} {a:1, b: danny, a:'#$1', c:{}}))
 
 
 "SUCCESS (ion_semantics.test)"
