@@ -9,6 +9,7 @@ Utilities for testing the Ion denotational model.
   (require
     "/fusion/exception"
     "/fusion/experimental/check"
+    "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/testing"
     "/ion_semantics/model"
@@ -68,11 +69,15 @@ Utilities for testing the Ion denotational model.
   // Symbols
 
   (define (mk_SymTok c)
-    (cond
-      ((is_string c) (lift_to SymTok (inject_into Unicode c)))
-      ((is_symbol c) (lift_to SymTok (inject_into Unicode (symbol_to_string c))))
-      ((is_int    c) (lift_to SymTok (inject_into I c)))
-      (true (raise_argument_error "mk_SymTok" "string/int" 0 c))))
+    (lift_to SymTok
+      (cond
+        ((is_string c) (inject_into Unicode c))
+        ((is_symbol c) (let [(str (symbol_to_string c))]
+                         (if (string_starts_with str "#$")
+                           (inject_into I (string_to_int (string_replace str "#$" "")))
+                           (inject_into Unicode str))))
+        ((is_int    c) (inject_into I c))
+        (true (raise_argument_error "mk_SymTok" "string/int" 0 c)))))
 
   (define (mk_RSym c)
     (cond
@@ -160,12 +165,12 @@ Utilities for testing the Ion denotational model.
 
   (define_check (check_Value expected actual)
     (let_values [((annot content) (tuple_values actual))]
-    (cond
-      ((is_safe   expected) (check_SafeVal expected (check_lower content SafeVal)))
-      ((is_symbol expected) (check_Symbol  expected (check_lower content Symbol)))
-      ((is_list   expected) (check_List    expected (check_lower content List)))
-      ((is_struct expected) (check_Struct  expected (check_lower content Struct)))
-      (true (fail "Unhandled expected value")))))
+      (cond
+        ((is_safe   expected) (check_SafeVal expected (check_lower content SafeVal)))
+        ((is_symbol expected) (check_Symbol  expected (check_lower content Symbol)))
+        ((is_list   expected) (check_List    expected (check_lower content List)))
+        ((is_struct expected) (check_Struct  expected (check_lower content Struct)))
+        (true (fail "Unhandled expected value")))))
 
   (define (check_Values expecteds actuals) // sexp and Value*
     (let loop [(es expecteds), (as actuals)]
@@ -181,6 +186,84 @@ Utilities for testing the Ion denotational model.
       [(is_check_error (|e| false))]
     (check_Value expected actual)
     true))
+
+
+  //============================================================================
+  // Ejecting output domain values to produce Fusion data
+
+  // Safe types
+
+  (define (eject_Boolean v)
+    (if (=== DotNull (subdomain v))
+      null.bool
+      (eject (unwrap v))))
+
+  (define (eject_Int v)
+    (if (=== DotNull (subdomain v))
+      null.int
+      (eject (unwrap v))))
+
+  (define (eject_SafeVal v)
+    (lets [(sub (subdomain v))]
+      (cond
+        ((=== sub NullNull) (raise sub))
+        ((=== sub Boolean ) (eject_Boolean (unwrap v)))
+        ((=== sub Int     ) (eject_Int     (unwrap v)))
+        ((=== sub String  ) (raise sub))
+        (true (raise sub)))))
+
+
+  // Symbols
+
+  (define (eject_Symbolic sym)
+    (if (=== Unicode (subdomain sym))
+      (string_to_symbol (eject (check_lower sym Unicode)))
+      (quote '#$0')))
+
+  (define (eject_Symbolics syms)
+    (assert (element_of syms 'Symbolic*'))
+    (map eject_Symbolic (seq_to_sexp syms)))
+
+  (define (eject_Symbol v)
+    (if (=== DotNull (subdomain v))
+      (quote null.symbol)
+      (eject_Symbolic (unwrap v))))
+
+
+  // Containers
+
+  (define (eject_List v)
+    (if (=== DotNull (subdomain v))
+      null.list
+      (apply list (eject_Values (unwrap v)))))
+
+  (define (eject_Struct v)
+    (if (=== DotNull (subdomain v))
+      null.struct
+      (for_struct [(f (seq_to_sexp (unwrap v)))]
+        (values (eject_Symbolic (Field_name  f))
+                (eject_Value    (Field_value f))))))
+
+
+  // Values
+
+  (define (eject_Content v)
+    (lets [(sub (subdomain v)),
+           (ejector (cond
+                      ((=== sub SafeVal) eject_SafeVal)
+                      ((=== sub Symbol ) eject_Symbol)
+                      ((=== sub List   ) eject_List)
+                      ((=== sub Struct ) eject_Struct)
+                      (true (raise sub))))]
+      (ejector (unwrap v))))
+
+  (define (eject_Value value)
+    (let_values [((annots content) (tuple_values value))]
+      (apply annotate (eject_Content content) (eject_Symbolics annots))))
+
+  (define (eject_Values values)
+    (assert (element_of values 'Value*'))
+    (map eject_Value (seq_to_sexp values)))
 
 
   //============================================================================
@@ -203,4 +286,15 @@ Utilities for testing the Ion denotational model.
     (lambda expecteds
       (lambda (actuals)
         (check_Values expecteds actuals))))
+
+
+  (define_syntax quote_top
+    (lambda (stx)
+      (datum_to_syntax
+        (quasiquote (quote (unquote (tail (syntax_unwrap stx)))))
+        (quote_syntax context)
+        stx)))
+
+  (define_binary_check (check_expansion expected input)
+    (=== expected (eject_Values (expand (apply parse input)))))
 )

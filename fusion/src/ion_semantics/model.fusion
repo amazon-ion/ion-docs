@@ -124,6 +124,9 @@ Cleanup:
     (fn value_annots  ((v Value) -> 'Symbolic*') (ith v 0))
     (fn value_content ((v Value) -> 'Content')   (ith v 1))
 
+    (fn Field_name  ((f Field) -> Symbolic) (ith f 0))
+    (fn Field_value ((f Field) -> Value)    (ith f 1))
+
 
     //=======================
     // Evaluation Functions

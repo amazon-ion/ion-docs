@@ -2,9 +2,19 @@
 
 '''
 
+Our testing strategy uses normal Fusion data to represent input documents for
+the model to expand, and to represent the expected results of expansion.
+This allows us to use built-in Fusion equality to validate the results.
+
+We "tunnel" special tokens as follows:
+  * Both input and output documents use symbols of the form `'#$ddd'` to represent
+    SIDS.
+  * Similarly, `'#$ion_d_d'` represents an IVM within the input.
+
+
+
 TODO
 ----
-* Transform Values (expansion result) to Fusion data, to make result check straightforwards.
 
 '''
 
@@ -17,54 +27,30 @@ TODO
 )
 
 
-(lets [(content "text for symbol"),
-       (unicode (inject_into Unicode content)),
-       (string  (lift_to String unicode)),
-       (symbol  (string2symbol string))]
-  (check === content (eject (lower_to Unicode symbol))))
+(check_expansion
+  (quote_top true false 1)   // Expected output
+  (quote_top true false 1))  // Input document
 
 
-(lets [(i        (inject_into I 0)),
-       (symtok   (lift_to SymTok i)),
-       (expanded (expand_SymTok e0 symtok))]
-  (check_true (element_of expanded Symbolic))
-  (check_Sym0 expanded))
+// Symbols
 
-(lets [(i        (inject_into I 1)),
-       (symtok   (lift_to SymTok i)),
-       (expanded (expand_SymTok e0 symtok))]
-  (check_true (element_of expanded Symbolic))
-  (check === "$ion" (eject (lower_to Unicode expanded))))
+(check_expansion
+  (quote_top danny $ion  '#$0')
+  (quote_top danny '#$1' '#$999'))
 
 
-// Expand a safe value
-(let [(v (expand1 true))]
-  (check_true (eject (check_lower (value_content v) SafeVal Boolean B))))
+// Lists
 
-// Expand a textual symbol
-(let [(v (expand1 (quote danny)))]
-  (check === "danny" (eject (check_lower (value_content v) Symbol Symbolic Unicode))))
-
-// Expand a system SID
-(let [(v (expand1 (mk_RSym 1)))]
-  (check === "$ion" (eject (check_lower (value_content v) Symbol Symbolic Unicode))))
-
-// Expand an out-of-range SID
-(let [(v (expand1 (mk_RSym 9999999999999)))]
-  (check === Sym0 (subdomain (check_lower (value_content v) Symbol Symbolic))))
+(check_expansion
+  (quote_top [] [[], 1, danny, $ion])
+  (quote_top [] [[], 1, danny, '#$1']))
 
 
+// Structs
 
-// TODO (check_pred (doc_matches) (expand (seq 'RVal*')))
-
-(check_pred (doc_matches 1)
-  (expand (parse 1)))
-(check_pred (doc_matches (quote danny) (quote $ion))
-  (expand (parse (quote danny) (mk_RSym 1))))
-(check_pred (doc_matches [[], 1, (quote danny), (quote $ion)])  // Lists
-  (expand (parse [[], 1, (quote danny), (mk_RSym 1)])))
-(check_pred (doc_matches {} (quote {a:$ion, c:{}, a:1, b:danny}))     // Structs
-  (expand (parse {} {a:1, b:(quote danny), a:(mk_RSym 1), c:{}})))
+(check_expansion
+  (quote_top {} {a:$ion, c:{}, a:1, b:danny})
+  (quote_top {} {a:1, b: danny, a:'#$1', c:{}}))
 
 
 "SUCCESS (ion_semantics.test)"

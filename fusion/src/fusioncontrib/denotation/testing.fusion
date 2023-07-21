@@ -22,6 +22,7 @@ Utilities for testing denotational models.
     seq_to_list
     seq_to_sexp
     tuple_values
+    unwrap
   )
 
   (define (seq_to_sexp seq)
