@@ -33,6 +33,7 @@
     define_func_domain
 
     // Domain Values
+    'record:domain_value'
     make_value
     is_domain_value
     domain_value_domain
@@ -160,10 +161,8 @@
   (define (element_of v domain)  // i.e., ∈
     (unless (is_domain domain)
       (raise_argument_error "element_of" "domain" 1 v domain))
-    (if (is_func_domain domain)
-      (is_procedure v)           // [FNREC] tighten this
       (and (is_domain_value v)
-           (ident domain (domain_value_domain v)))))
+           (ident domain (domain_value_domain v))))
 
 
   //-------------------
@@ -323,9 +322,8 @@ Lifts a subdomain value into a union domain.
     '''
     (unless (is_union_domain d)
       (raise_argument_error "lift_to" "union domain" 0 d v))
-    // [FNREC] The following isn't true for functions
-//  (unless (is_domain_value v)
-//    (raise_argument_error "lift_to" "a domain value" 1 d v))
+    (unless (is_domain_value v)
+      (raise_argument_error "lift_to" "a domain value" 1 d v))
     (unless (domain_accepts d v)
       (raise_argument_error (string_append "lift_to " (domain_name d))
         (display_to_string "value in one of "

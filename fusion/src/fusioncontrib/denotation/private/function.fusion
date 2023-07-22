@@ -3,17 +3,10 @@
 (module function "/fusion"
 
   '''
-At present, domain functions are implemented as Fusion functions.
+Domain functions are implemented as Fusion record-procedures.
 This makes "interpretation" of domain functions trivial; it's just Fusion execution.
-However, it means that it's harder to analyze the model because the bindings point
-to opaque objects.
-
-Ideally, domain fns would be implemented by records that can be applied as procedures.
-
-Until Fusion supports that, we could instead use records that have a `fn_applier` field
-that returns its implementation.
-In that case, we can "compile" the modeled function by replacing (f e ...) with
-((fn_applier f) e ...) while also doing arity- and type-checking using the record bound to `f`.
+It should also allow us to perform static type-checking of much of the modeled
+code, particularly once every subexpression is a function invocation.
 
 Domain functions are denoted using an expression language, something like:
 
@@ -50,6 +43,21 @@ Remember that _everything is functional here_, even things like IF.
   (define CTX (quote_syntax lexical_context))
 
 
+  (define_values ('record:fn' fn_ctor is_fn fn_get)
+    [
+      "private record type",
+      "private fn constructor",
+      '''
+    (is_fn v)
+
+Predicate for domain functions.
+      ''',
+      "private fn accessor"
+    ]
+    (make_record_type (quote P1) 'record:domain_value' 1 0))
+    // The one field in this subtype is the procedure to apply.
+
+
   (define (make_fn name domain impl)
     '''
 The `domain` must be a func_domain, the `impl` a Fusion procedure.
@@ -75,14 +83,16 @@ Type-checking of function application:
                           (unless (== (size argdomains) (size args))
                             (apply raise_arity_error name (size argdomains) args))
                           (for [(dom argdomains), (arg args)]
-                            (unless (element_of arg dom)
+                            (unless (or (element_of arg dom)
+                                        (and (is_func_domain dom)      // TODO [LAMBDA] tighten this
+                                             (is_procedure arg)))
                               (raise_argument_error name
                                 (symbol_to_string (domain_name dom)) -1 arg)))
                            (let [(r (apply impl args))]
                              (unless (element_of r out_dom)
                                (raise_result_error (string_append "result of " name)
                                  (symbol_to_string (domain_name out_dom)) r))
-                             r)))  // FIXME proper arg position
+                             r)))                                       // FIXME proper arg position
                       (|v| (unless (or (not in_dom) (element_of v in_dom))  // FIXME model TOP
                              (raise_argument_error name
                                (symbol_to_string (domain_name in_dom)) 0 v))
@@ -91,9 +101,8 @@ Type-checking of function application:
                              (raise_result_error name
                                (symbol_to_string (domain_name out_dom)) r))
                            r))))]
-      applier))
+      (fn_ctor domain /*rep*/ null applier)))
 
-  (define is_fn is_procedure)
 
   (define (xform_fn_sig sig_stx)
     '''

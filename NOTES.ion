@@ -4,7 +4,7 @@
 
 TODOs
 -----
-* Higher-order fns should wrap fn-typed arguments with type-checkers.
+* [LAMBDA] Modeled "lambdas" should be strongly typed.
   * At present, continuations are not type-checked at all.
 * Sequence domains like Val+
 * Singleton domains (replace dummy domains?)
@@ -19,7 +19,6 @@ TODOs
 
 
 Requires Fusion features:
-* [FNREC] Domain functions should be records, so they can be type-checked.
 * Better `display` of domains and values.
 * Better testing of display output requires `with_output_to_String` or something.
 * Use record guardians to type-check values.
