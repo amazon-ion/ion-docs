@@ -84,6 +84,7 @@ Domains come in several types:
     func_domain_output
 
     define_fn
+    mk_fn
     is_fn
   )
 

@@ -488,7 +488,7 @@ or null for TOP (accept any one value).
     '''
     (unless (or (is_domain input)
                 (is_list_of_domains input)
-                (is_null input))               // TODO model TOP properly
+                (is_null input))                                        // [TOP]
       (raise_argument_error "make_func_domain" "input domain or domains" 2
         name description input output))
     (when (and (is_product_domain input) (is_null (domain_name input)))
@@ -496,7 +496,7 @@ or null for TOP (accept any one value).
       (raise_argument_error "make_func_domain"
         "singular product-domain arg must be named" 0
         name description input output))
-    (unless (is_domain output)
+    (unless (is_domain output)                                          // [TOP]
       (raise_argument_error "make_func_domain" "output domain" 3
         name description input output))
     (let [(input (if (is_list_of_domains input)
@@ -504,8 +504,7 @@ or null for TOP (accept any one value).
                      (. input 0)
                      (make_product_domain null.string null.string (|| input)))
                    input))]
-      // FIXME proper checker
-      (make_domain FuncDomain name (always true) description [input, output])))
+      (make_domain FuncDomain name is_procedure description [input, output])))
 
   (define (is_func_domain v) (is_domain_of_type FuncDomain v))
 

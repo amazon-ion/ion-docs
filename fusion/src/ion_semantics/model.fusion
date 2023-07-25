@@ -169,7 +169,7 @@ Cleanup:
     (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
       (E_RContent (rval_content vr) r
-        (|c1|
+        (mk_fn CContinuation (c1)
           (k r (seq 'Value*' (tuple Value (expand_SymToks r (rval_annots vr)) c1))))))
 
     (dom CContinuation = (-> Content 'Value*')
@@ -193,18 +193,18 @@ Cleanup:
 
     (fn E_RList ((v RList) (r Environment) (k CContinuation) -> 'Value*')
       ('E*' (lower_to 'RVal*' v) r
-        (|r1 vs1|
+        (mk_fn Continuation (r1 vs1)
           (k (lift_to Content (lift_to List vs1))))))
 
-    (dom FContinuation = (-> 'RField*' 'Value*'))  // XXX Should be Field*
+    (dom FContinuation = (-> 'Field*' 'Value*'))
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) (k FContinuation) -> 'Value*')
       (if (seq_is_empty rfs)
         (k (seq 'Field*'))
         (E (rfield_value (seq_head rfs)) r
-          (|r1 vs1|                            // Value(s) from head field
+          (mk_fn Continuation (r1 vs1)               // Value(s) from head field
             // TODO Verify that vs1 is singleton?
             ('E_RField*' (seq_tail rfs) r1
-              (|fs2|                           // Field* from tail fields
+              (mk_fn FContinuation (fs2)             // Field* from tail fields
                 (k (seq_append
                      (seq 'Field*' (tuple Field
                                      (expand_SymTok r1 (rfield_name (seq_head rfs)))
@@ -213,24 +213,24 @@ Cleanup:
 
     (fn E_RStruct ((v RStruct) (r Environment) (k CContinuation) -> 'Value*')
       ('E_RField*' (lower_to 'RField*' v) r
-        (|fs1|
+        (mk_fn FContinuation (fs1)
           (k (lift_to Content (lift_to Struct fs1))))))
 
 
     (fn 'E+' ((vr 'RVal') (vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (E vr r k)
-        (E vr r (|r1 vs1| // v1 is expansion of first raw value
+        (E vr r (mk_fn Continuation (r1 vs1) // v1 is expansion of first raw value
                   ('E+' (ith vrs 0) (seq_tail vrs) r1
-                    (|r2 vs2| (k r2 (seq_append vs1 vs2))))))))
+                    (mk_fn Continuation (r2 vs2) (k r2 (seq_append vs1 vs2))))))))
 
     (fn 'E*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (k r (seq 'Value*'))
         (E (ith vrs 0) r
-          (|r1 vs1|
+          (mk_fn Continuation (r1 vs1)
             ('E*' (seq_tail vrs) r1
-              (|r2 vs2|
+              (mk_fn Continuation (r2 vs2)
                 (k r2 (seq_append vs1 vs2))))))))
 
   /*
@@ -246,6 +246,6 @@ Cleanup:
   */
 
     (fn expand ((rvals 'RVal*') -> 'Value*')
-      ('E+' (ith rvals 0) (seq_tail rvals) e0 k0))
+      ('E+' (ith rvals 0) (seq_tail rvals) e0 k0))  // TODO use E*
   )
 )

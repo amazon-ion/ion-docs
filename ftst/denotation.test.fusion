@@ -3,7 +3,10 @@
 (require
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/private/domain")
+  "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/testing"
+)
+
 
 (expect_syntax_error
   (define_model Bad
@@ -109,6 +112,33 @@
        (p (make_point2d x y))]
   (check ident x (product_domain_element Point2d p 0))
   (check ident y (product_domain_element Point2d p 1)))
+
+
+// Local functions
+
+(define (mk_Any v)
+  (lift_to Any
+    (inject_into (cond ((is_bool   v) B)
+                       ((is_int    v) Z)
+                       ((is_string v) S))
+      v)))
+
+(define (eject_Anys anys)
+  (map (compose domain_value_rep domain_value_rep) (seq_to_sexp anys)))
+
+(define anys (apply seq 'Any*' (map mk_Any [1, true, 2, "hi", "by", 3])))
+
+(check === (quote (1 2 3))
+  (eject_Anys (select_ints anys)))  // select_ints has a local Pred fn
+
+(expect_syntax_error (mk_fn))                   // Too few subforms
+(expect_syntax_error (mk_fn Pred))
+(expect_syntax_error (mk_fn Pred (arg)))
+(expect_syntax_error (mk_fn Pred (arg) true_val true_val)) // Too many subforms
+
+(expect_syntax_error (mk_fn (Pred) (a) true_val))      // Malformed domain name
+(expect_syntax_error (mk_fn Pred arg true_val))        // Args not a sexp
+(expect_syntax_error (mk_fn Pred null.sexp true_val))  // Args are invalid sexp
 
 
 //==========

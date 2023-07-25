@@ -23,7 +23,8 @@
 
     (dom Stamped = (* T Any) "A timestamped value")
 
-    (dom 'Z*' = (** Z) "sequence of Z")
+    (dom 'Z*'   = (** Z) "sequence of Z")
+    (dom 'Any*' = (** Any))
 
     (dom Any2Any = (-> Any Any))
     (dom Pred    = (-> Any B)  "A predicate function")
@@ -37,6 +38,18 @@
       a)
     (fn stamp ((t T) (v Any) -> Stamped)
       (tuple Stamped t v))
+
+    // TODO [BOOL]
+    (fn filter ((vs 'Any*') (p Pred) -> 'Any*')
+      (if (seq_is_empty vs) (seq 'Any*')
+        (if (eject (p (seq_head vs)))
+          (seq_append (seq 'Any*' (seq_head vs)) (filter (seq_tail vs) p))
+          (filter (seq_tail vs) p))))
+
+    (fn select_ints ((vs 'Any*') -> 'Any*')
+      (filter vs (mk_fn Pred (v) (if (=== Z (subdomain v))
+                                   (inject_into B true)
+                                   (inject_into B false)))))
   )
 
 

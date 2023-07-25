@@ -37,6 +37,7 @@ Remember that _everything is functional here_, even things like IF.
     define_fn
     is_fn
     make_fn
+    mk_fn
   )
 
 
@@ -83,25 +84,47 @@ Type-checking of function application:
                           (unless (== (size argdomains) (size args))
                             (apply raise_arity_error name (size argdomains) args))
                           (for [(dom argdomains), (arg args)]
-                            (unless (or (element_of arg dom)
-                                        (and (is_func_domain dom)      // TODO [LAMBDA] tighten this
-                                             (is_procedure arg)))
+                            (unless (element_of arg dom)
                               (raise_argument_error name
-                                (symbol_to_string (domain_name dom)) -1 arg)))
+                                (symbol_to_string (domain_name dom)) -1 arg))) // TODO show all args
                            (let [(r (apply impl args))]
                              (unless (element_of r out_dom)
                                (raise_result_error (string_append "result of " name)
                                  (symbol_to_string (domain_name out_dom)) r))
                              r)))                                       // FIXME proper arg position
-                      (|v| (unless (or (not in_dom) (element_of v in_dom))  // FIXME model TOP
+                      (|v| (unless (or (not in_dom) (element_of v in_dom))  // TODO [TOP]
                              (raise_argument_error name
                                (symbol_to_string (domain_name in_dom)) 0 v))
                          (let [(r (impl v))]
                            (unless (element_of r out_dom)
-                             (raise_result_error name
+                             (raise_result_error (string_append "result of " name)
                                (symbol_to_string (domain_name out_dom)) r))
                            r))))]
       (fn_ctor domain /*rep*/ null applier)))
+
+
+  (define_syntax mk_fn
+    '''
+    (mk_fn domain (arg ...+) body) => (fn_validator domain (lambda (arg ...) body))
+    '''
+    (lambda (stx)
+      (unless (=== 4 (syntax_size stx))
+        (wrong_syntax stx "invalid syntax"))
+      (let [(domain_stx (syntax_get stx 1)),
+            (args_stx   (syntax_get stx 2)),
+            (body_stx   (syntax_get stx 3))]
+        (unless (is_identifier domain_stx)
+          (wrong_syntax stx "invalid domain name: " domain_stx))
+        (let [(args (syntax_unwrap args_stx))]
+          (unless (and (is_sexp args) args)   // Reject null.sexp
+            (wrong_syntax stx "expected args sexp: " args_stx)))
+        (datum_to_syntax
+          (QQ (make_fn
+                "local fn" // (string_append "local " (or (domain_name domain) "function")))
+                (UQ domain_stx)
+                (lambda (UQ args_stx) (UQ body_stx))))
+          CTX
+          stx))))
 
 
   (define (xform_fn_sig sig_stx)
