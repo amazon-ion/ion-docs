@@ -14,7 +14,7 @@
 
   (provide
     // Domain meta-types
-    domain_meta
+    make_domain_meta
     make_domain
 
     // Domains
@@ -90,7 +90,22 @@
 
   // Basically the class metaobject/vtable for domain objects.
   // Instances include BaseDomain, UnionDomain, ProductDomain, FuncDomain.
-  (record domain_meta (name display_fn))
+  (record domain_meta (name display_fn eltof_fn))
+
+  (define (make_domain_meta name display_fn eltof_fn)
+    '''
+Creates a new domain "class".
+  * The `display_fn` accepts a domain value and `display`s its RHS.
+  * The `eltof_fn` accepts a domain (of this type) and a value, returns truthy iff
+    the value is an element of the domain.
+    May be null, to use the default mechanism.
+    '''
+    // TODO Use [GUARD] to populate default values.
+    (domain_meta name display_fn
+      (or eltof_fn (|d v|
+                     (and (is_domain_value v)
+                          (ident d (domain_value_domain v)))))))
+
 
   // The "classes" from which domain values can be created.
   (record domain (type name checker description data))
@@ -161,16 +176,16 @@
   (define (element_of v domain)  // i.e., ∈
     (unless (is_domain domain)
       (raise_argument_error "element_of" "domain" 1 v domain))
-      (and (is_domain_value v)
-           (ident domain (domain_value_domain v))))
+    ((domain_meta_eltof_fn (domain_type domain)) domain v))
 
 
   //-------------------
   // Dummy Domains
 
   (define DummyDomain
-    (domain_meta "DummyDomain"
-      (|d| (display "<" (domain_description d) ">"))))
+    (make_domain_meta "DummyDomain"
+      (|d| (display "<" (domain_description d) ">"))
+      null))
 
   (define (make_dummy_domain name desc)
     (make_domain DummyDomain name (always true) desc null))
@@ -199,12 +214,12 @@
   // Base Domains
 
   (define BaseDomain
-    (domain_meta "BaseDomain"
-      (|d| (display "<" (domain_description d) ">"))))
+    (make_domain_meta "BaseDomain"
+      (|d| (display "<" (domain_description d) ">"))
+      null))
 
   (define (make_base_domain name desc pred)
     (let [(pred (or pred (always true)))]
-      // TODO add DummyDomain that doesn't have a predicate
       // TODO type check args
       (make_domain BaseDomain name
         (|d v| (pred v))
@@ -268,9 +283,10 @@ Lifts a Fusion value into a base domain.
   // Union Domains
 
   (define UnionDomain
-    (domain_meta "UnionDomain"
+    (make_domain_meta "UnionDomain"
       (|d| (display (apply string_join " + "
-                      (map domain_name (union_domain_subdomains d)))))))
+                      (map domain_name (union_domain_subdomains d)))))
+      null))
 
   (define (make_union_domain name description domain_producer)
     // TODO Memoize domain production
@@ -368,9 +384,10 @@ Lifts a subdomain value into a union domain.
   // Product Domains
 
   (define ProductDomain
-    (domain_meta "ProductDomain"
+    (make_domain_meta "ProductDomain"
       (|d| (display (apply string_join " * "
-                      (map domain_name (product_domain_subdomains d)))))))
+                      (map domain_name (product_domain_subdomains d)))))
+      null))
 
   (define (make_product_domain name description domain_producer)  // Ugh
     // TODO Memoize domain production
@@ -478,7 +495,7 @@ Access component i of domain value v in domain d.
 
 
   (define FuncDomain
-    (domain_meta "FuncDomain" display_func_domain))
+    (make_domain_meta "FuncDomain" display_func_domain null))
 
 
   (define (make_func_domain name description input output)

@@ -5,6 +5,8 @@
 TODOs
 -----
 * [BOOL] Proper functional handling of booleans and if.
+  * Needs import function to bring in framework-defined doms and fns.
+  * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
 * Sequence domains like Val+
@@ -21,7 +23,7 @@ TODOs
 Requires Fusion features:
 * Better `display` of domains and values.
 * Better testing of display output requires `with_output_to_String` or something.
-* Use record guardians to type-check values.
+* [GUARD] Use record constructor guards to type-check values and supply defaults.
 
 
 Library Functions
