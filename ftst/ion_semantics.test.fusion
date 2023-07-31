@@ -53,4 +53,17 @@ TODO
   (quote_top g::{} {a:1, b: danny, a:'#$1', c:{}}))
 
 
+// LSTs
+
+(check_expansion                                     // Non-structs pass through
+  (quote_top first $ion_symbol_table::[] second)
+  (quote_top first $ion_symbol_table::[] second))
+(check_expansion
+  (quote_top first second)               // IST structs are elided from app view
+  (quote_top first $ion_symbol_table::{} second))
+(check_expansion
+  (quote_top [first, $ion_symbol_table::{}, second]) // ...but only at top-level
+  (quote_top [first, $ion_symbol_table::{}, second]))
+
+
 "SUCCESS (ion_semantics.test)"

@@ -154,6 +154,23 @@ Cleanup:
         (seq_append (seq 'Symbolic*' (expand_SymTok r (seq_head s)))
                     (expand_SymToks r (seq_tail s)))))
 
+    (fn symbol_text_matches ((s Symbolic) (t Unicode) -> B)
+      (if (= Unicode (subdomain s))
+        (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
+        (inject_into B false)))
+
+    (fn has_IST_annot ((ss 'Symbolic*') -> B)
+      (if (seq_is_empty ss)
+        (inject_into B false)
+        (symbol_text_matches
+          (seq_head ss)
+          (inject_into Unicode "$ion_symbol_table"))))
+
+    (fn is_local_symtab ((v Value) -> B)
+      (if (eject (has_IST_annot (value_annots v)))
+        (inject_into B (= Struct (subdomain (value_content v))))
+        (inject_into B false)))
+
 
     (fn e0 Environment (i)                          // The bootstrap Environment
       (if (=== 1 (eject i))
@@ -221,15 +238,39 @@ Cleanup:
       (if (seq_is_empty vrs)
         (E vr r k)
         (E vr r (mk_fn Continuation (r1 vs1) // v1 is expansion of first raw value
-                  ('E+' (ith vrs 0) (seq_tail vrs) r1
+                  ('E+' (seq_head vrs) (seq_tail vrs) r1
                     (mk_fn Continuation (r2 vs2) (k r2 (seq_append vs1 vs2))))))))
 
     (fn 'E*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (k r (seq 'Value*'))
-        (E (ith vrs 0) r
+        (E (seq_head vrs) r
           (mk_fn Continuation (r1 vs1)
             ('E*' (seq_tail vrs) r1
+              (mk_fn Continuation (r2 vs2)
+                (k r2 (seq_append vs1 vs2))))))))
+
+
+    // Top-level expansion
+
+    (fn TE ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
+      // TODO IVM
+      (E vr r
+        (mk_fn Continuation (r1 vs1)
+          (if (seq_is_empty vs1)
+            (k r1 vs1)
+            (if (eject (is_local_symtab (seq_head vs1)))
+              // TODO For now, just omit the LST from app view
+              (k r1 (seq_tail vs1))
+              // Expand normally
+              (k r1 vs1))))))
+
+    (fn 'TE*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
+      (if (seq_is_empty vrs)
+        (k r (seq 'Value*'))
+        (TE (seq_head vrs) r
+          (mk_fn Continuation (r1 vs1)
+            ('TE*' (seq_tail vrs) r1
               (mk_fn Continuation (r2 vs2)
                 (k r2 (seq_append vs1 vs2))))))))
 
@@ -246,6 +287,6 @@ Cleanup:
   */
 
     (fn expand ((rvals 'RVal*') -> 'Value*')
-      ('E+' (ith rvals 0) (seq_tail rvals) e0 k0))  // TODO use E*
+      ('TE*' rvals e0 k0))
   )
 )
