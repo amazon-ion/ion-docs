@@ -9,7 +9,6 @@ TODO
 Functional:
 * Implement $ion_symbol_table
   * Imports
-  * LST Extension
   * SID too large must raise an error
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
@@ -24,6 +23,11 @@ Cleanup:
 * Remove use of non-functional features in modeled functions
   * if
   * raise
+
+
+Spec Problems
+-------------
+* No mention of possible annotations on imports field.
 
   '''
 
@@ -140,6 +144,17 @@ Cleanup:
         (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
         (inject_into B false)))
 
+    (fn Symbol_text_matches ((s Symbol) (u Unicode) -> B)
+      (if (= Symbolic (subdomain s))
+        (Symbolic_text_matches (lower_to Symbolic s) u)
+        (inject_into B false)))
+
+    (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
+      (if (= Symbol (subdomain (value_content v)))
+        (Symbol_text_matches (lower_to Symbol (value_content v)) u)
+        (inject_into B false)))
+
+
     (fn Fields_get1 ((fs 'Field*') (u Unicode) -> 'Value*')  // returns 0 or 1, raises if more
       (if (seq_is_empty fs)
         (seq 'Value*')
@@ -216,6 +231,33 @@ Cleanup:
         (inject_into B (= Struct (subdomain (value_content v))))
         (inject_into B false)))
 
+
+    (fn compile_imports_elt ((c Content) -> 'Symbolic*')
+      (if (= Struct (subdomain c))
+        // TODO [NULL]
+        (seq 'Symbolic*')
+        (seq 'Symbolic*')))
+
+    (fn compile_imports_elts ((vs 'Value*') -> 'Symbolic*')
+      (if (seq_is_empty vs)
+        (seq 'Symbolic*')
+        (seq_append (compile_imports_elt (value_content (seq_head vs)))
+                    (compile_imports_elts (seq_tail vs)))))
+
+    (fn compile_imports_field ((v Value) (r Environment) -> 'Symbolic*')
+      (if (Value_is_symbol_matching v (inject_into Unicode "$ion_symbol_table"))
+        (lower_to 'Symbolic*' (Environment_lst r))
+        (seq_append (system_symbols (Environment_ivm r))
+          (if (= List (subdomain (value_content v)))
+            (compile_imports_elts (List_elts (lower_to List (value_content v))))
+            (seq 'Symbolic*')))))
+
+    (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
+      (if (seq_is_empty (Struct_get1 s (inject_into Unicode "imports")))
+        (system_symbols (Environment_ivm r))
+        (compile_imports_field (seq_head (Struct_get1 s (inject_into Unicode "imports"))) r)))
+
+
     (fn compile_symbols_elt ((c Content) -> Symbolic)
       (if (= SafeVal (subdomain c))
         (if (= String (subdomain (lower_to SafeVal c)))
@@ -248,7 +290,8 @@ Cleanup:
 
     (fn lst_for_$ion_symbol_table ((r Environment) (s Struct) -> LocalSymtab)
       (lift_to LocalSymtab
-        (seq_append (system_symbols (Environment_ivm r)) (local_symbols s))))
+        (seq_append (imported_symbols s r)
+                    (local_symbols s))))
 
 
     (fn initial_env ((c Catalog)-> Environment)

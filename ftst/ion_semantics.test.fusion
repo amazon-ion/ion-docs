@@ -92,7 +92,31 @@ TODO
     not::$ion_symbol_table::{symbols:["b"]} '#$10'))
 
 
-// TODO test rejection of repeated symbols-field
+// Malformed `imports` field
+
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:1} '#$1' '#$10'))
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:boom} '#$1' '#$10'))
+// TODO [NULL] imports:null.symbol
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:[]} '#$1' '#$10'))
+
+
+// Symbol Table Extension
+
+(check_expansion
+  (quote_top $ion a $ion a b)
+  (quote_top
+    $ion_symbol_table::{symbols:["a"]} '#$1' '#$10'
+    $ion_symbol_table::{symbols:["b"], imports:$ion_symbol_table}  '#$1' '#$10' '#$11'))
+
+
+// TODO test rejection of repeated symbols and/or imports field.
+
 
 // IVMs
 
