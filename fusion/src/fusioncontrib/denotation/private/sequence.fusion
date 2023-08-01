@@ -25,6 +25,7 @@
     seq_head
     seq_ith
     seq_is_empty
+    seq_length
     seq_tail
   )
 
@@ -124,6 +125,12 @@ within `domain`'s subdomain.
     (unless (is_seq seq)
       (raise_argument_error "seq_is_empty" "seq value" 0 seq))
     (is_empty (domain_value_rep seq)))
+
+
+  (define (seq_length seq)
+    (unless (is_seq seq)
+      (raise_argument_error "seq_length" "seq value" 0 seq))
+    (size (domain_value_rep seq)))
 
 
   (define (seq_ith seq i)

@@ -77,6 +77,7 @@ Domains come in several types:
     seq_append
     seq_head
     seq_is_empty
+    seq_length
     seq_tail
 
     // Function domains

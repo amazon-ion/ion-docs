@@ -129,24 +129,28 @@ Cleanup:
 
 
     //=======================
-    // Evaluation Functions
+    // Environment Management
 
-    // Environment returns Symbolic so it can represent SYM0 when the sid
+    (dom SharedSymtab = (* Unicode I 'Symbolic*'))     // name, version, symbols
+    (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
+    (dom Environment  = (* IVM LocalSymtab))
+
+    (fn lst_lookup ((lst LocalSymtab) (i I) -> Symbolic)
+      (ith (lower_to 'Symbolic*' lst)
+        (if (< (eject i) (seq_length (lower_to 'Symbolic*' lst)))
+          (eject i)
+          0)))
+
+    // Returns Symbolic so it can represent SYM0 when the sid
     // doesn't map to text.
-    (dom Environment = (-> I Symbolic))
+    (fn env_lookup_sid ((e Environment) (i I) -> Symbolic)
+      (lst_lookup (ith e 1) i))
 
-    // TODO I think this is TopContinuation;
-    //      intermediate continuations can't alter the environment!
-    (dom Continuation = (-> Environment 'Value*' 'Value*'))
-
-
-    (fn string2symbol ((s String) -> Symbolic)
-      (lift_to Symbolic (lower_to Unicode s)))
 
     (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
       (if (= Unicode (subdomain s))
         (lift_to Symbolic (lower_to Unicode s))
-        (r (lower_to I s))))
+        (env_lookup_sid r (lower_to I s))))
 
     (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
       (if (seq_is_empty s)
@@ -172,16 +176,33 @@ Cleanup:
         (inject_into B false)))
 
 
-    (fn e0 Environment (i)                          // The bootstrap Environment
-      (if (=== 1 (eject i))
-        (lift_to Symbolic (inject_into Unicode "$ion"))
-        (lift_to Symbolic (inject_into Sym0 _SYM0))))
+    (fn e0 ((ivm IVM) -> Environment)               // The bootstrap Environment
+      (tuple Environment
+        ivm
+        (lift_to LocalSymtab
+          (seq 'Symbolic*'
+            (lift_to Symbolic (inject_into Sym0    _SYM0))
+            (lift_to Symbolic (inject_into Unicode "$ion"))
+            (lift_to Symbolic (inject_into Unicode "$ion_1_0"))
+            (lift_to Symbolic (inject_into Unicode "$ion_symbol_table"))
+            (lift_to Symbolic (inject_into Unicode "name"))
+            (lift_to Symbolic (inject_into Unicode "version"))
+            (lift_to Symbolic (inject_into Unicode "imports"))
+            (lift_to Symbolic (inject_into Unicode "symbols"))
+            (lift_to Symbolic (inject_into Unicode "max_id"))
+            (lift_to Symbolic (inject_into Unicode "$ion_shared_symbol_table"))))))
+
+
+    //=======================
+    // Denotations
+
+    // TODO I think this is TopContinuation;
+    //      intermediate continuations can't alter the environment!
+    (dom Continuation = (-> Environment 'Value*' 'Value*'))
 
     (fn k0 Continuation (e v)                      // The bootstrap continuation
       v)
 
-
-    // Denotations
 
     (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
@@ -287,6 +308,6 @@ Cleanup:
   */
 
     (fn expand ((rvals 'RVal*') -> 'Value*')
-      ('TE*' rvals e0 k0))
+      ('TE*' rvals (e0 (inject_into IVM IVM_1_0)) k0))
   )
 )
