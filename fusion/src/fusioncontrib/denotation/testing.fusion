@@ -14,6 +14,7 @@ Utilities for testing denotational models.
   )
 
   (provide
+    check_is_seq_of
     check_lower
     is_base_domain_value
     is_seq
@@ -36,6 +37,11 @@ Utilities for testing denotational models.
     (unless (is_seq seq)
       (raise_argument_error "seq_to_list" "seq value" 0 seq))
     (apply list (domain_value_rep seq)))
+
+
+  (define_check (check_is_seq_of type value)
+    (check_pred is_seq value)
+    (check_same type (seq_domain_subdomain (domain_value_domain value))))
 
 
   (define check_lower

@@ -152,7 +152,13 @@ within `domain`'s subdomain.
 
 
   (define (seq_append seq0 seq1)
-    // TODO verify same subdomain
+    (unless (is_seq seq0)
+      (raise_argument_error "seq_append" "seq value" 0 seq0 seq1))
+    (unless (is_seq seq1)
+      (raise_argument_error "seq_append" "seq value" 1 seq0 seq1))
+    (unless (same (domain_value_domain seq0)
+                  (domain_value_domain seq1))
+      (raise_argument_error "seq_append" "same sequence type" -1 seq0 seq1))
     (make_value (domain_value_domain seq0)
       (append (domain_value_rep seq0) (domain_value_rep seq1))))
 )

@@ -5,6 +5,7 @@
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/private/domain"
   "/fusioncontrib/denotation/private/sequence"
+  "/fusioncontrib/denotation/testing"
   "/model1")
 
 
@@ -62,6 +63,9 @@
 
 (check_true (element_of stamped_int_val Stamped))
 
+(expect_argument_error (tuple z_val z_rep))        // 1st arg isn't a domain
+(expect_argument_error (tuple Z     z_rep))        // 1st arg isn't a product domain
+
 (expect_argument_error (tuple Stamped int_any_val))        // Arity mismatch
 (expect_argument_error (tuple Stamped t_val))
 (expect_argument_error (tuple Stamped stamped_int_val))
@@ -115,6 +119,15 @@
 (expect_argument_error (seq_tail Z))             // arg isn't a sequence
 
 
+// seq_append
+
+(let [(v (seq_append empty_Zs empty_Zs))]
+  (check_is_seq_of Z v)
+  (check_pred seq_is_empty v))
+
+(expect_argument_error (seq_append (inject_into Z 0) empty_Zs)) // 1st arg isn't a sequence
+(expect_argument_error (seq_append empty_Zs (inject_into Z 0))) // 2nd arg isn't a sequence
+(expect_argument_error (seq_append empty_Zs (seq 'Any*')))      // Args have different element type
 
 
 //======================

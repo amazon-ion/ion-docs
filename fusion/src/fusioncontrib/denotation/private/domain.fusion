@@ -415,12 +415,13 @@ Constructs a product-domain value.
     (lambda rest
       (let [(domain (head rest)),
             (value  (apply list (tail rest)))]
-        // TODO typecheck domain
+        (unless (is_product_domain domain)
+          (apply raise_argument_error "tuple" "product domain" 0 rest))
         (unless (domain_accepts domain value)
           // TODO Error message should identify the correct arg index.
-          (raise_argument_error "tuple"
-            (string_append "value in domain " (domain_name domain))
-            1 domain value))
+          (apply raise_argument_error "tuple"
+            (string_append "fields for domain " (domain_name domain))
+            -1 rest))
         (make_value domain value))))
 
   (define (is_tuple v)
