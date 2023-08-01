@@ -29,13 +29,6 @@ Requires Fusion features:
 * [GUARD] Use record constructor guards to type-check values and supply defaults.
 
 
-Library Functions
------------------
-append : T* x T* -> T*
-index  : T* x I  -> T
-<>     :         -> T*
-
-
 Denoters
 --------
 

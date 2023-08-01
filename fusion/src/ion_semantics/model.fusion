@@ -168,8 +168,14 @@ Cleanup:
 
 
     (dom SharedSymtab = (* Unicode I 'Symbolic*'))     // name, version, symbols
+    (dom Catalog      = (** SharedSymtab))
     (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
-    (dom Environment  = (* IVM LocalSymtab))
+    (dom Environment  = (* Catalog IVM LocalSymtab))
+
+    (fn Environment_cat ((r Environment) -> Catalog)     (ith r 0))
+    (fn Environment_ivm ((r Environment) -> IVM)         (ith r 1))
+    (fn Environment_lst ((r Environment) -> LocalSymtab) (ith r 2))
+
 
     (fn lst_lookup ((lst LocalSymtab) (i I) -> Symbolic)
       (ith (lower_to 'Symbolic*' lst)
@@ -180,7 +186,7 @@ Cleanup:
     // Returns Symbolic so it can represent SYM0 when the sid
     // doesn't map to text.
     (fn env_lookup_sid ((e Environment) (i I) -> Symbolic)
-      (lst_lookup (ith e 1) i))
+      (lst_lookup (Environment_lst e) i))
 
 
     (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
@@ -231,16 +237,25 @@ Cleanup:
         (seq 'Symbolic*')
         (compile_symbols_field (seq_head (Struct_get1 s (inject_into Unicode "symbols"))))))
 
-    (fn new_env ((e Environment) (s Struct) -> Environment)
-      (tuple Environment
-        (ith e 0)
-        (lift_to LocalSymtab
-          (seq_append (system_symbols (ith e 0)) (lst_symbols s)))))
 
-    (fn e0 ((ivm IVM) -> Environment)               // The bootstrap Environment
+    (fn initial_env ((c Catalog)-> Environment)
       (tuple Environment
+        c
+        (lower_to IVM IVM_1_0)
+        (lift_to LocalSymtab (system_symbols (lower_to IVM IVM_1_0)))))
+
+    (fn env_for_ivm ((r Environment) (ivm IVM) -> Environment)
+      (tuple Environment
+        (Environment_cat r)
         ivm
         (lift_to LocalSymtab (system_symbols ivm))))
+
+    (fn env_for_lst ((r Environment) (s Struct) -> Environment)
+      (tuple Environment
+        (Environment_cat r)
+        (Environment_ivm r)
+        (lift_to LocalSymtab
+          (seq_append (system_symbols (Environment_ivm r)) (lst_symbols s)))))
 
 
     //=======================
@@ -324,13 +339,13 @@ Cleanup:
 
     (fn TE ((vr TRVal) (r Environment) (k Continuation) -> 'Value*')
       (if (=== IVM (subdomain vr))
-        (k (e0 (lower_to IVM vr)) (seq 'Value*'))
+        (k (env_for_ivm r (lower_to IVM vr)) (seq 'Value*'))
         (E (lower_to RVal vr) r
           (mk_fn Continuation (r1 vs1)
             (if (seq_is_empty vs1)
               (k r1 vs1)
               (if (eject (is_local_symtab (seq_head vs1)))
-                (k (new_env r1 (lower_to Struct (value_content (seq_head vs1))))
+                (k (env_for_lst r1 (lower_to Struct (value_content (seq_head vs1))))
                    (seq_tail vs1))                             // TODO what if more than one value?
                 // Expand normally
                 (k r1 vs1)))))))
@@ -358,7 +373,7 @@ Cleanup:
 
     (fn expand ((rvals 'TRVal*') -> 'Value*')
       ('TE*' (seq_append (seq 'TRVal*' IVM_1_0) rvals)
-             (e0 (lower_to IVM IVM_1_0))
+             (initial_env initial_catalog)
              k0))
   )
 
@@ -366,4 +381,6 @@ Cleanup:
   (define IVM_1_0
     (lift_to TRVal (inject_into IVM _IVM_1_0)))
 
+  (define initial_catalog
+    (seq Catalog))
 )
