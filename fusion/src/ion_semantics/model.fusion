@@ -11,6 +11,9 @@ Functional:
   * Imports
   * LST Extension
   * SID too large must raise an error
+* From spec: "$0 is not semantically equivalent to SIDs with unknown text from
+  shared symbol tables, so replacing such SIDs with $0 is a destructive operation
+  to the semantics of the data."
 * [NULL] Implement DotNull
 * Distinguish top and internal continuations, to prove that non-TLV cannot alter
   the environment.
@@ -132,7 +135,7 @@ Cleanup:
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
 
-    (fn symbol_text_matches ((s Symbolic) (t Unicode) -> B)
+    (fn Symbolic_text_matches ((s Symbolic) (t Unicode) -> B)
       (if (= Unicode (subdomain s))
         (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
         (inject_into B false)))
@@ -140,7 +143,7 @@ Cleanup:
     (fn Fields_get1 ((fs 'Field*') (u Unicode) -> 'Value*')  // returns 0 or 1, raises if more
       (if (seq_is_empty fs)
         (seq 'Value*')
-        (if (eject (symbol_text_matches (Field_name (seq_head fs)) u))
+        (if (eject (Symbolic_text_matches (Field_name (seq_head fs)) u))
           (if (seq_is_empty (Fields_get1 (seq_tail fs) u))
             (seq 'Value*' (Field_value (seq_head fs)))
             (raise "repeated field"))
@@ -148,6 +151,11 @@ Cleanup:
 
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
       (Fields_get1 (lower_to 'Field*' s) u))
+
+    (fn has_first_annot ((v Value) (u Unicode) -> B)
+      (if (seq_is_empty (value_annots v))
+        (inject_into B false)
+        (Symbolic_text_matches (seq_head (value_annots v)) u)))
 
 
     //=======================
@@ -201,19 +209,14 @@ Cleanup:
                     (expand_SymToks r (seq_tail s)))))
 
 
-    (fn has_IST_annot ((ss 'Symbolic*') -> B)
-      (if (seq_is_empty ss)
-        (inject_into B false)
-        (symbol_text_matches
-          (seq_head ss)
-          (inject_into Unicode "$ion_symbol_table"))))
+    // $ion_symbol_table "compilation"
 
-    (fn is_local_symtab ((v Value) -> B)
-      (if (eject (has_IST_annot (value_annots v)))
+    (fn is_$ion_symbol_table ((v Value) -> B)
+      (if (eject (has_first_annot v (inject_into Unicode "$ion_symbol_table")))
         (inject_into B (= Struct (subdomain (value_content v))))
         (inject_into B false)))
 
-    (fn compile_symbol_elt ((c Content) -> Symbolic)
+    (fn compile_symbols_elt ((c Content) -> Symbolic)
       (if (= SafeVal (subdomain c))
         (if (= String (subdomain (lower_to SafeVal c)))
           // TODO [NULL]
@@ -221,41 +224,50 @@ Cleanup:
           (lift_to Symbolic (inject_into Sym0 _SYM0)))
         (lift_to Symbolic (inject_into Sym0 _SYM0))))
 
-    (fn compile_symbol_elts ((vs 'Value*') -> 'Symbolic*')
+    (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
       (if (seq_is_empty vs)
         (seq 'Symbolic*')
-        (seq_append (seq 'Symbolic*' (compile_symbol_elt (value_content (seq_head vs))))
-                    (compile_symbol_elts (seq_tail vs)))))
+        (seq_append (seq 'Symbolic*' (compile_symbols_elt (value_content (seq_head vs))))
+                    (compile_symbols_elts (seq_tail vs)))))
 
     (fn compile_symbols_field ((v Value) -> 'Symbolic*')
       (if (= List (subdomain (value_content v)))
-        (compile_symbol_elts (List_elts (lower_to List (value_content v))))
+        (compile_symbols_elts (List_elts (lower_to List (value_content v))))
         (seq 'Symbolic*')))
 
-    (fn lst_symbols ((s Struct) -> 'Symbolic*')
+    (fn local_symbols ((s Struct) -> 'Symbolic*')
       (if (seq_is_empty (Struct_get1 s (inject_into Unicode "symbols")))
         (seq 'Symbolic*')
         (compile_symbols_field (seq_head (Struct_get1 s (inject_into Unicode "symbols"))))))
+
+
+    // LST and Environment construction
+
+    (fn lst_for_ivm ((ivm IVM) -> LocalSymtab)
+      (lift_to LocalSymtab (system_symbols ivm)))
+
+    (fn lst_for_$ion_symbol_table ((r Environment) (s Struct) -> LocalSymtab)
+      (lift_to LocalSymtab
+        (seq_append (system_symbols (Environment_ivm r)) (local_symbols s))))
 
 
     (fn initial_env ((c Catalog)-> Environment)
       (tuple Environment
         c
         (lower_to IVM IVM_1_0)
-        (lift_to LocalSymtab (system_symbols (lower_to IVM IVM_1_0)))))
+        (lst_for_ivm (lower_to IVM IVM_1_0))))
 
     (fn env_for_ivm ((r Environment) (ivm IVM) -> Environment)
       (tuple Environment
         (Environment_cat r)
         ivm
-        (lift_to LocalSymtab (system_symbols ivm))))
+        (lst_for_ivm ivm)))
 
-    (fn env_for_lst ((r Environment) (s Struct) -> Environment)
+    (fn env_for_$ion_symbol_table ((r Environment) (s Struct) -> Environment)
       (tuple Environment
         (Environment_cat r)
         (Environment_ivm r)
-        (lift_to LocalSymtab
-          (seq_append (system_symbols (Environment_ivm r)) (lst_symbols s)))))
+        (lst_for_$ion_symbol_table r s)))
 
 
     //=======================
@@ -344,8 +356,9 @@ Cleanup:
           (mk_fn Continuation (r1 vs1)
             (if (seq_is_empty vs1)
               (k r1 vs1)
-              (if (eject (is_local_symtab (seq_head vs1)))
-                (k (env_for_lst r1 (lower_to Struct (value_content (seq_head vs1))))
+              (if (eject (is_$ion_symbol_table (seq_head vs1)))
+                (k (env_for_$ion_symbol_table r1
+                     (lower_to Struct (value_content (seq_head vs1))))
                    (seq_tail vs1))                             // TODO what if more than one value?
                 // Expand normally
                 (k r1 vs1)))))))

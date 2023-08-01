@@ -8,6 +8,7 @@ TODOs
   * Needs import function to bring in framework-defined doms and fns.
   * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
 * Domain constants `(val <name> <expr>)`
+* Product domains should allow one field; more natural than singleton unions.
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
 * element_of should handle subdomain check for union decomposition.
