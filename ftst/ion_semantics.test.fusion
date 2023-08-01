@@ -94,5 +94,14 @@ TODO
 
 // TODO test rejection of repeated symbols-field
 
+// IVMs
+
+// Inline IVM resets the LST
+(check_expansion
+  (quote_top $ion a '#$0')
+  (quote_top
+    '#$ion_1_0' $ion_symbol_table::{symbols:["a"]} '#$1' '#$10'
+    '#$ion_1_0' '#$10'))
+
 
 "SUCCESS (ion_semantics.test)"

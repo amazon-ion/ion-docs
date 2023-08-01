@@ -124,6 +124,12 @@ Utilities for testing the Ion denotational model.
           ((element_of c RSym) c)
           (true (raise_argument_error "mk_RVal" "symbol/bool/int/string/list" 0 c))))))
 
+  (define (mk_TRVal c)
+    (if (=== (quote '#$ion_1_0') c)
+      IVM_1_0
+      (lift_to TRVal
+        (mk_RVal c))))
+
 
   //============================================================================
   // Comparing normal-ish Fusion data with the output domain values
@@ -288,13 +294,13 @@ Utilities for testing the Ion denotational model.
   // Test drivers
 
   (define parse
-    "Construct an `RVal*` denoting the input values."
+    "Construct a `TRVal*` denoting the input values."
     (lambda input
-      (apply seq 'RVal*' (map mk_RVal input))))
+      (apply seq 'TRVal*' (map mk_TRVal input))))
 
 
   (define (expand1 input)
-    "Parse one top-level datum into `RVal*` then expand it, expecting one `Value`."
+    "Parse one top-level datum into `TRVal*` then expand it, expecting one `Value`."
     (lets [(vs (expand (parse input)))]
       (check_pred seq_is_empty (seq_tail vs))
       (ith vs 0)))

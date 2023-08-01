@@ -11,9 +11,9 @@ Functional:
   * Imports
   * LST Extension
   * SID too large must raise an error
-* Implement IVMs
 * [NULL] Implement DotNull
-* `expand` should handle empty input. Prepend IVM_1_0 to the stream?
+* Distinguish top and internal continuations, to prove that non-TLV cannot alter
+  the environment.
 * Struct denotations should be order-agnostic.
 
 Cleanup:
@@ -39,7 +39,7 @@ Cleanup:
       (values (ctor) pred)))
 
 
-  (define_values (IVM_1_0 IVM_1_1 is_ivm)
+  (define_values (_IVM_1_0 _IVM_1_1 is_ivm)
     (let_values [((rtd ctor pred accessor) (make_record_type (quote IVM) null 0))]
       (values (ctor) (ctor) pred)))
 
@@ -246,8 +246,6 @@ Cleanup:
     //=======================
     // Denotations
 
-    // TODO I think this is TopContinuation;
-    //      intermediate continuations can't alter the environment!
     (dom Continuation = (-> Environment 'Value*' 'Value*'))
 
     (fn k0 Continuation (e v)                      // The bootstrap continuation
@@ -324,19 +322,20 @@ Cleanup:
 
     // Top-level expansion
 
-    (fn TE ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
-      // TODO IVM
-      (E vr r
-        (mk_fn Continuation (r1 vs1)
-          (if (seq_is_empty vs1)
-            (k r1 vs1)
-            (if (eject (is_local_symtab (seq_head vs1)))
-              (k (new_env r1 (lower_to Struct (value_content (seq_head vs1))))
-                 (seq_tail vs1))   // TODO what if more than one value?
-              // Expand normally
-              (k r1 vs1))))))
+    (fn TE ((vr TRVal) (r Environment) (k Continuation) -> 'Value*')
+      (if (=== IVM (subdomain vr))
+        (k (e0 (lower_to IVM vr)) (seq 'Value*'))
+        (E (lower_to RVal vr) r
+          (mk_fn Continuation (r1 vs1)
+            (if (seq_is_empty vs1)
+              (k r1 vs1)
+              (if (eject (is_local_symtab (seq_head vs1)))
+                (k (new_env r1 (lower_to Struct (value_content (seq_head vs1))))
+                   (seq_tail vs1))                             // TODO what if more than one value?
+                // Expand normally
+                (k r1 vs1)))))))
 
-    (fn 'TE*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
+    (fn 'TE*' ((vrs 'TRVal*') (r Environment) (k Continuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (k r (seq 'Value*'))
         (TE (seq_head vrs) r
@@ -357,7 +356,14 @@ Cleanup:
       ('TRVal*' x Environment x Continuation -> 'Value*'))
   */
 
-    (fn expand ((rvals 'RVal*') -> 'Value*')
-      ('TE*' rvals (e0 (inject_into IVM IVM_1_0)) k0))
+    (fn expand ((rvals 'TRVal*') -> 'Value*')
+      ('TE*' (seq_append (seq 'TRVal*' IVM_1_0) rvals)
+             (e0 (lower_to IVM IVM_1_0))
+             k0))
   )
+
+
+  (define IVM_1_0
+    (lift_to TRVal (inject_into IVM _IVM_1_0)))
+
 )
