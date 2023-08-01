@@ -8,7 +8,9 @@ TODO
 ----
 Functional:
 * Implement $ion_symbol_table
-* Implement system symbol table
+  * Imports
+  * LST Extension
+  * SID too large must raise an error
 * Implement IVMs
 * [NULL] Implement DotNull
 * `expand` should handle empty input. Prepend IVM_1_0 to the stream?
@@ -121,6 +123,8 @@ Cleanup:
 
     (dom 'Value*' = (** Value))
 
+    (fn List_elts  ((v List) -> 'Value*') (lower_to 'Value*' v))
+
     (fn value_annots  ((v Value) -> 'Symbolic*') (ith v 0))
     (fn value_content ((v Value) -> 'Content')   (ith v 1))
 
@@ -128,8 +132,40 @@ Cleanup:
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
 
+    (fn symbol_text_matches ((s Symbolic) (t Unicode) -> B)
+      (if (= Unicode (subdomain s))
+        (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
+        (inject_into B false)))
+
+    (fn Fields_get1 ((fs 'Field*') (u Unicode) -> 'Value*')  // returns 0 or 1, raises if more
+      (if (seq_is_empty fs)
+        (seq 'Value*')
+        (if (eject (symbol_text_matches (Field_name (seq_head fs)) u))
+          (if (seq_is_empty (Fields_get1 (seq_tail fs) u))
+            (seq 'Value*' (Field_value (seq_head fs)))
+            (raise "repeated field"))
+          (Fields_get1 (seq_tail fs) u))))
+
+    (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
+      (Fields_get1 (lower_to 'Field*' s) u))
+
+
     //=======================
     // Environment Management
+
+    (fn system_symbols ((i IVM) -> 'Symbolic*')
+      (seq 'Symbolic*'
+        (lift_to Symbolic (inject_into Sym0    _SYM0))
+        (lift_to Symbolic (inject_into Unicode "$ion"))
+        (lift_to Symbolic (inject_into Unicode "$ion_1_0"))
+        (lift_to Symbolic (inject_into Unicode "$ion_symbol_table"))
+        (lift_to Symbolic (inject_into Unicode "name"))
+        (lift_to Symbolic (inject_into Unicode "version"))
+        (lift_to Symbolic (inject_into Unicode "imports"))
+        (lift_to Symbolic (inject_into Unicode "symbols"))
+        (lift_to Symbolic (inject_into Unicode "max_id"))
+        (lift_to Symbolic (inject_into Unicode "$ion_shared_symbol_table"))))
+
 
     (dom SharedSymtab = (* Unicode I 'Symbolic*'))     // name, version, symbols
     (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
@@ -158,10 +194,6 @@ Cleanup:
         (seq_append (seq 'Symbolic*' (expand_SymTok r (seq_head s)))
                     (expand_SymToks r (seq_tail s)))))
 
-    (fn symbol_text_matches ((s Symbolic) (t Unicode) -> B)
-      (if (= Unicode (subdomain s))
-        (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
-        (inject_into B false)))
 
     (fn has_IST_annot ((ss 'Symbolic*') -> B)
       (if (seq_is_empty ss)
@@ -175,22 +207,40 @@ Cleanup:
         (inject_into B (= Struct (subdomain (value_content v))))
         (inject_into B false)))
 
+    (fn compile_symbol_elt ((c Content) -> Symbolic)
+      (if (= SafeVal (subdomain c))
+        (if (= String (subdomain (lower_to SafeVal c)))
+          // TODO [NULL]
+          (lift_to Symbolic (lower_to Unicode (lower_to String (lower_to SafeVal c))))
+          (lift_to Symbolic (inject_into Sym0 _SYM0)))
+        (lift_to Symbolic (inject_into Sym0 _SYM0))))
+
+    (fn compile_symbol_elts ((vs 'Value*') -> 'Symbolic*')
+      (if (seq_is_empty vs)
+        (seq 'Symbolic*')
+        (seq_append (seq 'Symbolic*' (compile_symbol_elt (value_content (seq_head vs))))
+                    (compile_symbol_elts (seq_tail vs)))))
+
+    (fn compile_symbols_field ((v Value) -> 'Symbolic*')
+      (if (= List (subdomain (value_content v)))
+        (compile_symbol_elts (List_elts (lower_to List (value_content v))))
+        (seq 'Symbolic*')))
+
+    (fn lst_symbols ((s Struct) -> 'Symbolic*')
+      (if (seq_is_empty (Struct_get1 s (inject_into Unicode "symbols")))
+        (seq 'Symbolic*')
+        (compile_symbols_field (seq_head (Struct_get1 s (inject_into Unicode "symbols"))))))
+
+    (fn new_env ((e Environment) (s Struct) -> Environment)
+      (tuple Environment
+        (ith e 0)
+        (lift_to LocalSymtab
+          (seq_append (system_symbols (ith e 0)) (lst_symbols s)))))
 
     (fn e0 ((ivm IVM) -> Environment)               // The bootstrap Environment
       (tuple Environment
         ivm
-        (lift_to LocalSymtab
-          (seq 'Symbolic*'
-            (lift_to Symbolic (inject_into Sym0    _SYM0))
-            (lift_to Symbolic (inject_into Unicode "$ion"))
-            (lift_to Symbolic (inject_into Unicode "$ion_1_0"))
-            (lift_to Symbolic (inject_into Unicode "$ion_symbol_table"))
-            (lift_to Symbolic (inject_into Unicode "name"))
-            (lift_to Symbolic (inject_into Unicode "version"))
-            (lift_to Symbolic (inject_into Unicode "imports"))
-            (lift_to Symbolic (inject_into Unicode "symbols"))
-            (lift_to Symbolic (inject_into Unicode "max_id"))
-            (lift_to Symbolic (inject_into Unicode "$ion_shared_symbol_table"))))))
+        (lift_to LocalSymtab (system_symbols ivm))))
 
 
     //=======================
@@ -281,8 +331,8 @@ Cleanup:
           (if (seq_is_empty vs1)
             (k r1 vs1)
             (if (eject (is_local_symtab (seq_head vs1)))
-              // TODO For now, just omit the LST from app view
-              (k r1 (seq_tail vs1))
+              (k (new_env r1 (lower_to Struct (value_content (seq_head vs1))))
+                 (seq_tail vs1))   // TODO what if more than one value?
               // Expand normally
               (k r1 vs1))))))
 

@@ -37,8 +37,10 @@ Utilities for testing the Ion denotational model.
                (remove_first (|v2| (equal v1 v2)) list2)))))))
 
 
-  (define is_safe
-    (disjoin is_bool is_int))
+  (define (is_safe v)
+    (or (is_bool   v)
+        (is_int    v)
+        (is_string v)))
 
 
   //============================================================================
@@ -58,12 +60,19 @@ Utilities for testing the Ion denotational model.
       ((is_int  c) (lift_to Int (inject_into I c)))
       (true (raise_argument_error "mk_Int" "null or int" 0 c))))
 
+  (define (mk_String c)
+    (cond
+      ((is_null   c) (raise "[NULL]"))
+      ((is_string c) (lift_to String (inject_into Unicode c)))
+      (true (raise_argument_error "mk_String" "null or string" 0 c))))
+
   (define (mk_SafeVal c)
     (cond
-      ((is_null c) (raise "[NULL]"))
-      ((is_bool c) (lift_to SafeVal (mk_Boolean c)))
-      ((is_int  c) (lift_to SafeVal (mk_Int c)))
-      (true (raise_argument_error "mk_SafeVal" "null/bool/int" 0 c))))
+      ((is_null   c) (raise "[NULL]"))
+      ((is_bool   c) (lift_to SafeVal (mk_Boolean c)))
+      ((is_int    c) (lift_to SafeVal (mk_Int c)))
+      ((is_string c) (lift_to SafeVal (mk_String c)))
+      (true (raise_argument_error "mk_SafeVal" "null/bool/int/string" 0 c))))
 
 
   // Symbols
@@ -113,7 +122,7 @@ Utilities for testing the Ion denotational model.
           ((is_list   c)       (mk_RList   c))
           ((is_struct c)       (mk_RStruct c))
           ((element_of c RSym) c)
-          (true (raise_argument_error "mk_RVal" "symbol/bool/int/list" 0 c))))))
+          (true (raise_argument_error "mk_RVal" "symbol/bool/int/string/list" 0 c))))))
 
 
   //============================================================================
@@ -206,13 +215,18 @@ Utilities for testing the Ion denotational model.
       null.int
       (eject (unwrap v))))
 
+  (define (eject_String v)
+    (if (=== DotNull (subdomain v))
+      null.string
+      (eject (unwrap v))))
+
   (define (eject_SafeVal v)
     (lets [(sub (subdomain v))]
       (cond
         ((=== sub NullNull) (raise sub))
         ((=== sub Boolean ) (eject_Boolean (unwrap v)))
         ((=== sub Int     ) (eject_Int     (unwrap v)))
-        ((=== sub String  ) (raise sub))
+        ((=== sub String  ) (eject_String  (unwrap v)))
         (true (raise sub)))))
 
 
@@ -300,5 +314,7 @@ Utilities for testing the Ion denotational model.
         stx)))
 
   (define_binary_check (check_expansion expected input)
-    (=== expected (eject_Values (expand (apply parse input)))))
+    // Inner check ensures the failure message shows the ejected data.
+    (check === expected (eject_Values (expand (apply parse input))))
+    true)
 )

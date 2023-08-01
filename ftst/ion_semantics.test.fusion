@@ -65,6 +65,34 @@ TODO
 (check_expansion                                     // ...but only at top-level
   (quote_top [first, $ion_symbol_table::{}, second])
   (quote_top [first, $ion_symbol_table::{}, second]))
+(check_expansion
+  (quote_top a::'#$0' a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10'::'#$11' '#$10'))
+
+(check_expansion                               // Non-string entries act like $0
+  (quote_top '#$0' '#$0' '#$0')
+  (quote_top $ion_symbol_table::{symbols:[a, 1, true]} '#$10' '#$11' '#$12'))
+  // TODO [NULL] entries for null.null, null.string, null.symbol
+
+(check_expansion
+  (quote_top a b)
+  (quote_top
+    $ion_symbol_table::{symbols:["a"]} '#$10'
+    $ion_symbol_table::{symbols:["b"]} '#$10'))
+
+// $ion_symbol_table must be first annotation
+(check_expansion
+  (quote_top not::$ion_symbol_table::{symbols:["a"]})
+  (quote_top not::$ion_symbol_table::{symbols:["a"]}))
+
+(check_expansion
+  (quote_top a not::$ion_symbol_table::{symbols:["b"]} a)
+  (quote_top
+    $ion_symbol_table::{symbols:["a"]} '#$10'
+    not::$ion_symbol_table::{symbols:["b"]} '#$10'))
+
+
+// TODO test rejection of repeated symbols-field
 
 
 "SUCCESS (ion_semantics.test)"
