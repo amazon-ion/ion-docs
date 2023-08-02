@@ -143,7 +143,10 @@ within `domain`'s subdomain.
   (define (seq_head seq)
     (unless (is_seq seq)
       (raise_argument_error "seq_head" "seq value" 0 seq))
-    (head (domain_value_rep seq)))
+    (let [(sexp (domain_value_rep seq))]
+      (if (is_empty sexp)
+        (raise_argument_error "seq_head" "non-empty seq" 0 seq)
+        (head sexp))))
 
   (define (seq_tail seq)
     (unless (is_seq seq)
