@@ -92,7 +92,7 @@ TODO
     not::$ion_symbol_table::{symbols:["b"]} '#$10'))
 
 
-// Malformed `imports` field
+// Empty or malformed `imports` field is ignored
 
 (check_expansion
   (quote_top $ion a)
@@ -104,6 +104,23 @@ TODO
 (check_expansion
   (quote_top $ion a)
   (quote_top $ion_symbol_table::{symbols:["a"], imports:[]} '#$1' '#$10'))
+
+
+// Non-exact-match imports
+
+(expect_any_raise
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"absent"}]} true)))
+
+
+// Exact-match imports
+
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs"}]} '#$1' '#$10'))
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:1}]} '#$1' '#$10'))
+// TODO normalise bad version values
 
 
 // Symbol Table Extension

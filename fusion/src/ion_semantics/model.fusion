@@ -9,6 +9,7 @@ TODO
 Functional:
 * Implement $ion_symbol_table
   * Imports
+    * [MAXID] max_id handling
   * SID too large must raise an error
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
@@ -16,7 +17,7 @@ Functional:
 * [NULL] Implement DotNull
 * Distinguish top and internal continuations, to prove that non-TLV cannot alter
   the environment.
-* Struct denotations should be order-agnostic.
+* Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
 * Streamline singleton domain values SYM0, IVMs via framework.
@@ -27,7 +28,7 @@ Cleanup:
 
 Spec Problems
 -------------
-* No mention of possible annotations on imports field.
+* No mention of possible annotations on imports field or its entries.
 
   '''
 
@@ -52,6 +53,8 @@ Spec Problems
 
 
   (define_model Ion
+
+    (dom Nothing = (^ is_void) "No value")
 
     (dom IVM = (^ is_ivm) "Ion version markers")
 
@@ -190,8 +193,38 @@ Spec Problems
         (lift_to Symbolic (inject_into Unicode "$ion_shared_symbol_table"))))
 
 
-    (dom SharedSymtab = (* Unicode I 'Symbolic*'))     // name, version, symbols
+    (dom SharedSymtab    = (* Unicode I 'Symbolic*'))     // name, version, symbols
+    (dom 'SharedSymtab?' = (+ Nothing SharedSymtab))
+
+    (fn SST_name    ((s SharedSymtab) -> Unicode)     (ith s 0))
+    (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
+    (fn SST_symbols ((s SharedSymtab) -> 'Symbolic*') (ith s 2))
+
+    (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
+      (tuple SharedSymtab
+        (lower_to Unicode (lower_to String (lower_to SafeVal
+          (value_content (seq_head (Struct_get1 s (inject_into Unicode "name")))))))
+        (lower_to I (lower_to Int (lower_to SafeVal
+          (value_content (seq_head (Struct_get1 s (inject_into Unicode "version")))))))
+        (local_symbols s)
+      ))
+
+
     (dom Catalog      = (** SharedSymtab))
+
+    (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab?')
+      (if (seq_is_empty c)
+        (lift_to 'SharedSymtab?' NOTHING)
+        (let [(sst (seq_head c))]
+          (if (and (=== (eject name) (eject (SST_name sst))) /* TODO version*/)
+            (lift_to 'SharedSymtab?' sst)
+            (Catalog_lookup (seq_tail c) name version)))))
+
+    (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
+      // TODO reject duplicate key
+      (seq_append (seq Catalog s) c))
+
+
     (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
     (dom Environment  = (* Catalog IVM LocalSymtab))
 
@@ -232,24 +265,67 @@ Spec Problems
         (inject_into B false)))
 
 
-    (fn compile_imports_elt ((c Content) -> 'Symbolic*')
-      (if (= Struct (subdomain c))
+    (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'Symbolic*')
+      (if (or (=== ""     (eject name))
+              (=== "$ion" (eject name)))
+        EMPTY_SYMBOLICS
+        (let [(symtab (Catalog_lookup c name version))]
+          (if (element_of symtab Nothing)
+            (if (< (eject max) 0)
+              (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
+              // TODO [MAXID] Allocate the right padding
+              (seq 'Symbolic*'))
+            // TODO [MAXID] Fail when no max_id and not exact match
+            // TODO [MAXID] Adjust length of imported seq
+            (SST_symbols (lower_to SharedSymtab symtab))))))
+
+    (fn normalize_name ((vs 'Value*') -> Unicode)  // "" is no-name sentinel
+      (if (seq_is_empty vs) EMPTY_UNICODE
+        (let [(c (value_content (seq_head vs)))]
+          (if (not (element_of c String)) EMPTY_UNICODE
+            // TODO [NULL]
+            (lower_to Unicode (lower_to String (lower_to SafeVal c)))))))
+
+    (fn normalize_version ((vs 'Value*') -> I)                // normalized to 1
+      (if (seq_is_empty vs) I_1
+        (let [(c (value_content (seq_head vs)))]
+          (if (not (element_of c Int)) I_1
+            // TODO [NULL]
+            // TODO range check
+            (lower_to I (lower_to Int (lower_to SafeVal c)))))))
+
+    (fn normalize_max_id ((vs 'Value*') -> I)                // normalized to -1
+      (if (seq_is_empty vs) (inject_into I -1)
+        (let [(c (value_content (seq_head vs)))]
+          (if (not (element_of c Int)) (inject_into I -1)
+            // TODO [NULL]
+            // TODO range check
+            (lower_to I (lower_to Int (lower_to SafeVal c)))))))
+
+    (fn compile_import_struct ((s Struct) (r Environment) -> 'Symbolic*')
+      (compile_import (normalize_name    (Struct_get1 s (inject_into Unicode "name")))
+                      (normalize_version (Struct_get1 s (inject_into Unicode "version")))
+                      (normalize_max_id  (Struct_get1 s (inject_into Unicode "max_id")))
+                      (Environment_cat r)))
+
+    (fn compile_imports_elt ((c Content) (r Environment) -> 'Symbolic*')
+      (if (element_of c Struct)
         // TODO [NULL]
-        (seq 'Symbolic*')
+        (compile_import_struct (lower_to Struct c) r)
         (seq 'Symbolic*')))
 
-    (fn compile_imports_elts ((vs 'Value*') -> 'Symbolic*')
+    (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'Symbolic*')
       (if (seq_is_empty vs)
         (seq 'Symbolic*')
-        (seq_append (compile_imports_elt (value_content (seq_head vs)))
-                    (compile_imports_elts (seq_tail vs)))))
+        (seq_append (compile_imports_elt (value_content (seq_head vs)) r)
+                    (compile_imports_elts (seq_tail vs) r))))
 
     (fn compile_imports_field ((v Value) (r Environment) -> 'Symbolic*')
-      (if (Value_is_symbol_matching v (inject_into Unicode "$ion_symbol_table"))
+      (if (eject (Value_is_symbol_matching v (inject_into Unicode "$ion_symbol_table")))
         (lower_to 'Symbolic*' (Environment_lst r))
         (seq_append (system_symbols (Environment_ivm r))
-          (if (= List (subdomain (value_content v)))
-            (compile_imports_elts (List_elts (lower_to List (value_content v))))
+          (if (element_of (value_content v) List)
+            (compile_imports_elts (List_elts (lower_to List (value_content v))) r)
             (seq 'Symbolic*')))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
@@ -260,8 +336,8 @@ Spec Problems
 
     (fn compile_symbols_elt ((c Content) -> Symbolic)
       (if (element_of c String)
-          // TODO [NULL]
-          (lift_to Symbolic (lower_to Unicode (lower_to String (lower_to SafeVal c))))
+        // TODO [NULL]
+        (lift_to Symbolic (lower_to Unicode (lower_to String (lower_to SafeVal c))))
         (lift_to Symbolic (inject_into Sym0 _SYM0))))
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
@@ -425,16 +501,16 @@ Spec Problems
       ('TRVal*' x Environment x Continuation -> 'Value*'))
   */
 
-    (fn expand ((rvals 'TRVal*') -> 'Value*')
+    (fn expand ((rvals 'TRVal*') (c Catalog) -> 'Value*')           // TODO accept a Catalog
       ('TE*' (seq_append (seq 'TRVal*' IVM_1_0) rvals)
-             (initial_env initial_catalog)
+             (initial_env c)
              k0))
   )
 
-
-  (define IVM_1_0
-    (lift_to TRVal (inject_into IVM _IVM_1_0)))
-
-  (define initial_catalog
-    (seq Catalog))
+  (define NOTHING          (inject_into Nothing (void)))
+  (define IVM_1_0          (lift_to TRVal (inject_into IVM _IVM_1_0)))
+  (define EMPTY_CATALOG    (seq Catalog))
+  (define I_1              (inject_into I 1))
+  (define EMPTY_UNICODE    (inject_into Unicode ""))
+  (define EMPTY_SYMBOLICS  (seq 'Symbolic*'))
 )
