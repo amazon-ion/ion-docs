@@ -118,13 +118,18 @@
 
 (define (mk_Any v)
   (lift_to Any
-    (inject_into (cond ((is_bool   v) B)
-                       ((is_int    v) Z)
-                       ((is_string v) S))
-      v)))
+    (cond ((is_bool   v) (inject_into B v))
+          ((is_int    v) (lift_to Num (inject_into Z v)))
+          ((is_string v) (inject_into S v)))))
+
+(define (eject_any a)
+  (eject (let [(rep (domain_value_rep a))]
+           (if (element_of rep Num)
+             (domain_value_rep rep)
+             rep))))
 
 (define (eject_Anys anys)
-  (map (compose domain_value_rep domain_value_rep) (seq_to_sexp anys)))
+  (map eject_any (seq_to_sexp anys)))
 
 (define anys (apply seq 'Any*' (map mk_Any [1, true, 2, "hi", "by", 3])))
 

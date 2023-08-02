@@ -27,9 +27,12 @@
 //====================
 // Union domain values
 
+// element_of
 (check_true (element_of int_exact_val Exact))
 (check_true (element_of dec_exact_val Exact))
-(check_true (element_of int_any_val Any))
+(check_true (element_of int_any_val   Any))
+(check_true (element_of int_any_val   Num))
+(check_true (element_of int_any_val   Z))     // Sees "through" union domains.
 
 
 // lift_to

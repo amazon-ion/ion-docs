@@ -104,7 +104,9 @@ Creates a new domain "class".
     (domain_meta name display_fn
       (or eltof_fn (|d v|
                      (and (is_domain_value v)
-                          (ident d (domain_value_domain v)))))))
+                          (or (ident d (domain_value_domain v))
+                              (and (is_union_domain_value v)
+                                   (element_of (unwrap v) d))))))))
 
 
   // The "classes" from which domain values can be created.

@@ -140,17 +140,17 @@ Spec Problems
 
 
     (fn Symbolic_text_matches ((s Symbolic) (t Unicode) -> B)
-      (if (= Unicode (subdomain s))
+      (if (element_of s Unicode)
         (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
         (inject_into B false)))
 
     (fn Symbol_text_matches ((s Symbol) (u Unicode) -> B)
-      (if (= Symbolic (subdomain s))
+      (if (element_of s Symbolic)
         (Symbolic_text_matches (lower_to Symbolic s) u)
         (inject_into B false)))
 
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
-      (if (= Symbol (subdomain (value_content v)))
+      (if (element_of (value_content v) Symbol)
         (Symbol_text_matches (lower_to Symbol (value_content v)) u)
         (inject_into B false)))
 
@@ -213,7 +213,7 @@ Spec Problems
 
 
     (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
-      (if (= Unicode (subdomain s))
+      (if (element_of s Unicode)
         (lift_to Symbolic (lower_to Unicode s))
         (env_lookup_sid r (lower_to I s))))
 
@@ -228,7 +228,7 @@ Spec Problems
 
     (fn is_$ion_symbol_table ((v Value) -> B)
       (if (eject (has_first_annot v (inject_into Unicode "$ion_symbol_table")))
-        (inject_into B (= Struct (subdomain (value_content v))))
+        (inject_into B (element_of (value_content v) Struct))
         (inject_into B false)))
 
 
@@ -259,11 +259,9 @@ Spec Problems
 
 
     (fn compile_symbols_elt ((c Content) -> Symbolic)
-      (if (= SafeVal (subdomain c))
-        (if (= String (subdomain (lower_to SafeVal c)))
+      (if (element_of c String)
           // TODO [NULL]
           (lift_to Symbolic (lower_to Unicode (lower_to String (lower_to SafeVal c))))
-          (lift_to Symbolic (inject_into Sym0 _SYM0)))
         (lift_to Symbolic (inject_into Sym0 _SYM0))))
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
@@ -273,7 +271,7 @@ Spec Problems
                     (compile_symbols_elts (seq_tail vs)))))
 
     (fn compile_symbols_field ((v Value) -> 'Symbolic*')
-      (if (= List (subdomain (value_content v)))
+      (if (element_of (value_content v) List)
         (compile_symbols_elts (List_elts (lower_to List (value_content v))))
         (seq 'Symbolic*')))
 
@@ -333,13 +331,13 @@ Spec Problems
 
     (fn E_RContent ((vr RContent) (r Environment) (k CContinuation) -> 'Value*')
       // General value evaluation
-      (if (= SafeVal (subdomain vr))
+      (if (element_of vr SafeVal)
         (k (lift_to Content (lower_to SafeVal vr)))
-        (if (= RSym (subdomain vr))
+        (if (element_of vr RSym)
           (E_RSym (lower_to RSym vr) r k)
-          (if (= RList (subdomain vr))
+          (if (element_of vr RList)
             (E_RList (lower_to RList vr) r k)
-            (if (= RStruct (subdomain vr))
+            (if (element_of vr RStruct)
               (E_RStruct (lower_to RStruct vr) r k)
               (raise "not implemented"))))))
 
@@ -393,7 +391,7 @@ Spec Problems
     // Top-level expansion
 
     (fn TE ((vr TRVal) (r Environment) (k Continuation) -> 'Value*')
-      (if (=== IVM (subdomain vr))
+      (if (element_of vr IVM)
         (k (env_for_ivm r (lower_to IVM vr)) (seq 'Value*'))
         (E (lower_to RVal vr) r
           (mk_fn Continuation (r1 vs1)

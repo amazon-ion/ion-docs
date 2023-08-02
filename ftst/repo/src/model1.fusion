@@ -19,7 +19,7 @@
 
     (dom Exact = (+ Z D))
     (dom Num   = (+ Z D F))
-    (dom Any   = (+ B Z D F S T) "All Values")
+    (dom Any   = (+ B Num S T) "All Values")
 
     (dom Stamped = (* T Any) "A timestamped value")
 
@@ -47,7 +47,7 @@
           (filter (seq_tail vs) p))))
 
     (fn select_ints ((vs 'Any*') -> 'Any*')
-      (filter vs (mk_fn Pred (v) (if (=== Z (subdomain v))
+      (filter vs (mk_fn Pred (v) (if (element_of v Z)
                                    (inject_into B true)
                                    (inject_into B false)))))
   )
@@ -73,7 +73,7 @@
   (define int_num_val   (lift_to Num z_val))
   (define flt_num_val   (lift_to Num f_val))
 
-  (define int_any_val (lift_to Any z_val))
+  (define int_any_val (lift_to Any (lift_to Num z_val)))
 
 
   // Product domain values

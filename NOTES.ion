@@ -9,10 +9,9 @@ TODOs
   * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
 * Domain constants `(val <name> <expr>)`
 * Product domains should allow one field; more natural than singleton unions.
+* [LET] Functional let form. (See L.I.S.P. p172)
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
-* element_of should handle subdomain check for union decomposition.
-  *  (= T (subdomain v))   =>  (element_of v T)
 * Sequence domains like Val+
 * Singleton domains (replace dummy domains?)
 * Domain extension; pre-define B/Z/D/F/S/T
