@@ -140,6 +140,8 @@ Creates a new domain "class".
          (ident d (domain_type v))))
 
   (define (domain_accepts d v)
+    // TODO Replace this with something better defined. It's not used uniformly.
+    //   It only checks the _internal representation_ of domain values.
     (unless (is_domain d)
       (raise_argument_error "domain_accepts" "domain" 0 d v))
     ((domain_checker d) d v))
@@ -173,6 +175,10 @@ Creates a new domain "class".
   (define (make_value domain v)
     (unless (is_domain domain)
       (raise_argument_error "make_value" "domain" 0 domain v))
+    (unless (domain_accepts domain v)
+      (raise_argument_error "make_value"
+        (string_append "value acceptable to domain " (domain_name domain))
+        1 domain v))
     (domain_value domain v))
 
   (define (element_of v domain)  // i.e., ∈

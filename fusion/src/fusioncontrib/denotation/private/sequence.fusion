@@ -62,8 +62,8 @@ Returns the domain of the seq's elements.
 
   (define (seq_domain_checker d values)
     (let [(subdomain (seq_domain_subdomain d))]
-      (and (is_list values)
-           (every (|v| (element_of v subdomain))))))
+      (and (is_sexp values)
+           (every (|v| (element_of v subdomain)) values))))
 
 
   (define (is_seq_domain d)
