@@ -27,30 +27,45 @@ TODO
 )
 
 
+// Safe types
+
 (check_expansion
-  (quote_top true a::false 1 a::'#$0' ::2 $ion_shared_symbol_table)   // Expected output
-  (quote_top true a::false 1 a::'#$99'::2 '#$9'))                     // Input document
+  (quote_top null.null null.null a::null $ion ::null)   // Expected output
+  (quote_top null      null.null a::null '#$1'::null))  // Input document
+
+(check_expansion
+  (quote_top null.bool a::null.bool true $ion ::false)
+  (quote_top null.bool a::null.bool true '#$1'::false))
+
+(check_expansion
+  (quote_top null.int a::null.int 0 1 a::$ion ::2)
+  (quote_top null.int a::null.int 0 1 a::'#$1'::2))
+
+
+(check_expansion
+  (quote_top null.string a::null.string "" "queen" $ion ::"king")
+  (quote_top null.string a::null.string "" "queen" '#$1'::"king"))
 
 
 // Symbols
 
 (check_expansion
-  (quote_top danny $ion   $ion::'#$0')
-  (quote_top danny '#$1' '#$1'::'#$999'))
+  (quote_top null.symbol a::null.symbol '' danny $ion   $ion::name)
+  (quote_top null.symbol a::null.symbol '' danny '#$1' '#$1'::'#$4'))
 
 
 // Lists
 
 (check_expansion
-  (quote_top a::[] [[], 1, danny, $ion])
-  (quote_top a::[] [[], 1, danny, '#$1']))
+  (quote_top null.list a::null.list a::[] [[], 1, danny, $ion])
+  (quote_top null.list a::null.list a::[] [[], 1, danny, '#$1']))
 
 
 // Structs
 
 (check_expansion
-  (quote_top g::{} {a:$ion, c:{}, a:1, b:danny})
-  (quote_top g::{} {a:1, b: danny, a:'#$1', c:{}}))
+  (quote_top null.struct a::null.struct g::{} {a:$ion, c:{}, a:1, b:danny})
+  (quote_top null.struct a::null.struct g::{} {a:1, b: danny, a:'#$1', c:{}}))
 
 
 // LSTs
@@ -59,21 +74,29 @@ TODO
   (quote_top first $ion_symbol_table::[] second)
   (quote_top first $ion_symbol_table::[] second))
 
-(check_expansion                         // IST structs are elided from app view
+// IST structs are elided from app view
+(check_expansion
   (quote_top first second)
-  (quote_top first $ion_symbol_table::{} second))
-(check_expansion                                     // ...but only at top-level
-  (quote_top [first, $ion_symbol_table::{}, second])
-  (quote_top [first, $ion_symbol_table::{}, second]))
+  (quote_top first $ion_symbol_table::{} $ion_symbol_table::null.struct second))
+
+// ...but only at top-level
+(check_expansion
+  (quote_top [first, $ion_symbol_table::{}, $ion_symbol_table::null.struct, second])
+  (quote_top [first, $ion_symbol_table::{}, $ion_symbol_table::null.struct, second]))
 (check_expansion
   (quote_top a::'#$0' a)
   (quote_top $ion_symbol_table::{symbols:["a"]} '#$10'::'#$11' '#$10'))
 
-(check_expansion                               // Non-string entries act like $0
+// Non-string and null `symbols` entries act like $0
+(check_expansion
   (quote_top '#$0' '#$0' '#$0')
   (quote_top $ion_symbol_table::{symbols:[a, 1, true]} '#$10' '#$11' '#$12'))
-  // TODO [NULL] entries for null.null, null.string, null.symbol
+(check_expansion
+  (quote_top a '#$0' '#$0' '#$0' '#$0' b)
+  (quote_top $ion_symbol_table::{symbols:["a", null.null, null.symbol, null.string, null.int, "b"]}
+    '#$10' '#$11' '#$12' '#$13' '#$14' '#$15'))
 
+// Successive ISTs replace earlier ones
 (check_expansion
   (quote_top a b)
   (quote_top
@@ -100,10 +123,18 @@ TODO
 (check_expansion
   (quote_top $ion a)
   (quote_top $ion_symbol_table::{symbols:["a"], imports:boom} '#$1' '#$10'))
-// TODO [NULL] imports:null.symbol
 (check_expansion
   (quote_top $ion a)
   (quote_top $ion_symbol_table::{symbols:["a"], imports:[]} '#$1' '#$10'))
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:null} '#$1' '#$10'))
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:null.list} '#$1' '#$10'))
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:null.int} '#$1' '#$10'))
 
 
 // Non-exact-match imports
@@ -161,13 +192,71 @@ TODO
 
 // TODO Use both versions of abcs; how to handle the second copy of "a"?
 
+// Empty/malformed `name` => ignore the import
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:""},
+                                          {name:null},
+                                          {name:null.string},
+                                          {name:1, version:1},
+                                          {name:"abcs"}]}
+    '#$10'))
+
+
+
+// Non-struct entries in `imports` list are ignored.
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[null,        {name:"abcs"}]} '#$10'))
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[null.bool,   {name:"abcs"}]} '#$10'))
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[null.struct, {name:"abcs"}]} '#$10'))
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[true,        {name:"abcs"}]} '#$10'))
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[[],          {name:"abcs"}]} '#$10'))
+
+
 // Normalise bad version values to 1
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null.int}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null.bool}]} '#$10' '#$11'))
 (check_expansion
   (quote_top a '#$0')
   (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:0}]} '#$10' '#$11'))
 (check_expansion
   (quote_top a '#$0')
   (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:"2"}]} '#$10' '#$11'))
+
+
+// Bad max_id values ignored given exact match
+(check_expansion
+  (quote_top a m)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:null}, {name:"mnop"}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a m)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:null.int}, {name:"mnop"}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a m)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:null.bool}, {name:"mnop"}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a m)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:-1}, {name:"mnop"}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a m)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:"2"}, {name:"mnop"}]} '#$10' '#$11'))
+
 
 
 // Symbol Table Extension

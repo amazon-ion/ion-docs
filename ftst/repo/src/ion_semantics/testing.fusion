@@ -38,9 +38,10 @@ Utilities for testing the Ion denotational model.
 
 
   (define (is_safe v)
-    (or (is_bool   v)
-        (is_int    v)
-        (is_string v)))
+    (or (is_null_null v)
+        (is_bool      v)
+        (is_int       v)
+        (is_string    v)))
 
 
   //============================================================================
@@ -48,27 +49,30 @@ Utilities for testing the Ion denotational model.
 
   // Safe types
 
+  (define (mk_NullNull c)
+    (lift_to NullNull (singleton DotNull)))
+
   (define (mk_Boolean c)
     (cond
-      ((is_null c) (raise "[NULL]"))
+      ((is_null c) (lift_to Boolean (singleton DotNull)))
       ((is_bool c) (lift_to Boolean (inject_into B c)))
       (true (raise_argument_error "mk_Boolean" "null or bool" 0 c))))
 
   (define (mk_Int c)
     (cond
-      ((is_null c) (raise "[NULL]"))
+      ((is_null c) (lift_to Int (singleton DotNull)))
       ((is_int  c) (lift_to Int (inject_into I c)))
       (true (raise_argument_error "mk_Int" "null or int" 0 c))))
 
   (define (mk_String c)
     (cond
-      ((is_null   c) (raise "[NULL]"))
+      ((is_null   c) (lift_to String (singleton DotNull)))
       ((is_string c) (lift_to String (inject_into Unicode c)))
       (true (raise_argument_error "mk_String" "null or string" 0 c))))
 
   (define (mk_SafeVal c)
     (cond
-      ((is_null   c) (raise "[NULL]"))
+      ((is_null_null c) (lift_to SafeVal (mk_NullNull c)))
       ((is_bool   c) (lift_to SafeVal (mk_Boolean c)))
       ((is_int    c) (lift_to SafeVal (mk_Int c)))
       ((is_string c) (lift_to SafeVal (mk_String c)))
@@ -86,26 +90,32 @@ Utilities for testing the Ion denotational model.
                            (inject_into I (string_to_int (string_replace str "#$" "")))
                            (inject_into Unicode str))))
         ((is_int    c) (inject_into I c))
-        (true (raise_argument_error "mk_SymTok" "string/int" 0 c)))))
+        (true (raise_argument_error "mk_SymTok" "text/int" 0 c)))))
 
   (define (mk_RSym c)
     (cond
-      ((is_null   c) (lift_to RSym (raise "[NULL]")))
+      ((is_null   c) (lift_to RSym (singleton DotNull)))
       ((is_string c) (lift_to RSym (mk_SymTok c)))
       ((is_symbol c) (lift_to RSym (mk_SymTok c)))
       ((is_int    c) (lift_to RSym (mk_SymTok c)))
-      (true (raise_argument_error "mk_RSym" "null/string/int" 0 c))))
+      (true (raise_argument_error "mk_RSym" "null/text/int" 0 c))))
 
 
   // Containers
 
   (define (mk_RList c)
-    (lift_to RList (apply seq 'RVal*' (map mk_RVal c))))
+    (lift_to RList
+      (if (is_null c)
+        (singleton DotNull)
+        (apply seq 'RVal*' (map mk_RVal c)))))
 
   (define (mk_RStruct c)
-    (lift_to RStruct (apply seq 'RField*'
-                       (for_list [((k v) c)]
-                         (tuple RField (mk_SymTok k) (mk_RVal v))))))
+    (lift_to RStruct
+      (if (is_null c)
+        (singleton DotNull)
+        (apply seq 'RField*'
+          (for_list [((k v) c)]
+            (tuple RField (mk_SymTok k) (mk_RVal v)))))))
 
 
   // Values
@@ -211,6 +221,10 @@ Utilities for testing the Ion denotational model.
 
   // Safe types
 
+  (define (eject_NullNull v)
+    (assert (element_of v DotNull))
+    null.null)
+
   (define (eject_Boolean v)
     (if (element_of v DotNull)
       null.bool
@@ -228,10 +242,10 @@ Utilities for testing the Ion denotational model.
 
   (define (eject_SafeVal v)
     (cond
-      ((element_of v NullNull) (raise "TODO null"))
-      ((element_of v Boolean ) (eject_Boolean (unwrap v)))
-      ((element_of v Int     ) (eject_Int     (unwrap v)))
-      ((element_of v String  ) (eject_String  (unwrap v)))
+      ((element_of v NullNull) (eject_NullNull (unwrap v)))
+      ((element_of v Boolean ) (eject_Boolean  (unwrap v)))
+      ((element_of v Int     ) (eject_Int      (unwrap v)))
+      ((element_of v String  ) (eject_String   (unwrap v)))
       (true (raise (subdomain v)))))
 
 

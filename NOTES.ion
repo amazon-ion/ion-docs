@@ -14,6 +14,7 @@ TODOs
   * Similar seqcase to traverse sequences
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
   * This makes indirect lowering unambiguous.
+  * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
 * Domain constants `(val <name> <expr>)`
 * Automatically create 'Domain*' for each 'Domain'. Perhaps 'Domain?' too?
 * Product domains should allow one field; more natural than singleton unions.

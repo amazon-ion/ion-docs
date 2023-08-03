@@ -411,7 +411,7 @@ Lifts a subdomain value into a union domain.
     (let [(rep (domain_value_rep v))]
       (unless (domain_is rep d)
         (raise_argument_error "lower_to"
-          (string_append "element of union-domain over " (domain_name d))
+          (string_append "element of " (domain_name d))
           1 d v))
       rep))
 
