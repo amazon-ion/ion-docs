@@ -222,7 +222,7 @@ Spec Problems
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
-      (seq_append (seq Catalog s) c))
+      (seq_prepend s c))
 
 
     (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
@@ -253,8 +253,8 @@ Spec Problems
     (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
       (if (seq_is_empty s)
         EMPTY_SYMBOLICS
-        (seq_append (seq 'Symbolic*' (expand_SymTok r (seq_head s)))
-                    (expand_SymToks r (seq_tail s)))))
+        (seq_prepend (expand_SymTok  r (seq_head s))
+                     (expand_SymToks r (seq_tail s)))))
 
 
     // $ion_symbol_table "compilation"
@@ -343,8 +343,8 @@ Spec Problems
     (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
-        (seq_append (seq 'Symbolic*' (compile_symbols_elt (value_content (seq_head vs))))
-                    (compile_symbols_elts (seq_tail vs)))))
+        (seq_prepend (compile_symbols_elt (value_content (seq_head vs)))
+                     (compile_symbols_elts (seq_tail vs)))))
 
     (fn declared_symbols ((s Struct) -> 'Symbolic*')
       (let [(vals (Struct_get1 s (inject_into Unicode "symbols")))]
@@ -434,10 +434,9 @@ Spec Problems
             // TODO Verify that vs1 is singleton?
             ('E_RField*' (seq_tail rfs) r1
               (mk_fn FContinuation (fs2)             // Field* from tail fields
-                (k (seq_append
-                     (seq 'Field*' (tuple Field
-                                     (expand_SymTok r1 (rfield_name (seq_head rfs)))
-                                     (seq_head vs1)))
+                (k (seq_prepend (tuple Field
+                                  (expand_SymTok r1 (rfield_name (seq_head rfs)))
+                                  (seq_head vs1))
                      fs2))))))))
 
     (fn E_RStruct ((v RStruct) (r Environment) (k CContinuation) -> 'Value*')
@@ -500,8 +499,8 @@ Spec Problems
       ('TRVal*' x Environment x Continuation -> 'Value*'))
   */
 
-    (fn expand ((rvals 'TRVal*') (c Catalog) -> 'Value*')           // TODO accept a Catalog
-      ('TE*' (seq_append (seq 'TRVal*' IVM_1_0) rvals)
+    (fn expand ((rvals 'TRVal*') (c Catalog) -> 'Value*')
+      ('TE*' (seq_prepend IVM_1_0 rvals)
              (initial_env c)
              k0))
   )

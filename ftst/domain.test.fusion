@@ -131,6 +131,18 @@
 (expect_argument_error (seq_tail Z))             // arg isn't a sequence
 
 
+
+// seq_prepend
+
+(let [(s1 (seq_prepend z_val empty_Zs))]
+  (check === 1 (seq_length s1))
+  (check_same z_val (seq_head s1)))
+
+(expect_argument_error (seq_prepend z_val z_val))       // 2nd arg isn't a sequence
+(expect_argument_error (seq_prepend empty_Zs empty_Zs)) // 1st arg is wrong type
+(expect_argument_error (seq_prepend int_any_val empty_Zs)) // 1st arg is above target domain
+
+
 // seq_append
 
 (let [(v (seq_append empty_Zs empty_Zs))]

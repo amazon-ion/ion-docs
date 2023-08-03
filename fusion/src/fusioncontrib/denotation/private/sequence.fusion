@@ -26,6 +26,7 @@
     seq_ith
     seq_is_empty
     seq_length
+    seq_prepend
     seq_tail
   )
 
@@ -152,6 +153,18 @@ within `domain`'s subdomain.
     (unless (is_seq seq)
       (raise_argument_error "seq_tail" "seq value" 0 seq))
     (make_value (domain_value_domain seq) (tail (domain_value_rep seq))))
+
+
+  (define (seq_prepend v seq)
+    (unless (is_seq seq)
+      (raise_argument_error "seq_append" "seq value" 1 v seq))
+    (let [(subdomain (seq_domain_subdomain (domain_value_domain seq)))]
+      (unless (direct_element_of v subdomain)
+        (raise_argument_error "seq_prepend"
+          (string_append "value in domain " (domain_name subdomain))
+          0 v seq)))
+    (make_value (domain_value_domain seq)
+      (pair v (domain_value_rep seq))))
 
 
   (define (seq_append seq0 seq1)
