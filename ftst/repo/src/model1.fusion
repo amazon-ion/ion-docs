@@ -47,9 +47,7 @@
           (filter (seq_tail vs) p))))
 
     (fn select_ints ((vs 'Any*') -> 'Any*')
-      (filter vs (mk_fn Pred (v) (if (element_of v Z)
-                                   (inject_into B true)
-                                   (inject_into B false)))))
+      (filter vs (mk_fn Pred (v) (element_of v Z))))
   )
 
 

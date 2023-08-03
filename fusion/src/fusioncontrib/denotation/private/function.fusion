@@ -59,21 +59,25 @@ Predicate for domain functions.
     // The one field in this subtype is the procedure to apply.
 
 
+  (define (typecheck_value d v fail_proc)
+    (if (domain_is v d)
+      v
+      (if (and (is_base_domain d) (base_domain_accepts d v))
+        // Auto-inject
+        (inject_into d v)
+        (fail_proc))))
+
   (define (typecheck_actuals name domains args)
     (let [(count (size domains))]
       (unless (=== count (size args))
         (apply raise_arity_error name count args))
-      (let loop [(i 0), (ds domains), (as args), (results (quote ()))]
+      (let loop [(i 0), (ds domains), (as args)]
         (if (=== count i)
-          (reverse results)
-          (loop (+ 1 i) (tail ds) (tail as)
-            (let [(d (head ds)), (a (head as))]
-              (if (domain_is a d)
-                (pair a results)
-                (if (and (is_base_domain d) (base_domain_accepts d a))
-                  // Auto-inject
-                  (pair (inject_into d a) results)
-                  (apply raise_argument_error name (symbol_to_string d) i args)))))))))
+          (quote ())
+          (let [(d (head ds)), (a (head as))]
+            (pair (typecheck_value d a
+                    (|| (apply raise_argument_error name (symbol_to_string d) i args)))
+              (loop (+ 1 i) (tail ds) (tail as))))))))
 
   (define (make_fn name domain impl)
     '''
@@ -94,16 +98,16 @@ Type-checking of function application:
         domain impl))
     (lets [(in_dom  (func_domain_input  domain)),
            (out_dom (func_domain_output domain)),
-           (argdomains  (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
-                          (apply sexp (product_domain_subdomains in_dom))
-                          (sexp in_dom))),
-           (applier     (lambda rest
-                          (lets [(args (typecheck_actuals name argdomains rest)),
-                                 (r (apply impl args))]
-                            (unless (domain_is r out_dom)
-                              (raise_result_error (string_append "result of " name)
-                                (symbol_to_string (domain_name out_dom)) r))
-                            r)))]
+           (argdomains (if (and (is_product_domain in_dom)
+                                (is_null (domain_name in_dom)))
+                         (apply sexp (product_domain_subdomains in_dom))
+                         (sexp in_dom))),
+           (applier (lambda rest
+                      (lets [(args (typecheck_actuals name argdomains rest)),
+                             (r (apply impl args))]
+                        (typecheck_value out_dom r
+                          (|| (raise_result_error (string_append "result of " name)
+                                (symbol_to_string (domain_name out_dom)) r))))))]
       (fn_ctor domain /*rep*/ null applier)))
 
 

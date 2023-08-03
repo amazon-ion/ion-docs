@@ -144,18 +144,18 @@ Spec Problems
 
     (fn Symbolic_text_matches ((s Symbolic) (t Unicode) -> B)
       (if (element_of s Unicode)
-        (inject_into B (=== (eject t) (eject (lower_to Unicode s))))
-        (inject_into B false)))
+        (=== (eject t) (eject (lower_to Unicode s)))
+        false))
 
     (fn Symbol_text_matches ((s Symbol) (u Unicode) -> B)
       (if (element_of s Symbolic)
         (Symbolic_text_matches (lower_to Symbolic s) u)
-        (inject_into B false)))
+        false))
 
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
       (if (element_of (value_content v) Symbol)
         (Symbol_text_matches (lower_to Symbol (value_content v)) u)
-        (inject_into B false)))
+        false))
 
 
     (fn Fields_get1 ((fs 'Field*') (u Unicode) -> 'Value*')  // returns 0 or 1, raises if more
@@ -171,8 +171,7 @@ Spec Problems
       (Fields_get1 (lower_to 'Field*' s) u))
 
     (fn has_first_annot ((v Value) (u Unicode) -> B)
-      (if (seq_is_empty (value_annots v))
-        (inject_into B false)
+      (if (seq_is_empty (value_annots v)) false
         (Symbolic_text_matches (seq_head (value_annots v)) u)))
 
 
@@ -271,8 +270,8 @@ Spec Problems
 
     (fn is_$ion_symbol_table ((v Value) -> B)
       (if (eject (has_first_annot v "$ion_symbol_table"))
-        (inject_into B (element_of (value_content v) Struct))
-        (inject_into B false)))
+        (element_of (value_content v) Struct)
+        false))
 
     (fn symbol_padding ((len I) -> 'Symbolic*')
       (if (=== 0 (eject len))
@@ -327,9 +326,11 @@ Spec Problems
               (if (< (eject i) 1) I_1 i))))))
 
     (fn normalize_max_id ((vs 'Value*') -> I)                // < 0 = absent or invalid
-      (if (seq_is_empty vs) (inject_into I -1)
+      (if (seq_is_empty vs)
+        -1
         (let [(c (value_content (seq_head vs)))]
-          (if (not (element_of c Int)) (inject_into I -1)
+          (if (not (element_of c Int))
+            -1
             // TODO [NULL]
             (lower_to I (lower_to Int (lower_to SafeVal c)))))))
 
