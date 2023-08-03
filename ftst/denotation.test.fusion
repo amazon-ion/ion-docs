@@ -85,7 +85,7 @@
   (check_same z_val (lower_to Z converted)))
 (expect_argument_error (convert_Num_to_Exact flt_num_val))
 
-(expect_syntax_error (fn bad_identity Any2Any identity))
+(expect_syntax_error (fn bad_identity Any2Any identity))  // Missing argument declaration
 
 
 // Functions over product domains require one argument in that domain.
@@ -112,6 +112,9 @@
        (p (make_point2d x y))]
   (check ident x (product_domain_element Point2d p 0))
   (check ident y (product_domain_element Point2d p 1)))
+
+(expect_argument_error (make_point2d int_any_val z_val))  // 1st arg is wrong type
+(expect_argument_error (make_point2d z_val int_any_val))  // 2nd arg is wrong type
 
 
 // Local functions
