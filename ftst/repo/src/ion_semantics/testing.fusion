@@ -324,6 +324,9 @@ Utilities for testing the Ion denotational model.
       $ion_shared_symbol_table::{
         name:"mnop", version:3, symbols:["m", "n", "o"]
       }
+      $ion_shared_symbol_table::{
+        name:"mnop", version:4, symbols:["4", "n", "o", "p"]  // Change used to detect v4
+      }
     ))
 
   (define testing_catalog

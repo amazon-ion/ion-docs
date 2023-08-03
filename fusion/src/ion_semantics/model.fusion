@@ -8,9 +8,6 @@ TODO
 ----
 Functional:
 * Implement $ion_symbol_table
-  * Imports
-    * Catalog needs to support inexact match
-    * [MAXID] max_id handling
   * SID too large must raise an error
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
@@ -214,14 +211,24 @@ Spec Problems
 
     (dom Catalog      = (** SharedSymtab))
 
-    (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab?')
+    (fn Catalog_scan ((c Catalog) (n Unicode) (v I) (best 'SharedSymtab?') -> 'SharedSymtab?')
       (if (seq_is_empty c)
-        (lift_to 'SharedSymtab?' NOTHING)
+        best
         (let [(sst (seq_head c))]
-          (if (and (=== (eject name)    (eject (SST_name sst)))
-                   (=== (eject version) (eject (SST_version sst))))
-            (lift_to 'SharedSymtab?' sst)
-            (Catalog_lookup (seq_tail c) name version)))))
+          (if (=== (eject n) (eject (SST_name sst)))
+            (if (=== (eject v) (eject (SST_version sst)))
+              // Exact match
+              (lift_to 'SharedSymtab?' sst)
+              (if (or (element_of best Nothing)
+                      (< (eject (SST_version (lower_to SharedSymtab best)))
+                         (eject (SST_version sst))))
+                // Found a new best match
+                (Catalog_scan (seq_tail c) n v (lift_to 'SharedSymtab?' sst))
+                (Catalog_scan (seq_tail c) n v best)))
+            (Catalog_scan (seq_tail c) n v best)))))
+
+    (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab?')
+      (Catalog_scan c name version (lift_to 'SharedSymtab?' NOTHING)))
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
@@ -299,9 +306,10 @@ Spec Problems
                   // No max_id, use as-is
                   (SST_symbols symtab)
                   (adjust_length (SST_symbols symtab) max))
-                // TODO Inexact match
-                // TODO [MAXID] Fail when no max_id and not exact match
-                (raise "inexact match")))))))
+                // Inexact match
+                (if (< (eject max) 0)
+                  (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
+                  (adjust_length (SST_symbols symtab) max))))))))
 
     (fn normalize_name ((vs 'Value*') -> Unicode)  // "" is no-name sentinel
       (if (seq_is_empty vs) EMPTY_UNICODE
