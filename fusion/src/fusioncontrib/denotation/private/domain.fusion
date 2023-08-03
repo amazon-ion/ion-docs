@@ -41,7 +41,9 @@
     domain_value_rep
 
     // Base domain value operators
+    is_base_domain
     is_base_domain_value
+    base_domain_accepts
     inject_into
     eject
 
@@ -249,6 +251,9 @@ Determines whether `v` is a direct element of the `domain`.
 
   (define (base_domain_predicate d)
     (domain_data d))
+
+  (define (base_domain_accepts d v)
+    (domain_accepts d v))
 
 
   (define (inject_into d v)

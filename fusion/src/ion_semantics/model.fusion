@@ -203,11 +203,10 @@ Spec Problems
     (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
       (tuple SharedSymtab
         (lower_to Unicode (lower_to String (lower_to SafeVal
-          (value_content (seq_head (Struct_get1 s (inject_into Unicode "name")))))))
+          (value_content (seq_head (Struct_get1 s "name"))))))
         (lower_to I (lower_to Int (lower_to SafeVal
-          (value_content (seq_head (Struct_get1 s (inject_into Unicode "version")))))))
-        (declared_symbols s)
-      ))
+          (value_content (seq_head (Struct_get1 s "version"))))))
+        (declared_symbols s)))
 
 
     (dom Catalog      = (** SharedSymtab))
@@ -271,7 +270,7 @@ Spec Problems
     // $ion_symbol_table "compilation"
 
     (fn is_$ion_symbol_table ((v Value) -> B)
-      (if (eject (has_first_annot v (inject_into Unicode "$ion_symbol_table")))
+      (if (eject (has_first_annot v "$ion_symbol_table"))
         (inject_into B (element_of (value_content v) Struct))
         (inject_into B false)))
 
@@ -279,13 +278,13 @@ Spec Problems
       (if (=== 0 (eject len))
         EMPTY_SYMBOLICS
         (seq_prepend (lift_to Symbolic (inject_into Sym0 _SYM0))
-          (symbol_padding (inject_into I (- (eject len) 1))))))
+          (symbol_padding (- (eject len) 1)))))
 
     (fn adjust_length ((ss 'Symbolic*') (max I) -> 'Symbolic*')
       (if (=== (seq_length ss) (eject max))
         ss
         (if (< (seq_length ss) (eject max))
-          (seq_append ss (symbol_padding (inject_into I (- (eject max) (seq_length ss)))))
+          (seq_append ss (symbol_padding (- (eject max) (seq_length ss))))
           (seq_truncate ss (eject max)))))
 
     (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'Symbolic*')
@@ -335,9 +334,9 @@ Spec Problems
             (lower_to I (lower_to Int (lower_to SafeVal c)))))))
 
     (fn compile_import_struct ((s Struct) (r Environment) -> 'Symbolic*')
-      (compile_import (normalize_name    (Struct_get1 s (inject_into Unicode "name")))
-                      (normalize_version (Struct_get1 s (inject_into Unicode "version")))
-                      (normalize_max_id  (Struct_get1 s (inject_into Unicode "max_id")))
+      (compile_import (normalize_name    (Struct_get1 s "name"))
+                      (normalize_version (Struct_get1 s "version"))
+                      (normalize_max_id  (Struct_get1 s "max_id"))
                       (Environment_cat r)))
 
     (fn compile_imports_elt ((c Content) (r Environment) -> 'Symbolic*')
@@ -353,7 +352,7 @@ Spec Problems
                     (compile_imports_elts (seq_tail vs) r))))
 
     (fn compile_imports_field ((v Value) (r Environment) -> 'Symbolic*')
-      (if (eject (Value_is_symbol_matching v (inject_into Unicode "$ion_symbol_table")))
+      (if (eject (Value_is_symbol_matching v "$ion_symbol_table"))
         (lower_to 'Symbolic*' (Environment_lst r))
         (seq_append (system_symbols (Environment_ivm r))
           (if (element_of (value_content v) List)
@@ -361,9 +360,9 @@ Spec Problems
             EMPTY_SYMBOLICS))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
-      (if (seq_is_empty (Struct_get1 s (inject_into Unicode "imports")))
+      (if (seq_is_empty (Struct_get1 s "imports"))
         (system_symbols (Environment_ivm r))
-        (compile_imports_field (seq_head (Struct_get1 s (inject_into Unicode "imports"))) r)))
+        (compile_imports_field (seq_head (Struct_get1 s "imports")) r)))
 
 
     (fn compile_symbols_elt ((c Content) -> Symbolic)
@@ -379,7 +378,7 @@ Spec Problems
                      (compile_symbols_elts (seq_tail vs)))))
 
     (fn declared_symbols ((s Struct) -> 'Symbolic*')
-      (let [(vals (Struct_get1 s (inject_into Unicode "symbols")))]
+      (let [(vals (Struct_get1 s "symbols"))]
         (if (seq_is_empty vals)
           EMPTY_SYMBOLICS
           (let [(c (value_content (seq_head vals)))]

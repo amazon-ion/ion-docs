@@ -114,6 +114,10 @@
   (check ident x (product_domain_element Point2d p 0))
   (check ident y (product_domain_element Point2d p 1)))
 
+(let [(p (make_point2d 123 456))]                 // Auto injection of arguments
+  (check_same 123 (eject (ith p 0)))
+  (check_same 456 (eject (ith p 1))))
+
 (expect_argument_error (make_point2d int_any_val z_val))  // 1st arg is wrong type
 (expect_argument_error (make_point2d z_val int_any_val))  // 2nd arg is wrong type
 
