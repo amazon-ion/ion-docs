@@ -206,7 +206,7 @@ Spec Problems
           (value_content (seq_head (Struct_get1 s (inject_into Unicode "name")))))))
         (lower_to I (lower_to Int (lower_to SafeVal
           (value_content (seq_head (Struct_get1 s (inject_into Unicode "version")))))))
-        (local_symbols s)
+        (declared_symbols s)
       ))
 
 
@@ -252,7 +252,7 @@ Spec Problems
 
     (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
       (if (seq_is_empty s)
-        (seq 'Symbolic*')
+        EMPTY_SYMBOLICS
         (seq_append (seq 'Symbolic*' (expand_SymTok r (seq_head s)))
                     (expand_SymToks r (seq_tail s)))))
 
@@ -274,7 +274,7 @@ Spec Problems
             (if (< (eject max) 0)
               (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
               // TODO [MAXID] Allocate the right padding
-              (seq 'Symbolic*'))
+              EMPTY_SYMBOLICS)
             // TODO [MAXID] Fail when no max_id and not exact match
             // TODO [MAXID] Adjust length of imported seq
             (SST_symbols (lower_to SharedSymtab symtab))))))
@@ -312,11 +312,11 @@ Spec Problems
       (if (element_of c Struct)
         // TODO [NULL]
         (compile_import_struct (lower_to Struct c) r)
-        (seq 'Symbolic*')))
+        EMPTY_SYMBOLICS))
 
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'Symbolic*')
       (if (seq_is_empty vs)
-        (seq 'Symbolic*')
+        EMPTY_SYMBOLICS
         (seq_append (compile_imports_elt (value_content (seq_head vs)) r)
                     (compile_imports_elts (seq_tail vs) r))))
 
@@ -326,7 +326,7 @@ Spec Problems
         (seq_append (system_symbols (Environment_ivm r))
           (if (element_of (value_content v) List)
             (compile_imports_elts (List_elts (lower_to List (value_content v))) r)
-            (seq 'Symbolic*')))))
+            EMPTY_SYMBOLICS))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
       (if (seq_is_empty (Struct_get1 s (inject_into Unicode "imports")))
@@ -342,19 +342,18 @@ Spec Problems
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
       (if (seq_is_empty vs)
-        (seq 'Symbolic*')
+        EMPTY_SYMBOLICS
         (seq_append (seq 'Symbolic*' (compile_symbols_elt (value_content (seq_head vs))))
                     (compile_symbols_elts (seq_tail vs)))))
 
-    (fn compile_symbols_field ((v Value) -> 'Symbolic*')
-      (if (element_of (value_content v) List)
-        (compile_symbols_elts (List_elts (lower_to List (value_content v))))
-        (seq 'Symbolic*')))
-
-    (fn local_symbols ((s Struct) -> 'Symbolic*')
-      (if (seq_is_empty (Struct_get1 s (inject_into Unicode "symbols")))
-        (seq 'Symbolic*')
-        (compile_symbols_field (seq_head (Struct_get1 s (inject_into Unicode "symbols"))))))
+    (fn declared_symbols ((s Struct) -> 'Symbolic*')
+      (let [(vals (Struct_get1 s (inject_into Unicode "symbols")))]
+        (if (seq_is_empty vals)
+          EMPTY_SYMBOLICS
+          (let [(c (value_content (seq_head vals)))]
+            (if (element_of c List)
+              (compile_symbols_elts (List_elts (lower_to List c)))
+              EMPTY_SYMBOLICS)))))
 
 
     // LST and Environment construction
@@ -365,7 +364,7 @@ Spec Problems
     (fn lst_for_$ion_symbol_table ((r Environment) (s Struct) -> LocalSymtab)
       (lift_to LocalSymtab
         (seq_append (imported_symbols s r)
-                    (local_symbols s))))
+                    (declared_symbols s))))
 
 
     (fn initial_env ((c Catalog)-> Environment)
