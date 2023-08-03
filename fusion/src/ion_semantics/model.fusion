@@ -9,6 +9,7 @@ TODO
 Functional:
 * Implement $ion_symbol_table
   * Imports
+    * Catalog needs to support inexact match
     * [MAXID] max_id handling
   * SID too large must raise an error
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
@@ -17,6 +18,7 @@ Functional:
 * [NULL] Implement DotNull
 * Distinguish top and internal continuations, to prove that non-TLV cannot alter
   the environment.
+* SST compilation is very weak.
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
@@ -216,7 +218,8 @@ Spec Problems
       (if (seq_is_empty c)
         (lift_to 'SharedSymtab?' NOTHING)
         (let [(sst (seq_head c))]
-          (if (and (=== (eject name) (eject (SST_name sst))) /* TODO version*/)
+          (if (and (=== (eject name)    (eject (SST_name sst)))
+                   (=== (eject version) (eject (SST_version sst))))
             (lift_to 'SharedSymtab?' sst)
             (Catalog_lookup (seq_tail c) name version)))))
 
@@ -264,20 +267,41 @@ Spec Problems
         (inject_into B (element_of (value_content v) Struct))
         (inject_into B false)))
 
+    (fn symbol_padding ((len I) -> 'Symbolic*')
+      (if (=== 0 (eject len))
+        EMPTY_SYMBOLICS
+        (seq_prepend (lift_to Symbolic (inject_into Sym0 _SYM0))
+          (symbol_padding (inject_into I (- (eject len) 1))))))
+
+    (fn adjust_length ((ss 'Symbolic*') (max I) -> 'Symbolic*')
+      (if (=== (seq_length ss) (eject max))
+        ss
+        (if (< (seq_length ss) (eject max))
+          (seq_append ss (symbol_padding (inject_into I (- (eject max) (seq_length ss)))))
+          (seq_truncate ss (eject max)))))
 
     (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'Symbolic*')
       (if (or (=== ""     (eject name))
               (=== "$ion" (eject name)))
         EMPTY_SYMBOLICS
-        (let [(symtab (Catalog_lookup c name version))]
-          (if (element_of symtab Nothing)
+        (let [(found (Catalog_lookup c name version))]
+          (if (element_of found Nothing)
+            // The Catalog has nothing with this name.
             (if (< (eject max) 0)
+              // If max_id is invalid or absent, must have exact match.
               (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
-              // TODO [MAXID] Allocate the right padding
-              EMPTY_SYMBOLICS)
-            // TODO [MAXID] Fail when no max_id and not exact match
-            // TODO [MAXID] Adjust length of imported seq
-            (SST_symbols (lower_to SharedSymtab symtab))))))
+              (adjust_length EMPTY_SYMBOLICS max))
+            // We found something in the catalog
+            (let [(symtab (lower_to SharedSymtab found))]
+              (if (=== (eject version) (eject (SST_version symtab)))
+                // We have an exact match!
+                (if (< (eject max) 0)
+                  // No max_id, use as-is
+                  (SST_symbols symtab)
+                  (adjust_length (SST_symbols symtab) max))
+                // TODO Inexact match
+                // TODO [MAXID] Fail when no max_id and not exact match
+                (raise "inexact match")))))))
 
     (fn normalize_name ((vs 'Value*') -> Unicode)  // "" is no-name sentinel
       (if (seq_is_empty vs) EMPTY_UNICODE
@@ -291,8 +315,8 @@ Spec Problems
         (let [(c (value_content (seq_head vs)))]
           (if (not (element_of c Int)) I_1
             // TODO [NULL]
-            // TODO range check
-            (lower_to I (lower_to Int (lower_to SafeVal c)))))))
+            (let [(i (lower_to I (lower_to Int (lower_to SafeVal c))))]
+              (if (< (eject i) 1) I_1 i))))))
 
     (fn normalize_max_id ((vs 'Value*') -> I)                // normalized to -1
       (if (seq_is_empty vs) (inject_into I -1)

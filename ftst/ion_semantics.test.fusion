@@ -108,19 +108,61 @@ TODO
 
 // Non-exact-match imports
 
+// If no max_id, lack of exact-match must raise an error.
 (expect_any_raise
-  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"absent"}]} true)))
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"absent"}]})))
+(expect_any_raise
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"empty", version:2}]})))
+
+// If max_id not non-negative int, lack of exact-match must raise an error.
+(expect_any_raise
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"absent", max_id:null.int}]})))
+(expect_any_raise
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"empty", version:2, max_id:-5}]})))
+
+
+// When max_id is present and valid, pad/truncade mismatched or absent SSTs.
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"absent", max_id:0}, {name:"abcs"}]} '#$10'))
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"empty", version:2, max_id:3}, {name:"abcs"}]} '#$13'))
 
 
 // Exact-match imports
 
 (check_expansion
-  (quote_top $ion a)
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs"}]} '#$1' '#$10'))
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs"}]} '#$10' '#$11'))
 (check_expansion
-  (quote_top $ion a)
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:1}]} '#$1' '#$10'))
-// TODO normalise bad version values
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:1}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a b '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:2}]} '#$10' '#$11' '#$12'))
+
+// max_id inserts padding when exact-match
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"empty", version:1, max_id:3}, {name:"abcs"}]} '#$13'))
+
+// Multiple imports
+
+(check_expansion
+  (quote_top m a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"mnop", max_id:3}, {name:"abcs"}]} '#$10' '#$13' '#$14'))
+
+
+// TODO Use both versions of abcs; how to handle the second copy of "a"?
+
+// Normalise bad version values to 1
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:0}]} '#$10' '#$11'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:"2"}]} '#$10' '#$11'))
 
 
 // Symbol Table Extension

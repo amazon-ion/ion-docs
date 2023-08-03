@@ -310,8 +310,21 @@ Utilities for testing the Ion denotational model.
   (define catalog_data
     (quote_top
       $ion_shared_symbol_table::{
+        name:"empty", version:1, symbols:[]
+      }
+      $ion_shared_symbol_table::{
         name:"abcs", version:1, symbols:["a"]
-      }))
+      }
+      $ion_shared_symbol_table::{
+        name:"abcs", version:2, symbols:["a", "b"]
+      }
+      $ion_shared_symbol_table::{
+        name:"mnop", version:1, symbols:["m"]
+      }
+      $ion_shared_symbol_table::{
+        name:"mnop", version:3, symbols:["m", "n", "o"]
+      }
+    ))
 
   (define testing_catalog
     (for_fold [(c EMPTY_CATALOG)]
