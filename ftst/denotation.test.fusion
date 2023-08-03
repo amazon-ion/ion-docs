@@ -61,7 +61,7 @@
 
 (check_pred is_fn stamp)
 (expect_arity_error (stamp))
-(check_true (element_of (stamp t_val int_any_val) Stamped))
+(check_true (domain_is (stamp t_val int_any_val) Stamped))
 
 
 // We can turn a plain Fusion function into a type-checked domain function.
@@ -81,7 +81,7 @@
   (lift_to Exact (lower_to Z v)))                   // TODO handle D as well
 
 (let [(converted (convert_Num_to_Exact int_num_val))]
-  (check_true (element_of converted Exact))
+  (check_true (domain_is converted Exact))
   (check_same z_val (lower_to Z converted)))
 
 (expect_argument_error (convert_Num_to_Exact int_any_val))
@@ -128,7 +128,7 @@
 
 (define (eject_any a)
   (eject (let [(rep (domain_value_rep a))]
-           (if (element_of rep Num)
+           (if (domain_is rep Num)
              (domain_value_rep rep)
              rep))))
 
@@ -153,6 +153,7 @@
 //==========
 // Misc cases
 
+(expect_argument_error (domain_is  t_val int_any_val))     // 2nd arg not a domain
 (expect_argument_error (element_of t_val int_any_val))     // 2nd arg not a domain
 
 

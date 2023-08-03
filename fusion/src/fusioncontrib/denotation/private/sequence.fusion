@@ -65,7 +65,7 @@ Returns the domain of the seq's elements.
   (define (seq_domain_checker d values)
     (let [(subdomain (seq_domain_subdomain d))]
       (and (is_sexp values)
-           (every (|v| (direct_element_of v subdomain)) values))))
+           (every (|v| (domain_is v subdomain)) values))))
 
 
   (define (is_seq_domain d)
@@ -111,7 +111,7 @@ within `domain`'s subdomain.
         (let [(subdomain (seq_domain_subdomain domain))]
           (let loop [(i 1), (vs values)]
             (when (is_pair vs)
-              (if (direct_element_of (head vs) subdomain)
+              (if (domain_is (head vs) subdomain)
                 (loop (+ 1 i) (tail vs))
                 (apply raise_argument_error "seq"
                   (string_append "value in domain " (domain_name subdomain))
@@ -160,7 +160,7 @@ within `domain`'s subdomain.
     (unless (is_seq seq)
       (raise_argument_error "seq_append" "seq value" 1 v seq))
     (let [(subdomain (seq_domain_subdomain (domain_value_domain seq)))]
-      (unless (direct_element_of v subdomain)
+      (unless (domain_is v subdomain)
         (raise_argument_error "seq_prepend"
           (string_append "value in domain " (domain_name subdomain))
           0 v seq)))

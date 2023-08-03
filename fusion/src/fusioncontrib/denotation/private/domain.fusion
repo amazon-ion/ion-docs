@@ -36,7 +36,7 @@
     'record:domain_value'
     make_value
     is_domain_value
-    direct_element_of
+    domain_is
     domain_value_domain
     domain_value_rep
 
@@ -182,7 +182,12 @@ Creates a new domain "class".
         1 domain v))
     (domain_value domain v))
 
-  (define (direct_element_of v domain)
+  (define (domain_is v domain)
+    '''
+Determines whether `v` is a direct element of the `domain`.
+    '''
+    (unless (is_domain domain)
+      (raise_argument_error "domain_is" "domain" 1 v domain))
     (and (is_domain_value v)
          (ident domain (domain_value_domain v))))
 
@@ -317,7 +322,7 @@ Lifts a Fusion value into a base domain.
       domains))
 
   (define (union_domain_checker d v)
-    (any (|sub| (direct_element_of v sub))
+    (any (|sub| (domain_is v sub))
       (union_domain_subdomains d)))
 
   (define_syntax define_union_domain
@@ -386,7 +391,7 @@ Lifts a subdomain value into a union domain.
     (unless (is_union_domain_value v)
       (raise_argument_error "lower_to" "union-domain value" 1 d v))
     (let [(rep (domain_value_rep v))]
-      (unless (direct_element_of rep d)
+      (unless (domain_is rep d)
         (raise_argument_error "lower_to"
           (string_append "element of union-domain over " (domain_name d))
           1 d v))
@@ -434,7 +439,7 @@ Constructs a product-domain value.
                    (vs   (tail rest)),
                    (subs (apply sexp (product_domain_subdomains domain)))]
           (when (is_pair vs)
-            (if (direct_element_of (head vs) (head subs))
+            (if (domain_is (head vs) (head subs))
               (loop (+ 1 i) (tail vs) (tail subs))
               (apply raise_argument_error
                   (string_append "tuple " (domain_name domain))
@@ -478,7 +483,7 @@ Access component i of domain value v in domain d.
            (same_size values subdomains)
            (for_fold [(all_are_good true)]
                      [(v values), (s subdomains)]
-             (and all_are_good (direct_element_of v s))))))
+             (and all_are_good (domain_is v s))))))
 
   (define_syntax define_product_domain
     '''

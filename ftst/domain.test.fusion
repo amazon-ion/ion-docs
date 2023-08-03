@@ -12,14 +12,20 @@
 
 // Base domain values
 
+(check_false (domain_is  z_rep Z))        // 1st arg is not a domain value
 (check_false (element_of z_rep Z))
 
+(check_true (domain_is  z_val Z))
 (check_true (element_of z_val Z))
 (check === z_rep (eject z_val))
 
-(check_false (element_of t_val Any))
+(check_true  (domain_is  t_val T))
 (check_true  (element_of t_val T))
 
+(check_false (domain_is  int_any_val Z))
+(check_true  (element_of int_any_val Z))
+
+// eject
 (expect_argument_error (eject 1))              // not a domain value
 (expect_argument_error (eject int_exact_val))  // not a base domain value
 
@@ -27,12 +33,22 @@
 //====================
 // Union domain values
 
+// domain_is
+(check_true  (domain_is int_exact_val Exact))
+(check_true  (domain_is dec_exact_val Exact))
+(check_true  (domain_is int_any_val   Any))
+(check_false (domain_is int_any_val   Num))
+
+
 // element_of
 (check_true (element_of int_exact_val Exact))
 (check_true (element_of dec_exact_val Exact))
 (check_true (element_of int_any_val   Any))
-(check_true (element_of int_any_val   Num))
-(check_true (element_of int_any_val   Z))     // Sees "through" union domains.
+
+(check_true  (element_of int_any_val   Num))   // Succeeds when lowering would succeed
+(check_true  (element_of int_any_val   Z))
+(check_false (element_of z_val         Num))   // ... but not lifting
+(check_false (element_of t_val         Any))
 
 
 // lift_to
@@ -69,6 +85,7 @@
 //======================
 // Product domain values
 
+(check_true (domain_is  stamped_int_val Stamped))
 (check_true (element_of stamped_int_val Stamped))
 
 (expect_argument_error (tuple z_val z_rep))        // 1st arg isn't a domain
@@ -107,6 +124,9 @@
 (define empty_Zs (seq 'Z*'))
 (check_pred is_seq       empty_Zs)
 (check_pred seq_is_empty empty_Zs)
+
+(check_true (domain_is  empty_Zs 'Z*'))
+(check_true (element_of empty_Zs 'Z*'))
 
 (define z0 (inject_into Z 0))
 (define z1 (inject_into Z 1))

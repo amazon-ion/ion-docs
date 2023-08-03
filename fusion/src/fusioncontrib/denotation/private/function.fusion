@@ -86,13 +86,13 @@ Type-checking of function application:
                             (apply raise_arity_error name (size argdomains) args))
                           (let loop [(i 0), (ds argdomains), (as args)]
                             (when (is_pair ds)
-                              (if (direct_element_of (head as) (head ds))
+                              (if (domain_is (head as) (head ds))
                                 (loop (+ 1 i) (tail ds) (tail as))
                                 (apply raise_argument_error name
                                   (symbol_to_string (domain_name (head ds)))
                                   i args))))
                           (let [(r (apply impl args))]
-                            (unless (direct_element_of r out_dom)
+                            (unless (domain_is r out_dom)
                               (raise_result_error (string_append "result of " name)
                                 (symbol_to_string (domain_name out_dom)) r))
                             r)))]

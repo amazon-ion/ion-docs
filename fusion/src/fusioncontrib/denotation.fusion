@@ -51,6 +51,7 @@ Domains come in several types:
     domain_description
     domain_name
     display_domain
+    domain_is
     element_of
 
     // Base domain value operators
