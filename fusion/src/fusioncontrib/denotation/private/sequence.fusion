@@ -28,6 +28,7 @@
     seq_length
     seq_prepend
     seq_tail
+    seq_truncate
   )
 
 
@@ -177,4 +178,14 @@ within `domain`'s subdomain.
       (raise_argument_error "seq_append" "same sequence type" -1 seq0 seq1))
     (make_value (domain_value_domain seq0)
       (append (domain_value_rep seq0) (domain_value_rep seq1))))
+
+
+  (define (seq_truncate seq len)
+    (unless (is_seq seq)
+      (raise_argument_error "seq_truncate" "seq value" 0 seq len))
+    (unless (and (is_int len) (<= 0 len))
+      (raise_argument_error "seq_truncate" "non-negative int" 1 seq len))
+    (unless (<= len (seq_length seq))
+      (raise_argument_error "seq_truncate" "int <= sequence length" 1 seq len))
+    (make_value (domain_value_domain seq) (subseq (domain_value_rep seq) 0 len)))
 )
