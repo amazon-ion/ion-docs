@@ -7,8 +7,7 @@ A denotational semantic model of Ion.
 TODO
 ----
 Functional:
-* Implement $ion_symbol_table
-  * SID too large must raise an error
+* SID too large must raise an error. Need new way to test the LST maxid.
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
@@ -16,6 +15,8 @@ Functional:
 * Distinguish top and internal continuations, to prove that non-TLV cannot alter
   the environment.
 * SST compilation is very weak.
+* Catalog construction should reject duplicate keys, so we don't imply anything
+  about selection criteria.
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
@@ -311,14 +312,14 @@ Spec Problems
                   (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
                   (adjust_length (SST_symbols symtab) max))))))))
 
-    (fn normalize_name ((vs 'Value*') -> Unicode)  // "" is no-name sentinel
+    (fn normalize_name ((vs 'Value*') -> Unicode)             // "" = absent or invalid
       (if (seq_is_empty vs) EMPTY_UNICODE
         (let [(c (value_content (seq_head vs)))]
           (if (not (element_of c String)) EMPTY_UNICODE
             // TODO [NULL]
             (lower_to Unicode (lower_to String (lower_to SafeVal c)))))))
 
-    (fn normalize_version ((vs 'Value*') -> I)                // normalized to 1
+    (fn normalize_version ((vs 'Value*') -> I)                // 1 = absent or invalid
       (if (seq_is_empty vs) I_1
         (let [(c (value_content (seq_head vs)))]
           (if (not (element_of c Int)) I_1
@@ -326,12 +327,11 @@ Spec Problems
             (let [(i (lower_to I (lower_to Int (lower_to SafeVal c))))]
               (if (< (eject i) 1) I_1 i))))))
 
-    (fn normalize_max_id ((vs 'Value*') -> I)                // normalized to -1
+    (fn normalize_max_id ((vs 'Value*') -> I)                // < 0 = absent or invalid
       (if (seq_is_empty vs) (inject_into I -1)
         (let [(c (value_content (seq_head vs)))]
           (if (not (element_of c Int)) (inject_into I -1)
             // TODO [NULL]
-            // TODO range check
             (lower_to I (lower_to Int (lower_to SafeVal c)))))))
 
     (fn compile_import_struct ((s Struct) (r Environment) -> 'Symbolic*')
