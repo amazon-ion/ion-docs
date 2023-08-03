@@ -73,7 +73,7 @@
 (expect_argument_error (identity_fn t_val))    // Wrong argument type
 
 (define_fn bad_pred Pred (v) v)
-(expect_result_error (bad_pred int_any_val))   // Returns an Any, not a B
+(expect_result_error (bad_pred Any_true))      // Returns an Any, not a B
 
 
 // Now a real-ish function
