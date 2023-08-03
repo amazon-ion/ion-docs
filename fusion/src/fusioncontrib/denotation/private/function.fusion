@@ -78,9 +78,10 @@ Type-checking of function application:
         domain impl))
     (lets [(in_dom  (func_domain_input  domain)),
            (out_dom (func_domain_output domain)),
-           (applier (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
-                      (let [(argdomains (apply sexp (product_domain_subdomains in_dom)))]
-                        (lambda args
+           (argdomains  (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
+                          (apply sexp (product_domain_subdomains in_dom))
+                          (sexp in_dom))),
+           (applier     (lambda args
                           (unless (same_size argdomains args)
                             (apply raise_arity_error name (size argdomains) args))
                           (let loop [(i 0), (ds argdomains), (as args)]
@@ -94,20 +95,7 @@ Type-checking of function application:
                             (unless (element_of r out_dom)
                               (raise_result_error (string_append "result of " name)
                                 (symbol_to_string (domain_name out_dom)) r))
-                            r)))                                       // FIXME proper arg position
-                      (lambda args
-                        // Do our own arity checking so error message includes function name
-                        (unless (=== 1 (size args))
-                          (apply raise_arity_error name 1 args))
-                        (let [(v (head args))]
-                          (unless (or (not in_dom) (element_of v in_dom))  // TODO [TOP]
-                            (raise_argument_error name
-                              (symbol_to_string (domain_name in_dom)) 0 v))
-                          (let [(r (impl v))]
-                            (unless (element_of r out_dom)
-                              (raise_result_error (string_append "result of " name)
-                                (symbol_to_string (domain_name out_dom)) r))
-                            r)))))]
+                            r)))]
       (fn_ctor domain /*rep*/ null applier)))
 
 

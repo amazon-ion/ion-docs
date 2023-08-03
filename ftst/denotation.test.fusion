@@ -83,7 +83,8 @@
 (let [(converted (convert_Num_to_Exact int_num_val))]
   (check_true (element_of converted Exact))
   (check_same z_val (lower_to Z converted)))
-(expect_argument_error (convert_Num_to_Exact flt_num_val))
+
+(expect_argument_error (convert_Num_to_Exact int_any_val))
 
 (expect_syntax_error (fn bad_identity Any2Any identity))  // Missing argument declaration
 
