@@ -11,8 +11,6 @@ Functional:
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
-* Distinguish top and internal continuations, to prove that non-TLV cannot alter
-  the environment.
 * SST compilation is very weak.
 * Catalog construction should reject duplicate keys, so we don't imply anything
   about selection criteria.
@@ -407,20 +405,17 @@ Spec Problems
     //=======================
     // Denotations
 
-    (dom Continuation = (-> Environment 'Value*' 'Value*'))
-
-    (fn k0 Continuation (e v)                      // The bootstrap continuation
-      v)
-
+    (dom Continuation = (-> 'Value*' 'Value*')
+      "Continuation where the environment cannot be changed.")
 
     (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
       (E_RContent (rval_content vr) r
         (mk_fn CContinuation (c1)
-          (k r (seq 'Value*' (tuple Value (expand_SymToks r (rval_annots vr)) c1))))))
+          (k (seq 'Value*' (tuple Value (expand_SymToks r (rval_annots vr)) c1))))))
 
     (dom CContinuation = (-> Content 'Value*')
-      "Accepts results of value expansion, sans annotations")
+      "Continuation when expanding a value's content.")
 
     (fn E_RContent ((vr RContent) (r Environment) (k CContinuation) -> 'Value*')
       // General value evaluation
@@ -444,20 +439,23 @@ Spec Problems
       (if (element_of v DotNull)
         (k (lift_to Content (lift_to List (singleton DotNull))))
         ('E*' (lower_to 'RVal*' v) r
-          (mk_fn Continuation (r1 vs1)
+          (mk_fn Continuation (vs1)
             (k (lift_to Content (lift_to List vs1)))))))
 
-    (dom FContinuation = (-> 'Field*' 'Value*'))
+
+    (dom FContinuation = (-> 'Field*' 'Value*')
+      "Continuation when expanding struct fields.")
+
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) (k FContinuation) -> 'Value*')
       (if (seq_is_empty rfs)
         (k (seq 'Field*'))
         (E (rfield_value (seq_head rfs)) r
-          (mk_fn Continuation (r1 vs1)               // Value(s) from head field
+          (mk_fn Continuation (vs1)                  // Value(s) from head field
             // TODO Verify that vs1 is singleton?
-            ('E_RField*' (seq_tail rfs) r1
+            ('E_RField*' (seq_tail rfs) r
               (mk_fn FContinuation (fs2)             // Field* from tail fields
                 (k (seq_prepend (tuple Field
-                                  (expand_SymTok r1 (rfield_name (seq_head rfs)))
+                                  (expand_SymTok r (rfield_name (seq_head rfs)))
                                   (seq_head vs1))
                      fs2))))))))
 
@@ -471,37 +469,40 @@ Spec Problems
 
     (fn 'E*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
       (if (seq_is_empty vrs)
-        (k r (seq 'Value*'))
+        (k (seq 'Value*'))
         (E (seq_head vrs) r
-          (mk_fn Continuation (r1 vs1)
-            ('E*' (seq_tail vrs) r1
-              (mk_fn Continuation (r2 vs2)
-                (k r2 (seq_append vs1 vs2))))))))
+          (mk_fn Continuation (vs1)
+            ('E*' (seq_tail vrs) r
+              (mk_fn Continuation (vs2)
+                (k (seq_append vs1 vs2))))))))
 
 
     // Top-level expansion
 
-    (fn TE ((vr TRVal) (r Environment) (k Continuation) -> 'Value*')
+    (dom TContinuation = (-> Environment 'Value*' 'Value*')
+      "Continuation when expanding top-level values")
+
+    (fn TE ((vr TRVal) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of vr IVM)
         (k (env_for_ivm r (lower_to IVM vr)) (seq 'Value*'))
         (E (lower_to RVal vr) r
-          (mk_fn Continuation (r1 vs1)
+          (mk_fn Continuation (vs1)
             (if (seq_is_empty vs1)
-              (k r1 vs1)
+              (k r vs1)
               (if (eject (is_$ion_symbol_table (seq_head vs1)))
-                (k (env_for_$ion_symbol_table r1
+                (k (env_for_$ion_symbol_table r
                      (lower_to Struct (value_content (seq_head vs1))))
                    (seq_tail vs1))                             // TODO what if more than one value?
                 // Expand normally
-                (k r1 vs1)))))))
+                (k r vs1)))))))
 
-    (fn 'TE*' ((vrs 'TRVal*') (r Environment) (k Continuation) -> 'Value*')
+    (fn 'TE*' ((vrs 'TRVal*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (k r (seq 'Value*'))
         (TE (seq_head vrs) r
-          (mk_fn Continuation (r1 vs1)
+          (mk_fn TContinuation (r1 vs1)
             ('TE*' (seq_tail vrs) r1
-              (mk_fn Continuation (r2 vs2)
+              (mk_fn TContinuation (r2 vs2)
                 (k r2 (seq_append vs1 vs2))))))))
 
   /*
@@ -515,6 +516,8 @@ Spec Problems
     (den 'TE*' "Top-level stream evaluation"
       ('TRVal*' x Environment x Continuation -> 'Value*'))
   */
+
+    (fn k0 TContinuation (e v) v)                     // The bootstrap continuation
 
     (fn expand ((rvals 'TRVal*') (c Catalog) -> 'Value*')
       ('TE*' (seq_prepend (lift_to TRVal IVM_1_0) rvals)
