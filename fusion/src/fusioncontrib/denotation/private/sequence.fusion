@@ -69,7 +69,7 @@ Returns the domain of the seq's elements.
 
 
   (define (is_seq_domain d)
-    (and (is_domain d) (ident SeqDomain (domain_type d))))
+    (is_domain_of_type SeqDomain d))
 
 
   (define_syntax define_seq_domain

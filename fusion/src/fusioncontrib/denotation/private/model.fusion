@@ -69,7 +69,7 @@ Returns:
              (def_val (syntax_unwrap def)),
              (desc (if (< 4 (syntax_size dom_stx)) (syntax_get dom_stx 4) null.string))]
         (if (is_string def_val)
-          (result (QQ (define_dummy_domain (UQ name) (UQ def))))
+          (result (QQ (define_singleton_domain (UQ name) (UQ def))))
           (if (is_sexp def_val)
               (let [(op   (syntax_unwrap (head def_val))),
                     (args (tail def_val))]
@@ -104,7 +104,7 @@ Returns:
     '''
     (dom name = description)
 
-Defines a dummy domain with the given name and description.
+Defines a singleton domain with the given name and description.
 
     (dom name = <domain-spec> description?)
 

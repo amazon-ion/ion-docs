@@ -54,6 +54,9 @@ Domains come in several types:
     domain_is
     element_of
 
+    // Singleton domains
+    singleton
+
     // Base domain value operators
     inject_into
     eject

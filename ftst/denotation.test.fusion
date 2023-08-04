@@ -43,7 +43,7 @@
 (check_pred is_domain Stamped)
 (check_pred is_domain Any2Any)
 
-(check === "dummy" (domain_description Dummy))
+(check === "singleton" (domain_description Single))
 (check === "Integers" (domain_description Z))
 (check === "All Values" (domain_description Any))
 (check === "A timestamped value" (domain_description Stamped))

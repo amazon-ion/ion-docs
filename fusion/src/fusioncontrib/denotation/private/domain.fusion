@@ -19,6 +19,7 @@
 
     // Domains
     is_domain
+    is_domain_of_type
     domain_description
     domain_name
     domain_data
@@ -26,7 +27,6 @@
     display_domain
     element_of
 
-    define_dummy_domain
     define_base_domain
     define_union_domain
     define_product_domain
@@ -39,6 +39,10 @@
     domain_is
     domain_value_domain
     domain_value_rep
+
+    // Singleton domains
+    define_singleton_domain
+    singleton
 
     // Base domain value operators
     is_base_domain
@@ -200,30 +204,39 @@ Determines whether `v` is a direct element of the `domain`.
 
 
   //-------------------
-  // Dummy Domains
+  // Singleton Domains
 
-  (define DummyDomain
-    (make_domain_meta "DummyDomain"
+  (define SingletonDomain
+    (make_domain_meta "SingletonDomain"
       (|d| (display "<" (domain_description d) ">"))
       null))
 
-  (define (make_dummy_domain name desc)
-    (make_domain DummyDomain name (always true) desc null))
+  (define (make_singleton_domain name desc)
+    (make_domain SingletonDomain name (always true) desc null))
+
+  (define (is_singleton_domain d)
+    (is_domain_of_type SingletonDomain d))
+
+  (define (singleton d)
+    "Returns a value in a singleton domain `d`."
+    (unless (is_singleton_domain d)
+      (raise_argument_error "singleton" "singleton domain" 0 d))
+    (make_value d null))
 
 
-  (define_syntax define_dummy_domain
+  (define_syntax define_singleton_domain
     '''
-    (define_dummy_domain name description)
+    (define_singleton_domain name description)
     '''
     (lambda (stx)
       (unless (=== (syntax_size stx) 3)
-        (wrong_syntax stx "Bad syntax for define_dummy_domain"))
+        (wrong_syntax stx "Bad syntax for define_singleton_domain"))
       (let [(name_stx (syntax_get stx 1)),
             (desc_stx (syntax_get stx 2))]  // TODO typecheck
         (datum_to_syntax
           (QQ
             (define (UQ name_stx)
-              (make_dummy_domain
+              (make_singleton_domain
                 (quote (UQ name_stx))
                 (UQ desc_stx))))
           (quote_syntax context)
@@ -247,7 +260,7 @@ Determines whether `v` is a direct element of the `domain`.
         pred)))
 
   (define (is_base_domain d)
-    (and (is_domain d) (ident BaseDomain (domain_type d))))
+    (is_domain_of_type BaseDomain d))
 
   (define (base_domain_predicate d)
     (domain_data d))
@@ -316,7 +329,7 @@ Lifts a Fusion value into a base domain.
     (make_domain UnionDomain name union_domain_checker description domain_producer))
 
   (define (is_union_domain d)
-    (and (is_domain d) (ident UnionDomain (domain_type d))))
+    (is_domain_of_type UnionDomain d))
 
   (define (union_domain_subdomains d)
     "Returns list of domains"
@@ -417,7 +430,7 @@ Lifts a subdomain value into a union domain.
     (make_domain ProductDomain name product_domain_checker description domain_producer))
 
   (define (is_product_domain d)
-    (and (is_domain d) (ident ProductDomain (domain_type d))))
+    (is_domain_of_type ProductDomain d))
 
   (define (product_domain_subdomains d)
     '''

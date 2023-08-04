@@ -9,7 +9,18 @@
   "/model1")
 
 
+//====================
+// Singleton domains
 
+(define SINGLE (singleton Single))
+
+(check_true (domain_is  SINGLE Single))
+(check_true (element_of SINGLE Single))
+
+(expect_argument_error (singleton B))
+
+
+//====================
 // Base domain values
 
 (check_false (domain_is  z_rep Z))        // 1st arg is not a domain value

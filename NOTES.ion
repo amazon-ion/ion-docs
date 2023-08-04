@@ -4,23 +4,26 @@
 
 TODOs
 -----
+* Domain extension; pre-define B/Z/D/F/S/T
+  * Or perhaps import desired features?
 * [BOOL] Proper functional handling of booleans and if.
   * Needs import function to bring in framework-defined doms and fns.
   * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
+* BOTTOM domain for error reporting.
+* Typecase to safely and completely lower a union domain value
+  * Similar seqcase to traverse sequences
+* Ensure Union domains are fully disjoint, even when inlining nested Unions.
+  * This makes indirect lowering unambiguous.
 * Domain constants `(val <name> <expr>)`
+* Automatically create 'Domain*' for each 'Domain'. Perhaps 'Domain?' too?
 * Product domains should allow one field; more natural than singleton unions.
 * [LET] Functional let form. (See L.I.S.P. p172)
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
-* Sequence domains like Val+
-* Singleton domains (replace dummy domains?)
-* Domain extension; pre-define B/Z/D/F/S/T
-  * Or perhaps import desired features?
 * display_model should print functions (and denoters)
 * TOP domain
-* BOTTOM domain
 * Delay and memoize component domains (enable recursive types)
-* Typecase to safely and completely lower a union domain value
+* Sequence domains like Val+
 
 
 Requires Fusion features:

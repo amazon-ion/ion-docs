@@ -8,7 +8,7 @@
 
 
   (define_model M1
-    (dom Dummy = "dummy")
+    (dom Single = "singleton")
 
     (dom B = (^ is_bool)      "Booleans")
     (dom Z = (^ is_int)       "Integers")

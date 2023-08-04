@@ -125,9 +125,9 @@ Utilities for testing the Ion denotational model.
           (true (raise_argument_error "mk_RVal" "symbol/bool/int/string/list" 0 c))))))
 
   (define (mk_TRVal c)
-    (if (=== (quote '#$ion_1_0') c)
-      IVM_1_0
-      (lift_to TRVal
+    (lift_to TRVal
+      (if (=== (quote '#$ion_1_0') c)
+        IVM_1_0
         (mk_RVal c))))
 
 
