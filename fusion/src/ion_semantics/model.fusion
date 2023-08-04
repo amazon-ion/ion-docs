@@ -326,43 +326,40 @@ Spec Problems
                       (normalize_max_id  (Struct_get1 s "max_id"))
                       (Environment_cat r)))
 
-    (fn compile_imports_elt ((c Content) (r Environment) -> 'Symbolic*')
-      (if (and (element_of c Struct) (not (element_of c DotNull)))
-        (compile_import_struct (lower_to Struct c) r)
-        EMPTY_SYMBOLICS))
-
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'Symbolic*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
-        (seq_append (compile_imports_elt (value_content (seq_head vs)) r)
+        (seq_append (let [(c (value_content (seq_head vs)))]
+                      (if (and (element_of c Struct) (not (element_of c DotNull)))
+                        (compile_import_struct (lower_to Struct c) r)
+                        EMPTY_SYMBOLICS))
                     (compile_imports_elts (seq_tail vs) r))))
 
     (fn compile_imports_field ((v Value) (r Environment) -> 'Symbolic*')
       (if (eject (Value_is_symbol_matching v "$ion_symbol_table"))
         (lower_to 'Symbolic*' (Environment_lst r))
-        (seq_append (system_symbols (Environment_ivm r))
+        (seq_append
+          (system_symbols (Environment_ivm r))
           (let [(c (value_content v))]
             (if (and (element_of c List) (not (element_of c DotNull)))
               (compile_imports_elts (List_elts (lower_to List (value_content v))) r)
               EMPTY_SYMBOLICS)))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
-      (if (seq_is_empty (Struct_get1 s "imports"))
-        (system_symbols (Environment_ivm r))
-        (compile_imports_field (seq_head (Struct_get1 s "imports")) r)))
+      (let [(vals (Struct_get1 s "imports"))]
+        (if (seq_is_empty vals)
+          (system_symbols (Environment_ivm r))
+          (compile_imports_field (seq_head vals) r))))
 
-
-    (fn compile_symbols_elt ((c Content) -> Symbolic)
-      (if (element_of c DotNull)
-        (lift_to Symbolic SYM0)
-        (if (element_of c String)
-          (lift_to Symbolic (lower_to Unicode (lower_to String (lower_to SafeVal c))))
-          (lift_to Symbolic SYM0))))
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
-        (seq_prepend (compile_symbols_elt (value_content (seq_head vs)))
+        (seq_prepend (let [(c (value_content (seq_head vs)))]
+                       (lift_to Symbolic
+                         (if (and (element_of c String) (not (element_of c DotNull)))
+                           (lower_to Unicode (lower_to String (lower_to SafeVal c)))
+                           SYM0)))
                      (compile_symbols_elts (seq_tail vs)))))
 
     (fn declared_symbols ((s Struct) -> 'Symbolic*')
