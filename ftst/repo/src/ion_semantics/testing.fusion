@@ -50,7 +50,7 @@ Utilities for testing the Ion denotational model.
   // Safe types
 
   (define (mk_NullNull c)
-    (lift_to NullNull (singleton DotNull)))
+    (lift DOTNULL NullNull))
 
   (define (mk_Boolean c)
     (cond

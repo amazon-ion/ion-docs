@@ -58,12 +58,12 @@ What do we want a denoter to do?
 Resolves symbols in a single raw value.
   '''
   (match
-    [RSym::sym]    (k r (lift_to Symbol (symbolize r sym)))    // E[[sym]]rk = k r symbolize(r sym)
+    [RSym::sym]    (k r (lift (symbolize r sym) Symbol))    // E[[sym]]rk = k r symbolize(r sym)
     [RStruct::str] (k r (new_struct))
     [RList::l]     ('Ev*' (lower_to 'RVal*' l) r
                      (Continuation (r1 vs)
-                       (k r1 (lift_to 'RList' vs))))
-    [SafeVal::s]   (k r (lift_to Value s))))
+                       (k r1 (lift vs 'RList'))))
+    [SafeVal::s]   (k r (lift s Value))))
 '''
 ^^^^^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^^^^
 This is syntax in   This is "real code" as in define_fn
@@ -92,7 +92,7 @@ Factoring out new top-level functions will make it easier to debug, I think.
            vvvvvvv  vvvvvvvvv
 '''
 (define_fn Ev_RSym (RSym::sym Environment::r Continuation::k -> 'Value*')
-  (k r (lift_to Symbol (symbolize r sym))))
+  (k r (lift (symbolize r sym) Symbol)))
 (define_fn Ev_RStruct
   ...)
 (define_fn Ev (RVal::rv Environment::r Continuation::k -> 'Value*')

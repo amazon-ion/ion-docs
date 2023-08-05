@@ -78,7 +78,7 @@
 
 // Now a real-ish function
 (define_fn convert_Num_to_Exact ((v Num) -> Exact)  // Assumes v ∈ Exact
-  (lift_to Exact (lower_to Z v)))                   // TODO handle D as well
+  (lift (lower v Z) Exact))                         // TODO handle D as well
 
 (let [(converted (convert_Num_to_Exact int_num_val))]
   (check_true (domain_is converted Exact))

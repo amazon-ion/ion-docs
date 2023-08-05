@@ -93,6 +93,29 @@
 (expect_argument_error (lower_to Z   int_any_val)) // 2nd are is two unions above target domain
 
 
+// lift
+(let [(v (lift z_val Num))]
+  (check_true (domain_is v Num))
+  (check_same z_rep (eject (lower v Z))))
+(let [(v (lift z_val Num Any))]
+  (check_true (domain_is v Any))
+  (check_same z_rep (eject (lower v Num Z))))
+
+(expect_argument_error (lift z_val Z))     // 2nd arg is not a union domain
+(expect_argument_error (lift z_val Num Z)) // 3rd arg is not a union domain
+
+(expect_arity_error (lift))
+(expect_arity_error (lift int_num_val))
+
+
+// lower
+(expect_argument_error (lower int_num_val Num))    // 2nd arg is not a subdomain
+(expect_argument_error (lower int_any_val Num B))  // 3rd arg is not a subdomain
+
+(expect_arity_error (lower))
+(expect_arity_error (lower int_num_val))
+
+
 //======================
 // Product domain values
 

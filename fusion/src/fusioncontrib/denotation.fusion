@@ -62,9 +62,11 @@ Domains come in several types:
     eject
 
     // Union domain value operators
+    lift
     lift_to
     subdomain
 //  unwrap     // Considered unsafe
+    lower
     lower_to
 
     // Product domain operators

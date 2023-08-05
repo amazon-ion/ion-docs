@@ -53,9 +53,11 @@
 
     // Union domain value operators
     is_union_domain_value
+    lift
     lift_to
     subdomain
     unwrap
+    lower
     lower_to
 
     // Product domain operators
@@ -415,6 +417,27 @@ Lifts a subdomain value into a union domain.
           1 d v))
       rep))
 
+
+  (define lift
+    (lambda args
+      (unless (is_pair (tail args))
+        (apply raise_arity_error "lift" 2 args))                // TODO 2 is not correct
+      (let loop [(i 1), (val (head args)), (doms (tail args))]
+        (if (is_pair doms)
+          (if (is_union_domain (head doms))
+            (loop (+ i 1) (lift_to (head doms) val) (tail doms))
+            (apply raise_argument_error "lift" "union domain" i args))
+          val))))
+
+  (define lower
+    (lambda args
+      (unless (is_pair (tail args))
+        (apply raise_arity_error "lower" 2 args))                // TODO 2 is not correct
+      (let loop [(i 1), (val (head args)), (doms (tail args))]
+        // TODO typecheck val
+        (if (is_pair doms)
+          (loop (+ i 1) (lower_to (head doms) val) (tail doms))
+          val))))
 
   //-------------------
   // Product Domains
