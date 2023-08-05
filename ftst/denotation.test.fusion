@@ -144,6 +144,15 @@
 (check === (quote (1 2 3))
   (eject_Anys (select_ints anys)))  // select_ints has a local Pred fn
 
+
+// Given domain is not a func-domain.
+(expect_contract_error (mk_fn Any (a) true_val))
+
+// Detect arity mismatch when the function is created, not when invoked
+(expect_contract_error (mk_fn Pred    (a b)   true_val))
+(expect_contract_error (mk_fn Stamper (a)     stamped_int_val))
+(expect_contract_error (mk_fn Stamper (a b c) stamped_int_val))
+
 (expect_syntax_error (mk_fn))                   // Too few subforms
 (expect_syntax_error (mk_fn Pred))
 (expect_syntax_error (mk_fn Pred (arg)))

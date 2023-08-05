@@ -76,7 +76,9 @@ Predicate for domain functions.
           (quote ())
           (let [(d (head ds)), (a (head as))]
             (pair (typecheck_value d a
-                    (|| (apply raise_argument_error name (symbol_to_string d) i args)))
+                    (|| (apply raise_argument_error name
+                          (symbol_to_string (domain_name d))
+                          i args)))
               (loop (+ 1 i) (tail ds) (tail as))))))))
 
   (define (make_fn name domain impl)
@@ -91,17 +93,11 @@ Type-checking of function application:
     '''
       // TODO validate name
     (unless (is_func_domain domain)
-      (raise_argument_error "make_fn" "function domain" 0
-        domain impl))
+      (raise_argument_error "make_fn" "function domain" 0 domain impl))
     (unless (is_procedure impl)
-      (raise_argument_error "make_fn" "procedure" 1
-        domain impl))
-    (lets [(in_dom  (func_domain_input  domain)),
+      (raise_argument_error "make_fn" "procedure" 1 domain impl))
+    (lets [(argdomains (apply sexp (func_domain_argdomains domain))),
            (out_dom (func_domain_output domain)),
-           (argdomains (if (and (is_product_domain in_dom)
-                                (is_null (domain_name in_dom)))
-                         (apply sexp (product_domain_subdomains in_dom))
-                         (sexp in_dom))),
            (applier (lambda rest
                       (lets [(args (typecheck_actuals name argdomains rest)),
                              (r (apply impl args))]
@@ -111,9 +107,20 @@ Type-checking of function application:
       (fn_ctor domain /*rep*/ null applier)))
 
 
+  (define (check_fn_arity d args)
+    (unless (is_func_domain d)
+      (raise_contract_error "mk_fn"
+        (display_to_string "expected function domain, given "
+          (if (is_domain d) (domain_name d) d))))
+    (let [(arity (size (func_domain_argdomains d)))]
+      (unless (same arity (size args))
+        (raise_contract_error "mk_fn"
+          (display_to_string (domain_name d) " has arity " arity " but declaration is " args)))))
+
+
   (define_syntax mk_fn
     '''
-    (mk_fn domain (arg ...+) body) => (fn_validator domain (lambda (arg ...) body))
+    (mk_fn domain (arg ...+) body)
     '''
     (lambda (stx)
       (unless (=== 4 (syntax_size stx))
@@ -124,13 +131,20 @@ Type-checking of function application:
         (unless (is_identifier domain_stx)
           (wrong_syntax stx "invalid domain name: " domain_stx))
         (let [(args (syntax_unwrap args_stx))]
-          (unless (and (is_sexp args) args)   // Reject null.sexp
+          // TODO ensure sexp of identifiers
+          (unless (and (is_sexp args)
+                        args)         // Reject null.sexp
             (wrong_syntax stx "expected args sexp: " args_stx)))
         (datum_to_syntax
-          (QQ (make_fn
-                "local fn" // (string_append "local " (or (domain_name domain) "function")))
-                (UQ domain_stx)
-                (lambda (UQ args_stx) (UQ body_stx))))
+          // Using a let-binding forces a continuation frame with the mk_fn location.
+          (QQ (let [(loc (UQ (datum_to_syntax
+                               (QQ (check_fn_arity (UQ domain_stx) (quote (UQ args_stx))))
+                               CTX
+                               stx)))]
+                (make_fn
+                  "local fn" // (string_append "local " (or (domain_name domain) "function")))
+                  (UQ domain_stx)
+                  (lambda (UQ args_stx) (UQ body_stx)))))
           CTX
           stx))))
 

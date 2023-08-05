@@ -571,6 +571,7 @@ or null for TOP (accept any one value).
   (define (func_domain_output d) (list_element (domain_data d) 1))
 
   (define (func_domain_argdomains d)
+    "Return list of domains for the arguments to `d`."
     (let [(in_dom (func_domain_input d))]
       (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
         (product_domain_subdomains in_dom)
