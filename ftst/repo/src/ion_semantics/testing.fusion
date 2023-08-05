@@ -53,66 +53,57 @@ Utilities for testing the Ion denotational model.
     (lift DOTNULL NullNull))
 
   (define (mk_Boolean c)
-    (cond
-      ((is_null c) (lift_to Boolean (singleton DotNull)))
-      ((is_bool c) (lift_to Boolean (inject_into B c)))
-      (true (raise_argument_error "mk_Boolean" "null or bool" 0 c))))
+    (lift_to Boolean
+      (if (is_null c) DOTNULL
+        (inject_into B c))))
 
   (define (mk_Int c)
-    (cond
-      ((is_null c) (lift_to Int (singleton DotNull)))
-      ((is_int  c) (lift_to Int (inject_into I c)))
-      (true (raise_argument_error "mk_Int" "null or int" 0 c))))
+    (lift_to Int
+      (if (is_null c) DOTNULL
+        (inject_into I c))))
 
   (define (mk_String c)
-    (cond
-      ((is_null   c) (lift_to String (singleton DotNull)))
-      ((is_string c) (lift_to String (inject_into Unicode c)))
-      (true (raise_argument_error "mk_String" "null or string" 0 c))))
+    (lift_to String
+      (if (is_null c) DOTNULL
+        (inject_into Unicode c))))
 
   (define (mk_SafeVal c)
-    (cond
-      ((is_null_null c) (lift_to SafeVal (mk_NullNull c)))
-      ((is_bool   c) (lift_to SafeVal (mk_Boolean c)))
-      ((is_int    c) (lift_to SafeVal (mk_Int c)))
-      ((is_string c) (lift_to SafeVal (mk_String c)))
-      (true (raise_argument_error "mk_SafeVal" "null/bool/int/string" 0 c))))
+    (lift_to SafeVal
+      (cond
+        ((is_null_null c) (mk_NullNull c))
+        ((is_bool      c) (mk_Boolean  c))
+        ((is_int       c) (mk_Int      c))
+        ((is_string    c) (mk_String   c))
+        (true (raise_argument_error "mk_SafeVal" "null/bool/int/string" 0 c)))))
 
 
   // Symbols
 
   (define (mk_SymTok c)
     (lift_to SymTok
-      (cond
-        ((is_string c) (inject_into Unicode c))
-        ((is_symbol c) (let [(str (symbol_to_string c))]
-                         (if (string_starts_with str "#$")
-                           (inject_into I (string_to_int (string_replace str "#$" "")))
-                           (inject_into Unicode str))))
-        ((is_int    c) (inject_into I c))
-        (true (raise_argument_error "mk_SymTok" "text/int" 0 c)))))
+      (if (is_int c)
+        (inject_into I c)
+        (let [(str (symbol_to_string c))]
+          (if (string_starts_with str "#$")
+            (inject_into I (string_to_int (string_replace str "#$" "")))
+            (inject_into Unicode str))))))
 
   (define (mk_RSym c)
-    (cond
-      ((is_null   c) (lift_to RSym (singleton DotNull)))
-      ((is_string c) (lift_to RSym (mk_SymTok c)))
-      ((is_symbol c) (lift_to RSym (mk_SymTok c)))
-      ((is_int    c) (lift_to RSym (mk_SymTok c)))
-      (true (raise_argument_error "mk_RSym" "null/text/int" 0 c))))
+    (lift_to RSym
+      (if (is_null c) DOTNULL
+        (mk_SymTok c))))
 
 
   // Containers
 
   (define (mk_RList c)
     (lift_to RList
-      (if (is_null c)
-        (singleton DotNull)
+      (if (is_null c) DOTNULL
         (apply seq 'RVal*' (map mk_RVal c)))))
 
   (define (mk_RStruct c)
     (lift_to RStruct
-      (if (is_null c)
-        (singleton DotNull)
+      (if (is_null c) DOTNULL
         (apply seq 'RField*'
           (for_list [((k v) c)]
             (tuple RField (mk_SymTok k) (mk_RVal v)))))))
@@ -121,99 +112,22 @@ Utilities for testing the Ion denotational model.
   // Values
 
   (define (mk_RVal c)
-    (tuple RVal (apply seq 'SymTok*' (map mk_SymTok (annotations c)))
+    (tuple RVal
+      (apply seq 'SymTok*' (map mk_SymTok (annotations c)))
       (lift_to RContent
-        (cond
-          // TODO Annotations are not stripped from c and are injected into the model.
-          //  This is confusing when debugging, at the very least.
-          //  Currently this is counterbalanced by how eject_Value applies annotations.
-          ((is_safe   c)       (mk_SafeVal c))
-          ((is_symbol c)       (mk_RSym    c))
-          ((is_list   c)       (mk_RList   c))
-          ((is_struct c)       (mk_RStruct c))
-          ((domain_is c RSym)  c)
-          (true (raise_argument_error "mk_RVal" "symbol/bool/int/string/list" 0 c))))))
+        (let [(c (annotate c))]  // Remove any annotations
+          (cond
+            ((is_safe   c) (mk_SafeVal c))
+            ((is_symbol c) (mk_RSym    c))
+            ((is_list   c) (mk_RList   c))
+            ((is_struct c) (mk_RStruct c))
+            (true (raise_argument_error "mk_RVal" "symbol/bool/int/string/list" 0 c)))))))
 
   (define (mk_TRVal c)
     (lift_to TRVal
       (if (=== (quote '#$ion_1_0') c)
         IVM_1_0
         (mk_RVal c))))
-
-
-  //============================================================================
-  // Comparing normal-ish Fusion data with the output domain values
-
-  // Safe types
-
-  (define_check (check_Int expected actual)
-    // TODO null.int
-    (check === expected (eject (check_lower actual I))))
-
-  (define_check (check_SafeVal expected actual)
-    (cond
-      ((is_int expected) (check_Int expected (check_lower actual Int)))
-      (true (fail "Unhandled expected value"))))
-
-
-  // Symbols
-
-  (define_check (check_Sym0 actual)
-    (check_same Sym0 (subdomain actual)))
-
-  (define_check (check_Symbol expected actual)
-    // TODO $0, null.symbol
-    (check === (symbol_to_string expected)
-      (eject (check_lower actual Symbolic Unicode))))
-
-
-  // Containers
-
-  (define_check (check_List expected actual)
-    (check_Values (apply sexp expected) (check_lower actual 'Value*')))
-
-  (define_check (check_Struct expected actual)
-    //   Perhaps we should be using Fusion equality to make this easier.
-    //   Transform the modeled result into Fusion data and === to expected Fusion data.
-    //   Not sure how to handle $0 since Fusion can't represent it.  We could use a
-    //   sentinel value but that doesn't work for field names and annotations.
-
-    // Turn expected and actual structs into list of key/values pairs, then use bag_equal.
-    (let [(exp_bag (for_list [((k v) expected)]
-                     (pair (symbol_to_string k) v))),
-          (act_bag (for_list [(f (seq_to_sexp (check_lower actual 'Field*')))]
-                     (pair (eject (check_lower (ith f 0) Unicode))
-                           (ith f 1))))]
-      (check (curry_left bag_equal (|e a| (and (=== (head e) (head a))
-                                               (equals_Value (tail e) (tail a)))))
-        exp_bag act_bag)))
-
-
-  // Values
-
-  (define_check (check_Value expected actual)
-    (let_values [((annot content) (tuple_values actual))]
-      (cond
-        ((is_safe   expected) (check_SafeVal expected (check_lower content SafeVal)))
-        ((is_symbol expected) (check_Symbol  expected (check_lower content Symbol)))
-        ((is_list   expected) (check_List    expected (check_lower content List)))
-        ((is_struct expected) (check_Struct  expected (check_lower content Struct)))
-        (true (fail "Unhandled expected value")))))
-
-  (define (check_Values expecteds actuals) // sexp and Value*
-    (let loop [(es expecteds), (as actuals)]
-      (check_same (is_empty es) (seq_is_empty as))
-      (or (is_empty es)
-          (begin
-            (check_Value (head es) (ith as 0))
-            (loop (tail es) (seq_tail as))))))
-
-  (define (equals_Value expected actual)
-    // Hacky way to avoid writing both raising and non-raising comparisons.
-    (with_handlers
-      [(is_check_error (|e| false))]
-    (check_Value expected actual)
-    true))
 
 
   //============================================================================
@@ -241,12 +155,13 @@ Utilities for testing the Ion denotational model.
       (eject (unwrap v))))
 
   (define (eject_SafeVal v)
-    (cond
-      ((element_of v NullNull) (eject_NullNull (unwrap v)))
-      ((element_of v Boolean ) (eject_Boolean  (unwrap v)))
-      ((element_of v Int     ) (eject_Int      (unwrap v)))
-      ((element_of v String  ) (eject_String   (unwrap v)))
-      (true (raise (subdomain v)))))
+    (let [(ejector (cond
+                     ((element_of v NullNull) eject_NullNull)
+                     ((element_of v Boolean ) eject_Boolean )
+                     ((element_of v Int     ) eject_Int     )
+                     ((element_of v String  ) eject_String  )
+                     (true (raise (subdomain v)))))]
+      (ejector (unwrap v))))
 
 
   // Symbols
@@ -356,11 +271,6 @@ Utilities for testing the Ion denotational model.
   (define (expand_doc input)
     "Parse top-level inputs (contained in a sequence) into `TRVal*` then expand it."
     (expand (apply parse input) testing_catalog))
-
-  (define doc_matches
-    (lambda expecteds
-      (lambda (actuals)
-        (check_Values expecteds actuals))))
 
   (define_binary_check (check_expansion expected input)
     // Inner check ensures the failure message shows the ejected data.
