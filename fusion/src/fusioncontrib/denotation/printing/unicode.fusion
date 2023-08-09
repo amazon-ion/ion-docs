@@ -17,8 +17,10 @@ Print domain models in a Unicode-rich plain-text format.
     uniprinter
   )
 
+
   (define (pp_tuple t r)
     (pp_print_terms t r "⟨" ", " "⟩"))
+
 
   (define uniprinter
     '''
@@ -71,5 +73,12 @@ A model printer that renders in Unicode plain-text.
         // For any other syntax form, unwrap and try again.
         (type_method is_syntax
           (|stx r| (pp_print (syntax_unwrap stx) r)))
+
+        (type_method is_domain
+          (|d r| (display_domain d)))
+
+        (type_method is_model
+          (|m r| (display "Domains\n=======")
+                 (pp_print_terms (apply sexp (model_domains m)) r "\n" "\n" "\n")))
       )))
 )

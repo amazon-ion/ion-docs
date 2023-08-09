@@ -53,3 +53,24 @@
 (check_unicode
   "filter(vs, p) = IF #vs = 0 THEN ⟨⟩ ELSE IF p(vs↓0) THEN ⟨vs↓0⟩§filter(vs†1, p) ELSE filter(vs†1, p) ENDIF ENDIF"
   filter)
+
+
+(define_model Tiny
+  (dom Single = "single")
+  (dom B = (^ is_bool))
+  (dom U = (+ Single B))
+  (dom Tuple = (* U B Single))
+  (dom Func = (-> U Tuple B))
+  (fn f Func (u t) true)
+)
+
+(check_unicode '''\
+Domains
+=======
+Single = <single>
+B = <null.string>
+U = Single + B
+Tuple = U * B * Single
+Func = U * Tuple -> B
+'''
+  Tiny)

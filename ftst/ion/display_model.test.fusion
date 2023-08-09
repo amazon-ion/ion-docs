@@ -1,11 +1,10 @@
 // Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
 
 (require
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/printing"
+  "/fusioncontrib/denotation/printing/unicode"
   "/ion_semantics/model"
 )
 
 
 // This lets us see the model when running the test suite.
-(display_model Ion)
+(uniprinter Ion)

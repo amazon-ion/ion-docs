@@ -28,7 +28,6 @@ References:
   )
 
   (provide
-    display_model
     domain_method
     fn_args
     fn_code
@@ -36,6 +35,7 @@ References:
     form_method
     is_fn
     make_printer
+    model_domains
     pp_basedom
     pp_binary
     pp_print
@@ -44,15 +44,6 @@ References:
     pp_unary
     type_method
   )
-
-
-  (define (display_model m)
-    "Deprecated legacy feature, to be replaced with model printers."
-    (displayln "Domains")
-    (displayln "=======")
-    (displayln)
-    (do (|d| (display_domain d) (displayln))
-      (model_domains m)))
 
 
   (define (type_method pred method)
@@ -140,7 +131,8 @@ clauses.
     (write e))
 
   (define (pp_print_terms vs env beg mid end)
-    (assert (is_sexp vs))
+    (unless (is_sexp vs)
+      (raise_argument_error "pp_print_terms" "sexp" 0 vs end beg mid end))
     (display beg)
     (let loop [(vs vs)]
       (when (is_pair vs)
