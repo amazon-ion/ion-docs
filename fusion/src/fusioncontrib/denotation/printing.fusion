@@ -40,6 +40,7 @@ References:
     pp_binary
     pp_print
     pp_print_terms
+    pp_ternary
     pp_unary
     type_method
   )
@@ -150,6 +151,10 @@ clauses.
     (display end))
 
   (define (pp_unary beg end)
+    '''
+Generates a print method that prints a unary expression (a sexp with two
+elements) by displaying text before and after the single argument expression.
+    '''
     (|v e| (display beg)
            (pp_print (. v 1) e)
            (display end)))
@@ -161,7 +166,19 @@ clauses.
            (pp_print (. v 2) e)
            (display end)))
 
+  (define (pp_ternary beg mid1 mid2 end)
+    (|v e| (display beg)
+           (pp_print (. v 1) e)
+           (display mid1)
+           (pp_print (. v 2) e)
+           (display mid2)
+           (pp_print (. v 3) e)
+           (display end)))
+
   (define (pp_basedom e r)
+    '''
+Prints base-domain values by ejecting their representation and printing that.
+    '''
     (pp_print (eject e) r))
 
 )
