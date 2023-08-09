@@ -17,6 +17,8 @@ Print domain models in a Unicode-rich plain-text format.
     uniprinter
   )
 
+  (define (pp_tuple t r)
+    (pp_print_terms t r "⟨" ", " "⟩"))
 
   (define uniprinter
     '''
@@ -44,7 +46,7 @@ A model printer that renders in Unicode plain-text.
           (|s r| (pp_print_terms (syntax_unwrap (. s 2)) r "λ" " " ".")
                  (pp_print (. s 3) r)))
         (form_method (quote_syntax seq)
-          (|s r| (pp_print_terms (tail (tail s)) r "<" ", " ">")))
+          (|s r| (pp_tuple (tail (tail s)) r)))
         (form_method (quote_syntax seq_append)
           (pp_binary "" "§" ""))
         (form_method (quote_syntax seq_head)
@@ -56,7 +58,9 @@ A model printer that renders in Unicode plain-text.
         (form_method (quote_syntax tuple)
           (|s r| (display "in")
                  (pp_print (. s 1) r)
-                 (pp_print_terms (tail (tail s)) r "(<" ", " ">)")))
+                 (display "(")
+                 (pp_tuple (tail (tail s)) r)
+                 (display ")")))
 
         // Function application. This must follow other forms!
         (type_method is_syntax_pair
