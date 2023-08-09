@@ -34,6 +34,8 @@
 
     (dom Stamper = (-> T Any Stamped)) // Two arguments (ie, anonymous product)
 
+    (fn Stamped_time ((s Stamped) -> T) (ith s 0))
+
     (fn id ((a Any) -> Any)
       a)
     (fn stamp ((t T) (v Any) -> Stamped)

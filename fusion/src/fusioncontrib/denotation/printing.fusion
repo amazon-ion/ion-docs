@@ -1,0 +1,161 @@
+(module display "/fusion"
+  '''
+Customizable pretty-printing framework for denotational models (and,
+potentially, Fusion in general).
+
+The design and implementation draw heavily from Christian Queinnec's `l2t` tool,
+formerly known as LiSP2TeX and used to produce the math in his book
+_Lisp in Small Pieces_.
+
+References:
+* [l2t: literate programming utility][l2t-web]
+* [_Literate programming from Scheme to TEX_][l2t-doc]
+
+[lt2-web]: https://christian.queinnec.org/WWW/l2t.html
+[l2t-doc]: https://www.researchgate.net/publication/2798097_Literate_programming_from_Scheme_to_TEX
+
+  '''
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/function"
+    "/fusioncontrib/denotation/private/model"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    display_model
+    domain_method
+    fn_args
+    fn_code
+    fn_name
+    form_method
+    is_fn
+    make_printer
+    pp_basedom
+    pp_binary
+    pp_print
+    pp_print_terms
+    type_method
+  )
+
+
+  (define (display_model m)
+    "Deprecated legacy feature, to be replaced with model printers."
+    (displayln "Domains")
+    (displayln "=======")
+    (displayln)
+    (do (|d| (display_domain d) (displayln))
+      (model_domains m)))
+
+
+  (define (type_method pred method)
+    '''
+Configuration clause declaring a printing method for values that match the
+predicate `pred`.
+    '''
+    (assert (is_procedure pred))
+    (assert (is_procedure method))
+    (|v| (if (pred v) method false)))
+
+
+  (define (domain_method dom method)
+    '''
+Configuration clause declaring a printing method for values in the domain `dom`.
+    '''
+    (assert (is_domain dom))
+    (type_method (|v| (domain_is v dom)) method))
+
+
+  (define (form_method id method)
+    '''
+Configuration clause declaring a printing method for the procedure or syntax
+form with the binding `id`.
+    '''
+    (type_method
+      (|v| (and (is_syntax_pair v)
+                (is_identifier (head (syntax_unwrap v)))
+                (free_identifier_equal id (head (syntax_unwrap v)))))
+      (|v e| (method (syntax_unwrap v) e))))
+
+
+  (define_values ('record:model_printer' model_printer is_model_printer accessor)
+    // Fields are:
+    //   0) The invokable procedure
+    //   1) The environment
+    (make_record_type (quote model_printer) null 2 0))
+
+  (define (model_printer_env p) (accessor p 1))
+
+
+  (define (make_printer clauses)
+    '''
+You'll generally need to add methods for is_fn, is_domain_value, etc.
+    '''
+    (assert (is_sexp clauses))
+    (let [(env (append clauses
+                 (sexp
+                   (type_method is_base_domain_value pp_basedom)
+                   (type_method is_string            pp_write)
+                   (type_method is_symbol            pp_write)
+                   (|v| pp_default))))]
+      (model_printer (|v| (pp_print v env)) env)))
+
+
+  // Environment is a sexp of frames, each frame is one of:
+  //  * A procedure, takes a value and returns a printer xor falsey.
+
+  (define (pp_print v env)
+    '''
+General-purpose dispatcher for pretty-printing values, for use by customization
+clauses.
+    '''
+    (let find_method [(e env)]
+      (if (is_pair e)
+        (let [(frame (head e))]
+          (if (is_procedure frame)
+            (let [(method (frame v))]
+              (if method
+                (method v env)         // TODO extend env per l2t context-extend
+                (find_method (tail e))))
+            (find_method (tail e))))
+        (raise "can't print it"))))
+
+
+  //============================================================================
+  // Printing Methods
+  // Each takes a value and an environment, and prints to current-output-port
+
+  (define (pp_default e r)
+    // TODO This should eventually allow override of things _inside_ e.
+    (display e))
+
+  (define (pp_write e r)
+    (write e))
+
+  (define (pp_print_terms vs env beg mid end)
+    (assert (is_sexp vs))
+    (display beg)
+    (let loop [(vs vs)]
+      (when (is_pair vs)
+        (pp_print (head vs) env)
+        (when (is_pair (tail vs))
+          (display mid))
+          (loop (tail vs))))
+    (display end))
+
+  (define (pp_binary beg mid end)
+    (|v e| (display beg)
+           (pp_print (. v 1) e)
+           (display mid)
+           (pp_print (. v 2) e)
+           (display end)))
+
+  (define (pp_basedom e r)
+    (pp_print (eject e) r))
+
+)

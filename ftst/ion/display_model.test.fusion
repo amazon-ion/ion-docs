@@ -2,6 +2,7 @@
 
 (require
   "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/printing"
   "/ion_semantics/model"
 )
 

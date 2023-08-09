@@ -17,10 +17,10 @@
 
   (provide
     define_model
-    display_model
     dom
     fn
     is_model
+    model_domains
   )
 
   (define CTX (quote_syntax lexical_context))
@@ -165,12 +165,4 @@ Defines a function from one domain to another.
                       (UQ (pair (quote list) (reverse names)))))))
             CTX
             stx)))))
-
-
-  (define (display_model m)
-    (displayln "Domains")
-    (displayln "=======")
-    (displayln)
-    (do (|d| (display_domain d) (displayln))
-      (model_domains m)))
 )

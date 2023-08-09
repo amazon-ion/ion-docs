@@ -42,7 +42,6 @@ Domains come in several types:
     // The model DSL
     define_model
     is_model
-    display_model
     dom
     fn
 

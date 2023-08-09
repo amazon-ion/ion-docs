@@ -1,0 +1,81 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusion/experimental/syntax"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/printing"
+  "/fusioncontrib/denotation/private/util"
+  "/model1"
+  
+  (only_in "/fusion/private/io" with_output_to_string)
+)
+
+
+(define_binary_check (check_same_text expected actual)
+  (=== expected actual))
+
+(define_check (check_printing printer expected value)
+  (check_same_text expected
+    (with_output_to_string (printer value))))
+
+
+(define default_printer
+  (make_printer (sexp)))
+
+(check_printing default_printer "{{{void}}}"   (void))
+(check_printing default_printer "true"         true)
+(check_printing default_printer "123"          123)
+(check_printing default_printer "\"\""         "")
+(check_printing default_printer "\"hello\""    "hello")
+(check_printing default_printer "''"           (quote ''))
+//(check_printing default_printer "'true'"       (quote true))  // FIXME bug in write?
+(check_printing default_printer "[123, \"x\"]" [123, "x"])
+
+// By default, base-domain values are ejected and displayed.
+(check_printing default_printer "true"   (inject_into B true))
+(check_printing default_printer "1646"   (inject_into Z 1646))
+(check_printing default_printer "\"hi\"" (inject_into S "hi"))
+
+
+(define texter
+  (make_printer
+    // formatting rules in decreasing precedence
+    (sexp
+      (type_method is_fn
+        (|fn r| (pp_print (fn_name fn) r)
+                (pp_print_terms (fn_args fn) r "(" ", " ") = ")
+                (pp_print (fn_code fn) r)))
+      (form_method (quote_syntax tuple)
+        (|s r| (display "in")
+               (pp_print (. s 1) r)
+               (pp_print_terms (tail (tail s)) r "(<" ", " ">)")))
+      (form_method (quote_syntax ith)
+        (|s r| (pp_print (. s 1) r)
+               (display "↓")
+               (pp_print (. s 2) r)))
+      (form_method (quote_syntax mk_fn)
+        (|s r| (lets [(args (syntax_unwrap (. s 2))),
+                      (body (. s 3))]
+                   (display "λ")
+                   (pp_print_terms args r "" " " ".")
+                   (pp_print body r))))
+      (form_method (quote_syntax element_of)
+        (pp_binary "" " ∈ " ""))
+      // Application must follow other forms!
+      (type_method is_syntax_pair
+        (|stx r| (let [(s (syntax_unwrap stx))]
+                   (pp_print       (head s) r)
+                   (pp_print_terms (tail s) r "(" ", " ")"))))
+      // For any other syntax form, unwrap and try again.
+      (type_method is_syntax
+        (|stx r| (pp_print (syntax_unwrap stx) r)))
+    )))
+
+(check_printing texter "true" true_val)
+(check_printing texter "1646" (inject_into Z 1646))
+
+(check_printing texter "id(a) = a" id)
+(check_printing texter "stamp(t, v) = inStamped(<t, v>)" stamp)
+(check_printing texter "Stamped_time(s) = s↓0" Stamped_time)
+(check_printing texter "select_ints(vs) = filter(vs, λv.v ∈ Z)" select_ints)

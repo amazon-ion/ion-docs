@@ -1,0 +1,18 @@
+(module display "/fusion"
+  '''
+Miscellaneous things that should really be provided by Fusion.
+  '''
+
+  (require
+    "/fusion/experimental/syntax"
+  )
+
+  (provide
+    is_syntax_pair
+  )
+
+  (define (is_syntax_pair v)
+    (and (is_syntax v)
+         (is_pair (syntax_unwrap v))))
+
+)
