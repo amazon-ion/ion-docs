@@ -1,0 +1,82 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module uniprinter "/fusion"
+
+  '''
+Print domain models in a Unicode-rich plain-text format.
+  '''
+
+  (require
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/printing"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    uniprinter
+  )
+
+
+  (define uniprinter
+    '''
+A model printer that renders in Unicode plain-text.
+    '''
+    (make_printer
+      // formatting rules in decreasing precedence
+      (sexp
+        // General functions
+        (type_method is_fn
+          (|fn r| (pp_print (fn_name fn) r)
+                  (pp_print_terms (fn_args fn) r "(" ", " ") = ")
+                  (pp_print (fn_code fn) r)))
+
+        // Special forms
+        (form_method (quote_syntax eject) // Ignored
+          (pp_unary "" ""))
+        (form_method (quote_syntax element_of)
+          (pp_binary "" " ∈ " ""))
+        (form_method (quote_syntax if)
+          (|s r| (display "IF ")
+                 (pp_print (. s 1) r)
+                 (display " THEN ")
+                 (pp_print (. s 2) r)
+                 (display " ELSE ")
+                 (pp_print (. s 3) r)
+                 (display " ENDIF")))
+        (form_method (quote_syntax ith)
+          (|s r| (pp_print (. s 1) r)
+                 (display "↓")
+                 (pp_print (. s 2) r)))
+        (form_method (quote_syntax mk_fn)
+          (|s r| (lets [(args (syntax_unwrap (. s 2))),
+                        (body (. s 3))]
+                     (display "λ")
+                     (pp_print_terms args r "" " " ".")
+                     (pp_print body r))))
+        (form_method (quote_syntax seq)
+          (|s r| (pp_print_terms (tail (tail s)) r "<" ", " ">")))
+        (form_method (quote_syntax seq_append)
+          (pp_binary "" "§" ""))
+        (form_method (quote_syntax seq_head)
+          (pp_unary "" "↓0"))
+        (form_method (quote_syntax seq_is_empty)
+          (pp_unary "#" " = 0"))
+        (form_method (quote_syntax seq_tail)
+          (pp_unary "" "†1"))
+        (form_method (quote_syntax tuple)
+          (|s r| (display "in")
+                 (pp_print (. s 1) r)
+                 (pp_print_terms (tail (tail s)) r "(<" ", " ">)")))
+
+        // Function application. This must follow other forms!
+        (type_method is_syntax_pair
+          (|stx r| (let [(s (syntax_unwrap stx))]
+                     (pp_print       (head s) r)
+                     (pp_print_terms (tail s) r "(" ", " ")"))))
+
+        // For any other syntax form, unwrap and try again.
+        (type_method is_syntax
+          (|stx r| (pp_print (syntax_unwrap stx) r)))
+      )))
+)
