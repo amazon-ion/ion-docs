@@ -35,8 +35,10 @@ Remember that _everything is functional here_, even things like IF.
 
   (provide
     define_fn
+    fn_args
+    fn_code
+    fn_name
     is_fn
-    make_fn
     mk_fn
   )
 
@@ -55,8 +57,19 @@ Predicate for domain functions.
       ''',
       "private fn accessor"
     ]
-    (make_record_type (quote P1) 'record:domain_value' 1 0))
-    // The one field in this subtype is the procedure to apply.
+    (make_record_type (quote 'record:fn') 'record:domain_value' 3 0))
+    // The inherited domain_value_rep field holds the function name.
+    // The fields in this subtype are:
+    //   0: the procedure to apply (that is, the compiled function).
+    //   1: a sexp of identifiers; the argument names.
+    //   2: a syntax-object for the body of the function.
+
+  (define (fn_name fn)
+    (unless (is_fn fn) (raise_argument_error "fn_name" "domain function" 0 fn))
+    (domain_value_rep fn))
+
+  (define (fn_args fn) (fn_get fn 1))
+  (define (fn_code fn) (fn_get fn 2))
 
 
   (define (typecheck_value d v fail_proc)
@@ -81,7 +94,7 @@ Predicate for domain functions.
                           i args)))
               (loop (+ 1 i) (tail ds) (tail as))))))))
 
-  (define (make_fn name domain impl)
+  (define (make_fn name domain impl arg_stxs code_stx)
     '''
 The `domain` must be a func_domain, the `impl` a Fusion procedure.
 
@@ -104,7 +117,7 @@ Type-checking of function application:
                         (typecheck_value out_dom r
                           (|| (raise_result_error (string_append "result of " name)
                                 (symbol_to_string (domain_name out_dom)) r))))))]
-      (fn_ctor domain /*rep*/ null applier)))
+      (fn_ctor domain name applier arg_stxs code_stx)))
 
 
   (define (check_fn_arity d args)
@@ -144,7 +157,9 @@ Type-checking of function application:
                 (make_fn
                   "local fn" // (string_append "local " (or (domain_name domain) "function")))
                   (UQ domain_stx)
-                  (lambda (UQ args_stx) (UQ body_stx)))))
+                  (lambda (UQ args_stx) (UQ body_stx))
+                  (syntax_unwrap (QS (UQ args_stx)))
+                  (QS (UQ body_stx)))))
           CTX
           stx))))
 
@@ -205,14 +220,16 @@ Returns:
         // TODO typecheck name
         (unless (is_sexp (syntax_unwrap sig_stx))
           (wrong_syntax stx "invalid fn signature: " sig_stx))
-        (let_values [((func_domain_stx argnames)
+        (let_values [((func_domain_stx args_stx)
                       (xform_fn_sig (syntax_unwrap sig_stx)))]
           (datum_to_syntax
             (QQ (define (UQ name_stx)
                   (make_fn (quote (UQ name_stx))
                     (UQ func_domain_stx)
-                    (lambda (UQ argnames)
-                      (UQ expr_stx)))))
+                    (lambda (UQ args_stx)
+                      (UQ expr_stx))
+                    (syntax_unwrap (QS (UQ args_stx)))
+                    (QS (UQ expr_stx)))))
             CTX stx))))
 
   (define (define_fn_named_domain stx)
@@ -228,7 +245,9 @@ Returns:
               (make_fn (quote (UQ name_stx))
                 (UQ type_stx)
                 (lambda (UQ args_stx)
-                  (UQ expr_stx)))))
+                  (UQ expr_stx))
+                (syntax_unwrap (QS (UQ args_stx)))
+                (QS (UQ expr_stx)))))
         CTX stx)))
 
   (define_syntax define_fn
