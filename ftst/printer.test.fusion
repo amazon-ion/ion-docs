@@ -7,7 +7,7 @@
   "/fusioncontrib/denotation/printing"
   "/fusioncontrib/denotation/private/util"
   "/model1"
-  
+
   (only_in "/fusion/private/io" with_output_to_string)
 )
 
@@ -42,14 +42,26 @@
   (make_printer
     // formatting rules in decreasing precedence
     (sexp
+      // General functions
       (type_method is_fn
         (|fn r| (pp_print (fn_name fn) r)
                 (pp_print_terms (fn_args fn) r "(" ", " ") = ")
                 (pp_print (fn_code fn) r)))
+      // Special forms
+      (form_method (quote_syntax eject) // Ignored
+        (pp_unary "" ""))
       (form_method (quote_syntax tuple)
         (|s r| (display "in")
                (pp_print (. s 1) r)
                (pp_print_terms (tail (tail s)) r "(<" ", " ">)")))
+      (form_method (quote_syntax if)
+        (|s r| (display "IF ")
+               (pp_print (. s 1) r)
+               (display " THEN ")
+               (pp_print (. s 2) r)
+               (display " ELSE ")
+               (pp_print (. s 3) r)
+               (display " ENDIF")))
       (form_method (quote_syntax ith)
         (|s r| (pp_print (. s 1) r)
                (display "↓")
@@ -60,8 +72,19 @@
                    (display "λ")
                    (pp_print_terms args r "" " " ".")
                    (pp_print body r))))
+      (form_method (quote_syntax seq)
+        (|s r| (pp_print_terms (tail (tail s)) r "<" ", " ">")))
+      (form_method (quote_syntax seq_append)
+        (pp_binary "" "§" ""))
+      (form_method (quote_syntax seq_head)
+        (pp_unary "" "↓0"))
+      (form_method (quote_syntax seq_is_empty)
+        (pp_unary "#" " = 0"))
+      (form_method (quote_syntax seq_tail)
+        (pp_unary "" "†1"))
       (form_method (quote_syntax element_of)
         (pp_binary "" " ∈ " ""))
+
       // Application must follow other forms!
       (type_method is_syntax_pair
         (|stx r| (let [(s (syntax_unwrap stx))]
@@ -79,3 +102,7 @@
 (check_printing texter "stamp(t, v) = inStamped(<t, v>)" stamp)
 (check_printing texter "Stamped_time(s) = s↓0" Stamped_time)
 (check_printing texter "select_ints(vs) = filter(vs, λv.v ∈ Z)" select_ints)
+
+(check_printing texter
+  "filter(vs, p) = IF #vs = 0 THEN <> ELSE IF p(vs↓0) THEN <vs↓0>§filter(vs†1, p) ELSE filter(vs†1, p) ENDIF ENDIF"
+  filter)

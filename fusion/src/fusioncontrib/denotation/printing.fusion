@@ -40,6 +40,7 @@ References:
     pp_binary
     pp_print
     pp_print_terms
+    pp_unary
     type_method
   )
 
@@ -147,6 +148,11 @@ clauses.
           (display mid))
           (loop (tail vs))))
     (display end))
+
+  (define (pp_unary beg end)
+    (|v e| (display beg)
+           (pp_print (. v 1) e)
+           (display end)))
 
   (define (pp_binary beg mid end)
     (|v e| (display beg)
