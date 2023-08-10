@@ -13,6 +13,7 @@
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/sequence"
+    "/fusioncontrib/denotation/private/util"
   )
 
   (provide
@@ -28,7 +29,7 @@
 
 
   (record model (elements))
-  
+
   (define (model_domains model) (choose is_domain (model_elements model)))
   (define (model_fns     model) (choose is_fn     (model_elements model)))
 
@@ -43,23 +44,20 @@ Returns:
     (for_fold [(define_forms  (sexp)),
                (element_names (sexp))]
               [(d body)]
-      (unless (is_sexp (syntax_unwrap d))
+      (unless (is_syntax_pair d)
         (wrong_syntax d "Expected sexp defining a denotational element"))
       (lets [(type (syntax_get d 0)),
-             (name (syntax_get d 1))]
-        (cond
-          ((free_identifier_equal (QS dom) type)
-           (values
-            (pair (handle_domain_def d name) define_forms)
-            (pair name element_names)))
-          ((free_identifier_equal (QS fn) type)
-           (values
-            (pair (handle_fn d name) define_forms)
-            (pair name element_names)))
-          (true (wrong_syntax type "Unexpected model type"))))))
+             (name (syntax_get d 1)),
+             (handler (cond
+                        ((free_identifier_equal (QS dom) type) handle_dom)
+                        ((free_identifier_equal (QS fn ) type) handle_fn)
+                        (true (wrong_syntax type "Unexpected model type"))))]
+        (values
+          (pair (handler d name) define_forms)
+          (pair name element_names)))))
 
 
-  (define (handle_domain_def dom_stx name)
+  (define (handle_dom dom_stx name)
     (let [(result (|d| (datum_to_syntax d CTX dom_stx)))]
       (lets [(eq   (syntax_get dom_stx 2)),  // TODO validate the `=`
              (def  (syntax_get dom_stx 3)),
@@ -67,7 +65,7 @@ Returns:
              (desc (if (< 4 (syntax_size dom_stx)) (syntax_get dom_stx 4) null.string))]
         (if (is_string def_val)
           (result (QQ (define_singleton_domain (UQ name) (UQ def))))
-          (if (is_sexp def_val)
+          (if (is_pair def_val)
               (let [(op   (syntax_unwrap (head def_val))),
                     (args (tail def_val))]
                 (cond

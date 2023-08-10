@@ -31,6 +31,7 @@ Remember that _everything is functional here_, even things like IF.
     (rename_in "/fusion/base"
       (quote Q) (quasiquote QQ) (unquote UQ))
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
   )
 
   (provide
@@ -145,8 +146,7 @@ Type-checking of function application:
           (wrong_syntax stx "invalid domain name: " domain_stx))
         (let [(args (syntax_unwrap args_stx))]
           // TODO ensure sexp of identifiers
-          (unless (and (is_sexp args)
-                        args)         // Reject null.sexp
+          (unless (is_pair args)
             (wrong_syntax stx "expected args sexp: " args_stx)))
         (datum_to_syntax
           // Using a let-binding forces a continuation frame with the mk_fn location.
@@ -218,7 +218,7 @@ Returns:
             (sig_stx  (syntax_get stx 2)),
             (expr_stx (syntax_get stx 3))]
         // TODO typecheck name
-        (unless (is_sexp (syntax_unwrap sig_stx))
+        (unless (is_syntax_pair sig_stx)
           (wrong_syntax stx "invalid fn signature: " sig_stx))
         (let_values [((func_domain_stx args_stx)
                       (xform_fn_sig (syntax_unwrap sig_stx)))]
@@ -238,7 +238,7 @@ Returns:
           (args_stx (syntax_get stx 3)),
           (expr_stx (syntax_get stx 4))]
       // TODO typecheck name, type
-      (unless (is_sexp (syntax_unwrap args_stx))
+      (unless (is_syntax_pair args_stx)
         (wrong_syntax args_stx "expected sexp of arguments"))
       (datum_to_syntax
         (QQ (define (UQ name_stx)
