@@ -397,6 +397,9 @@ Lifts a subdomain value into a union domain.
 
 
   (define lift
+    '''
+    (lift v domain ...+)
+    '''
     (lambda args
       (unless (is_pair (tail args))
         (apply raise_arity_error "lift" 2 args))                // TODO 2 is not correct

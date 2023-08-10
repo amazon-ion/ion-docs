@@ -10,6 +10,7 @@ TODOs
   * Needs import function to bring in framework-defined doms and fns.
   * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
 * BOTTOM domain for error reporting.
+* Lowering should return [BOTTOM] if not in the target domain. (See LiSP p162)
 * Typecase to safely and completely lower a union domain value
   * Similar seqcase to traverse sequences
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.

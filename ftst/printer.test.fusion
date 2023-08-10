@@ -58,11 +58,29 @@
 (define_model Tiny
   (dom Single = "single")
   (dom B = (^ is_bool))
-  (dom U = (+ Single B))
+  (dom I = (^ is_int) "integers")
+  (dom U = (+ B I))
+  (dom V = (+ U Single))
   (dom 'U*' = (** U))
   (dom Tuple = (* U B Single))
   (dom Func = (-> U Tuple B))
-  (fn f Func (u t) true)
+
+  (fn f Func (u t) (let [(x u), (s true)] s))
+
+  (fn add  ((i0 I) (i1 I)   -> I)    (+ i0 i1))
+  (fn sub  ((i0 I) (i1 I)   -> I)    (- i0 i1))
+  (fn lt   ((i0 I) (i1 I)   -> I)    (< i0 i1))
+  (fn eq   ((i0 I) (i1 I)   -> I)    (=== i0 i1))
+  (fn gt   ((i0 I) (i1 I)   -> I)    (> i0 i1))
+  (fn len  ((us 'U*')       -> I)    (seq_length us))
+  (fn cons ((u U) (us 'U*') -> 'U*') (seq_prepend u us))
+  (fn incr ((i I)           -> I)    (+ i (inject_into I 1)))
+  (fn b2u  ((b B)           -> U)    (lift_to U b))
+  (fn i2u  ((i I)           -> U)    (lift i U))
+  (fn i2v  ((i I)           -> V)    (lift i U V))
+  (fn u2b  ((u U)           -> B)    (lower_to B u))
+  (fn u2i  ((u U)           -> I)    (lower u I))
+  (fn v2i  ((v V)           -> I)    (lower v U I))
 )
 
 (check_unicode '''\
@@ -70,13 +88,29 @@ Domains
 =======
 Single = <single>
 B = <null.string>
-U = Single + B
+I = <integers>
+U = B + I
+V = U + Single
 U* = U*
 Tuple = U * B * Single
 Func = U * Tuple -> B
 
 Functions
 =========
-f(u, t) = true
+f(u, t) = LET x = u ; s = true IN s ENDLET
+add(i0, i1) = i0 + i1
+sub(i0, i1) = i0 - i1
+lt(i0, i1) = i0 < i1
+eq(i0, i1) = i0 = i1
+gt(i0, i1) = i0 > i1
+len(us) = #us
+cons(u, us) = ⟨u⟩§us
+incr(i) = i + inI(1)
+b2u(b) = inU(b)
+i2u(i) = inU(i)
+i2v(i) = inV(inU(i))
+u2b(u) = u|B
+u2i(u) = u|I
+v2i(v) = v|U|I
 '''
   Tiny)

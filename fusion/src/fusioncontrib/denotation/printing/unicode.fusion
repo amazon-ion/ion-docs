@@ -19,10 +19,6 @@ Print domain models in a Unicode-rich plain-text format.
   )
 
 
-  (define (pp_tuple t r)
-    (pp_print_terms t r "⟨" ", " "⟩"))
-
-
   (define (pp_domain_name_else_rhs d r)
     (let [(name (domain_name d))]
       (if name (display name) (pp_domain_rhs d r))))
@@ -51,6 +47,56 @@ Print domain models in a Unicode-rich plain-text format.
       (pp_print_terms (model_fns m) r "\n" "\n" "\n")))
 
 
+  // Special Forms and Functions
+
+  (define (pp_bindings bindings r)
+    (assert (is_sexp bindings))
+    (when (is_pair bindings)
+      (let [(binding (syntax_unwrap (head bindings)))]
+        (assert (=== 2 (size binding)))
+        (pp_print (. binding 0) r)
+        (display " = ")
+        (pp_print (. binding 1) r)
+        (when (is_pair (tail bindings))
+          (display " ; ")
+          (pp_bindings (tail bindings) r)))))
+
+  (define (pp_let s r)
+    (display "LET ")
+    (let [(bindings (apply sexp (syntax_unwrap (. s 1)))),
+          (body     (. s 2))]
+      (assert (not (is_empty bindings)))
+      (pp_bindings bindings r)
+      (display " IN ")
+      (pp_print body r)
+      (display " ENDLET")))
+
+  (define (pp_lift s r)
+    (for [(d (reverse (tail (tail s))))]
+      (display "in")
+      (pp_print d r)
+      (display "("))
+    (pp_print (. s 1) r)
+    (for [(d (tail (tail s)))]
+      (display ")")))
+
+  (define (pp_lift_to d v r)
+    (display "in")
+    (pp_print d r)
+    (display "(")
+    (pp_print v r)
+    (display ")"))
+
+  (define (pp_seq t r)
+    (pp_print_terms t r "⟨" ", " "⟩"))
+
+  (define (pp_tuple s r)
+    (display "in")
+    (pp_print (. s 1) r)
+    (display "(")
+    (pp_seq (tail (tail s)) r)
+    (display ")"))
+
 
   (define uniprinter
     '''
@@ -72,27 +118,46 @@ A model printer that renders in Unicode plain-text.
           (pp_binary "" " ∈ " ""))
         (form_method (quote_syntax if)
           (pp_ternary "IF " " THEN " " ELSE " " ENDIF"))
+        (form_method (quote_syntax inject_into)
+          (|s r| (pp_lift_to (. s 1) (. s 2) r)))
         (form_method (quote_syntax ith)
           (pp_binary "" "↓" ""))
+        (form_method (quote_syntax let)  pp_let)
+        (form_method (quote_syntax lift) pp_lift)
+        (form_method (quote_syntax lift_to)
+          (|s r| (pp_lift_to (. s 1) (. s 2) r)))
+        (form_method (quote_syntax lower)
+          (|s r| (pp_print (. s 1) r)
+                 (pp_print_terms (tail (tail s)) r "|" "|" "")))
+        (form_method (quote_syntax lower_to)
+          (|s r| (pp_print (. s 2) r)
+                 (display "|")
+                 (pp_print (. s 1) r)))
         (form_method (quote_syntax mk_fn)
           (|s r| (pp_print_terms (. s 2) r "λ" " " ".")
                  (pp_print (. s 3) r)))
         (form_method (quote_syntax seq)
-          (|s r| (pp_tuple (tail (tail s)) r)))
+          (|s r| (pp_seq (tail (tail s)) r)))
         (form_method (quote_syntax seq_append)
           (pp_binary "" "§" ""))
         (form_method (quote_syntax seq_head)
           (pp_unary "" "↓0"))
         (form_method (quote_syntax seq_is_empty)
           (pp_unary "#" " = 0"))
+        (form_method (quote_syntax seq_length)
+          (pp_unary "#" ""))
+        (form_method (quote_syntax seq_prepend)
+          (pp_binary "⟨" "⟩§" ""))
         (form_method (quote_syntax seq_tail)
           (pp_unary "" "†1"))
-        (form_method (quote_syntax tuple)
-          (|s r| (display "in")
-                 (pp_print (. s 1) r)
-                 (display "(")
-                 (pp_tuple (tail (tail s)) r)
-                 (display ")")))
+        // TODO seq_truncate
+        (form_method (quote_syntax tuple) pp_tuple)
+
+        (form_method (quote_syntax +)     (pp_binary "" " + " ""))
+        (form_method (quote_syntax -)     (pp_binary "" " - " ""))
+        (form_method (quote_syntax <)     (pp_binary "" " < " ""))
+        (form_method (quote_syntax ===)   (pp_binary "" " = " ""))
+        (form_method (quote_syntax >)     (pp_binary "" " > " ""))
 
         // Function application. This must follow other forms!
         (type_method is_syntax_pair
