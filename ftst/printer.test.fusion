@@ -48,10 +48,10 @@
 (check_unicode "id(a) = a" id)
 (check_unicode "stamp(t, v) = inStamped(⟨t, v⟩)" stamp)
 (check_unicode "Stamped_time(s) = s↓0" Stamped_time)
-(check_unicode "select_ints(vs) = filter(vs, λv.v ∈ Z)" select_ints)
+(check_unicode "select_ints(vs) = (filter vs λv.v ∈ Z)" select_ints)
 
 (check_unicode
-  "filter(vs, p) = IF #vs = 0 THEN ⟨⟩ ELSE IF p(vs↓0) THEN ⟨vs↓0⟩§filter(vs†1, p) ELSE filter(vs†1, p) ENDIF ENDIF"
+  "filter(vs, p) = IF #vs = 0 THEN ⟨⟩ ELSE IF (p vs↓0) THEN ⟨vs↓0⟩§(filter vs†1 p) ELSE (filter vs†1 p) ENDIF ENDIF"
   filter)
 
 

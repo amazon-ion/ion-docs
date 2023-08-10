@@ -45,7 +45,7 @@ Print domain models in a Unicode-rich plain-text format.
 
   (define (pp_model m r)
     (display "Domains\n=======")
-    (pp_print_terms (apply sexp (model_domains m)) r "\n" "\n" "\n")
+    (pp_print_terms (model_domains m) r "\n" "\n" "\n")
     (unless (is_empty (model_fns m))
       (display "\nFunctions\n=========")
       (pp_print_terms (model_fns m) r "\n" "\n" "\n")))
@@ -75,7 +75,7 @@ A model printer that renders in Unicode plain-text.
         (form_method (quote_syntax ith)
           (pp_binary "" "↓" ""))
         (form_method (quote_syntax mk_fn)
-          (|s r| (pp_print_terms (syntax_unwrap (. s 2)) r "λ" " " ".")
+          (|s r| (pp_print_terms (. s 2) r "λ" " " ".")
                  (pp_print (. s 3) r)))
         (form_method (quote_syntax seq)
           (|s r| (pp_tuple (tail (tail s)) r)))
@@ -96,9 +96,7 @@ A model printer that renders in Unicode plain-text.
 
         // Function application. This must follow other forms!
         (type_method is_syntax_pair
-          (|stx r| (let [(s (syntax_unwrap stx))]
-                     (pp_print       (head s) r)
-                     (pp_print_terms (tail s) r "(" ", " ")"))))
+          (|stx r| (pp_print_terms stx r "(" " " ")")))
 
         // For any other syntax form, unwrap and try again.
         (type_method is_syntax
