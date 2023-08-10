@@ -86,7 +86,7 @@ a static set: one could implement a catalog that pulls symbol tables
 from a network repository, or one that has application symbol tables "compiled
 in", or (very likely) some composition of these techniques. The
 mechanism by which shared symbol tables are acquired is irrelevant to this
-specification.
+specification, but is discussed in [Catalog Best Practices][catalog].
 
 ### Top-Level Semantics
 
@@ -623,3 +623,4 @@ annotations:
 
 <!-- references -->
 [docs]: {{ site.baseurl }}/docs.html
+[catalog]: catalog.html
