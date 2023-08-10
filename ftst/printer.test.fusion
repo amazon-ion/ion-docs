@@ -74,5 +74,9 @@ U = Single + B
 U* = U*
 Tuple = U * B * Single
 Func = U * Tuple -> B
+
+Functions
+=========
+f(u, t) = true
 '''
   Tiny)

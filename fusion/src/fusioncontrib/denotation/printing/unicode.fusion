@@ -43,6 +43,15 @@ Print domain models in a Unicode-rich plain-text format.
       (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d r))))
 
 
+  (define (pp_model m r)
+    (display "Domains\n=======")
+    (pp_print_terms (apply sexp (model_domains m)) r "\n" "\n" "\n")
+    (unless (is_empty (model_fns m))
+      (display "\nFunctions\n=========")
+      (pp_print_terms (model_fns m) r "\n" "\n" "\n")))
+
+
+
   (define uniprinter
     '''
 A model printer that renders in Unicode plain-text.
@@ -99,8 +108,6 @@ A model printer that renders in Unicode plain-text.
           (|d r| (display (domain_name d) " = ")
                  (pp_domain_rhs d r)))
 
-        (type_method is_model
-          (|m r| (display "Domains\n=======")
-                 (pp_print_terms (apply sexp (model_domains m)) r "\n" "\n" "\n")))
+        (type_method is_model pp_model)
       )))
 )

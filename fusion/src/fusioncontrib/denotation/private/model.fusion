@@ -21,19 +21,16 @@
     fn
     is_model
     model_domains
+    model_fns
   )
 
   (define CTX (quote_syntax lexical_context))
 
 
-  (record model (domains))
-
-  (define (make_model domains)
-    (unless (is_list_of_domains domains)
-      (raise_argument_error "make_model" "list of domains" 0
-        domains))
-    (model domains))
-
+  (record model (elements))
+  
+  (define (model_domains model) (choose is_domain (model_elements model)))
+  (define (model_fns     model) (choose is_fn     (model_elements model)))
 
   (define (parse_model model_stx body)
     '''
@@ -43,8 +40,8 @@ Returns:
   * sexp of element define-forms in reverse order defined
   * sexp of domain identifiers in reverse order defined
     '''
-    (for_fold [(define_forms (sexp)),
-               (domain_names (sexp))]
+    (for_fold [(define_forms  (sexp)),
+               (element_names (sexp))]
               [(d body)]
       (unless (is_sexp (syntax_unwrap d))
         (wrong_syntax d "Expected sexp defining a denotational element"))
@@ -54,11 +51,11 @@ Returns:
           ((free_identifier_equal (QS dom) type)
            (values
             (pair (handle_domain_def d name) define_forms)
-            (pair name domain_names)))
+            (pair name element_names)))
           ((free_identifier_equal (QS fn) type)
            (values
             (pair (handle_fn d name) define_forms)
-            domain_names))
+            (pair name element_names)))
           (true (wrong_syntax type "Unexpected model type"))))))
 
 
@@ -161,8 +158,7 @@ Defines a function from one domain to another.
             (QQ (begin
                   (UQ (pair (quote begin) (reverse defines)))
                   (define (UQ model_name)
-                    (make_model
-                      (UQ (pair (quote list) (reverse names)))))))
+                    (model (UQ (pair (quote list) (reverse names)))))))
             CTX
             stx)))))
 )

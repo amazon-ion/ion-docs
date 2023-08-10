@@ -45,6 +45,7 @@ References:
     is_union_domain
     make_printer
     model_domains
+    model_fns
     pp_basedom
     pp_binary
     pp_print
