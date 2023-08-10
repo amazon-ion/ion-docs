@@ -32,14 +32,8 @@
   )
 
 
-
-  (define (display_seq_domain d)
-    (display (domain_name (seq_domain_subdomain d)))
-    (display "*"))
-
-
   (define SeqDomain
-    (make_domain_meta "SeqDomain" display_seq_domain null))
+    (make_domain_meta "SeqDomain" null))
 
 
   (define (make_seq_domain name description entry_domain)

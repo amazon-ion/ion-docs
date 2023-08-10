@@ -24,6 +24,7 @@ References:
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
+    "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/util"
   )
 
@@ -33,7 +34,15 @@ References:
     fn_code
     fn_name
     form_method
+    func_domain_argdomains
+    func_domain_output
+    is_base_domain
     is_fn
+    is_func_domain
+    is_product_domain
+    is_seq_domain
+    is_singleton_domain
+    is_union_domain
     make_printer
     model_domains
     pp_basedom
@@ -42,7 +51,10 @@ References:
     pp_print_terms
     pp_ternary
     pp_unary
+    product_domain_subdomains
+    seq_domain_subdomain
     type_method
+    union_domain_subdomains
   )
 
 
@@ -131,15 +143,21 @@ clauses.
     (write e))
 
   (define (pp_print_terms vs env beg mid end)
-    (unless (is_sexp vs)
-      (raise_argument_error "pp_print_terms" "sexp" 0 vs end beg mid end))
+    (unless (is_sequence vs)
+      (raise_argument_error "pp_print_terms" "list/sexp" 0 vs end beg mid end))
     (display beg)
-    (let loop [(vs vs)]
-      (when (is_pair vs)
-        (pp_print (head vs) env)
-        (when (is_pair (tail vs))
-          (display mid))
-          (loop (tail vs))))
+    (if (is_sexp vs)
+      (let loop [(vs vs)]
+        (when (is_pair vs)
+          (pp_print (head vs) env)
+          (when (is_pair (tail vs))
+            (display mid))
+            (loop (tail vs))))
+      (let loop [(i 0)]
+        (when (< i (size vs))
+          (unless (=== 0 i) (display mid))
+          (pp_print (list_element vs i) env)
+          (loop (+ 1 i)))))
     (display end))
 
   (define (pp_unary beg end)

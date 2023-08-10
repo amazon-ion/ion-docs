@@ -24,7 +24,6 @@
     domain_name
     domain_data
     domain_type
-    display_domain
     element_of
 
     define_base_domain
@@ -42,6 +41,7 @@
 
     // Singleton domains
     define_singleton_domain
+    is_singleton_domain
     singleton
 
     // Base domain value operators
@@ -52,6 +52,8 @@
     eject
 
     // Union domain value operators
+    is_union_domain
+    union_domain_subdomains
     is_union_domain_value
     lift
     lift_to
@@ -76,7 +78,6 @@
     make_func_domain
     is_func_domain
     func_domain_argdomains
-    func_domain_input
     func_domain_output
 
     // Helpers
@@ -99,18 +100,17 @@
 
   // Basically the class metaobject/vtable for domain objects.
   // Instances include BaseDomain, UnionDomain, ProductDomain, FuncDomain.
-  (record domain_meta (name display_fn eltof_fn))
+  (record domain_meta (name eltof_fn))
 
-  (define (make_domain_meta name display_fn eltof_fn)
+  (define (make_domain_meta name eltof_fn)
     '''
 Creates a new domain "class".
-  * The `display_fn` accepts a domain value and `display`s its RHS.
   * The `eltof_fn` accepts a domain (of this type) and a value, returns truthy iff
     the value is an element of the domain.
     May be null, to use the default mechanism.
     '''
     // TODO Use [GUARD] to populate default values.
-    (domain_meta name display_fn
+    (domain_meta name
       (or eltof_fn (|d v|
                      (and (is_domain_value v)
                           (or (ident d (domain_value_domain v))
@@ -155,21 +155,6 @@ Creates a new domain "class".
       (raise_argument_error "domain_accepts" "domain" 0 d v))
     ((domain_checker d) d v))
 
-
-  (define (display_domain_name_else_rhs d)
-    (let [(name (domain_name d))]
-      (if name (display name) (display_domain_rhs d))))
-
-  (define (display_domain_rhs d)
-    ((domain_meta_display_fn (domain_type d)) d))
-
-  (define (display_domain d)
-    (unless (is_domain d)
-      (raise_argument_error "display_domain" "domain" 0 d))
-    (display (domain_name d) " = ")
-    (display_domain_rhs d))
-
-
   (define (is_list_of_domains v)
     (and (is_list v) (every is_domain v)))
 
@@ -177,7 +162,7 @@ Creates a new domain "class".
   //-------------------
   // Domain Values
 
-  // TODO display these in a readable way!
+  // TODO display these in a readable way; perhaps DOMAIN::{{{REP}}}
 
   (record domain_value (domain rep))  // TODO guardian to typecheck
 
@@ -209,9 +194,7 @@ Determines whether `v` is a direct element of the `domain`.
   // Singleton Domains
 
   (define SingletonDomain
-    (make_domain_meta "SingletonDomain"
-      (|d| (display "<" (domain_description d) ">"))
-      null))
+    (make_domain_meta "SingletonDomain" null))
 
   (define (make_singleton_domain name desc)
     (make_domain SingletonDomain name (always true) desc null))
@@ -249,9 +232,7 @@ Determines whether `v` is a direct element of the `domain`.
   // Base Domains
 
   (define BaseDomain
-    (make_domain_meta "BaseDomain"
-      (|d| (display "<" (domain_description d) ">"))
-      null))
+    (make_domain_meta "BaseDomain" null))
 
   (define (make_base_domain name desc pred)
     (let [(pred (or pred (always true)))]
@@ -321,10 +302,7 @@ Lifts a Fusion value into a base domain.
   // Union Domains
 
   (define UnionDomain
-    (make_domain_meta "UnionDomain"
-      (|d| (display (apply string_join " + "
-                      (map domain_name (union_domain_subdomains d)))))
-      null))
+    (make_domain_meta "UnionDomain" null))
 
   (define (make_union_domain name description domain_producer)
     // TODO Memoize domain production
@@ -443,10 +421,7 @@ Lifts a subdomain value into a union domain.
   // Product Domains
 
   (define ProductDomain
-    (make_domain_meta "ProductDomain"
-      (|d| (display (apply string_join " * "
-                      (map domain_name (product_domain_subdomains d)))))
-      null))
+    (make_domain_meta "ProductDomain" null))
 
   (define (make_product_domain name description domain_producer)  // Ugh
     // TODO Memoize domain production
@@ -553,14 +528,8 @@ Access component i of domain value v in domain d.
   //-------------------
   // Function Domains
 
-  (define (display_func_domain d)
-    (display_domain_name_else_rhs (func_domain_input d))
-    (display " -> ")
-    (display_domain_name_else_rhs (func_domain_output d)))
-
-
   (define FuncDomain
-    (make_domain_meta "FuncDomain" display_func_domain null))
+    (make_domain_meta "FuncDomain" null))
 
 
   (define (make_func_domain name description input output)

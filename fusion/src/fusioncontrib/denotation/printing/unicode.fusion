@@ -7,6 +7,7 @@ Print domain models in a Unicode-rich plain-text format.
   '''
 
   (require
+    "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/printing"
@@ -20,6 +21,26 @@ Print domain models in a Unicode-rich plain-text format.
 
   (define (pp_tuple t r)
     (pp_print_terms t r "⟨" ", " "⟩"))
+
+
+  (define (pp_domain_name_else_rhs d r)
+    (let [(name (domain_name d))]
+      (if name (display name) (pp_domain_rhs d r))))
+
+  (define (pp_subdoms subdoms r mid)
+    (pp_print_terms (map domain_name subdoms) r "" mid ""))
+
+  (define (pp_domain_rhs d r)
+    (cond
+      ((is_singleton_domain d) (display "<" (domain_description d) ">"))
+      ((is_base_domain      d) (display "<" (domain_description d) ">"))
+      ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) r " + "))
+      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) r " * "))
+      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) r " * ")
+                               (display " -> ")
+                               (pp_domain_name_else_rhs (func_domain_output d) r))
+      ((is_seq_domain       d) (display (domain_name (seq_domain_subdomain d)) "*"))
+      (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d r))))
 
 
   (define uniprinter
@@ -75,7 +96,8 @@ A model printer that renders in Unicode plain-text.
           (|stx r| (pp_print (syntax_unwrap stx) r)))
 
         (type_method is_domain
-          (|d r| (display_domain d)))
+          (|d r| (display (domain_name d) " = ")
+                 (pp_domain_rhs d r)))
 
         (type_method is_model
           (|m r| (display "Domains\n=======")

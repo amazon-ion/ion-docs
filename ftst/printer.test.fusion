@@ -59,6 +59,7 @@
   (dom Single = "single")
   (dom B = (^ is_bool))
   (dom U = (+ Single B))
+  (dom 'U*' = (** U))
   (dom Tuple = (* U B Single))
   (dom Func = (-> U Tuple B))
   (fn f Func (u t) true)
@@ -70,6 +71,7 @@ Domains
 Single = <single>
 B = <null.string>
 U = Single + B
+U* = U*
 Tuple = U * B * Single
 Func = U * Tuple -> B
 '''

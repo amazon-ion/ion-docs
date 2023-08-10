@@ -49,7 +49,6 @@ Domains come in several types:
     is_domain
     domain_description
     domain_name
-    display_domain
     domain_is
     element_of
 
@@ -64,15 +63,10 @@ Domains come in several types:
     lift
     lift_to
     subdomain
-//  unwrap     // Considered unsafe
     lower
     lower_to
 
-    // Product domain operators
-    is_product_domain
-    product_domain_subdomains
-
-    // Product domain value operators
+    // Product domains
     tuple
     product_domain_element
 
@@ -88,9 +82,6 @@ Domains come in several types:
     seq_truncate
 
     // Function domains
-    func_domain_argdomains
-    func_domain_output
-
     define_fn
     mk_fn
     is_fn
