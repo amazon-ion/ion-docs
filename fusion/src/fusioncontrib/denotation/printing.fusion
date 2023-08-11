@@ -48,6 +48,7 @@ References:
     model_fns
     pp_basedom
     pp_binary
+    pp_nary
     pp_print
     pp_print_terms
     pp_syntax
@@ -221,6 +222,9 @@ elements) by displaying text before and after the single argument expression.
            (display mid2)
            (pp_print (. v 3) e)
            (display end)))
+
+  (define (pp_nary beg mid end)
+    (|v e| (pp_print_terms (tail v) e beg mid end)))
 
 
   //============================================================================

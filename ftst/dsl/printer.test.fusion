@@ -5,6 +5,7 @@
   "/fusion/experimental/syntax"
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/printing"
+  "/fusioncontrib/denotation/printing/latex"
   "/fusioncontrib/denotation/printing/unicode"
   "/fusioncontrib/denotation/private/util"
   "/model1"
@@ -117,3 +118,15 @@ u2i(u) = u|I
 v2i(v) = v|U|I
 '''
   Tiny)
+
+
+//==============================================================================
+// LaTeX printing
+
+(define_check (check_latex expected v)
+  (check_printing latexprint expected v))
+
+(check_latex "\\mbox{\\bf true}"  (inject_into B true))
+(check_latex "\\mbox{\\bf false}" (inject_into B false))
+
+(check_latex "1646" (inject_into Z 1646))

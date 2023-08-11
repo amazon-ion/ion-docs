@@ -1,0 +1,294 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module latex "/fusion"
+
+  '''
+Print domain models in a LaTeX format.
+
+In general, the output is in math mode, but individual print methods may shift
+back to text mode to print things like identifiers and strings in text mode.
+
+**Note:** The generated LaTeX assumes the presence of a wrapping `tabbing`
+environment with additional definitions along these lines (from LiSP2TeX):
+
+```                          '''/* Double-backslashes are for Ion, not TeX */'''
+\\def\\DenotedLisp{\\begingroup
+  \\def\\EndDenotedLisp{$ \\end{tabbing}\\endgroup}
+  \\ifDenotationInline
+    \\def\\setandincrindent{ }
+    \\def\\decrindent{ }
+    \\def\\newline{ }
+  \\else
+    \\def\\setandincrindent{ $ \\@settab\\@tabplus $ }
+    \\def\\decrindent{ $ \\@tabminus $ }
+    \\def\\newline{ $ \\@tabcr $ }
+  \\fi\\begin{tabbing} $ }
+```
+
+Observe that the local definitions, including a redefinition of `\\newline`,
+switch out of math-mode and then back, because tabbing/newlines aren't allowed
+in math mode.
+  '''
+
+  // Helpful reference to what's available in MathJAX:
+  // https://onemathematicalcat.org//MathJaxDocumentation/TeXSyntax.htm
+
+  
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/printing"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    latexprint
+  )
+
+
+  // Formatting constants per LiSP2TeX
+
+  (define SPACE "\\:")       // medium space
+  (define NL "\\newline\n")  // "real" newline for code readablity
+
+  (define wrap_with_space (|s| (string_append SPACE s SPACE)))
+
+  (define TRUE  "\\mbox{\\bf true}")
+  (define FALSE "\\mbox{\\bf false}")
+
+  (define SEQ_OPEN  "\\langle ")
+  (define SEQ_CLOSE "\\rangle ")
+
+  (define DEFINE_EQ  " = \\newline\n")
+
+  (define IF_IF    (wrap_with_space "\\mbox{\\bf{if}}"))
+  (define IF_THEN  (wrap_with_space "\\mbox{\\bf{then}}"))
+  (define IF_ELSE  (wrap_with_space "\\mbox{\\bf{else}}"))
+  (define IF_END   (wrap_with_space "\\mbox{\\bf{endif}}"))
+  (define LET_LET  (wrap_with_space "\\mbox{\\bf{let}}"))
+  (define LET_IN   (wrap_with_space "\\mbox{\\bf{in}}"))
+  (define LET_END  "")
+
+  (define WITHIN_BINDINGS   " = ")
+  (define BETWEEN_BINDINGS  (wrap_with_space "\\mbox{\\bf{and}}"))
+
+
+// Convert a symbol into a TeX string.
+
+  (define (texescape str)
+    (string_replace (string_replace str "_" "\\_") "$" "\\$"))
+
+  (define (texify_symbol v)
+    (let [(str (symbol_to_string v))]
+      // The trailing '\/' is post-italic space.
+      (string_append "\\mbox{\\it " (texescape str) "\\/}")))
+
+
+  (define (pp_newline e)
+    (display NL))
+
+  (define (pp_incr_indentation e)
+    (display " \\setandincrindent\n")
+    // (pp-extend r 'indent) TODO record in environment
+    e)
+
+  (define (pp_decr_indentation e)
+    (display " \\decrindent\n"))
+
+
+  //============================================================================
+  // Custom Printing Methods
+
+  (define (pp_domain_name v e)
+    (display "\\mbox{\\bf " v "}"))
+
+  (define (pp_domain_name_else_rhs d e)
+    (let [(name (domain_name d))]
+      (if name (pp_domain_name name) (pp_domain_rhs d e))))
+
+  (define (pp_subdoms subdoms r mid)
+    (pp_print_terms (map domain_name subdoms) r "" mid ""))  // TODO use pp_domain_name
+
+  (define (pp_domain_rhs d e)
+    (cond
+      ((is_singleton_domain d) (display "<" (domain_description d) ">"))
+      ((is_base_domain      d) (display "<" (domain_description d) ">"))
+      ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
+      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " * "))
+      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " * ")
+                               (display " -> ")
+                               (pp_domain_name_else_rhs (func_domain_output d) e))
+      ((is_seq_domain       d) (display (domain_name (seq_domain_subdomain d)) "*"))
+      (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))
+
+
+  (define (pp_model m e)
+//    (display "Domains\n=======")
+//    (pp_print_terms (model_domains m) e "\n" "\n" "\n")
+    (unless (is_empty (model_fns m))
+//      (display "\nFunctions\n=========")
+      (pp_print_terms (model_fns m) e NL NL NL)))
+
+
+  // Special Forms and Functions
+
+  (define (pp_bindings bindings e)
+    (assert (is_sexp bindings))
+    (when (is_pair bindings)
+      (let [(binding (syntax_unwrap (head bindings)))]
+        (assert (=== 2 (size binding)))
+        (pp_print (. binding 0) e)
+        (display WITHIN_BINDINGS)
+        (pp_print (. binding 1) e)
+        (when (is_pair (tail bindings))
+          (display BETWEEN_BINDINGS)
+          (pp_bindings (tail bindings) e)))))
+
+  (define (pp_in_domain d e)
+    (display "\\mbox{\\it{in}\\small\\bf " d "}"))
+
+  (define (pp_let s e)
+    (let [(e1 (pp_incr_indentation e))]
+      (display LET_LET)
+      (let [(bindings (apply sexp (syntax_unwrap (. s 1)))),
+            (body     (. s 2))]
+        (assert (not (is_empty bindings)))
+        (pp_bindings bindings e)
+        (display NL)
+        (display LET_IN)
+        (pp_print body e)
+        (display LET_END))
+      (pp_decr_indentation e)))
+
+  (define (pp_lift s e)
+    (for [(d (reverse (tail (tail s))))]
+      (pp_in_domain d e)
+      (display "("))
+    (pp_print (. s 1) e)
+    (for [(d (tail (tail s)))]
+      (display ")")))
+
+  (define (pp_lift_to d v e)
+    (pp_in_domain d e)
+    (display "(")
+    (pp_print v e)
+    (display ")"))
+
+  (define (pp_seq t e)
+    (pp_print_terms t e SEQ_OPEN ", " SEQ_CLOSE))
+
+  (define (pp_tuple s e)
+    (display "in")
+    (pp_print (. s 1) e)
+    (display "(")
+    (pp_seq (tail (tail s)) e)
+    (display ")"))
+
+
+  (define (pp_if v e)
+    (let [(e (pp_incr_indentation e))]
+      (display IF_IF)
+      (pp_print (. v 1) e)
+      (pp_newline e)
+      (display IF_THEN)
+      (pp_print (. v 2) e)
+      (pp_newline e)
+      (display IF_ELSE)
+      (pp_print (. v 3) e)
+      (pp_newline e)
+      (display IF_END)
+      (pp_decr_indentation e)))
+
+
+  (define pp_ith
+    (|v e|
+      (let [(arg_exp (. v 2))]
+        (when (is_sexp (syntax_unwrap arg_exp))
+          (raise "cannot combine ith with an S-expression")))
+        // \! is negative thin-space
+      ((pp_binary "" "\\!\\downarrow_{" "}") v e)))
+
+  (define (pp_lower v e)    // (lower expr d1 d2 ...)  =>  (lower (lower_to d1 expr) d2 ...)
+    (pp_print
+      (datum_to_syntax
+        (let [(first_lower (sexp (QS lower_to) (. v 2) (. v 1))),
+              (more_doms   (tail (tail (tail v))))]
+          (if (is_empty more_doms)
+            first_lower
+            (apply sexp (QS lower) first_lower more_doms)))
+        (. v 0))
+      e))
+
+  (define pp_lower_to
+    (|v e|
+      (pp_print (. v 2) e)
+      (display "\\mid_{\\mbox{\\tiny ")
+      (pp_domain_name (. v 1) e)
+      (display "}}")))
+
+
+  //============================================================================
+
+
+  (define latexprint
+    '''
+A model printer that renders in Unicode plain-text.
+    '''
+    (make_printer                  // Formatting rules in decreasing precedence
+      // Base Types
+      (type_method is_bool        (|v e| (display (if v TRUE FALSE))))
+      (type_method is_symbol      (|v e| (display (texify_symbol v))))
+      (type_method is_string      (|v e| (display "\\mbox{\\rm ``{\\tt " (texescape v) "}''}")))
+
+      // General functions
+      (type_method is_fn           (|f e| (display "\n\n")
+                                          (pp_print (fn_name f) e)
+                                          (pp_print_terms (fn_args f) e "(" ", " ")")
+                                          (display DEFINE_EQ)
+                                          (pp_print       (fn_code f) e)))
+
+      // Special forms
+      (form_method eject           (pp_unary "" ""))
+      (form_method element_of      (|v e| (pp_print (. v 1) e)
+                                          (display "\\in ")
+                                          (pp_domain_name (. v 2) e)))
+      (form_method if              pp_if)
+      (form_method inject_into     (|s e| (pp_lift_to (. s 1) (. s 2) e)))
+      (form_method ith             pp_ith)
+      (form_method let             pp_let)
+      (form_method lift            pp_lift)
+      (form_method lift_to         (|s e| (pp_lift_to (. s 1) (. s 2) e)))
+      (form_method lower           pp_lower)
+      (form_method lower_to        pp_lower_to)
+      (form_method mk_fn           (|s e| (pp_print_terms (. s 2) e "\\lambda " " " ".")
+                                          (pp_print (. s 3) e)))
+      (form_method seq             (|s e| (pp_seq (tail (tail s)) e)))
+      (form_method seq_append      (pp_binary "" "\\S" ""))
+      (form_method seq_head        (pp_unary "" "\\!\\downarrow_{0}"))
+      (form_method seq_is_empty    (pp_unary "\\#" "=0"))
+      (form_method seq_length      (pp_unary "\\#" ""))
+      (form_method seq_prepend     (pp_binary "⟨" "⟩\\S" ""))
+      (form_method seq_tail        (pp_unary "" "\\dagger1"))
+      // TODO seq_truncate
+      (form_method tuple           pp_tuple)
+
+      (form_method and             (pp_nary "" "\\ \\wedge\\ " ""))
+      (form_method or              (pp_nary "" "\\ \\vee\\ "   ""))
+      (form_method not             (pp_nary "" "\\ \\lnot\\ "  ""))
+
+      (form_method +               (pp_binary "" " + " ""))
+      (form_method -               (pp_binary "" " - " ""))
+      (form_method <               (pp_binary "" " < " ""))
+      (form_method ===             (pp_binary "" " = " ""))
+      (form_method >               (pp_binary "" " > " ""))
+
+      // Function application. This must follow other forms!
+      (type_method is_syntax_pair  (|stx e| (pp_print_terms stx e "(" SPACE ")")))
+
+      (type_method is_domain       (|d e| (display (domain_name d) " = ")
+                                          (pp_domain_rhs d e)))
+
+      (type_method is_model        pp_model)
+    ))
+)
