@@ -39,10 +39,15 @@
 (check_printing default_printer "\"hi\"" (inject_into S "hi"))
 
 
+//==============================================================================
+// Unicode printing
+
 (define_check (check_unicode expected v)
   (check_printing uniprinter expected v))
 
-(check_unicode "true" true_val)
+(check_unicode "true"  (inject_into B true))
+(check_unicode "false" (inject_into B false))
+
 (check_unicode "1646" (inject_into Z 1646))
 
 (check_unicode "id(a) = a" id)

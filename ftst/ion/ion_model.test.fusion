@@ -22,8 +22,8 @@ TODO
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/testing"
-  "/ion_semantics/model"
-  "/ion_semantics/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
 )
 
 
@@ -281,4 +281,4 @@ TODO
     '#$ion_1_0' '#$10'))
 
 
-"SUCCESS (ion_semantics.test)"
+"SUCCESS (ion_model.test)"

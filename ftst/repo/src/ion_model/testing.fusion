@@ -12,7 +12,7 @@ Utilities for testing the Ion denotational model.
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/testing"
-    "/ion_semantics/model"
+    "/ion_model/model"
   )
 
   (provide (all_defined_out))

@@ -2,7 +2,7 @@
 
 (require
   "/fusioncontrib/denotation/printing/unicode"
-  "/ion_semantics/model"
+  "/ion_model/model"
 )
 
 
