@@ -50,6 +50,7 @@ References:
     pp_binary
     pp_print
     pp_print_terms
+    pp_syntax
     pp_ternary
     pp_unary
     product_domain_subdomains
@@ -58,6 +59,40 @@ References:
     union_domain_subdomains
   )
 
+
+  (define_values ('record:model_printer' model_printer is_model_printer accessor)
+    // Fields are:
+    //   0) The invokable procedure
+    //   1) The environment
+    (make_record_type (quote model_printer) null 2 0))
+
+
+  // Environment is a sexp of frames, each frame is one of:
+  //  * A procedure, takes a value and returns a printer xor falsey.
+  //  * ...more to come.
+  (define (model_printer_env p) (accessor p 1))
+
+
+  (define (make_printer clauses)
+    '''
+Contruct a customized pretty-printer.
+
+You'll generally need to add methods for is_fn, is_domain_value, etc.
+    '''
+    (assert (is_sexp clauses))
+    (let [(env (append clauses
+                 (sexp
+                   (type_method is_base_domain_value pp_basedom)
+                   (type_method is_string            pp_write)
+                   (type_method is_symbol            pp_write)
+                   // For any syntax forms, unwrap and try again.
+                   (type_method is_syntax            pp_syntax)
+                   (|v| pp_default))))]
+      (model_printer (|v| (pp_print v env)) env)))
+
+
+  //============================================================================
+  // Printer Customization Clauses
 
   (define (type_method pred method)
     '''
@@ -89,31 +124,9 @@ form with the binding `id`.
       (|v e| (method (syntax_unwrap v) e))))
 
 
-  (define_values ('record:model_printer' model_printer is_model_printer accessor)
-    // Fields are:
-    //   0) The invokable procedure
-    //   1) The environment
-    (make_record_type (quote model_printer) null 2 0))
-
-  (define (model_printer_env p) (accessor p 1))
-
-
-  (define (make_printer clauses)
-    '''
-You'll generally need to add methods for is_fn, is_domain_value, etc.
-    '''
-    (assert (is_sexp clauses))
-    (let [(env (append clauses
-                 (sexp
-                   (type_method is_base_domain_value pp_basedom)
-                   (type_method is_string            pp_write)
-                   (type_method is_symbol            pp_write)
-                   (|v| pp_default))))]
-      (model_printer (|v| (pp_print v env)) env)))
-
-
-  // Environment is a sexp of frames, each frame is one of:
-  //  * A procedure, takes a value and returns a printer xor falsey.
+  //============================================================================
+  // Printing Methods
+  // Each takes a value and an environment, and prints to current-output-port
 
   (define (pp_print v env)
     '''
@@ -132,16 +145,20 @@ clauses.
         (raise "can't print it"))))
 
 
-  //============================================================================
-  // Printing Methods
-  // Each takes a value and an environment, and prints to current-output-port
-
   (define (pp_default e r)
     // TODO This should eventually allow override of things _inside_ e.
     (display e))
 
+
   (define (pp_write e r)
+    "Prints a value using `write`."
     (write e))
+
+
+  (define (pp_syntax v env)
+    "Prints a syntax object by unwrapping it and recursing."
+    (pp_print (syntax_unwrap v) env))
+
 
   (define (pp_print_terms vs env beg mid end)
     (if (is_syntax vs)
@@ -164,6 +181,11 @@ clauses.
               (loop (+ 1 i)))))
         (display end))))
 
+
+  //============================================================================
+  // Printing Method Factories
+  // Each creates a printing method.
+
   (define (pp_unary beg end)
     '''
 Generates a print method that prints a unary expression (a sexp with two
@@ -173,12 +195,14 @@ elements) by displaying text before and after the single argument expression.
            (pp_print (. v 1) e)
            (display end)))
 
+
   (define (pp_binary beg mid end)
     (|v e| (display beg)
            (pp_print (. v 1) e)
            (display mid)
            (pp_print (. v 2) e)
            (display end)))
+
 
   (define (pp_ternary beg mid1 mid2 end)
     (|v e| (display beg)
@@ -188,6 +212,10 @@ elements) by displaying text before and after the single argument expression.
            (display mid2)
            (pp_print (. v 3) e)
            (display end)))
+
+
+  //============================================================================
+  // Printing Methods specific to denatational models.
 
   (define (pp_basedom e r)
     '''
