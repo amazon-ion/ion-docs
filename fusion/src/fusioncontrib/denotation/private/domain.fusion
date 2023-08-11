@@ -6,10 +6,7 @@
     "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusion/private/record"
-    (rename_in "/fusion/experimental/syntax"
-      (quote_syntax QS))
-    (rename_in "/fusion/base"
-      (quote Q) (quasiquote QQ) (unquote UQ))
+    "/fusioncontrib/denotation/private/util"
   )
 
   (provide

@@ -22,7 +22,7 @@
 
 
 (define default_printer
-  (make_printer (sexp)))
+  (make_printer))
 
 (check_printing default_printer "{{{void}}}"   (void))
 (check_printing default_printer "true"         true)

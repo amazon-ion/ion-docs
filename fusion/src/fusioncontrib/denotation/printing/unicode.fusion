@@ -108,52 +108,50 @@ Print domain models in a Unicode-rich plain-text format.
     '''
 A model printer that renders in Unicode plain-text.
     '''
-    (make_printer
-      // formatting rules in decreasing precedence
-      (sexp
-        // General functions
-        (type_method is_fn                       (|f r| (pp_print       (fn_name f) r)
-                                                        (pp_print_terms (fn_args f) r "(" ", " ") = ")
-                                                        (pp_print       (fn_code f) r)))
+    (make_printer                  // Formatting rules in decreasing precedence
+      // General functions
+      (type_method is_fn           (|f r| (pp_print       (fn_name f) r)
+                                          (pp_print_terms (fn_args f) r "(" ", " ") = ")
+                                          (pp_print       (fn_code f) r)))
 
-        // Special forms
-        (form_method (quote_syntax eject)        (pp_unary "" ""))
-        (form_method (quote_syntax element_of)   (pp_binary "" " ∈ " ""))
-        (form_method (quote_syntax if)           (pp_ternary "IF " " THEN " " ELSE " " ENDIF"))
-        (form_method (quote_syntax inject_into)  (|s r| (pp_lift_to (. s 1) (. s 2) r)))
-        (form_method (quote_syntax ith)          (pp_binary "" "↓" ""))
-        (form_method (quote_syntax let)          pp_let)
-        (form_method (quote_syntax lift)         pp_lift)
-        (form_method (quote_syntax lift_to)      (|s r| (pp_lift_to (. s 1) (. s 2) r)))
-        (form_method (quote_syntax lower)        (|s r| (pp_print (. s 1) r)
-                                                        (pp_print_terms (tail (tail s)) r "|" "|" "")))
-        (form_method (quote_syntax lower_to)     (|s r| (pp_print (. s 2) r)
-                                                        (display "|")
-                                                        (pp_print (. s 1) r)))
-        (form_method (quote_syntax mk_fn)        (|s r| (pp_print_terms (. s 2) r "λ" " " ".")
-                                                        (pp_print (. s 3) r)))
-        (form_method (quote_syntax seq)          (|s r| (pp_seq (tail (tail s)) r)))
-        (form_method (quote_syntax seq_append)   (pp_binary "" "§" ""))
-        (form_method (quote_syntax seq_head)     (pp_unary "" "↓0"))
-        (form_method (quote_syntax seq_is_empty) (pp_unary "#" " = 0"))
-        (form_method (quote_syntax seq_length)   (pp_unary "#" ""))
-        (form_method (quote_syntax seq_prepend)  (pp_binary "⟨" "⟩§" ""))
-        (form_method (quote_syntax seq_tail)     (pp_unary "" "†1"))
-        // TODO seq_truncate
-        (form_method (quote_syntax tuple)        pp_tuple)
+      // Special forms
+      (form_method eject           (pp_unary "" ""))
+      (form_method element_of      (pp_binary "" " ∈ " ""))
+      (form_method if              (pp_ternary "IF " " THEN " " ELSE " " ENDIF"))
+      (form_method inject_into     (|s r| (pp_lift_to (. s 1) (. s 2) r)))
+      (form_method ith             (pp_binary "" "↓" ""))
+      (form_method let             pp_let)
+      (form_method lift            pp_lift)
+      (form_method lift_to         (|s r| (pp_lift_to (. s 1) (. s 2) r)))
+      (form_method lower           (|s r| (pp_print (. s 1) r)
+                                          (pp_print_terms (tail (tail s)) r "|" "|" "")))
+      (form_method lower_to        (|s r| (pp_print (. s 2) r)
+                                          (display "|")
+                                          (pp_print (. s 1) r)))
+      (form_method mk_fn           (|s r| (pp_print_terms (. s 2) r "λ" " " ".")
+                                          (pp_print (. s 3) r)))
+      (form_method seq             (|s r| (pp_seq (tail (tail s)) r)))
+      (form_method seq_append      (pp_binary "" "§" ""))
+      (form_method seq_head        (pp_unary "" "↓0"))
+      (form_method seq_is_empty    (pp_unary "#" " = 0"))
+      (form_method seq_length      (pp_unary "#" ""))
+      (form_method seq_prepend     (pp_binary "⟨" "⟩§" ""))
+      (form_method seq_tail        (pp_unary "" "†1"))
+      // TODO seq_truncate
+      (form_method tuple           pp_tuple)
 
-        (form_method (quote_syntax +)            (pp_binary "" " + " ""))
-        (form_method (quote_syntax -)            (pp_binary "" " - " ""))
-        (form_method (quote_syntax <)            (pp_binary "" " < " ""))
-        (form_method (quote_syntax ===)          (pp_binary "" " = " ""))
-        (form_method (quote_syntax >)            (pp_binary "" " > " ""))
+      (form_method +               (pp_binary "" " + " ""))
+      (form_method -               (pp_binary "" " - " ""))
+      (form_method <               (pp_binary "" " < " ""))
+      (form_method ===             (pp_binary "" " = " ""))
+      (form_method >               (pp_binary "" " > " ""))
 
-        // Function application. This must follow other forms!
-        (type_method is_syntax_pair              (|stx r| (pp_print_terms stx r "(" " " ")")))
+      // Function application. This must follow other forms!
+      (type_method is_syntax_pair  (|stx r| (pp_print_terms stx r "(" " " ")")))
 
-        (type_method is_domain                   (|d r| (display (domain_name d) " = ")
-                                                        (pp_domain_rhs d r)))
+      (type_method is_domain       (|d r| (display (domain_name d) " = ")
+                                          (pp_domain_rhs d r)))
 
-        (type_method is_model                    pp_model)
-      )))
+      (type_method is_model        pp_model)
+    ))
 )

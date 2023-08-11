@@ -5,10 +5,19 @@ Miscellaneous things that should really be provided by Fusion.
 
   (require
     "/fusion/experimental/syntax"
+
+    (rename_in "/fusion/experimental/syntax"
+      (quote_syntax QS))
+    (rename_in "/fusion/base"
+      (quote Q) (quasiquote QQ) (unquote UQ))
   )
 
   (provide
     is_syntax_pair
+    Q
+    QS
+    QQ
+    UQ
   )
 
   (define (is_syntax_pair v)
