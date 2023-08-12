@@ -17,7 +17,6 @@ TODOs
   * This makes indirect lowering unambiguous.
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
 * Domain constants `(val <name> <expr>)`
-* Automatically create 'Domain*' for each 'Domain'. Perhaps 'Domain?' too?
 * Product domains should allow one field; more natural than singleton unions.
 * [LET] Functional let form. (See L.I.S.P. p172)
 * Improve error reporting locations; TCE + PCS = no meaningful stack

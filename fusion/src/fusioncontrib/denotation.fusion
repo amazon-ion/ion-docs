@@ -27,7 +27,8 @@ Domains come in several types:
     explicitly lifted into the union, and lowered back out of the union.
   * _Product domains_ model ordered tuples of values.
   * _Sequence domains_ model sequences of zero or more values from a given
-    domain.
+    domain.  Sequence domains cannot be defined directly, they are defined
+    automatically for each domain.
 
   '''
   (require

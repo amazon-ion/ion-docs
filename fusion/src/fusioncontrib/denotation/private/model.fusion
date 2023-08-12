@@ -54,35 +54,39 @@ Returns:
 
 
   (define (handle_dom dom_stx name)
+    // TODO Ensure `name` doesn't end with "*" to prevent clash with sequences.
     (let [(result (|d| (datum_to_syntax d CTX dom_stx)))]
       (lets [(eq   (syntax_get dom_stx 2)),  // TODO validate the `=`
              (def  (syntax_get dom_stx 3)),
              (def_val (syntax_unwrap def)),
              (desc (if (< 4 (syntax_size dom_stx)) (syntax_get dom_stx 4) null.string))]
-        (if (is_string def_val)
-          (result (QQ (define_singleton_domain (UQ name) (UQ def))))
-          (if (is_pair def_val)
-              (let [(op   (syntax_unwrap (head def_val))),
-                    (args (tail def_val))]
-                (cond
-                  ((=== (quote ^) op)
-                   (result
-                     (pair (quote define_base_domain) (pair name (pair desc args)))))
-                  ((=== (quote +) op)
-                   (result
-                     (pair (quote define_union_domain) (pair name (pair desc args)))))
-                  ((=== (quote *) op)
-                    (result
-                      (pair (quote define_product_domain) (pair name (pair desc args)))))
-                  ((=== (quote **) op)
-                    (result
-                      (pair (quote define_seq_domain) (pair name (pair desc args)))))
-                  ((=== (quote ->) op)
-                    (result
-                      (pair (quote define_func_domain) (pair name (pair desc args)))))
-                  (true (wrong_syntax def
-                          "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
-              (wrong_syntax def "Expected string or sexp for domain definition"))))))
+        (sexp
+          (quote begin)
+          (if (is_string def_val)
+            (result (QQ (define_singleton_domain (UQ name) (UQ def))))
+            (if (is_pair def_val)
+                (let [(op   (syntax_unwrap (head def_val))),
+                      (args (tail def_val))]
+                  (cond
+                    ((=== (quote ^) op)
+                     (result
+                       (pair (quote define_base_domain) (pair name (pair desc args)))))
+                    ((=== (quote +) op)
+                     (result
+                       (pair (quote define_union_domain) (pair name (pair desc args)))))
+                    ((=== (quote *) op)
+                      (result
+                        (pair (quote define_product_domain) (pair name (pair desc args)))))
+                    ((=== (quote ->) op)
+                      (result
+                        (pair (quote define_func_domain) (pair name (pair desc args)))))
+                    (true (wrong_syntax def
+                            "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+                (wrong_syntax def "Expected string or sexp for domain definition")))
+            (result (sexp (quote define_seq_domain)
+                      (datum_to_syntax (symbol_append (syntax_unwrap name) "*") name)
+                      (string_append "Sequence of " (syntax_unwrap name))
+                      name))))))
 
 
   (define (handle_fn fn_stx name)
@@ -115,10 +119,6 @@ Defines a union of one or more domains.
     (* <dom-id> <dom-id> ...+)
 
 Defines a product of two or more domains.
-
-    (** <dom-id>)
-
-Defines a sequence (zero or more elements) of a domain.
 
     (-> <dom-id> <dom-id>)
 

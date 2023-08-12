@@ -14,6 +14,7 @@ Miscellaneous things that should really be provided by Fusion.
 
   (provide
     is_syntax_pair
+    symbol_append
     Q
     QS
     QQ
@@ -23,5 +24,10 @@ Miscellaneous things that should really be provided by Fusion.
   (define (is_syntax_pair v)
     (and (is_syntax v)
          (is_pair (syntax_unwrap v))))
+
+  // Also exists in /fusion/private/record
+  (define symbol_append
+    (lambda texts
+      (string_to_symbol (apply string_append texts))))
 
 )

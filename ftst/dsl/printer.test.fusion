@@ -66,7 +66,6 @@
   (dom I = (^ is_int) "integers")
   (dom U = (+ B I))
   (dom V = (+ U Single))
-  (dom 'U*' = (** U))
   (dom Tuple = (* U B Single))
   (dom Func = (-> U Tuple B))
 
@@ -96,7 +95,6 @@ B = <null.string>
 I = <integers>
 U = B + I
 V = U + Single
-U* = U*
 Tuple = U * B * Single
 Func = U * Tuple -> B
 

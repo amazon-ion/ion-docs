@@ -74,23 +74,18 @@ Spec Problems
     // Raw-layer Data Types, which can contain unresolved SIDs
 
     (dom SymTok    = (+ Unicode I))     // "Raw" symbol token
-    (dom 'SymTok*' = (** SymTok))
 
     (dom RSym      = (+ DotNull SymTok))
     (dom RList     = (+ DotNull 'RVal*'))
 
 //  (dom RStruct = (-> SymTok RVal))   // Currently can't recurse in ->
     (dom RField    = (* SymTok RVal))
-    (dom 'RField*' = (** RField))
     (dom RStruct   = (+ DotNull 'RField*'))
 
     // The "raw" data model
     (dom RContent = (+ SafeVal RSym RList RStruct))
     (dom RVal     = (* 'SymTok*' RContent))
     (dom TRVal    = (+ RVal IVM))
-
-    (dom 'RVal*'  = (** RVal))
-    (dom 'TRVal*' = (** TRVal))
 
     (fn rval_annots  ((v RVal) -> 'SymTok*')  (ith v 0))
     (fn rval_content ((v RVal) -> 'RContent') (ith v 1))
@@ -103,20 +98,16 @@ Spec Problems
     // Application-layer Data Types
 
     (dom Symbolic    = (+ Unicode Sym0))  // "Expanded" symbol token
-    (dom 'Symbolic*' = (** Symbolic))
 
     (dom Symbol   = (+ DotNull Symbolic))
     (dom List     = (+ DotNull 'Value*'))
 
     (dom Field    = (* Symbolic Value))
-    (dom 'Field*' = (** Field))
     (dom Struct   = (+ DotNull 'Field*'))
 
     // The Ion data model, proper
     (dom Content   = (+ SafeVal Symbol List Struct))
     (dom Value     = (* 'Symbolic*' Content))
-
-    (dom 'Value*' = (** Value))
 
     (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
 
@@ -193,9 +184,9 @@ Spec Problems
         (declared_symbols s)))
 
 
-    (dom Catalog      = (** SharedSymtab))
+    (dom Catalog = (+ 'SharedSymtab*'))  // TODO * would be better
 
-    (fn Catalog_scan ((c Catalog) (n Unicode) (v I) (best 'SharedSymtab?') -> 'SharedSymtab?')
+    (fn Catalog_scan ((c 'SharedSymtab*') (n Unicode) (v I) (best 'SharedSymtab?') -> 'SharedSymtab?')
       (if (seq_is_empty c)
         best
         (let [(sst (seq_head c))]
@@ -212,11 +203,11 @@ Spec Problems
             (Catalog_scan (seq_tail c) n v best)))))
 
     (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab?')
-      (Catalog_scan c name version (lift NOTHING 'SharedSymtab?')))
+      (Catalog_scan (lower c 'SharedSymtab*') name version (lift NOTHING 'SharedSymtab?')))
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
-      (seq_prepend s c))
+      (lift (seq_prepend s (lower c 'SharedSymtab*')) Catalog))
 
 
     (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
@@ -528,7 +519,7 @@ Spec Problems
   (define IVM_1_0          (lift (singleton Ion1_0) IVM))
   (define SYM0             (singleton Sym0))
   (define DOTNULL          (singleton DotNull))
-  (define EMPTY_CATALOG    (seq Catalog))
+  (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
   (define EMPTY_UNICODE    (inject_into Unicode ""))
   (define EMPTY_SYMBOLICS  (seq 'Symbolic*'))
   (define EMPTY_STRUCT     (lift (seq 'Field*') Struct))
