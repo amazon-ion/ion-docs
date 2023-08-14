@@ -2,55 +2,45 @@
 // Testing of various styles we need.
 // Easier to debug in fragments than in the full document.
 
+// We use blocks with and without embedde Unicode because dblatex has trouble
+// with those in combination and we have postprocessing workarounds.
+
 include::styles.adoc[]
 
 
-Testing unicode arrows in normal text → double: latexmath:[⇒]
+Body content:
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
 
-[subs="+normal"]
+[{nrm}]
 ----
-Testing unicode arrow in source text -> → double: => ⇒ latexmath:[⇒]
+Nrm listing with non-Unicode double-arrow: => and ellipses: ...
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
 ----
 
 [{nrm}]
 ----
-This should be italic: _template_
+Nrm listing with Unicode double-arrow: ⇒ and ellipses: …
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
 ----
 
-
-This should be italic and subscript: _template~cond~back_
-
-[{nrm}]
-----
-This should be italic and subscript: _template~cond~back_
-----
-
-[{nrm}]
-----
-Same here: (*if_void* _template~cond~_)
-----
-
-[{nrm}]
-----
-(:detail_page_url [true]) ⇒ _**error**: make_string expects a string_
-----
 
 [IMPORTANT]
 ====
-This should have bold keywords `*macro*` and `*list*`:
+Admonition block:
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
 
 [{nrm}]
 ----
-(*macro* ouch [(stuff [*list*])] …)
+Nrm listing with non-Unicode double-arrow: => and ellipses: ...
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+[{nrm}]
+----
+Nrm listing with Unicode double-arrow: ⇒ and ellipses: …
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
 ----
 ====
-
-Same, but the ellipses can trip it up:
-
-[{nrm}]
-----
-(*macro* ouch [(stuff [*list*])] …)
-----
 
 
 A problematic char: ┌  and the heavy version ┏
