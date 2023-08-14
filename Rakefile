@@ -75,5 +75,7 @@ end
 task :default => "spec:build"
 
 task :clean => "spec:clean"
+task :html  => "spec:html"
+task :pdf   => "spec:pdf"
 task :build => "spec:build"
 task :watch => "spec:watch"

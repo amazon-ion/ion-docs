@@ -16,15 +16,21 @@ container and then run a transient container with that image to build the PDF/HT
 the arguments to run `bundle exec rake`:
 
 ```
-# build the spec
-$ ./build-docker.sh spec:build
+# build the spec in all formats
+$ ./build-docker.sh build
 
 # clean-up
-$ ./build-docker.sh spec:clean
+$ ./build-docker.sh clean
 
 # build the spec with watches to auto-rebuild on file change
-$ ./build-docker.sh spec:watch
+$ ./build-docker.sh watch
 ```
+
+## Debugging
+
+Running `build-docker.sh -s` opens a shell in a new container.
+Once there, you can run `rake` directly, for example `rake pdf`.
+
 
 ## Development
 
