@@ -928,7 +928,7 @@ Primitive types have inherent tradeoffs and require careful consideration, but i
 the right circumstances the density wins can be significant.
 
 
-[#macro_shapes]
+[#eg:macro_shapes]
 === Macro Shapes
 
 We can now introduce the final kind of input constraint, macro-shaped parameters.  To understand
