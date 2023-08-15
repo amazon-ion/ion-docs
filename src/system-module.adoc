@@ -6,7 +6,8 @@ include::styles.adoc[]
 The symbols and macros of the system module `$ion` are available everywhere within an Ion document,
 with the version of that module being determined by the spec-version of each segment.
 
-The specific system symbols are largely uninteresting to users; while the binary encoding heavily leverages the system symbol table, the text encoding that users typically interact with does not.
+The specific system symbols are largely uninteresting to users; while the binary encoding heavily
+leverages the system symbol table, the text encoding that users typically interact with does not.
 The system macros are more visible, especially to authors of macros.
 
 This chapter catalogs the system-provided macros.
@@ -159,7 +160,7 @@ TODO https://github.com/amazon-ion/ion-docs/issues/253
 If the coefficient were decimal, this could re-scale values. Useful?
 
 
-===== `make_float` ❓
+===== `make_float`
 
 [{nrm}]
 ----
