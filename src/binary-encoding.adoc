@@ -2298,7 +2298,7 @@ considered "shapes" rather than types because while their encoding is always sta
 produced by their expansion is not. A single macro can produce streams of varying length and containing values of
 different Ion types depending on the arguments provided in the invocation.
 
-See the link:macros-by-example.adoc#macro_shapes[Macro Shapes] section of _Macros by Example_ for more information.
+See the link:macros-by-example.adoc#eg:macro_shapes[Macro Shapes] section of _Macros by Example_ for more information.
 
 === Encoding E-expressions With Multiple Arguments
 

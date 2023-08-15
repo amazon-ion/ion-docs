@@ -524,7 +524,7 @@ in practice, since symbols are trivial to manage.
 Macros are more sophisticated entities, and most macros are implemented in terms of other macros.
 This makes it valuable to support transitive import of macros between shared modules.
 
-Let's revisit <<_macro_shapes,our scatter plot example>> and build a module for expressing charts
+Let's revisit <<eg:macro_shapes,our scatter plot example>> and build a module for expressing charts
 for various data sets.
 First we take our basic geometric macros and package them in a shared module:
 
@@ -813,7 +813,7 @@ Invoked as:
 )
 ----
 
-This leverages <<_splicing_in_encoded_data,splicing>> to add two S-expressions to the enclosing
+This leverages <<eg:splicing,splicing>> to add two S-expressions to the enclosing
 directive.
 
 
