@@ -11,6 +11,7 @@ Functional:
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
+  * Probably Symbolic needs to track symbol source: SharedSymtab x N::index
 * SST compilation is very weak.
 * Catalog construction should reject duplicate keys, so we don't imply anything
   about selection criteria.

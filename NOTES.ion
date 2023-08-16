@@ -4,13 +4,25 @@
 
 TODOs
 -----
-* Domain extension; pre-define B/Z/D/F/S/T
-  * Or perhaps import desired features?
+* TOP domain
+* `(import TOP B I)` to get them added to the defined elements in the model
+  * So they can be printed.
+  * Should be optional, though.
+* Predefined domains, perhaps replacing base domains?
+  * B = booleans
+  * Z = integers
+  * N = natural numbers?
+  * S = strings of Unicode code points?
+  * C = Unicode code point?
 * [BOOL] Proper functional handling of booleans and if.
   * Needs import function to bring in framework-defined doms and fns.
   * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
 * BOTTOM domain for error reporting.
+  * Automatic strictness in fn interceptor.
 * Lowering should return [BOTTOM] if not in the target domain. (See LiSP p162)
+* For union types `U = A+B`, autogenerate:
+  * lifting function `inU()`
+  * lowering functions `U->A()` and `U->B()`
 * Typecase to safely and completely lower a union domain value
   * Similar seqcase to traverse sequences
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
@@ -21,8 +33,6 @@ TODOs
 * [LET] Functional let form. (See L.I.S.P. p172)
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
-* Model printer should print functions (and denoters)
-* TOP domain
 * Delay and memoize component domains (enable recursive types)
 * Sequence domains like Val+
 
