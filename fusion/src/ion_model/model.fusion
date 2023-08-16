@@ -51,9 +51,6 @@ Spec Problems
 
     (dom B      = (^ is_bool)      "Booleans")
     (dom I      = (^ is_int)       "Integers")
-    (dom D      = (^ is_decimal)   "Decimals")
-    (dom F      = (^ is_float)     "Floats")
-    (dom T      = (^ is_timestamp) "Timestamps")
 
 
     //=============================
@@ -67,7 +64,7 @@ Spec Problems
     (dom Int      = (+ DotNull I))
     (dom String   = (+ DotNull Unicode))
 
-    (dom SafeVal = (+ NullNull Boolean Int String /*decimal float blob clob*/)
+    (dom SafeVal = (+ NullNull Boolean Int String /*Decimal Float Timetstam Blob Clob*/)
       "Values that cannot contain SIDs")
 
 
