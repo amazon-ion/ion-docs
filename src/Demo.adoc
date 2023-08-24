@@ -1,0 +1,56 @@
+= Style Demo
+
+// Demo of various markup styles we need.
+// Easier to debug in fragments than in the full document.
+
+// We use blocks with and without embedded Unicode because dblatex has trouble
+// with those in combination and we have postprocessing workarounds.
+
+include::styles.adoc[]
+
+
+Body content:
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+
+[{nrm}]
+----
+Nrm listing with non-Unicode double-arrow: => and ellipses: ...
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+[{nrm}]
+----
+Nrm listing with Unicode double-arrow: ⇒ and ellipses: …
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+
+[IMPORTANT]
+====
+Admonition block:
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+
+[{nrm}]
+----
+Nrm listing with non-Unicode double-arrow: => and ellipses: ...
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+[{nrm}]
+----
+Nrm listing with Unicode double-arrow: ⇒ and ellipses: …
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+====
+
+
+A problematic char: ┌  and the heavy version ┏
+
+[%unbreakable]
+----
+              ┏──── Lowest bit is 1 (end), indicating
+              │     this is the only byte.
+0 0 0 1 1 1 0 1
+└─────┬─────┘
+unsigned int 14
+----
