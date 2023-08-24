@@ -12,11 +12,11 @@ echo 'eval "$(~/.rbenv/bin/rbenv init - zsh)"' >> ~/.zshrc
 eval "$(~/.rbenv/bin/rbenv init - bash)"
 
 # Install latest stable Ruby
-rbenv install $(rbenv install -l | grep -v - | tail -1)
-rbenv global $(rbenv install -l | grep -v - | tail -1)
+rbenv install "$(rbenv install -l | grep -v - | tail -1)"
+rbenv global  "$(rbenv install -l | grep -v - | tail -1)"
 
 # Install our required Gems
-cd ${BOOTSTRAP_DIR}
+cd "${BOOTSTRAP_DIR}"
 bundle install
 
 # Get required fonts for the theme
