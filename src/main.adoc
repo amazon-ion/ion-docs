@@ -27,6 +27,10 @@ Ion Team
 
 // TODO html stylesheet; see https://docs.asciidoctor.org/asciidoctor/latest/html-backend/custom-stylesheet/
 
+// Only uncomment when testing changes to the rendering pipeline!
+// include::styletest.adoc[]
+
+
 include::introduction.adoc[]
 
 include::whatsnew.adoc[]

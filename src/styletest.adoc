@@ -1,0 +1,65 @@
+== Style Testing
+// Testing of various styles we need.
+// Easier to debug in fragments than in the full document.
+
+include::styles.adoc[]
+
+
+Testing unicode arrows in normal text → double: latexmath:[⇒]
+
+[subs="+normal"]
+----
+Testing unicode arrow in source text -> → double: => ⇒ latexmath:[⇒]
+----
+
+[{nrm}]
+----
+This should be italic: _template_
+----
+
+
+This should be italic and subscript: _template~cond~back_
+
+[{nrm}]
+----
+This should be italic and subscript: _template~cond~back_
+----
+
+[{nrm}]
+----
+Same here: (*if_void* _template~cond~_)
+----
+
+[{nrm}]
+----
+(:detail_page_url [true]) ⇒ _**error**: make_string expects a string_
+----
+
+[IMPORTANT]
+====
+This should have bold keywords `*macro*` and `*list*`:
+
+[{nrm}]
+----
+(*macro* ouch [(stuff [*list*])] …)
+----
+====
+
+Same, but the ellipses can trip it up:
+
+[{nrm}]
+----
+(*macro* ouch [(stuff [*list*])] …)
+----
+
+
+A problematic char: ┌  and the heavy version ┏
+
+[%unbreakable]
+----
+              ┏──── Lowest bit is 1 (end), indicating
+              │     this is the only byte.
+0 0 0 1 1 1 0 1
+└─────┬─────┘
+unsigned int 14
+----
