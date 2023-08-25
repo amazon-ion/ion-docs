@@ -1,6 +1,6 @@
 # Inspired by https://github.com/simdjson/simdjson/blob/master/Dockerfile
 
-FROM ubuntu:23.10
+FROM ubuntu:23.04
 
 ARG USER_ID
 ARG GROUP_ID
@@ -16,7 +16,8 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get -y install \
     libssl-dev libyaml-dev libreadline6-dev zlib1g-dev libgmp-dev libncurses5-dev \
     libffi-dev libgdbm6 libgdbm-dev libdb-dev uuid-dev \
     flex libxml2-dev libgdk-pixbuf2.0-dev libcairo2-dev libpango1.0-dev fonts-lyx cmake \
-    libzstd-dev libwebp-dev pngquant
+    libzstd-dev libwebp-dev pngquant \
+    xmlto
 
 # These sparse files do not behave well for large UIDs
 RUN rm /var/log/faillog /var/log/lastlog

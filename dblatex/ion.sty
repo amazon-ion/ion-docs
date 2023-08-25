@@ -1,0 +1,40 @@
+%% This style is derived from the docbook one.
+%% Source: dblatex manual section 5.5.1
+%% https://sources.debian.org/data/main/d/dblatex/0.3.12py3-1/docs/manual.pdf
+
+%% This file attempts to get Unicode handling working, since our
+%% AsciiDoc source files use non-Latin-1 characters. Most notably,
+%% the binary encoding diagrams use the Box Drawing characters.
+
+\RequirePackage{textcomp}
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{ion}[Ion DocBook Style]
+
+%% Just use the original package and pass the options
+\RequirePackageWithOptions{docbook}
+
+
+%% Here we teach TeX the Unicode characters we need that are not defined elsewhere.
+%% Some of these are inserted by AsciiDoctor!
+\DeclareUnicodeCharacter{03BC}{\textmu}                     % Greek Small Letter Mu
+\DeclareUnicodeCharacter{200B}{\hspace{0pt}}                % Zero Width Space
+\DeclareUnicodeCharacter{21D2}{\ensuremath{\Rightarrow}}    % Rightwards Double Arrow
+
+
+%% Now we do the same thing for listings, since that has its own UTF-8 handling.
+%% See https://tex.stackexchange.com/questions/24528
+
+\lstset{
+  literate={→}{{$\rightarrow$}}1
+           {⇒}{{$\Rightarrow$}}1
+}
+
+
+%% Prevent the copyright from appearing on its own page.
+%% \maketitle is originally defined in dblatex's docbook.sty
+
+\def\maketitle{
+  \DBKcover
+  \newpage
+}

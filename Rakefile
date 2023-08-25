@@ -82,6 +82,36 @@ namespace :spec do
                 adoc)
   end
 
+  def xml_to_pdf(xml)
+    puts "Converting #{xml} to PDF..."
+
+    # See our dblatex/README.md for explanation.
+
+    # https://www.mankier.com/1/xmlto
+    xmlto_params = [
+      "--skip-validation",
+      # "-vv",                       # Enables --verbose for dblatex
+    ]
+
+    # https://www.mankier.com/1/dblatex
+    dblatex_params = [
+      "--param=latex.encoding=utf8",
+      "--xsl-user=/workspace/dblatex/xsl/ion.xsl",
+      "--texstyle=/workspace/dblatex/ion.sty",
+      "--texpost=/workspace/dblatex/postprocess.sh",
+      # "--quiet",                  # Less verbose, only error messages
+      # "--verbose",                # Show the running commands
+      "--debug",                  # Keep the /tmp subdir with tex files
+    ]
+
+    safe_system('xmlto',  *xmlto_params,
+                '--with-dblatex',
+                '-p', dblatex_params.join(' '),
+                '-o', 'build',
+                'pdf',
+                xml)
+  end
+
 
   #=============================================================================
   # Generate tasks for each book
@@ -100,8 +130,8 @@ namespace :spec do
       adoc_to_html adoc, html
     end
 
-    file pdf => [:prereqs, adoc] do
-      adoc_to_pdf adoc, pdf
+    file pdf => [:prereqs, xml] do
+      xml_to_pdf xml
     end
   end
 
