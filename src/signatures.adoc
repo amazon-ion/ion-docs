@@ -89,7 +89,7 @@ Finally, any visible macro can be used as a type, in which case the argument is 
 as an S-expression with elements matching that macro’s signature.
 As with tagless arguments, these arguments are serialized without any explicit indication of
 their type, since that’s implied by context.
-(Zero-parameter macros—constants—are acceptable but pointless.)
+(Using a zero-parameter macro as a parameter type is acceptable but pointless, since the result is constant.)
 
 
 === Cardinality
