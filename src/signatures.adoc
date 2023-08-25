@@ -3,8 +3,8 @@
 
 include::styles.adoc[]
 
-A macro's _signature_ define the syntax of expressions that invoke it, and the set of input values
-it acceptable.
+A macro's _signature_ defines the syntax of expressions that invoke it, and the set of input values
+it accepts.
 Signatures apply to both E-expressions and macro-language invocations.
 Because they denote the interface for users of macros, we describe them independently of macro
 definitions.
@@ -183,8 +183,8 @@ arity_.
 
 === Result Specification
 
-To enable more robust and easier-to debug templates, a signature can express a _result
-specification_ that constraints the data that it produces.
+To enable more robust and easier-to-debug templates, a signature can express a _result
+specification_ that constrains the data that it produces.
 Results are specified by their type (abstract or concrete) and cardinality.
 Both factors are verified by the macro expander when the macro is invoked.
 
