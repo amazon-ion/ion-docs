@@ -116,9 +116,9 @@ Spec Problems
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
 
-    (fn Symbolic_text_matches ((s Symbolic) (t Unicode) -> B)
+    (fn Symbolic_text_matches ((s Symbolic) (u Unicode) -> B)
       (if (element_of s Unicode)
-        (=== (eject t) (eject (lower s Unicode)))
+        (=== (eject u) (eject (lower s Unicode)))
         false))
 
     (fn Symbol_text_matches ((s Symbol) (u Unicode) -> B)
@@ -174,12 +174,11 @@ Spec Problems
     (fn SST_symbols ((s SharedSymtab) -> 'Symbolic*') (ith s 2))
 
     (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
-      (tuple SharedSymtab
-        (lower (value_content (seq_head (Struct_get1 s "name")))
-          SafeVal String Unicode)
-        (lower (value_content (seq_head (Struct_get1 s "version")))
-          SafeVal Int I)
-        (declared_symbols s)))
+      (let [(n (lower (value_content (seq_head (Struct_get1 s "name")))
+                 SafeVal String Unicode)),
+            (v (lower (value_content (seq_head (Struct_get1 s "version")))
+                 SafeVal Int I))]
+        (tuple SharedSymtab n v (declared_symbols s))))
 
 
     (dom Catalog = (+ 'SharedSymtab*'))  // TODO * would be better
@@ -217,10 +216,10 @@ Spec Problems
 
 
     (fn lst_lookup ((lst LocalSymtab) (i I) -> Symbolic)
-      (ith (lower lst 'Symbolic*')
-        (if (< (eject i) (seq_length (lower lst 'Symbolic*')))
-          (eject i)
-          0)))
+      (let [(sid (if (< (eject i) (seq_length (lower lst 'Symbolic*')))
+                   (eject i)
+                   0))]
+        (ith (lower lst 'Symbolic*') sid)))
 
     // Returns Symbolic so it can represent SYM0 when the sid
     // doesn't map to text.
@@ -261,8 +260,8 @@ Spec Problems
           (seq_truncate ss (eject max)))))
 
     (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'Symbolic*')
-      (if (or (=== ""     (eject name))
-              (=== "$ion" (eject name)))
+      (if (or (=== (eject name) "")
+              (=== (eject name) "$ion"))
         EMPTY_SYMBOLICS
         (let [(found (Catalog_lookup c name version))]
           (if (element_of found Nothing)
@@ -308,10 +307,10 @@ Spec Problems
             -1))))
 
     (fn compile_import_struct ((s Struct) (r Environment) -> 'Symbolic*')
-      (compile_import (normalize_name    (Struct_get1 s "name"))
-                      (normalize_version (Struct_get1 s "version"))
-                      (normalize_max_id  (Struct_get1 s "max_id"))
-                      (Environment_cat r)))
+      (let [(n (normalize_name    (Struct_get1 s "name"))),
+            (v (normalize_version (Struct_get1 s "version"))),
+            (m (normalize_max_id  (Struct_get1 s "max_id")))]
+        (compile_import n v m (Environment_cat r))))
 
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'Symbolic*')
       (if (seq_is_empty vs)

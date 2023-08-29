@@ -28,6 +28,12 @@ environment with additional definitions along these lines (from LiSP2TeX):
 Observe that the local definitions, including a redefinition of `\\newline`,
 switch out of math-mode and then back, because tabbing/newlines aren't allowed
 in math mode.
+
+
+TODO
+====
+  * Print domain definitions.
+  * Insert some vertical space between function definitions.
   '''
 
   // Helpful reference to what's available in MathJAX:
@@ -153,6 +159,7 @@ in math mode.
         (display WITHIN_BINDINGS)
         (pp_print (. binding 1) e)
         (when (is_pair (tail bindings))
+          (pp_newline e)
           (display BETWEEN_BINDINGS)
           (pp_bindings (tail bindings) e)))))
 
@@ -297,7 +304,7 @@ A model printer that renders in Unicode plain-text.
 
       (form_method and             (pp_nary "" "\\ \\wedge\\ " ""))
       (form_method or              (pp_nary "" "\\ \\vee\\ "   ""))
-      (form_method not             (pp_nary "" "\\ \\lnot\\ "  ""))
+      (form_method not             (pp_unary "\\lnot " ""))
 
       (form_method +               (pp_binary "" " + " ""))
       (form_method -               (pp_binary "" " - " ""))
