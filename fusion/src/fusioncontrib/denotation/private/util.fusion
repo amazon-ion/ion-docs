@@ -13,6 +13,7 @@ Miscellaneous things that should really be provided by Fusion.
   )
 
   (provide
+    is_sexp_of_ids
     is_syntax_pair
     symbol_append
     Q
@@ -24,6 +25,16 @@ Miscellaneous things that should really be provided by Fusion.
   (define (is_syntax_pair v)
     (and (is_syntax v)
          (is_pair (syntax_unwrap v))))
+
+  (define (is_sexp_of_ids ids)
+    // Hmm, returns true for null.sexp
+    (if (is_sexp ids)
+      (if (is_pair ids)
+        (if (is_identifier (head ids))
+          (is_sexp_of_ids (tail ids))
+          false)
+        true)
+      false))
 
   // Also exists in /fusion/private/record
   (define symbol_append

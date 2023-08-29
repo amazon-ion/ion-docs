@@ -234,7 +234,8 @@ Returns:
           (args_stx (syntax_get stx 3)),
           (expr_stx (syntax_get stx 4))]
       // TODO typecheck name, type
-      (unless (is_syntax_pair args_stx)
+      (unless (and (is_syntax_pair args_stx)
+                   (is_sexp_of_ids (syntax_unwrap args_stx)))
         (wrong_syntax args_stx "expected sexp of arguments"))
       (datum_to_syntax
         (QQ (define (UQ name_stx)
