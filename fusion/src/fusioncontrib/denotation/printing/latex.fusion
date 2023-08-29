@@ -156,11 +156,6 @@ in math mode.
           (display BETWEEN_BINDINGS)
           (pp_bindings (tail bindings) e)))))
 
-  (define (pp_in_domain d e)
-    // `d` is a syntax identifier for the domain
-    (display "\\mbox{\\it{in}\\small ")
-    (pp_domain_name d e)
-    (display "}"))
 
   (define (pp_let s e)
     (let [(e1 (pp_incr_indentation e))]
@@ -174,20 +169,6 @@ in math mode.
         (pp_print body e)
         (display LET_END))
       (pp_decr_indentation e)))
-
-  (define (pp_lift s e)
-    (for [(d (reverse (tail (tail s))))]
-      (pp_in_domain d e)
-      (display "("))
-    (pp_print (. s 1) e)
-    (for [(d (tail (tail s)))]
-      (display ")")))
-
-  (define (pp_lift_to d v e)
-    (pp_in_domain d e)
-    (display "(")
-    (pp_print v e)
-    (display ")"))
 
   (define (pp_seq t e)
     (pp_print_terms t e SEQ_OPEN ", " SEQ_CLOSE))
@@ -214,6 +195,27 @@ in math mode.
           (raise "cannot combine ith with an S-expression")))
         // \! is negative thin-space
       ((pp_binary "" "\\!\\downarrow_{" "}") v e)))
+
+
+
+  (define (pp_lift v e)  // (lift expr d1 d2 ...)  => (lift (lift_to d1 expr) d2 ...)
+    (pp_print
+      (datum_to_syntax
+        (let [(first_lift (sexp (QS lift_to) (. v 2) (. v 1))),
+              (more_doms   (tail (tail (tail v))))]
+          (if (is_empty more_doms)
+            first_lift
+            (apply sexp (QS lift) first_lift more_doms)))
+        (. v 0))
+      e))
+
+  (define (pp_lift_to v e) // v ~= (lift_to DOM EXPR)
+    (display "\\mbox{\\it{in}\\small ")
+    (pp_domain_name (. v 1) e)
+    (display "}(")
+    (pp_print (. v 2) e)
+    (display ")"))
+
 
   (define (pp_lower v e)    // (lower expr d1 d2 ...)  =>  (lower (lower_to d1 expr) d2 ...)
     (pp_print
@@ -262,11 +264,11 @@ A model printer that renders in Unicode plain-text.
                                           (display "\\in ")
                                           (pp_domain_name (. v 2) e)))
       (form_method if              pp_if)
-      (form_method inject_into     (|s e| (pp_lift_to (. s 1) (. s 2) e)))
+      (form_method inject_into     pp_lift_to)
       (form_method ith             pp_ith)
       (form_method let             pp_let)
       (form_method lift            pp_lift)
-      (form_method lift_to         (|s e| (pp_lift_to (. s 1) (. s 2) e)))
+      (form_method lift_to         pp_lift_to)
       (form_method lower           pp_lower)
       (form_method lower_to        pp_lower_to)
       (form_method mk_fn           (|s e| (pp_print_terms (. s 2) e "\\lambda " " " ".")
