@@ -171,25 +171,23 @@ clauses.
 
 
   (define (pp_print_terms vs env beg mid end)
-    (if (is_syntax vs)
-      (pp_print_terms (syntax_unwrap vs) env beg mid end)
-      (begin
-        (unless (is_sequence vs)
-          (raise_argument_error "pp_print_terms" "list/sexp" 0 vs end beg mid end))
-        (display beg)
-        (if (is_sexp vs)
-          (let loop [(vs vs)]
-            (when (is_pair vs)
-              (pp_print (head vs) env)
-              (when (is_pair (tail vs))
-                (display mid))
-                (loop (tail vs))))
-          (let loop [(i 0)]
-            (when (< i (size vs))
-              (unless (=== 0 i) (display mid))
-              (pp_print (list_element vs i) env)
-              (loop (+ 1 i)))))
-        (display end))))
+    (let [(vs (desyntax vs))]
+      (unless (is_sequence vs)
+        (raise_argument_error "pp_print_terms" "list/sexp" 0 vs end beg mid end))
+      (display beg)
+      (if (is_sexp vs)
+        (let loop [(vs vs)]
+          (when (is_pair vs)
+            (pp_print (head vs) env)
+            (when (is_pair (tail vs))
+              (display mid))
+              (loop (tail vs))))
+        (let loop [(i 0)]
+          (when (< i (size vs))
+            (unless (=== 0 i) (display mid))
+            (pp_print (list_element vs i) env)
+            (loop (+ 1 i)))))
+      (display end)))
 
 
   //============================================================================

@@ -13,6 +13,7 @@ Miscellaneous things that should really be provided by Fusion.
   )
 
   (provide
+    desyntax
     is_sexp_of_ids
     is_syntax_pair
     symbol_append
@@ -44,5 +45,8 @@ Miscellaneous things that should really be provided by Fusion.
 
   (define (text_to_string v)
     (if (is_string v) v (symbol_to_string v)))
+
+  (define (desyntax v)
+    (if (is_syntax v) (syntax_unwrap v) v))
 
 )

@@ -32,8 +32,9 @@ in math mode.
 
 TODO
 ====
-  * Print domain definitions.
+  * Print sequence-domain names with non-bold superscript asterisk.
   * Insert some vertical space between function definitions.
+  * When printing multiple domains definitions, column-align them.
   '''
 
   // Helpful reference to what's available in MathJAX:
@@ -104,41 +105,50 @@ TODO
 
 
   //============================================================================
-  // Custom Printing Methods
+  // Printing Model Definitions
+
+  (define (pp_model m e)
+    (pp_print_terms (model_domains m) e "" NL NL)
+    (unless (is_empty (model_fns m))
+      (pp_print_terms (model_fns m) e NL NL "")))
+
 
   (define (pp_domain_name v e)
     (display "\\mbox{\\bf ")
-    (display (texescape (text_to_string (syntax_to_datum v))))
+    (display (texescape (text_to_string (desyntax v))))
     (display "}"))
 
   (define (pp_domain_name_else_rhs d e)
     (let [(name (domain_name d))]
-      (if name (pp_domain_name name) (pp_domain_rhs d e))))
+      (if name
+        (pp_domain_name name e)
+        (pp_domain_rhs d e))))
 
-  (define (pp_subdoms subdoms r mid)
-    (pp_print_terms (map domain_name subdoms) r "" mid ""))  // TODO use pp_domain_name
+  (define (pp_subdoms subdoms env mid)
+    (let loop [(i 0)]
+      (when (< i (size subdoms))
+        (unless (=== 0 i) (display mid))
+        (pp_domain_name (domain_name (list_element subdoms i)) env)
+        (loop (+ 1 i)))))
 
   (define (pp_domain_rhs d e)
     (cond
-      ((is_singleton_domain d) (display "<" (domain_description d) ">"))
-      ((is_base_domain      d) (display "<" (domain_description d) ">"))
+      ((is_singleton_domain d) (display "\\mbox{(" (texescape (domain_description d)) ")}"))
+      ((is_base_domain      d) (display "\\mbox{(" (texescape (domain_description d)) ")}"))
       ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
-      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " * "))
-      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " * ")
-                               (display " -> ")
+      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " \\times "))
+      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " \\times ")
+                               (display " \\rightarrow ")
                                (pp_domain_name_else_rhs (func_domain_output d) e))
-      ((is_seq_domain       d) (display (domain_name (seq_domain_subdomain d)) "*"))
       (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))
 
+  (define (pp_domain_def v e)
+    (pp_domain_name (domain_name v) e)
+    (display " = ")                    // no newline
+    (pp_domain_rhs v e))
 
-  (define (pp_model m e)
-//    (display "Domains\n=======")
-//    (pp_print_terms (model_domains m) e "\n" "\n" "\n")
-    (unless (is_empty (model_fns m))
-//      (display "\nFunctions\n=========")
-      (pp_print_terms (model_fns m) e NL NL NL)))
 
-  (define (pp_fn v e)
+  (define (pp_fn_def v e)
     (pp_print (fn_name v) e)
     (pp_print_terms (fn_args v) e "(" ", " ")")
     (display DEFINE_EQ)
@@ -148,6 +158,7 @@ TODO
       (pp_decr_indentation e1)))
 
 
+  //============================================================================
   // Special Forms and Functions
 
   (define (pp_bindings bindings e)
@@ -318,8 +329,7 @@ A model printer that renders in Unicode plain-text.
 
       // Semantic Model Elements
       (type_method is_model        pp_model)
-      (type_method is_domain       (|d e| (display (domain_name d) " = ")
-                                          (pp_domain_rhs d e)))
-      (type_method is_fn           pp_fn)
+      (type_method is_domain       pp_domain_def)
+      (type_method is_fn           pp_fn_def)
     ))
 )
