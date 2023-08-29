@@ -170,8 +170,6 @@ in math mode.
         (display LET_END))
       (pp_decr_indentation e)))
 
-  (define (pp_seq t e)
-    (pp_print_terms t e SEQ_OPEN ", " SEQ_CLOSE))
 
   (define (pp_if v e)
     (let [(e (pp_incr_indentation e))]
@@ -235,6 +233,20 @@ in math mode.
     (display "}}"))
 
 
+  (define (pp_seq v e)
+    (pp_print_terms (tail (tail v)) e SEQ_OPEN ", " SEQ_CLOSE))
+
+  (define (pp_seq_prepend v e)
+    "Expand (seq_prepend e1 e2) => (seq_append (seq null e1) e2)"
+    (pp_print
+      (datum_to_syntax
+        (sexp (QS seq_append)
+          (sexp (QS seq) (quote IgnoredDomainName) (. v 1))
+          (. v 2))
+        (. v 0))
+      e))
+
+
   (define (pp_tuple v e)  // (tuple D v1 v2 ...) => (lift_to D (seq D v1 v2 ...))
     (pp_print
       (datum_to_syntax
@@ -273,12 +285,12 @@ A model printer that renders in Unicode plain-text.
       (form_method lower_to        pp_lower_to)
       (form_method mk_fn           (|s e| (pp_print_terms (. s 2) e "\\lambda " " " ".")
                                           (pp_print (. s 3) e)))
-      (form_method seq             (|s e| (pp_seq (tail (tail s)) e)))
+      (form_method seq             pp_seq)
       (form_method seq_append      (pp_binary "" "\\S" ""))
       (form_method seq_head        (pp_unary "" "\\!\\downarrow_{0}"))
       (form_method seq_is_empty    (pp_unary "\\#" "=0"))
       (form_method seq_length      (pp_unary "\\#" ""))
-      (form_method seq_prepend     (pp_binary "⟨" "⟩\\S" ""))
+      (form_method seq_prepend     pp_seq_prepend)
       (form_method seq_tail        (pp_unary "" "\\dagger1"))
       // TODO seq_truncate
       (form_method tuple           pp_tuple)
