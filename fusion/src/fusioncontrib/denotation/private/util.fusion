@@ -16,6 +16,7 @@ Miscellaneous things that should really be provided by Fusion.
     is_sexp_of_ids
     is_syntax_pair
     symbol_append
+    text_to_string
     Q
     QS
     QQ
@@ -40,5 +41,8 @@ Miscellaneous things that should really be provided by Fusion.
   (define symbol_append
     (lambda texts
       (string_to_symbol (apply string_append texts))))
+
+  (define (text_to_string v)
+    (if (is_string v) v (symbol_to_string v)))
 
 )

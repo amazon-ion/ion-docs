@@ -62,11 +62,14 @@
 
 
 (define_model Tiny
+  (dom Nada = "nothing")
   (dom Single = "single")
   (dom B = (^ is_bool))
   (dom I = (^ is_int) "integers")
   (dom U = (+ B I))
   (dom V = (+ U Single))
+  (dom 'V?' = (+ V Nada))
+
   (dom Tuple = (* U B Single))
   (dom Func = (-> U Tuple B))
 
@@ -86,16 +89,20 @@
   (fn u2b  ((u U)           -> B)    (lower_to B u))
   (fn u2i  ((u U)           -> I)    (lower u I))
   (fn v2i  ((v V)           -> I)    (lower v U I))
+
+  (fn 'v2v?' ((v V)        -> 'V?')  (lift v 'V?'))
 )
 
 (check_unicode '''\
 Domains
 =======
+Nada = <nothing>
 Single = <single>
 B = <null.string>
 I = <integers>
 U = B + I
 V = U + Single
+V? = V + Nada
 Tuple = U * B * Single
 Func = U * Tuple -> B
 
@@ -116,12 +123,21 @@ i2v(i) = inV(inU(i))
 u2b(u) = u|B
 u2i(u) = u|I
 v2i(v) = v|U|I
+v2v?(v) = inV?(v)
 '''
   Tiny)
 
 
 //==============================================================================
 // LaTeX printing
+
+(define_model Tricksy
+  (dom B = (^ is_bool))
+  (dom I = (^ is_int))
+  (dom '$V?' = (+ B I))
+
+  (fn 'i2$v?' (('i$?' I) -> '$V?') (lift_to '$V?' (lower_to '$V?' 'i$?')))
+)
 
 (define_check (check_latex expected v)
   (check_printing latexprint expected v))
@@ -130,3 +146,8 @@ v2i(v) = v|U|I
 (check_latex "\\mbox{\\bf false}" (inject_into B false))
 
 (check_latex "1646" (inject_into Z 1646))
+
+(check_latex
+  '''\\mbox{\\it i2\\$v?\\/}(\\mbox{\\it i\\$?\\/}) = \\newline\n'''
+  '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\tiny \\mbox{\\bf \\$V?}}})'''
+  'i2$v?')

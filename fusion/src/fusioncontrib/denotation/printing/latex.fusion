@@ -101,7 +101,9 @@ in math mode.
   // Custom Printing Methods
 
   (define (pp_domain_name v e)
-    (display "\\mbox{\\bf " v "}"))
+    (display "\\mbox{\\bf ")
+    (display (texescape (text_to_string (syntax_to_datum v))))
+    (display "}"))
 
   (define (pp_domain_name_else_rhs d e)
     (let [(name (domain_name d))]
@@ -146,7 +148,10 @@ in math mode.
           (pp_bindings (tail bindings) e)))))
 
   (define (pp_in_domain d e)
-    (display "\\mbox{\\it{in}\\small\\bf " d "}"))
+    // `d` is a syntax identifier for the domain
+    (display "\\mbox{\\it{in}\\small ")
+    (pp_domain_name d e)
+    (display "}"))
 
   (define (pp_let s e)
     (let [(e1 (pp_incr_indentation e))]
@@ -220,7 +225,7 @@ in math mode.
         (. v 0))
       e))
 
-  (define pp_lower_to
+  (define pp_lower_to  // eg (lower_to DOM_NAME EXPR)
     (|v e|
       (pp_print (. v 2) e)
       (display "\\mid_{\\mbox{\\tiny ")
@@ -242,8 +247,7 @@ A model printer that renders in Unicode plain-text.
       (type_method is_string      (|v e| (display "\\mbox{\\rm ``{\\tt " (texescape v) "}''}")))
 
       // General functions
-      (type_method is_fn           (|f e| (display "\n\n")
-                                          (pp_print (fn_name f) e)
+      (type_method is_fn           (|f e| (pp_print (fn_name f) e)
                                           (pp_print_terms (fn_args f) e "(" ", " ")")
                                           (display DEFINE_EQ)
                                           (pp_print       (fn_code f) e)))

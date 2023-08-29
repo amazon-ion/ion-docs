@@ -153,5 +153,6 @@ A model printer that renders in Unicode plain-text.
                                           (pp_domain_rhs d e)))
 
       (type_method is_model        pp_model)
+      (type_method is_symbol       (|v e| (display v)))   // Override default `write` call.
     ))
 )
