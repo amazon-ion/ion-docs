@@ -262,7 +262,7 @@ Utilities for testing the Ion denotational model.
     (for_fold [(c EMPTY_CATALOG)]
       [(sst (seq_to_sexp (expand (apply parse catalog_data) EMPTY_CATALOG)))]
       (Catalog_extend c
-        (SST_for_$ion_shared_symbol_table (lower_to Struct (value_content sst))))))
+        (SST_for_$ion_shared_symbol_table (lower_to Struct (Value_content sst))))))
 
 
   //============================================================================

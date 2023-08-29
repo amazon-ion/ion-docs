@@ -42,15 +42,15 @@ Spec Problems
   (define_model Ion
 
     (dom Nothing = "No value")
+    (dom B       = (^ is_bool)   "Booleans")
+    (dom I       = (^ is_int)    "Integers")
+    (dom Unicode = (^ is_string) "Sequences of Unicode code points")
 
     (dom Ion1_0 = "IVM for Ion 1.0")
     (dom IVM    = (+ Ion1_0) "Ion version markers")
 
-    (dom Unicode = (^ is_string) "Sequence of Unicode code points")
     (dom Sym0    = "The undefined symbol")
 
-    (dom B      = (^ is_bool)      "Booleans")
-    (dom I      = (^ is_int)       "Integers")
 
 
     //=============================
@@ -85,11 +85,11 @@ Spec Problems
     (dom RVal     = (* 'SymTok*' RContent))
     (dom TRVal    = (+ RVal IVM))
 
-    (fn rval_annots  ((v RVal) -> 'SymTok*')  (ith v 0))
-    (fn rval_content ((v RVal) -> 'RContent') (ith v 1))
+    (fn RVal_annots  ((v RVal) -> 'SymTok*')  (ith v 0))
+    (fn RVal_content ((v RVal) -> 'RContent') (ith v 1))
 
-    (fn rfield_name  ((f RField) -> SymTok) (ith f 0))
-    (fn rfield_value ((f RField) -> RVal)   (ith f 1))
+    (fn RField_name  ((f RField) -> SymTok) (ith f 0))
+    (fn RField_value ((f RField) -> RVal)   (ith f 1))
 
 
     //=============================
@@ -109,8 +109,8 @@ Spec Problems
 
     (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
 
-    (fn value_annots  ((v Value) -> 'Symbolic*') (ith v 0))
-    (fn value_content ((v Value) -> 'Content')   (ith v 1))
+    (fn Value_annots  ((v Value) -> 'Symbolic*') (ith v 0))
+    (fn Value_content ((v Value) -> 'Content')   (ith v 1))
 
     (fn Field_name  ((f Field) -> Symbolic) (ith f 0))
     (fn Field_value ((f Field) -> Value)    (ith f 1))
@@ -127,8 +127,8 @@ Spec Problems
         false))
 
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
-      (if (element_of (value_content v) Symbol)
-        (Symbol_text_matches (lower (value_content v) Symbol) u)
+      (if (element_of (Value_content v) Symbol)
+        (Symbol_text_matches (lower (Value_content v) Symbol) u)
         false))
 
 
@@ -144,9 +144,9 @@ Spec Problems
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
       (Fields_get1 (lower s 'Field*') u))
 
-    (fn has_first_annot ((v Value) (u Unicode) -> B)
-      (if (seq_is_empty (value_annots v)) false
-        (Symbolic_text_matches (seq_head (value_annots v)) u)))
+    (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
+      (if (seq_is_empty (Value_annots v)) false
+        (Symbolic_text_matches (seq_head (Value_annots v)) u)))
 
 
     //=======================
@@ -174,9 +174,9 @@ Spec Problems
     (fn SST_symbols ((s SharedSymtab) -> 'Symbolic*') (ith s 2))
 
     (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
-      (let [(n (lower (value_content (seq_head (Struct_get1 s "name")))
+      (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
                  SafeVal String Unicode)),
-            (v (lower (value_content (seq_head (Struct_get1 s "version")))
+            (v (lower (Value_content (seq_head (Struct_get1 s "version")))
                  SafeVal Int I))]
         (tuple SharedSymtab n v (declared_symbols s))))
 
@@ -242,8 +242,8 @@ Spec Problems
     // $ion_symbol_table "compilation"
 
     (fn is_$ion_symbol_table ((v Value) -> B)
-      (if (eject (has_first_annot v "$ion_symbol_table"))
-        (element_of (value_content v) Struct)
+      (if (eject (Value_has_first_annot v "$ion_symbol_table"))
+        (element_of (Value_content v) Struct)
         false))
 
     (fn symbol_padding ((len I) -> 'Symbolic*')
@@ -285,14 +285,14 @@ Spec Problems
 
     (fn normalize_name ((vs 'Value*') -> Unicode)             // "" = absent or invalid
       (if (seq_is_empty vs) EMPTY_UNICODE
-        (let [(c (value_content (seq_head vs)))]
+        (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c String) (not (element_of c DotNull)))
             (lower c SafeVal String Unicode)
             EMPTY_UNICODE))))
 
     (fn normalize_version ((vs 'Value*') -> I)                // 1 = absent or invalid
       (if (seq_is_empty vs) 1
-        (let [(c (value_content (seq_head vs)))]
+        (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(i (lower c SafeVal Int I))]
               (if (< (eject i) 1) 1 i))
@@ -301,7 +301,7 @@ Spec Problems
     (fn normalize_max_id ((vs 'Value*') -> I)                // < 0 = absent or invalid
       (if (seq_is_empty vs)
         -1
-        (let [(c (value_content (seq_head vs)))]
+        (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (lower c SafeVal Int I)
             -1))))
@@ -315,7 +315,7 @@ Spec Problems
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'Symbolic*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
-        (seq_append (let [(c (value_content (seq_head vs)))]
+        (seq_append (let [(c (Value_content (seq_head vs)))]
                       (if (and (element_of c Struct) (not (element_of c DotNull)))
                         (compile_import_struct (lower c Struct) r)
                         EMPTY_SYMBOLICS))
@@ -326,9 +326,9 @@ Spec Problems
         (lower (Environment_lst r) 'Symbolic*')
         (seq_append
           (system_symbols (Environment_ivm r))
-          (let [(c (value_content v))]
+          (let [(c (Value_content v))]
             (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_imports_elts (List_elts (lower (value_content v) List)) r)
+              (compile_imports_elts (List_elts (lower (Value_content v) List)) r)
               EMPTY_SYMBOLICS)))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
@@ -341,7 +341,7 @@ Spec Problems
     (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
-        (seq_prepend (let [(c (value_content (seq_head vs)))]
+        (seq_prepend (let [(c (Value_content (seq_head vs)))]
                        (lift_to Symbolic
                          (if (and (element_of c String) (not (element_of c DotNull)))
                            (lower c SafeVal String Unicode)
@@ -352,7 +352,7 @@ Spec Problems
       (let [(vals (Struct_get1 s "symbols"))]
         (if (seq_is_empty vals)
           EMPTY_SYMBOLICS
-          (let [(c (value_content (seq_head vals)))]
+          (let [(c (Value_content (seq_head vals)))]
             (if (element_of c List)
               (compile_symbols_elts (List_elts (lower c List)))
               EMPTY_SYMBOLICS)))))
@@ -398,9 +398,9 @@ Spec Problems
 
     (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
-      (E_RContent (rval_content vr) r
+      (E_RContent (RVal_content vr) r
         (mk_fn CContinuation (c1)
-          (k (seq 'Value*' (tuple Value (expand_SymToks r (rval_annots vr)) c1))))))
+          (k (seq 'Value*' (tuple Value (expand_SymToks r (RVal_annots vr)) c1))))))
 
     (dom CContinuation = (-> Content 'Value*')
       "Continuation when expanding a value's content.")
@@ -436,13 +436,13 @@ Spec Problems
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) (k FContinuation) -> 'Value*')
       (if (seq_is_empty rfs)
         (k (seq 'Field*'))
-        (E (rfield_value (seq_head rfs)) r
+        (E (RField_value (seq_head rfs)) r
           (mk_fn Continuation (vs1)                  // Value(s) from head field
             // TODO Verify that vs1 is singleton?
             ('E_RField*' (seq_tail rfs) r
               (mk_fn FContinuation (fs2)             // Field* from tail fields
                 (k (seq_prepend (tuple Field
-                                  (expand_SymTok r (rfield_name (seq_head rfs)))
+                                  (expand_SymTok r (RField_name (seq_head rfs)))
                                   (seq_head vs1))
                      fs2))))))))
 
@@ -478,7 +478,7 @@ Spec Problems
               (k r vs1)
               (if (eject (is_$ion_symbol_table (seq_head vs1)))
                 (k (env_for_$ion_symbol_table r
-                     (lower (value_content (seq_head vs1)) Struct))
+                     (lower (Value_content (seq_head vs1)) Struct))
                    (seq_tail vs1))                             // TODO what if more than one value?
                 // Expand normally
                 (k r vs1)))))))
