@@ -192,14 +192,6 @@ in math mode.
   (define (pp_seq t e)
     (pp_print_terms t e SEQ_OPEN ", " SEQ_CLOSE))
 
-  (define (pp_tuple s e)
-    (display "in")
-    (pp_print (. s 1) e)
-    (display "(")
-    (pp_seq (tail (tail s)) e)
-    (display ")"))
-
-
   (define (pp_if v e)
     (let [(e (pp_incr_indentation e))]
       (display IF_IF)
@@ -234,12 +226,21 @@ in math mode.
         (. v 0))
       e))
 
-  (define pp_lower_to  // eg (lower_to DOM_NAME EXPR)
-    (|v e|
-      (pp_print (. v 2) e)
-      (display "\\mid_{\\mbox{\\tiny ")
-      (pp_domain_name (. v 1) e)
-      (display "}}")))
+  (define (pp_lower_to v e)  // v ~= (lower_to DOM_NAME EXPR)
+    (pp_print (. v 2) e)
+    (display "\\mid_{\\mbox{\\tiny ")
+    (pp_domain_name (. v 1) e)
+    (display "}}"))
+
+
+  (define (pp_tuple v e)  // (tuple D v1 v2 ...) => (lift_to D (seq D v1 v2 ...))
+    (pp_print
+      (datum_to_syntax
+        (sexp (QS lift_to) (. v 1)
+           (apply sexp (QS seq) (. v 1) (tail (tail v))))
+        (. v 0))
+      e))
+
 
 
   //============================================================================

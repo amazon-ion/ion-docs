@@ -91,6 +91,8 @@
   (fn v2i  ((v V)           -> I)    (lower v U I))
 
   (fn 'v2v?' ((v V)        -> 'V?')  (lift v 'V?'))
+
+  (fn mk_Tuple ((u U) (b B) (s Single) -> Tuple)  (tuple Tuple u b s))
 )
 
 (check_unicode '''\
@@ -124,6 +126,7 @@ u2b(u) = u|B
 u2i(u) = u|I
 v2i(v) = v|U|I
 v2v?(v) = inV?(v)
+mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
 '''
   Tiny)
 
@@ -152,3 +155,9 @@ v2v?(v) = inV?(v)
   '''\\:\\: \\setandincrindent\n'''
   '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\tiny \\mbox{\\bf \\$V?}}}) \\decrindent\n'''
   'i2$v?')
+
+(check_latex
+  '''\\mbox{\\it mk\\_Tuple\\/}(\\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}) = \\newline\n'''
+  '''\\:\\: \\setandincrindent\n'''
+  '''\\mbox{\\it{in}\\small \\mbox{\\bf Tuple}}(\\langle \\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}\\rangle ) \\decrindent\n'''
+  mk_Tuple)
