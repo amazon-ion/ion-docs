@@ -155,14 +155,14 @@ clauses.
         (raise "can't print it"))))
 
 
-  (define (pp_default e r)
-    // TODO This should eventually allow override of things _inside_ e.
-    (display e))
+  (define (pp_default v e)
+    // TODO This should eventually allow override of things _inside_ v.
+    (display v))
 
 
-  (define (pp_write e r)
+  (define (pp_write v e)
     "Prints a value using `write`."
-    (write e))
+    (write v))
 
 
   (define (pp_syntax v env)
@@ -230,10 +230,10 @@ elements) by displaying text before and after the single argument expression.
   //============================================================================
   // Printing Methods specific to denatational models.
 
-  (define (pp_basedom e r)
+  (define (pp_basedom v e)
     '''
 Prints base-domain values by ejecting their representation and printing that.
     '''
-    (pp_print (eject e) r))
+    (pp_print (eject v) e))
 
 )

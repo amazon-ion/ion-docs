@@ -22,82 +22,82 @@ Print domain models in a Unicode-rich plain-text format.
   //============================================================================
   // Custom Printing Methods
 
-  (define (pp_domain_name_else_rhs d r)
+  (define (pp_domain_name_else_rhs d e)
     (let [(name (domain_name d))]
-      (if name (display name) (pp_domain_rhs d r))))
+      (if name (display name) (pp_domain_rhs d e))))
 
-  (define (pp_subdoms subdoms r mid)
-    (pp_print_terms (map domain_name subdoms) r "" mid ""))
+  (define (pp_subdoms subdoms e mid)
+    (pp_print_terms (map domain_name subdoms) e "" mid ""))
 
-  (define (pp_domain_rhs d r)
+  (define (pp_domain_rhs d e)
     (cond
       ((is_singleton_domain d) (display "<" (domain_description d) ">"))
       ((is_base_domain      d) (display "<" (domain_description d) ">"))
-      ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) r " + "))
-      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) r " * "))
-      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) r " * ")
+      ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
+      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " * "))
+      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " * ")
                                (display " -> ")
-                               (pp_domain_name_else_rhs (func_domain_output d) r))
+                               (pp_domain_name_else_rhs (func_domain_output d) e))
       ((is_seq_domain       d) (display (domain_name (seq_domain_subdomain d)) "*"))
-      (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d r))))
+      (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))
 
 
-  (define (pp_model m r)
+  (define (pp_model m e)
     (display "Domains\n=======")
-    (pp_print_terms (model_domains m) r "\n" "\n" "\n")
+    (pp_print_terms (model_domains m) e "\n" "\n" "\n")
     (unless (is_empty (model_fns m))
       (display "\nFunctions\n=========")
-      (pp_print_terms (model_fns m) r "\n" "\n" "\n")))
+      (pp_print_terms (model_fns m) e "\n" "\n" "\n")))
 
 
   // Special Forms and Functions
 
-  (define (pp_bindings bindings r)
+  (define (pp_bindings bindings e)
     (assert (is_sexp bindings))
     (when (is_pair bindings)
       (let [(binding (syntax_unwrap (head bindings)))]
         (assert (=== 2 (size binding)))
-        (pp_print (. binding 0) r)
+        (pp_print (. binding 0) e)
         (display " = ")
-        (pp_print (. binding 1) r)
+        (pp_print (. binding 1) e)
         (when (is_pair (tail bindings))
           (display " ; ")
-          (pp_bindings (tail bindings) r)))))
+          (pp_bindings (tail bindings) e)))))
 
-  (define (pp_let s r)
+  (define (pp_let s e)
     (display "LET ")
     (let [(bindings (apply sexp (syntax_unwrap (. s 1)))),
           (body     (. s 2))]
       (assert (not (is_empty bindings)))
-      (pp_bindings bindings r)
+      (pp_bindings bindings e)
       (display " IN ")
-      (pp_print body r)
+      (pp_print body e)
       (display " ENDLET")))
 
-  (define (pp_lift s r)
+  (define (pp_lift s e)
     (for [(d (reverse (tail (tail s))))]
       (display "in")
-      (pp_print d r)
+      (pp_print d e)
       (display "("))
-    (pp_print (. s 1) r)
+    (pp_print (. s 1) e)
     (for [(d (tail (tail s)))]
       (display ")")))
 
-  (define (pp_lift_to d v r)
+  (define (pp_lift_to d v e)
     (display "in")
-    (pp_print d r)
+    (pp_print d e)
     (display "(")
-    (pp_print v r)
+    (pp_print v e)
     (display ")"))
 
-  (define (pp_seq t r)
-    (pp_print_terms t r "⟨" ", " "⟩"))
+  (define (pp_seq t e)
+    (pp_print_terms t e "⟨" ", " "⟩"))
 
-  (define (pp_tuple s r)
+  (define (pp_tuple s e)
     (display "in")
-    (pp_print (. s 1) r)
+    (pp_print (. s 1) e)
     (display "(")
-    (pp_seq (tail (tail s)) r)
+    (pp_seq (tail (tail s)) e)
     (display ")"))
 
 
@@ -110,27 +110,27 @@ A model printer that renders in Unicode plain-text.
     '''
     (make_printer                  // Formatting rules in decreasing precedence
       // General functions
-      (type_method is_fn           (|f r| (pp_print       (fn_name f) r)
-                                          (pp_print_terms (fn_args f) r "(" ", " ") = ")
-                                          (pp_print       (fn_code f) r)))
+      (type_method is_fn           (|f e| (pp_print       (fn_name f) e)
+                                          (pp_print_terms (fn_args f) e "(" ", " ") = ")
+                                          (pp_print       (fn_code f) e)))
 
       // Special forms
       (form_method eject           (pp_unary "" ""))
       (form_method element_of      (pp_binary "" " ∈ " ""))
       (form_method if              (pp_ternary "IF " " THEN " " ELSE " " ENDIF"))
-      (form_method inject_into     (|s r| (pp_lift_to (. s 1) (. s 2) r)))
+      (form_method inject_into     (|s e| (pp_lift_to (. s 1) (. s 2) e)))
       (form_method ith             (pp_binary "" "↓" ""))
       (form_method let             pp_let)
       (form_method lift            pp_lift)
-      (form_method lift_to         (|s r| (pp_lift_to (. s 1) (. s 2) r)))
-      (form_method lower           (|s r| (pp_print (. s 1) r)
-                                          (pp_print_terms (tail (tail s)) r "|" "|" "")))
-      (form_method lower_to        (|s r| (pp_print (. s 2) r)
+      (form_method lift_to         (|s e| (pp_lift_to (. s 1) (. s 2) e)))
+      (form_method lower           (|s e| (pp_print (. s 1) e)
+                                          (pp_print_terms (tail (tail s)) e "|" "|" "")))
+      (form_method lower_to        (|s e| (pp_print (. s 2) e)
                                           (display "|")
-                                          (pp_print (. s 1) r)))
-      (form_method mk_fn           (|s r| (pp_print_terms (. s 2) r "λ" " " ".")
-                                          (pp_print (. s 3) r)))
-      (form_method seq             (|s r| (pp_seq (tail (tail s)) r)))
+                                          (pp_print (. s 1) e)))
+      (form_method mk_fn           (|s e| (pp_print_terms (. s 2) e "λ" " " ".")
+                                          (pp_print (. s 3) e)))
+      (form_method seq             (|s e| (pp_seq (tail (tail s)) e)))
       (form_method seq_append      (pp_binary "" "§" ""))
       (form_method seq_head        (pp_unary "" "↓0"))
       (form_method seq_is_empty    (pp_unary "#" " = 0"))
@@ -147,10 +147,10 @@ A model printer that renders in Unicode plain-text.
       (form_method >               (pp_binary "" " > " ""))
 
       // Function application. This must follow other forms!
-      (type_method is_syntax_pair  (|stx r| (pp_print_terms stx r "(" " " ")")))
+      (type_method is_syntax_pair  (|stx e| (pp_print_terms stx e "(" " " ")")))
 
-      (type_method is_domain       (|d r| (display (domain_name d) " = ")
-                                          (pp_domain_rhs d r)))
+      (type_method is_domain       (|d e| (display (domain_name d) " = ")
+                                          (pp_domain_rhs d e)))
 
       (type_method is_model        pp_model)
     ))
