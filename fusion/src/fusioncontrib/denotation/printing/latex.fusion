@@ -132,6 +132,15 @@ in math mode.
 //      (display "\nFunctions\n=========")
       (pp_print_terms (model_fns m) e NL NL NL)))
 
+  (define (pp_fn v e)
+    (pp_print (fn_name v) e)
+    (pp_print_terms (fn_args v) e "(" ", " ")")
+    (display DEFINE_EQ)
+    (display SPACE SPACE)
+    (let [(e1 (pp_incr_indentation e))]
+      (pp_print (fn_code v) e1)
+      (pp_decr_indentation e1)))
+
 
   // Special Forms and Functions
 
@@ -246,12 +255,6 @@ A model printer that renders in Unicode plain-text.
       (type_method is_symbol      (|v e| (display (texify_symbol v))))
       (type_method is_string      (|v e| (display "\\mbox{\\rm ``{\\tt " (texescape v) "}''}")))
 
-      // General functions
-      (type_method is_fn           (|f e| (pp_print (fn_name f) e)
-                                          (pp_print_terms (fn_args f) e "(" ", " ")")
-                                          (display DEFINE_EQ)
-                                          (pp_print       (fn_code f) e)))
-
       // Special forms
       (form_method eject           (pp_unary "" ""))
       (form_method element_of      (|v e| (pp_print (. v 1) e)
@@ -290,9 +293,11 @@ A model printer that renders in Unicode plain-text.
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  (|stx e| (pp_print_terms stx e "(" SPACE ")")))
 
+
+      // Semantic Model Elements
+      (type_method is_model        pp_model)
       (type_method is_domain       (|d e| (display (domain_name d) " = ")
                                           (pp_domain_rhs d e)))
-
-      (type_method is_model        pp_model)
+      (type_method is_fn           pp_fn)
     ))
 )

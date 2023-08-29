@@ -149,5 +149,6 @@ v2v?(v) = inV?(v)
 
 (check_latex
   '''\\mbox{\\it i2\\$v?\\/}(\\mbox{\\it i\\$?\\/}) = \\newline\n'''
-  '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\tiny \\mbox{\\bf \\$V?}}})'''
+  '''\\:\\: \\setandincrindent\n'''
+  '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\tiny \\mbox{\\bf \\$V?}}}) \\decrindent\n'''
   'i2$v?')
