@@ -48,12 +48,14 @@ References:
     model_fns
     pp_basedom
     pp_binary
+    pp_display
     pp_nary
     pp_print
     pp_print_terms
     pp_syntax
     pp_ternary
     pp_unary
+    pp_write
     product_domain_subdomains
     seq_domain_subdomain
     type_method
@@ -81,14 +83,17 @@ Contruct a customized pretty-printer.
 You'll generally need to add methods for is_fn, is_domain_value, etc.
     '''
     (lambda clauses
-      (let [(env (append clauses
-                   (sexp
-                     (type_method is_base_domain_value pp_basedom)
-                     (type_method is_string            pp_write)
-                     (type_method is_symbol            pp_write)
-                     // For any syntax forms, unwrap and try again.
-                     (type_method is_syntax            pp_syntax)
-                     (|v| pp_default))))]
+      (lets [(base (when (is_model_printer (head clauses)) (head clauses))),
+             (env  (if base
+                     (append (tail clauses) (model_printer_env base))
+                     (append clauses
+                       (sexp
+                         (type_method is_base_domain_value pp_basedom)
+                         (type_method is_string            pp_write)
+                         (type_method is_symbol            pp_write)
+                         // For any syntax forms, unwrap and try again.
+                         (type_method is_syntax            pp_syntax)
+                         (|v| pp_display)))))]
         (model_printer (|v| (pp_print v env)) env))))
 
 
@@ -155,7 +160,7 @@ clauses.
         (raise "can't print it"))))
 
 
-  (define (pp_default v e)
+  (define (pp_display v e)
     // TODO This should eventually allow override of things _inside_ v.
     (display v))
 

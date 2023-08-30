@@ -40,6 +40,18 @@
 (check_printing default_printer "\"hi\"" (inject_into S "hi"))
 
 
+(define sub_printer
+  (make_printer default_printer
+    (type_method is_int (|v e| (display "<" v ">")))))
+
+(check_printing sub_printer "{{{void}}}"   (void))
+(check_printing sub_printer "true"         true)
+(check_printing sub_printer "<123>"        123)
+(check_printing sub_printer "\"hello\""    "hello")
+
+// TODO More tests of printer subclassing
+
+
 //==============================================================================
 // Unicode printing
 
