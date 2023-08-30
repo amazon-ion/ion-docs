@@ -169,8 +169,17 @@ TODO
       (pp_decr_indentation e1)))
 
 
+
   //============================================================================
   // Special Forms and Functions
+
+  (define (pp_fn_call stx e)
+    (lets [(sexp (desyntax stx)),
+           (name (head sexp)),
+           (args (tail sexp))]
+      (pp_print name e)
+      (pp_print_terms args e "(" ", " ")")))
+
 
   (define (pp_bindings bindings e)
     (assert (is_sexp bindings))
@@ -335,8 +344,7 @@ A model printer that renders in Unicode plain-text.
       (form_method >               (pp_binary "" " > " ""))
 
       // Function application. This must follow other forms!
-      (type_method is_syntax_pair  (|stx e| (pp_print_terms stx e "(" SPACE ")")))
-
+      (type_method is_syntax_pair  pp_fn_call)
 
       // Semantic Model Elements
       (type_method is_model        pp_model)
