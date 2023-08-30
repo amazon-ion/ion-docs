@@ -295,9 +295,9 @@ A model printer that renders in Unicode plain-text.
     '''
     (make_printer                  // Formatting rules in decreasing precedence
       // Base Types
-      (type_method is_bool        (|v e| (display (if v TRUE FALSE))))
-      (type_method is_symbol      (|v e| (display (texify_symbol v))))
-      (type_method is_string      (|v e| (display "\\mbox{\\rm ``{\\tt " (texescape v) "}''}")))
+      (type_method is_bool         (|v e| (display (if v TRUE FALSE))))
+      (type_method is_symbol       (pp_symbol texify_symbol))
+      (type_method is_string       (|v e| (display "\\mbox{\\rm ``{\\tt " (texescape v) "}''}")))
 
       // Special forms
       (form_method eject           (pp_unary "" ""))

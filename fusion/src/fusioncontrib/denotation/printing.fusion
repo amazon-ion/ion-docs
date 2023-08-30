@@ -52,12 +52,14 @@ References:
     pp_nary
     pp_print
     pp_print_terms
+    pp_symbol
     pp_syntax
     pp_ternary
     pp_unary
     pp_write
     product_domain_subdomains
     seq_domain_subdomain
+    sym_image
     type_method
     union_domain_subdomains
   )
@@ -71,9 +73,18 @@ References:
 
 
   // Environment is a sexp of frames, each frame is one of:
-  //  * A procedure, takes a value and returns a printer xor falsey.
-  //  * ...more to come.
+  //  * A procedure, takes a value and returns a print method xor falsey.
+  //  * A `symimage` record, mapping one or more identifiers to a printed image.
   (define (model_printer_env p) (accessor p 1))
+
+
+  (record symimage (image vars))
+
+  (define (symimage_handles frame var)
+    (let loop [(vars (symimage_vars frame))]
+      (and (is_pair vars)
+           (or (=== var (head vars))
+               (loop (tail vars))))))
 
 
   (define make_printer
@@ -139,6 +150,26 @@ form with the binding `id`.
           stx))))
 
 
+  (define_syntax sym_image
+    '''
+    (sym_image string id ...+)
+
+Configuration clause declaring that the given `id`s are to be printed using the
+`string`.  These clauses are effectively directives to `pp_symbol`, bypassing
+its normal escaping.
+    '''
+    (lambda (stx)
+      (let [(image (syntax_get stx 1)),
+            (ids   (tail (tail (syntax_unwrap stx))))]
+        (unless (is_string (syntax_unwrap image))
+          (wrong_syntax image "Expected a string"))
+        // TODO (is_sexp_of_ids ids)
+        (datum_to_syntax
+          (QQ (symimage (UQ image) (quote (UQ ids))))
+          (QS context)
+          stx))))
+
+
   //============================================================================
   // Printing Methods
   // Each takes a value and an environment, and prints to current-output-port
@@ -168,6 +199,28 @@ clauses.
   (define (pp_write v e)
     "Prints a value using `write`."
     (write v))
+
+
+  (define (pp_symbol escaper)
+    '''
+Produces a print method for symbols that uses the given `escaper` to prepare
+proprocess the symbol's text.  The `escaper` must accept a symbol and return a
+string whose content is printed as-is.
+
+To customize the rendering of specific symbols, configure the printer with
+`sym_image` clauses.  Such images are printed directly, bypassing the escaper.
+    '''
+    (|v e|
+      (assert (is_symbol v))
+      (letrec [(find_image (|e| (if (is_pair e)
+                                  (let [(frame (head e))]
+                                    (if (and (is_symimage frame)
+                                             (symimage_handles frame v))
+                                      (symimage_image frame)
+                                      (find_image (tail e))))
+                                  (escaper v))))]
+        (let [(image (find_image e))]
+          (display image)))))
 
 
   (define (pp_syntax v env)

@@ -39,15 +39,23 @@
 (check_printing default_printer "1646"   (inject_into Z 1646))
 (check_printing default_printer "\"hi\"" (inject_into S "hi"))
 
+(check_printing default_printer "(hi hola hello)" (quote (hi hola hello)))
+
 
 (define sub_printer
   (make_printer default_printer
-    (type_method is_int (|v e| (display "<" v ">")))))
+    (sym_image "HI" hi hello)
+    (type_method is_symbol (pp_symbol (|s| (string_append "<" s ">"))))
+    (type_method is_int    (|v e| (display "<" v ">")))
+    (type_method is_sexp   (|v e| (pp_print_terms v e "(" " " ")")))))
 
 (check_printing sub_printer "{{{void}}}"   (void))
 (check_printing sub_printer "true"         true)
 (check_printing sub_printer "<123>"        123)
 (check_printing sub_printer "\"hello\""    "hello")
+
+(check_printing sub_printer "(HI <hola> HI)"    (quote (hi hola hello)))
+
 
 // TODO More tests of printer subclassing
 
