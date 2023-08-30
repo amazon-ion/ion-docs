@@ -215,22 +215,17 @@ Spec Problems
     (fn Environment_lst ((r Environment) -> LocalSymtab) (ith r 2))
 
 
-    (fn lst_lookup ((lst LocalSymtab) (i I) -> Symbolic)
-      (let [(sid (if (< (eject i) (seq_length (lower lst 'Symbolic*')))
-                   (eject i)
-                   0))]
-        (ith (lower lst 'Symbolic*') sid)))
-
     // Returns Symbolic so it can represent SYM0 when the sid
     // doesn't map to text.
-    (fn env_lookup_sid ((e Environment) (i I) -> Symbolic)
-      (lst_lookup (Environment_lst e) i))
-
-
     (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
       (if (element_of s Unicode)
         (lift (lower s Unicode) Symbolic)
-        (env_lookup_sid r (lower s I))))
+        (let [(lst (Environment_lst r)),
+              (i (lower s I))]
+          (let [(sid (if (< (eject i) (seq_length (lower lst 'Symbolic*')))
+                       (eject i)
+                       0))]
+            (ith (lower lst 'Symbolic*') sid)))))
 
     (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
       (if (seq_is_empty s)
@@ -324,12 +319,11 @@ Spec Problems
     (fn compile_imports_field ((v Value) (r Environment) -> 'Symbolic*')
       (if (eject (Value_is_symbol_matching v "$ion_symbol_table"))
         (lower (Environment_lst r) 'Symbolic*')
-        (seq_append
-          (system_symbols (Environment_ivm r))
-          (let [(c (Value_content v))]
-            (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_imports_elts (List_elts (lower (Value_content v) List)) r)
-              EMPTY_SYMBOLICS)))))
+        (let [(ls (let [(c (Value_content v))]
+                    (if (and (element_of c List) (not (element_of c DotNull)))
+                    (compile_imports_elts (List_elts (lower c List)) r)
+                    EMPTY_SYMBOLICS)))]
+        (seq_append (system_symbols (Environment_ivm r)) ls))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
       (let [(vals (Struct_get1 s "imports"))]
