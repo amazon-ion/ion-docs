@@ -1,0 +1,28 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module ion_latex "/fusion"
+
+
+  (require
+    "/fusioncontrib/denotation/printing"
+    "/fusioncontrib/denotation/printing/latex"
+  )
+
+  (provide
+    ion_print_latex
+  )
+
+
+  (define ion_print_latex
+    '''
+A model printer that renders in Unicode plain-text.
+    '''
+    (make_printer latexprint
+      (sym_image "{\\cal E}"                     E)
+      (sym_image "{\\cal E}^{\\ast}"             'E*')
+      (sym_image "\\overline{\\cal E}"           TE)
+      (sym_image "\\overline{{\\cal E}^{\\ast}}" 'TE*')
+      (sym_image "v^{\\ast}"                     vs vals)
+    ))
+
+)

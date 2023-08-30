@@ -167,7 +167,7 @@ Spec Problems
 
 
     (dom SharedSymtab    = (* Unicode I 'Symbolic*'))     // name, version, symbols
-    (dom 'SharedSymtab?' = (+ Nothing SharedSymtab))
+    (dom 'SharedSymtab?' = (+ SharedSymtab Nothing))
 
     (fn SST_name    ((s SharedSymtab) -> Unicode)     (ith s 0))
     (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
