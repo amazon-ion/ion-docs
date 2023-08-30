@@ -32,9 +32,18 @@ in math mode.
 
 TODO
 ====
+  * Render function domains with their definition.
+  * Render stylized LHS for functions.
+  * Render tuple-getters using ↓
+  * Move Ion-specific bits into a printer subclass.
   * Print sequence-domain names with non-bold superscript asterisk.
   * Insert some vertical space between function definitions.
+    * Perhaps: 	\\smallskip, \\medskip, \\bigskip
   * When printing multiple domains definitions, column-align them.
+  * Remove a bit of hspace before the | in lower_to?
+    * Note they are already pretty close when chained.
+  * Figure out decorations for raw values.  Degrees?  Hat?
+    * \\dot  \\dotaccent?
   '''
 
   // Helpful reference to what's available in MathJAX:
@@ -151,8 +160,10 @@ TODO
   (define (pp_fn_def v e)
     (pp_print (fn_name v) e)
     (pp_print_terms (fn_args v) e "(" ", " ")")
-    (display DEFINE_EQ)
-    (display SPACE SPACE)
+    (display " = ")
+    (display "$\\`$ ")   // Tabbing command to right-align the rest of the line
+    (pp_domain_rhs (domain_of v) e)
+    (display NL SPACE SPACE)
     (let [(e1 (pp_incr_indentation e))]
       (pp_print (fn_code v) e1)
       (pp_decr_indentation e1)))

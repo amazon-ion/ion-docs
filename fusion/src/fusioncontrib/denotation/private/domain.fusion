@@ -33,6 +33,7 @@
     make_value
     is_domain_value
     domain_is
+    domain_of
     domain_value_domain
     domain_value_rep
 
@@ -171,6 +172,11 @@ Creates a new domain "class".
         (string_append "value acceptable to domain " (domain_name domain))
         1 domain v))
     (domain_value domain v))
+
+
+  (define (domain_of v)
+    // TODO typecheck
+    (domain_value_domain v))
 
   (define (domain_is v domain)
     '''
