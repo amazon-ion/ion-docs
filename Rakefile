@@ -6,7 +6,7 @@
 Version_string = "0.1"
 Date_string = Time.now.strftime("%Y-%m-%d")
 
-books = %w{IonSpec Demo}
+books = %w{IonSpec Semantics Demo}
 
 image_files = Rake::FileList.new("src/images/*.png", "src/images/*.svg") do |fl|
   fl.exclude("~*")

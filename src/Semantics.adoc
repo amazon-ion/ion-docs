@@ -1,0 +1,131 @@
+// Keep document header lines together!
+// Certain attributes must be defined here to work correctly.
+// https://docs.asciidoctor.org/asciidoc/latest/document/header
+:doctitle: Ion 1.0 Denotational Semantics
+:author: Todd V. Jonker
+:email: jonker@amazon.com
+// Document header ends at first blank line.
+
+// TODO This is generating invalid DocBook: no <year> just <holder>
+:copyright: 2023 Amazon.com Inc. or Affiliates (“Amazon”)
+:doctype: article
+:stem: latexmath
+
+// Now custom attributes and styles.
+:modeltex: ../build/ion-model.tex
+
+include::styles.adoc[]
+
+
+== Reading the Math
+
+Our denotational model is expressed in terms of lambda calculus, and the
+functions below use pretty-printed forms of numerous lambda calculus patterns.
+This section introduces the primary domains and notations used by the model.
+
+We use three fundamental domains, representing the primitive types.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=B]
+\newline
+include::{modeltex}[tag=I]
+\newline
+include::{modeltex}[tag=Unicode]
+++++
+
+Domain stem:[\mbox{\bf B}] has two values, stem:[\mbox{\bf true}] and
+stem:[\mbox{\bf false}].
+We test boolean values with a function _if_(_c_, _d_, _e_) that we pretty-print
+as:
+
+[{denotation}]
+++++
+\mbox{{\bf if} {\it c}\:{\bf then}\:{\it d}\:{\bf else}\:{\it e} {\bf endif}}
+++++
+
+We write **D**{asterisk} to mean the domain of sequences of **D**.
+We pretty-print such values between angle brackets
+stem:[\langle...\rangle].  For example,
+stem:[\langle\mbox{\bf true}, \mbox{\bf false}\rangle \in \mbox{\bf B}^{\ast}].
+We concatenate sequences with stem:[\S]; to push the element _d_ onto the front
+of sequence stem:[d^{\ast}] we can write stem:[\langle d \rangle\S d^{\ast}].
+To extract the stem:[i^{th}] element of sequence
+stem:[d^{\ast} = \langle e_1, e_2, ..., e_n\rangle] we write
+stem:[d^{\ast}\!\downarrow_{i} = e_i].
+To discard the first _i_ elements of a sequence, we write
+stem:[d^{\ast}\!\dagger i = \langle e_{i+1}, ..., e_n\rangle].
+Finally, write stem:[\#d^{\ast}] to mean the number of items in stem:[d^{\ast}].
+
+We write stem:[\mbox{\bf Sum} = \mbox{\bf D} + \mbox{\bf E}] to mean the
+disjoint sum of domains **D** and **E**: every element of **Sum** is an element
+of either **D** or **E**.
+Elements of sum domains are effectively "`tagged`", so we know which component
+domain they come from, and we can project or "`lower`" a value
+stem:[v \in \mbox{\bf Sum}] back there via stem:[v\mid_{\mbox{\tiny\bf D}}],
+assuming stem:[v \in \mbox{\bf D}].
+Conversely, we can inject or "lift`" a component value into **Sum** using the
+function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
+assuming stem:[v \in \mbox{\bf D} \vee v \in \mbox{\bf E}].
+
+We write stem:[\mbox{\bf Prod} = \mbox{\bf D} \times \mbox{\bf E}] to mean the
+Cartesian product of **D** and **E**. These are tuples containing first some
+stem:[d \in \mbox{\bf D}] and then some stem:[e \in \mbox{\bf E}].
+To extract elements from a tuple we can overload the stem:[\downarrow]
+operator, so that when stem:[p \in \mbox{\bf Prod}] we have
+stem:[p \downarrow_{1} \in \mbox{\bf D}] and
+stem:[p \downarrow_{2} \in \mbox{\bf E}].
+
+
+== Understanding the Denotation
+
+At a high level, the goal of this model is to define how an Ion processor turns
+"`raw values`" into "`application values`".  Raw values are fresh off the parser,
+without any interpretation of symbol tables or translation of SIDs into text.
+The IonJava library calls these "`system values`", and here we model them via
+the domain **RVal**, which we'll define later.
+We likewise model application values via the domain **Value**.
+
+Ion gives special treatment to top-level values: IVMs and encoding directives
+do not exist below top level.
+We model an Ion document or datastream as a sequence of these top-level raw
+values:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TRVal]
+\newline
+include::{modeltex}[tag=IVM]
+\newline
+include::{modeltex}[tag=Ion1_0]
+++++
+
+The **TRVal** domain indicates that the (raw) top-level contains raw values and
+IVMs.
+**Ion1_0** is a singleton domain containing only the opaque constant
+__ION_1_0__, and **IVM** is an extensible union of it with future IVMs.
+
+Our goal then is to implement the following function:
+
+// TODO Generate these function signatures.
+[{denotation}]
+++++
+\mbox{\it expand} : \mbox{\bf TRVal*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
+++++
+
+That is, given a sequence of raw top-level values and a catalog (that is, a set
+of shared symbol tables), we produce a sequence of application values.
+
+// TODO symbols
+// TODO LST, Environment, and lst lookup
+// TODO RVals and annotations/content
+// TODO Expansion and continuations
+// TODO SSTs and Catalogs
+
+
+== The Complete Denotation
+
+[{denotation}]
+++++
+include::{modeltex}[]
+++++
