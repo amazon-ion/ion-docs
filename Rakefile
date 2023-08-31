@@ -85,6 +85,8 @@ namespace :spec do
   def xml_to_pdf(xml)
     puts "Converting #{xml} to PDF..."
 
+    book = File.basename(xml, '.xml')
+
     # See our dblatex/README.md for explanation.
 
     # https://www.mankier.com/1/xmlto
@@ -97,12 +99,21 @@ namespace :spec do
     dblatex_params = [
       "--param=latex.encoding=utf8",
       "--xsl-user=/workspace/dblatex/xsl/ion.xsl",
-      "--texstyle=/workspace/dblatex/ion.sty",
+      "--texinputs=/workspace/dblatex/tex",
+      "--texstyle=ion",
       "--texpost=/workspace/dblatex/postprocess.sh",
       # "--quiet",                  # Less verbose, only error messages
       # "--verbose",                # Show the running commands
       "--debug",                  # Keep the /tmp subdir with tex files
     ]
+
+    # Book-specific XSL stylesheet (overrides the above default)
+    xsl = "/workspace/dblatex/xsl/#{book}.xsl"
+    dblatex_params << "--xsl-user=#{xsl}" if File.readable?(xsl)
+
+    # Book-specific LaTeX style (overrides the above default)
+    sty = "/workspace/dblatex/tex/#{book}.sty"
+    dblatex_params << "--texstyle=#{book}" if File.readable?(sty)
 
     safe_system('xmlto',  *xmlto_params,
                 '--with-dblatex',
