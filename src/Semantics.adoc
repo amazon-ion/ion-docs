@@ -116,14 +116,115 @@ Our goal then is to implement the following function:
 That is, given a sequence of raw top-level values and a catalog (that is, a set
 of shared symbol tables), we produce a sequence of application values.
 
-// TODO symbols
+
+=== Safe Values
+
+We'll start defining our data model with the easy cases: data types that cannot
+contain SIDS and therefore don't require expansion.
+For the moment, we are ignoring Ion annotations; we'll handle them elsewhere in
+the domain model.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=DotNull]
+\newline
+include::{modeltex}[tag=NullNull]
+\newline
+include::{modeltex}[tag=Boolean]
+\newline
+include::{modeltex}[tag=Int]
+\newline
+include::{modeltex}[tag=String]
+++++
+
+The singleton domain **DotNull** contains only an opaque constant `DOTNULL`
+that we use as a sentinel for the various typed nulls.  Such a thing is the only
+option for the **NullNull** domain, where it denotes `null.null`.  The domains
+**Boolean**, **Int**, and **String** simply combine the obvious primitive
+domains with the possibility of null.
+
+While we use a single sentinel value for all nulls, they are still
+strongly-typed in the data model, since the sentinel is "`wrapped`" by an
+appropriate domain denoting the data type.
+For example, if we have a value _v_ such that
+stem:[v \in \mbox{\bf Boolean} \wedge v \in \mbox{\bf DotNull}]
+then we know that _v_ denotes `null.bool`.
+
+In order to streamline some of the denotational functions, we'll group these
+together into a common domain:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SafeVal]
+++++
+
+Whereas the data types collected under **SafeVal** are modeled identically in
+the raw and application layers, the remaining types must distinguish them.
+
+NOTE: This denotation currently doesn't cover Ion's decimal, float, timestamp,
+blob, and clob types.  If it did, they would be part of **SafeVal**,
+with little effect on the remainder of the model.
+
+=== Symbols
+
+Symbols form the core of this denotation, which would be trivial if we didn't
+need to expand SIDs into their text.
+The following domains define their meaning:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RSymTok]
+\newline
+include::{modeltex}[tag=SymTok]
+\newline
+include::{modeltex}[tag=Sym0]
+++++
+
+The on-the-wire representation of a symbol is denoted by a _raw symbol token_
+**RSymTok** which is either a Unicode string or an integer SID.
+After expansion, we get a non-raw **SymTok**, where a SID isn't possible,
+but we can still get `$0`.
+To express that, we use a singleton domain **Sym0** containing only an opaque
+constant named `SYM0`.
+
+Symbol tokens are used to define annotations, field names, and symbol values.
+The latter are denoted as follows, where the value is either a symbol token or
+`null.symbol`.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RSymbol]
+\newline
+include::{modeltex}[tag=Symbol]
+++++
+
+To support our ability to match annotations and locate struct fields, we define
+a couple helper functions.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SymTok_matches]
+\newline\newline
+include::{modeltex}[tag=Symbol_matches]
+++++
+
+_SymTok_matches_ is straightforward: if the given **SymTok** is **Unicode** then
+we lower into that domain and compare with the argument.
+Otherwise, the token must be **Sym0**, so we return **false**.
+
+_Symbol_matches_ similarly checks whether the **Symbol** is a **SymTok** (as
+opposed to **DotNull**) before calling _SymTok_matches_.
+
+
 // TODO LST, Environment, and lst lookup
 // TODO RVals and annotations/content
 // TODO Expansion and continuations
 // TODO SSTs and Catalogs
 
+// TODO Document known issues
 
-== The Complete Denotation
+
+== The (Practically) Complete Denotation
 
 [{denotation}]
 ++++
