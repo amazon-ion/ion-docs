@@ -32,6 +32,7 @@ References:
     domain_method
     domain_name
     fn_args
+    fn_binding
     fn_code
     fn_name
     form_method

@@ -2,8 +2,10 @@
 
 (require
   "/fusion/experimental/check"
+  "/fusion/experimental/syntax"
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/private/function"
   "/fusioncontrib/denotation/testing"
 )
 
@@ -63,6 +65,7 @@
 (define_fn identity_fn Any2Any (v) v)
 (check_pred is_fn identity_fn)
 (check_same int_any_val (identity_fn int_any_val))
+(check bound_identifier_equal (quote_syntax identity_fn) (fn_binding identity_fn))
 
 (expect_argument_error (identity_fn 21))       // Wrong argument type
 (expect_argument_error (identity_fn t_val))    // Wrong argument type

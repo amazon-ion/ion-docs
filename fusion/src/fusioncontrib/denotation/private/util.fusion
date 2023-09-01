@@ -47,6 +47,7 @@ Miscellaneous things that should really be provided by Fusion.
     (if (is_string v) v (symbol_to_string v)))
 
   (define (desyntax v)
+    "If `v` is a syntax object, unwrap it, otherwise return it as is."
     (if (is_syntax v) (syntax_unwrap v) v))
 
 )

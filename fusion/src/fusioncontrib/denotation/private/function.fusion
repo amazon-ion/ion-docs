@@ -33,6 +33,7 @@ Remember that _everything is functional here_, even things like IF.
   (provide
     define_fn
     fn_args
+    fn_binding
     fn_code
     fn_name
     is_fn
@@ -55,15 +56,20 @@ Predicate for domain functions.
       "private fn accessor"
     ]
     (make_record_type (quote 'record:fn') 'record:domain_value' 3 0))
-    // The inherited domain_value_rep field holds the function name.
+    // The inherited domain_value_rep field holds the function's bound identifier.
     // The fields in this subtype are:
     //   0: the procedure to apply (that is, the compiled function).
     //   1: a sexp of identifiers; the argument names.
     //   2: a syntax-object for the body of the function.
 
+  (define (fn_binding fn)
+    (unless (is_fn fn) (raise_argument_error "fn_binding" "domain function" 0 fn))
+    (domain_value_rep fn))
+
   (define (fn_name fn)
     (unless (is_fn fn) (raise_argument_error "fn_name" "domain function" 0 fn))
-    (domain_value_rep fn))
+    (syntax_unwrap (domain_value_rep fn)))
+
 
   (define (fn_args fn) (fn_get fn 1))
   (define (fn_code fn) (fn_get fn 2))
@@ -77,16 +83,16 @@ Predicate for domain functions.
         (inject_into d v)
         (fail_proc))))
 
-  (define (typecheck_actuals name domains args)
+  (define (typecheck_actuals where domains args)
     (let [(count (size domains))]
       (unless (=== count (size args))
-        (apply raise_arity_error name count args))
+        (apply raise_arity_error where count args))
       (let loop [(i 0), (ds domains), (as args)]
         (if (=== count i)
           (quote ())
           (let [(d (head ds)), (a (head as))]
             (pair (typecheck_value d a
-                    (|| (apply raise_argument_error name
+                    (|| (apply raise_argument_error where
                           (symbol_to_string (domain_name d))
                           i args)))
               (loop (+ 1 i) (tail ds) (tail as))))))))
@@ -102,17 +108,19 @@ Type-checking of function application:
     arguments of the same number and type of the subdomains.
     '''
       // TODO validate name
+    (unless (or (is_identifier name) (is_null name))
+      (raise_argument_error "make_fn" "identifier" 0 name domain impl))
     (unless (is_func_domain domain)
-      (raise_argument_error "make_fn" "function domain" 0 domain impl))
+      (raise_argument_error "make_fn" "function domain" 1 name domain impl))
     (unless (is_procedure impl)
-      (raise_argument_error "make_fn" "procedure" 1 domain impl))
+      (raise_argument_error "make_fn" "procedure" 2 name domain impl))
     (lets [(argdomains (apply sexp (func_domain_argdomains domain))),
            (out_dom (func_domain_output domain)),
            (applier (lambda rest
-                      (lets [(args (typecheck_actuals name argdomains rest)),
+                      (lets [(args (typecheck_actuals (desyntax name) argdomains rest)),
                              (r (apply impl args))]
                         (typecheck_value out_dom r
-                          (|| (raise_result_error (string_append "result of " name)
+                          (|| (raise_result_error (string_append "result of " (desyntax name))
                                 (symbol_to_string (domain_name out_dom)) r))))))]
       (fn_ctor domain name applier arg_stxs code_stx)))
 
@@ -151,7 +159,7 @@ Type-checking of function application:
                                CTX
                                stx)))]
                 (make_fn
-                  "local fn" // (string_append "local " (or (domain_name domain) "function")))
+                  null    // (string_append "local " (or (domain_name domain) "function")))
                   (UQ domain_stx)
                   (lambda (UQ args_stx) (UQ body_stx))
                   (syntax_unwrap (QS (UQ args_stx)))
@@ -220,7 +228,7 @@ Returns:
                       (xform_fn_sig (syntax_unwrap sig_stx)))]
           (datum_to_syntax
             (QQ (define (UQ name_stx)
-                  (make_fn (quote (UQ name_stx))
+                  (make_fn (quote_syntax (UQ name_stx))
                     (UQ func_domain_stx)
                     (lambda (UQ args_stx)
                       (UQ expr_stx))
@@ -239,7 +247,7 @@ Returns:
         (wrong_syntax args_stx "expected sexp of arguments"))
       (datum_to_syntax
         (QQ (define (UQ name_stx)
-              (make_fn (quote (UQ name_stx))
+              (make_fn (quote_syntax (UQ name_stx))
                 (UQ type_stx)
                 (lambda (UQ args_stx)
                   (UQ expr_stx))
