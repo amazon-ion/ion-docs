@@ -81,6 +81,7 @@ TODO
   (define IF_ELSE  (wrap_with_space "\\mbox{\\bf{else}}"))
   (define IF_END   (wrap_with_space "\\mbox{\\bf{endif}}"))
   (define LET_LET  (wrap_with_space "\\mbox{\\bf{let}}"))
+  (define LET_LETREC (wrap_with_space "\\mbox{\\bf{letrec}}"))
   (define LET_IN   (wrap_with_space "\\mbox{\\bf{in}}"))
   (define LET_END  "")
 
@@ -207,6 +208,19 @@ TODO
         (display LET_END))
       (pp_decr_indentation e)))
 
+  (define (pp_letrec s e)
+    (let [(e1 (pp_incr_indentation e))]
+      (display LET_LETREC)
+      (let [(bindings (apply sexp (syntax_unwrap (. s 1)))),
+            (body     (. s 2))]
+        (assert (not (is_empty bindings)))
+        (pp_bindings bindings e)
+        (display NL)
+        (display LET_IN)
+        (pp_print body e)
+        (display LET_END))
+      (pp_decr_indentation e)))
+
 
   (define (pp_if v e)
     (let [(e (pp_incr_indentation e))]
@@ -315,7 +329,10 @@ A model printer that renders in Unicode plain-text.
       (form_method if              pp_if)
       (form_method inject_into     pp_lift_to)
       (form_method ith             pp_ith)
+      (form_method lambda          (|v e| (pp_print_terms (. v 1) e "\\lambda " " " ".")
+                                          (pp_print (. v 2) e)))
       (form_method let             pp_let)
+      (form_method letrec          pp_letrec)
       (form_method lift            pp_lift)
       (form_method lift_to         pp_lift_to)
       (form_method lower           pp_lower)

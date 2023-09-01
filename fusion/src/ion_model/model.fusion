@@ -132,17 +132,16 @@ Spec Problems
         false))
 
 
-    (fn Fields_get1 ((fs 'Field*') (u Unicode) -> 'Value*')  // returns 0 or 1, raises if more
-      (if (seq_is_empty fs)
-        (seq 'Value*')
-        (if (eject (Symbolic_text_matches (Field_name (seq_head fs)) u))
-          (if (seq_is_empty (Fields_get1 (seq_tail fs) u))
-            (seq 'Value*' (Field_value (seq_head fs)))
-            (raise "repeated field"))
-          (Fields_get1 (seq_tail fs) u))))
-
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
-      (Fields_get1 (lower s 'Field*') u))
+      (letrec [(seek (lambda (fs u)
+                       (if (seq_is_empty fs)
+                         (seq 'Value*')
+                         (if (eject (Symbolic_text_matches (Field_name (seq_head fs)) u))
+                           (if (seq_is_empty (seek (seq_tail fs) u))
+                             (seq 'Value*' (Field_value (seq_head fs)))
+                             (raise "repeated field"))
+                           (seek (seq_tail fs) u)))))]
+        (seek (lower s 'Field*') u)))
 
     (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
       (if (seq_is_empty (Value_annots v)) false
@@ -237,9 +236,8 @@ Spec Problems
     // $ion_symbol_table "compilation"
 
     (fn is_$ion_symbol_table ((v Value) -> B)
-      (if (eject (Value_has_first_annot v "$ion_symbol_table"))
-        (element_of (Value_content v) Struct)
-        false))
+      (and (eject (Value_has_first_annot v "$ion_symbol_table"))
+           (element_of (Value_content v) Struct)))
 
     (fn symbol_padding ((len I) -> 'Symbolic*')
       (if (=== 0 (eject len))
@@ -264,7 +262,7 @@ Spec Problems
             (if (< (eject max) 0)
               // If max_id is invalid or absent, must have exact match.
               (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
-              (adjust_length EMPTY_SYMBOLICS max))
+              (adjust_length EMPTY_SYMBOLICS max))  // Or, (symbol_padding max)
             // We found something in the catalog
             (let [(symtab (lower found SharedSymtab))]
               (if (=== (eject version) (eject (SST_version symtab)))
