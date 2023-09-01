@@ -45,7 +45,7 @@ Utilities for testing the Ion denotational model.
 
 
   //============================================================================
-  // Creating model values for the input domains like RVal
+  // Creating model values for the input domains like RValue
 
   // Safe types
 
@@ -79,8 +79,8 @@ Utilities for testing the Ion denotational model.
 
   // Symbols
 
-  (define (mk_SymTok c)
-    (lift_to SymTok
+  (define (mk_RSymTok c)
+    (lift_to RSymTok
       (if (is_int c)
         (inject_into I c)
         (let [(str (symbol_to_string c))]
@@ -88,10 +88,10 @@ Utilities for testing the Ion denotational model.
             (inject_into I (string_to_int (string_replace str "#$" "")))
             (inject_into Unicode str))))))
 
-  (define (mk_RSym c)
-    (lift_to RSym
+  (define (mk_RSymbol c)
+    (lift_to RSymbol
       (if (is_null c) DOTNULL
-        (mk_SymTok c))))
+        (mk_RSymTok c))))
 
 
   // Containers
@@ -99,35 +99,35 @@ Utilities for testing the Ion denotational model.
   (define (mk_RList c)
     (lift_to RList
       (if (is_null c) DOTNULL
-        (apply seq 'RVal*' (map mk_RVal c)))))
+        (apply seq 'RValue*' (map mk_RValue c)))))
 
   (define (mk_RStruct c)
     (lift_to RStruct
       (if (is_null c) DOTNULL
         (apply seq 'RField*'
           (for_list [((k v) c)]
-            (tuple RField (mk_SymTok k) (mk_RVal v)))))))
+            (tuple RField (mk_RSymTok k) (mk_RValue v)))))))
 
 
   // Values
 
-  (define (mk_RVal c)
-    (tuple RVal
-      (apply seq 'SymTok*' (map mk_SymTok (annotations c)))
+  (define (mk_RValue c)
+    (tuple RValue
+      (apply seq 'RSymTok*' (map mk_RSymTok (annotations c)))
       (lift_to RContent
         (let [(c (annotate c))]  // Remove any annotations
           (cond
             ((is_safe   c) (mk_SafeVal c))
-            ((is_symbol c) (mk_RSym    c))
+            ((is_symbol c) (mk_RSymbol    c))
             ((is_list   c) (mk_RList   c))
             ((is_struct c) (mk_RStruct c))
-            (true (raise_argument_error "mk_RVal" "symbol/bool/int/string/list" 0 c)))))))
+            (true (raise_argument_error "mk_RValue" "symbol/bool/int/string/list" 0 c)))))))
 
-  (define (mk_TRVal c)
-    (lift_to TRVal
+  (define (mk_TRValue c)
+    (lift_to TRValue
       (if (=== (quote '#$ion_1_0') c)
         IVM_1_0
-        (mk_RVal c))))
+        (mk_RValue c))))
 
 
   //============================================================================
@@ -166,19 +166,19 @@ Utilities for testing the Ion denotational model.
 
   // Symbols
 
-  (define (eject_Symbolic sym)
+  (define (eject_SymTok sym)
     (if (element_of sym Unicode)
       (string_to_symbol (eject (check_lower sym Unicode)))
       (quote '#$0')))
 
-  (define (eject_Symbolics syms)
-    (assert (domain_is syms 'Symbolic*'))
-    (map eject_Symbolic (seq_to_sexp syms)))
+  (define (eject_SymToks syms)
+    (assert (domain_is syms 'SymTok*'))
+    (map eject_SymTok (seq_to_sexp syms)))
 
   (define (eject_Symbol v)
     (if (element_of v DotNull)
       (quote null.symbol)
-      (eject_Symbolic (unwrap v))))
+      (eject_SymTok (unwrap v))))
 
 
   // Containers
@@ -192,7 +192,7 @@ Utilities for testing the Ion denotational model.
     (if (element_of v DotNull)
       null.struct
       (for_struct [(f (seq_to_sexp (unwrap v)))]
-        (values (eject_Symbolic (Field_name  f))
+        (values (eject_SymTok (Field_name  f))
                 (eject_Value    (Field_value f))))))
 
 
@@ -210,7 +210,7 @@ Utilities for testing the Ion denotational model.
   (define (eject_Value value)
     (let_values [((annots content) (tuple_values value))]
       // `annotate` replaces any existing annotations on the content.
-      (apply annotate (eject_Content content) (eject_Symbolics annots))))
+      (apply annotate (eject_Content content) (eject_SymToks annots))))
 
   (define (eject_Values values)
     (assert (domain_is values 'Value*'))
@@ -228,9 +228,9 @@ Utilities for testing the Ion denotational model.
         stx)))
 
   (define parse
-    "Construct a `TRVal*` denoting the input values."
+    "Construct a `TRValue*` denoting the input values."
     (lambda input
-      (apply seq 'TRVal*' (map mk_TRVal input))))
+      (apply seq 'TRValue*' (map mk_TRValue input))))
 
 
   //============================================================================
@@ -269,7 +269,7 @@ Utilities for testing the Ion denotational model.
   // Test drivers
 
   (define (expand_doc input)
-    "Parse top-level inputs (contained in a sequence) into `TRVal*` then expand it."
+    "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
     (expand (apply parse input) testing_catalog))
 
   (define_binary_check (check_expansion expected input)

@@ -11,7 +11,7 @@ Functional:
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
-  * Probably Symbolic needs to track symbol source: SharedSymtab x N::index
+  * Probably SymTok needs to track symbol source: SharedSymtab x N::index
 * SST compilation is very weak.
 * Catalog construction should reject duplicate keys, so we don't imply anything
   about selection criteria.
@@ -71,59 +71,58 @@ Spec Problems
     //=============================
     // Raw-layer Data Types, which can contain unresolved SIDs
 
-    (dom SymTok    = (+ Unicode I))     // "Raw" symbol token
+    (dom RSymTok   = (+ Unicode I))
+    (dom RSymbol   = (+ DotNull RSymTok))
 
-    (dom RSym      = (+ DotNull SymTok))
-    (dom RList     = (+ DotNull 'RVal*'))
+    (dom RList     = (+ DotNull 'RValue*'))
 
-//  (dom RStruct = (-> SymTok RVal))   // Currently can't recurse in ->
-    (dom RField    = (* SymTok RVal))
+    (dom RField    = (* RSymTok RValue))
     (dom RStruct   = (+ DotNull 'RField*'))
 
     // The "raw" data model
-    (dom RContent = (+ SafeVal RSym RList RStruct))
-    (dom RVal     = (* 'SymTok*' RContent))
-    (dom TRVal    = (+ RVal IVM))
+    (dom RContent = (+ SafeVal RSymbol RList RStruct))
+    (dom RValue     = (* 'RSymTok*' RContent))
+    (dom TRValue    = (+ RValue IVM))
 
-    (fn RVal_annots  ((v RVal) -> 'SymTok*')  (ith v 0))
-    (fn RVal_content ((v RVal) -> 'RContent') (ith v 1))
+    (fn RValue_annots  ((v RValue) -> 'RSymTok*')  (ith v 0))
+    (fn RValue_content ((v RValue) -> 'RContent') (ith v 1))
 
-    (fn RField_name  ((f RField) -> SymTok) (ith f 0))
-    (fn RField_value ((f RField) -> RVal)   (ith f 1))
+    (fn RField_name  ((f RField) -> RSymTok) (ith f 0))
+    (fn RField_value ((f RField) -> RValue)   (ith f 1))
 
 
     //=============================
     // Application-layer Data Types
 
-    (dom Symbolic    = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom SymTok    = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom Symbol   = (+ DotNull SymTok))
 
-    (dom Symbol   = (+ DotNull Symbolic))
     (dom List     = (+ DotNull 'Value*'))
 
-    (dom Field    = (* Symbolic Value))
+    (dom Field    = (* SymTok Value))
     (dom Struct   = (+ DotNull 'Field*'))
 
     // The Ion data model, proper
     (dom Content   = (+ SafeVal Symbol List Struct))
-    (dom Value     = (* 'Symbolic*' Content))
+    (dom Value     = (* 'SymTok*' Content))
 
     (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
 
-    (fn Value_annots  ((v Value) -> 'Symbolic*') (ith v 0))
+    (fn Value_annots  ((v Value) -> 'SymTok*') (ith v 0))
     (fn Value_content ((v Value) -> 'Content')   (ith v 1))
 
-    (fn Field_name  ((f Field) -> Symbolic) (ith f 0))
+    (fn Field_name  ((f Field) -> SymTok) (ith f 0))
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
 
-    (fn Symbolic_text_matches ((s Symbolic) (u Unicode) -> B)
+    (fn SymTok_text_matches ((s SymTok) (u Unicode) -> B)
       (if (element_of s Unicode)
         (=== (eject u) (eject (lower s Unicode)))
         false))
 
     (fn Symbol_text_matches ((s Symbol) (u Unicode) -> B)
-      (if (element_of s Symbolic)
-        (Symbolic_text_matches (lower s Symbolic) u)
+      (if (element_of s SymTok)
+        (SymTok_text_matches (lower s SymTok) u)
         false))
 
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
@@ -136,7 +135,7 @@ Spec Problems
       (letrec [(seek (lambda (fs u)
                        (if (seq_is_empty fs)
                          (seq 'Value*')
-                         (if (eject (Symbolic_text_matches (Field_name (seq_head fs)) u))
+                         (if (eject (SymTok_text_matches (Field_name (seq_head fs)) u))
                            (if (seq_is_empty (seek (seq_tail fs) u))
                              (seq 'Value*' (Field_value (seq_head fs)))
                              (raise "repeated field"))
@@ -145,32 +144,32 @@ Spec Problems
 
     (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
       (if (seq_is_empty (Value_annots v)) false
-        (Symbolic_text_matches (seq_head (Value_annots v)) u)))
+        (SymTok_text_matches (seq_head (Value_annots v)) u)))
 
 
     //=======================
     // Environment Management
 
-    (fn system_symbols ((i IVM) -> 'Symbolic*')
-      (seq 'Symbolic*'
-        (lift_to Symbolic SYM0)
-        (lift_to Symbolic (inject_into Unicode "$ion"))
-        (lift_to Symbolic (inject_into Unicode "$ion_1_0"))
-        (lift_to Symbolic (inject_into Unicode "$ion_symbol_table"))
-        (lift_to Symbolic (inject_into Unicode "name"))
-        (lift_to Symbolic (inject_into Unicode "version"))
-        (lift_to Symbolic (inject_into Unicode "imports"))
-        (lift_to Symbolic (inject_into Unicode "symbols"))
-        (lift_to Symbolic (inject_into Unicode "max_id"))
-        (lift_to Symbolic (inject_into Unicode "$ion_shared_symbol_table"))))
+    (fn system_symbols ((i IVM) -> 'SymTok*')
+      (seq 'SymTok*'
+        (lift_to SymTok SYM0)
+        (lift_to SymTok (inject_into Unicode "$ion"))
+        (lift_to SymTok (inject_into Unicode "$ion_1_0"))
+        (lift_to SymTok (inject_into Unicode "$ion_symbol_table"))
+        (lift_to SymTok (inject_into Unicode "name"))
+        (lift_to SymTok (inject_into Unicode "version"))
+        (lift_to SymTok (inject_into Unicode "imports"))
+        (lift_to SymTok (inject_into Unicode "symbols"))
+        (lift_to SymTok (inject_into Unicode "max_id"))
+        (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table"))))
 
 
-    (dom SharedSymtab    = (* Unicode I 'Symbolic*'))     // name, version, symbols
+    (dom SharedSymtab    = (* Unicode I 'SymTok*'))     // name, version, symbols
     (dom 'SharedSymtab?' = (+ SharedSymtab Nothing))
 
     (fn SST_name    ((s SharedSymtab) -> Unicode)     (ith s 0))
     (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
-    (fn SST_symbols ((s SharedSymtab) -> 'Symbolic*') (ith s 2))
+    (fn SST_symbols ((s SharedSymtab) -> 'SymTok*') (ith s 2))
 
     (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
       (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
@@ -206,7 +205,7 @@ Spec Problems
       (lift (seq_prepend s (lower c 'SharedSymtab*')) Catalog))
 
 
-    (dom LocalSymtab  = (+ 'Symbolic*'))               // imports, symbols
+    (dom LocalSymtab  = (+ 'SymTok*'))               // imports, symbols
     (dom Environment  = (* Catalog IVM LocalSymtab))
 
     (fn Environment_cat ((r Environment) -> Catalog)     (ith r 0))
@@ -214,23 +213,23 @@ Spec Problems
     (fn Environment_lst ((r Environment) -> LocalSymtab) (ith r 2))
 
 
-    // Returns Symbolic so it can represent SYM0 when the sid
+    // Returns SymTok so it can represent SYM0 when the sid
     // doesn't map to text.
-    (fn expand_SymTok ((r Environment) (s SymTok) -> Symbolic)
+    (fn expand_RSymTok ((r Environment) (s RSymTok) -> SymTok)
       (if (element_of s Unicode)
-        (lift (lower s Unicode) Symbolic)
+        (lift (lower s Unicode) SymTok)
         (let [(lst (Environment_lst r)),
               (i (lower s I))]
-          (let [(sid (if (< (eject i) (seq_length (lower lst 'Symbolic*')))
+          (let [(sid (if (< (eject i) (seq_length (lower lst 'SymTok*')))
                        (eject i)
                        0))]
-            (ith (lower lst 'Symbolic*') sid)))))
+            (ith (lower lst 'SymTok*') sid)))))
 
-    (fn expand_SymToks ((r Environment) (s 'SymTok*') -> 'Symbolic*')
+    (fn expand_RSymToks ((r Environment) (s 'RSymTok*') -> 'SymTok*')
       (if (seq_is_empty s)
         EMPTY_SYMBOLICS
-        (seq_prepend (expand_SymTok  r (seq_head s))
-                     (expand_SymToks r (seq_tail s)))))
+        (seq_prepend (expand_RSymTok  r (seq_head s))
+                     (expand_RSymToks r (seq_tail s)))))
 
 
     // $ion_symbol_table "compilation"
@@ -239,20 +238,20 @@ Spec Problems
       (and (eject (Value_has_first_annot v "$ion_symbol_table"))
            (element_of (Value_content v) Struct)))
 
-    (fn symbol_padding ((len I) -> 'Symbolic*')
+    (fn symbol_padding ((len I) -> 'SymTok*')
       (if (=== 0 (eject len))
         EMPTY_SYMBOLICS
-        (seq_prepend (lift SYM0 Symbolic)
+        (seq_prepend (lift SYM0 SymTok)
           (symbol_padding (- (eject len) 1)))))
 
-    (fn adjust_length ((ss 'Symbolic*') (max I) -> 'Symbolic*')
+    (fn adjust_length ((ss 'SymTok*') (max I) -> 'SymTok*')
       (if (=== (seq_length ss) (eject max))
         ss
         (if (< (seq_length ss) (eject max))
           (seq_append ss (symbol_padding (- (eject max) (seq_length ss))))
           (seq_truncate ss (eject max)))))
 
-    (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'Symbolic*')
+    (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'SymTok*')
       (if (or (=== (eject name) "")
               (=== (eject name) "$ion"))
         EMPTY_SYMBOLICS
@@ -299,13 +298,13 @@ Spec Problems
             (lower c SafeVal Int I)
             -1))))
 
-    (fn compile_import_struct ((s Struct) (r Environment) -> 'Symbolic*')
+    (fn compile_import_struct ((s Struct) (r Environment) -> 'SymTok*')
       (let [(n (normalize_name    (Struct_get1 s "name"))),
             (v (normalize_version (Struct_get1 s "version"))),
             (m (normalize_max_id  (Struct_get1 s "max_id")))]
         (compile_import n v m (Environment_cat r))))
 
-    (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'Symbolic*')
+    (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
         (seq_append (let [(c (Value_content (seq_head vs)))]
@@ -314,33 +313,33 @@ Spec Problems
                         EMPTY_SYMBOLICS))
                     (compile_imports_elts (seq_tail vs) r))))
 
-    (fn compile_imports_field ((v Value) (r Environment) -> 'Symbolic*')
+    (fn compile_imports_field ((v Value) (r Environment) -> 'SymTok*')
       (if (eject (Value_is_symbol_matching v "$ion_symbol_table"))
-        (lower (Environment_lst r) 'Symbolic*')
+        (lower (Environment_lst r) 'SymTok*')
         (let [(ls (let [(c (Value_content v))]
                     (if (and (element_of c List) (not (element_of c DotNull)))
                     (compile_imports_elts (List_elts (lower c List)) r)
                     EMPTY_SYMBOLICS)))]
         (seq_append (system_symbols (Environment_ivm r)) ls))))
 
-    (fn imported_symbols ((s Struct) (r Environment) -> 'Symbolic*')
+    (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
       (let [(vals (Struct_get1 s "imports"))]
         (if (seq_is_empty vals)
           (system_symbols (Environment_ivm r))
           (compile_imports_field (seq_head vals) r))))
 
 
-    (fn compile_symbols_elts ((vs 'Value*') -> 'Symbolic*')
+    (fn compile_symbols_elts ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMBOLICS
         (seq_prepend (let [(c (Value_content (seq_head vs)))]
-                       (lift_to Symbolic
+                       (lift_to SymTok
                          (if (and (element_of c String) (not (element_of c DotNull)))
                            (lower c SafeVal String Unicode)
                            SYM0)))
                      (compile_symbols_elts (seq_tail vs)))))
 
-    (fn declared_symbols ((s Struct) -> 'Symbolic*')
+    (fn declared_symbols ((s Struct) -> 'SymTok*')
       (let [(vals (Struct_get1 s "symbols"))]
         (if (seq_is_empty vals)
           EMPTY_SYMBOLICS
@@ -388,11 +387,11 @@ Spec Problems
     (dom Continuation = (-> 'Value*' 'Value*')
       "Continuation where the environment cannot be changed.")
 
-    (fn E ((vr RVal) (r Environment) (k Continuation) -> 'Value*')
+    (fn E ((vr RValue) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
-      (E_RContent (RVal_content vr) r
+      (E_RContent (RValue_content vr) r
         (mk_fn CContinuation (c1)
-          (k (seq 'Value*' (tuple Value (expand_SymToks r (RVal_annots vr)) c1))))))
+          (k (seq 'Value*' (tuple Value (expand_RSymToks r (RValue_annots vr)) c1))))))
 
     (dom CContinuation = (-> Content 'Value*')
       "Continuation when expanding a value's content.")
@@ -401,23 +400,23 @@ Spec Problems
       // General value evaluation
       (if (element_of vr SafeVal)
         (k (lift (lower vr SafeVal) Content))
-        (if (element_of vr RSym)
-          (E_RSym (lower vr RSym) r k)
+        (if (element_of vr RSymbol)
+          (E_RSymbol (lower vr RSymbol) r k)
           (if (element_of vr RList)
             (E_RList (lower vr RList) r k)
             (if (element_of vr RStruct)
               (E_RStruct (lower vr RStruct) r k)
               (raise "not implemented"))))))
 
-    (fn E_RSym ((v RSym) (r Environment) (k CContinuation) -> 'Value*')
+    (fn E_RSymbol ((v RSymbol) (r Environment) (k CContinuation) -> 'Value*')
       (k (lift (if (element_of v DotNull)
                  DOTNULL
-                 (expand_SymTok r (lower v SymTok))) Symbol Content)))
+                 (expand_RSymTok r (lower v RSymTok))) Symbol Content)))
 
     (fn E_RList ((v RList) (r Environment) (k CContinuation) -> 'Value*')
       (if (element_of v DotNull)
         (k (lift DOTNULL List Content))
-        ('E*' (lower v 'RVal*') r
+        ('E*' (lower v 'RValue*') r
           (mk_fn Continuation (vs1)
             (k (lift vs1 List Content))))))
 
@@ -434,7 +433,7 @@ Spec Problems
             ('E_RField*' (seq_tail rfs) r
               (mk_fn FContinuation (fs2)             // Field* from tail fields
                 (k (seq_prepend (tuple Field
-                                  (expand_SymTok r (RField_name (seq_head rfs)))
+                                  (expand_RSymTok r (RField_name (seq_head rfs)))
                                   (seq_head vs1))
                      fs2))))))))
 
@@ -446,7 +445,7 @@ Spec Problems
             (k (lift fs1 Struct Content))))))
 
 
-    (fn 'E*' ((vrs 'RVal*') (r Environment) (k Continuation) -> 'Value*')
+    (fn 'E*' ((vrs 'RValue*') (r Environment) (k Continuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (k (seq 'Value*'))
         (E (seq_head vrs) r
@@ -461,10 +460,10 @@ Spec Problems
     (dom TContinuation = (-> Environment 'Value*' 'Value*')
       "Continuation when expanding top-level values")
 
-    (fn TE ((vr TRVal) (r Environment) (k TContinuation) -> 'Value*')
+    (fn TE ((vr TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of vr IVM)
         (k (env_for_ivm r (lower vr IVM)) (seq 'Value*'))
-        (E (lower vr RVal) r
+        (E (lower vr RValue) r
           (mk_fn Continuation (vs1)
             (if (seq_is_empty vs1)
               (k r vs1)
@@ -475,7 +474,7 @@ Spec Problems
                 // Expand normally
                 (k r vs1)))))))
 
-    (fn 'TE*' ((vrs 'TRVal*') (r Environment) (k TContinuation) -> 'Value*')
+    (fn 'TE*' ((vrs 'TRValue*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty vrs)
         (k r (seq 'Value*'))
         (TE (seq_head vrs) r
@@ -486,20 +485,20 @@ Spec Problems
 
   /*
     (den TE "Top-level value evaluation"
-      ([TRVal] (e Environment) (k Continuation) -> 'Value*')
+      ([TRValue] (e Environment) (k Continuation) -> 'Value*')
       [IVM]  = (k e0 (seq Value))
-      [RVal::v] = (E v e (|e1 v1| (IF (= (annot v1) <$ion_symbol_table>)
+      [RValue::v] = (E v e (|e1 v1| (IF (= (annot v1) <$ion_symbol_table>)
                                     (k <> (extend_env e1 (imports v1))
                                     (k v1 e1)))))
 
     (den 'TE*' "Top-level stream evaluation"
-      ('TRVal*' x Environment x Continuation -> 'Value*'))
+      ('TRValue*' x Environment x Continuation -> 'Value*'))
   */
 
     (fn k0 TContinuation (e v) v)                     // The bootstrap continuation
 
-    (fn expand ((rvals 'TRVal*') (c Catalog) -> 'Value*')
-      ('TE*' (seq_prepend (lift IVM_1_0 TRVal) rvals)
+    (fn expand ((rvals 'TRValue*') (c Catalog) -> 'Value*')
+      ('TE*' (seq_prepend (lift IVM_1_0 TRValue) rvals)
              (initial_env c)
              k0))
   )
@@ -510,6 +509,6 @@ Spec Problems
   (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
   (define EMPTY_UNICODE    (inject_into Unicode ""))
-  (define EMPTY_SYMBOLICS  (seq 'Symbolic*'))
+  (define EMPTY_SYMBOLICS  (seq 'SymTok*'))
   (define EMPTY_STRUCT     (lift (seq 'Field*') Struct))
 )
