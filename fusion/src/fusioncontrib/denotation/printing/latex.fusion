@@ -35,7 +35,6 @@ TODO
   * Render function domains with their definition.
   * Render stylized LHS for functions.
   * Render tuple-getters using ↓
-  * Move Ion-specific bits into a printer subclass.
   * Print sequence-domain names with non-bold superscript asterisk.
   * Insert some vertical space between function definitions.
     * Perhaps: 	\\smallskip, \\medskip, \\bigskip
