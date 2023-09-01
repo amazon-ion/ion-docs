@@ -13,11 +13,29 @@
   )
 
 
+
+  // Print AsciiDoc tags around each definition, so they can be included into
+  // the document individually.
+
+  (define (pp_domain_def_adoc v e)
+    (display "% tag::" (domain_name v) "[]\n")
+    (pp_domain_def v e)
+    (display "% end::" (domain_name v) "[]\n"))
+
+  (define (pp_fn_def_adoc v e)
+    (display "% tag::" (fn_name v) "[]\n")
+    (pp_fn_def v e)
+    (display "% end::" (fn_name v) "[]\n"))
+
+
   (define ion_print_latex
     '''
 A model printer that renders in Unicode plain-text.
     '''
     (make_printer latexprint
+      (type_method is_domain                     pp_domain_def_adoc)
+      (type_method is_fn                         pp_fn_def_adoc)
+
       (sym_image "{\\cal E}"                     E)
       (sym_image "{\\cal E}^{\\ast}"             'E*')
       (sym_image "\\overline{\\cal E}"           TE)

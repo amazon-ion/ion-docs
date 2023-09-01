@@ -58,6 +58,8 @@ TODO
 
   (provide
     latexprint
+    pp_domain_def
+    pp_fn_def
   )
 
 

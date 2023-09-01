@@ -30,6 +30,7 @@ References:
 
   (provide
     domain_method
+    domain_name
     fn_args
     fn_code
     fn_name
@@ -37,6 +38,7 @@ References:
     func_domain_argdomains
     func_domain_output
     is_base_domain
+    is_domain
     is_fn
     is_func_domain
     is_product_domain
