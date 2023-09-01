@@ -181,3 +181,8 @@ mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
   '''\\:\\: \\setandincrindent\n'''
   '''\\mbox{\\it{in}\\small \\mbox{\\bf Tuple}}(\\langle \\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}\\rangle ) \\decrindent\n'''
   mk_Tuple)
+
+
+// To enable insertion of AsciiDoc tags, we want definitions to end with newlines
+(check_true (string_ends_with (with_output_to_string (latexprint B)) "\n"))
+(check_true (string_ends_with (with_output_to_string (latexprint f)) "\n"))

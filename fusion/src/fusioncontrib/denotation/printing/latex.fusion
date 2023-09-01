@@ -32,7 +32,6 @@ in math mode.
 
 TODO
 ====
-  * Render function domains with their definition.
   * Render stylized LHS for functions.
   * Render tuple-getters using ↓
   * Print sequence-domain names with non-bold superscript asterisk.
@@ -118,7 +117,7 @@ TODO
   (define (pp_model m e)
     (pp_print_terms (model_domains m) e "" NL NL)
     (unless (is_empty (model_fns m))
-      (pp_print_terms (model_fns m) e NL NL "")))
+      (pp_print_terms (model_fns m) e NL "\\newline\n\\newline\n" "")))
 
 
   (define (pp_domain_name v e)
@@ -153,7 +152,8 @@ TODO
   (define (pp_domain_def v e)
     (pp_domain_name (domain_name v) e)
     (display " = ")                    // no newline
-    (pp_domain_rhs v e))
+    (pp_domain_rhs v e)
+    (display "\n"))
 
 
   (define (pp_fn_def v e)
