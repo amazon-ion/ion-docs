@@ -60,11 +60,11 @@ Spec Problems
     (dom DotNull = "Sentinel for typed nulls")
 
     (dom NullNull = (+ DotNull))
-    (dom Boolean  = (+ DotNull B))
-    (dom Int      = (+ DotNull I))
-    (dom String   = (+ DotNull Unicode))
+    (dom Boolean  = (+ B DotNull))
+    (dom Int      = (+ I DotNull))
+    (dom String   = (+ Unicode DotNull))
 
-    (dom SafeVal = (+ NullNull Boolean Int String /*Decimal Float Timetstam Blob Clob*/)
+    (dom SafeVal = (+ NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/)
       "Values that cannot contain SIDs")
 
 
@@ -72,35 +72,36 @@ Spec Problems
     // Raw-layer Data Types, which can contain unresolved SIDs
 
     (dom RSymTok   = (+ Unicode I))
-    (dom RSymbol   = (+ DotNull RSymTok))
+    (dom RSymbol   = (+ RSymTok DotNull))
 
-    (dom RList     = (+ DotNull 'RValue*'))
+    (dom RList     = (+ 'RValue*' DotNull))
 
     (dom RField    = (* RSymTok RValue))
-    (dom RStruct   = (+ DotNull 'RField*'))
+    (dom RStruct   = (+ 'RField*' DotNull))
+
 
     // The "raw" data model
     (dom RContent = (+ SafeVal RSymbol RList RStruct))
     (dom RValue     = (* 'RSymTok*' RContent))
     (dom TRValue    = (+ RValue IVM))
 
-    (fn RValue_annots  ((v RValue) -> 'RSymTok*')  (ith v 0))
-    (fn RValue_content ((v RValue) -> 'RContent') (ith v 1))
+    (fn RValue_annots  ((rv RValue) -> 'RSymTok*') (ith rv 0))
+    (fn RValue_content ((rv RValue) -> 'RContent') (ith rv 1))
 
-    (fn RField_name  ((f RField) -> RSymTok) (ith f 0))
-    (fn RField_value ((f RField) -> RValue)   (ith f 1))
+    (fn RField_name  ((rf RField) -> RSymTok) (ith rf 0))
+    (fn RField_value ((rf RField) -> RValue)  (ith rf 1))
 
 
     //=============================
     // Application-layer Data Types
 
     (dom SymTok    = (+ Unicode Sym0))  // "Expanded" symbol token
-    (dom Symbol   = (+ DotNull SymTok))
+    (dom Symbol    = (+ SymTok DotNull))
 
-    (dom List     = (+ DotNull 'Value*'))
+    (dom List     = (+ 'Value*' DotNull))
 
     (dom Field    = (* SymTok Value))
-    (dom Struct   = (+ DotNull 'Field*'))
+    (dom Struct   = (+ 'Field*' DotNull))
 
     // The Ion data model, proper
     (dom Content   = (+ SafeVal Symbol List Struct))
@@ -114,37 +115,41 @@ Spec Problems
     (fn Field_name  ((f Field) -> SymTok) (ith f 0))
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
-
-    (fn SymTok_text_matches ((s SymTok) (u Unicode) -> B)
+    (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
       (if (element_of s Unicode)
         (=== (eject u) (eject (lower s Unicode)))
         false))
 
-    (fn Symbol_text_matches ((s Symbol) (u Unicode) -> B)
+    (fn Symbol_matches ((s Symbol) (u Unicode) -> B)
       (if (element_of s SymTok)
-        (SymTok_text_matches (lower s SymTok) u)
+        (SymTok_matches (lower s SymTok) u)
         false))
 
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
       (if (element_of (Value_content v) Symbol)
-        (Symbol_text_matches (lower (Value_content v) Symbol) u)
+        (Symbol_matches (lower (Value_content v) Symbol) u)
         false))
 
-
-    (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
+    (fn Struct_get ((s Struct) (u Unicode) -> 'Value*')
       (letrec [(seek (lambda (fs u)
                        (if (seq_is_empty fs)
                          (seq 'Value*')
-                         (if (eject (SymTok_text_matches (Field_name (seq_head fs)) u))
-                           (if (seq_is_empty (seek (seq_tail fs) u))
-                             (seq 'Value*' (Field_value (seq_head fs)))
-                             (raise "repeated field"))
-                           (seek (seq_tail fs) u)))))]
+                         (let [(f (seq_head fs)),
+                               (vs (seek (seq_tail fs) u))]
+                           (if (eject (SymTok_matches (Field_name f) u))
+                             (seq_prepend (Field_value f) vs)
+                             vs)))))]
         (seek (lower s 'Field*') u)))
+
+    (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
+      (let [(vs (Struct_get s u))]
+        (if (> (seq_length vs) 1)
+          (raise "repeated field")
+          vs)))
 
     (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
       (if (seq_is_empty (Value_annots v)) false
-        (SymTok_text_matches (seq_head (Value_annots v)) u)))
+        (SymTok_matches (seq_head (Value_annots v)) u)))
 
 
     //=======================
@@ -205,7 +210,15 @@ Spec Problems
       (lift (seq_prepend s (lower c 'SharedSymtab*')) Catalog))
 
 
-    (dom LocalSymtab  = (+ 'SymTok*'))               // imports, symbols
+    (dom LocalSymtab  = (+ 'SymTok*'))   // includes imported and local symbols
+
+    (fn LST_lookup ((lst LocalSymtab) (i I) -> SymTok)
+      (let [(sid (if (< (eject i) (seq_length (lower lst 'SymTok*')))
+                   (eject i)
+                   0))]
+        (ith (lower lst 'SymTok*') sid)))
+
+
     (dom Environment  = (* Catalog IVM LocalSymtab))
 
     (fn Environment_cat ((r Environment) -> Catalog)     (ith r 0))
@@ -218,12 +231,7 @@ Spec Problems
     (fn expand_RSymTok ((r Environment) (s RSymTok) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
-        (let [(lst (Environment_lst r)),
-              (i (lower s I))]
-          (let [(sid (if (< (eject i) (seq_length (lower lst 'SymTok*')))
-                       (eject i)
-                       0))]
-            (ith (lower lst 'SymTok*') sid)))))
+        (LST_lookup (Environment_lst r) (lower s I))))
 
     (fn expand_RSymToks ((r Environment) (s 'RSymTok*') -> 'SymTok*')
       (if (seq_is_empty s)
@@ -387,25 +395,25 @@ Spec Problems
     (dom Continuation = (-> 'Value*' 'Value*')
       "Continuation where the environment cannot be changed.")
 
-    (fn E ((vr RValue) (r Environment) (k Continuation) -> 'Value*')
+    (fn E ((rv RValue) (r Environment) (k Continuation) -> 'Value*')
       // General value evaluation
-      (E_RContent (RValue_content vr) r
+      (E_RContent (RValue_content rv) r
         (mk_fn CContinuation (c1)
-          (k (seq 'Value*' (tuple Value (expand_RSymToks r (RValue_annots vr)) c1))))))
+          (k (seq 'Value*' (tuple Value (expand_RSymToks r (RValue_annots rv)) c1))))))
 
     (dom CContinuation = (-> Content 'Value*')
       "Continuation when expanding a value's content.")
 
-    (fn E_RContent ((vr RContent) (r Environment) (k CContinuation) -> 'Value*')
+    (fn E_RContent ((rv RContent) (r Environment) (k CContinuation) -> 'Value*')
       // General value evaluation
-      (if (element_of vr SafeVal)
-        (k (lift (lower vr SafeVal) Content))
-        (if (element_of vr RSymbol)
-          (E_RSymbol (lower vr RSymbol) r k)
-          (if (element_of vr RList)
-            (E_RList (lower vr RList) r k)
-            (if (element_of vr RStruct)
-              (E_RStruct (lower vr RStruct) r k)
+      (if (element_of rv SafeVal)
+        (k (lift (lower rv SafeVal) Content))
+        (if (element_of rv RSymbol)
+          (E_RSymbol (lower rv RSymbol) r k)
+          (if (element_of rv RList)
+            (E_RList (lower rv RList) r k)
+            (if (element_of rv RStruct)
+              (E_RStruct (lower rv RStruct) r k)
               (raise "not implemented"))))))
 
     (fn E_RSymbol ((v RSymbol) (r Environment) (k CContinuation) -> 'Value*')
@@ -460,10 +468,10 @@ Spec Problems
     (dom TContinuation = (-> Environment 'Value*' 'Value*')
       "Continuation when expanding top-level values")
 
-    (fn TE ((vr TRValue) (r Environment) (k TContinuation) -> 'Value*')
-      (if (element_of vr IVM)
-        (k (env_for_ivm r (lower vr IVM)) (seq 'Value*'))
-        (E (lower vr RValue) r
+    (fn TE ((rv TRValue) (r Environment) (k TContinuation) -> 'Value*')
+      (if (element_of rv IVM)
+        (k (env_for_ivm r (lower rv IVM)) (seq 'Value*'))
+        (E (lower rv RValue) r
           (mk_fn Continuation (vs1)
             (if (seq_is_empty vs1)
               (k r vs1)
