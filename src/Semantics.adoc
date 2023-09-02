@@ -83,7 +83,7 @@ At a high level, the goal of this model is to define how an Ion processor turns
 "`raw values`" into "`application values`".  Raw values are fresh off the parser,
 without any interpretation of symbol tables or translation of SIDs into text.
 The IonJava library calls these "`system values`", and here we model them via
-the domain **RVal**, which we'll define later.
+the domain **RValue**, which we'll define later.
 We likewise model application values via the domain **Value**.
 
 Ion gives special treatment to top-level values: IVMs and encoding directives
@@ -93,14 +93,14 @@ values:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=TRVal]
+include::{modeltex}[tag=TRValue]
 \newline
 include::{modeltex}[tag=IVM]
 \newline
 include::{modeltex}[tag=Ion1_0]
 ++++
 
-The **TRVal** domain indicates that the (raw) top-level contains raw values and
+The **TRValue** domain indicates that the (raw) top-level contains raw values and
 IVMs.
 **Ion1_0** is a singleton domain containing only the opaque constant
 __ION_1_0__, and **IVM** is an extensible union of it with future IVMs.
@@ -110,14 +110,20 @@ Our goal then is to implement the following function:
 // TODO Generate these function signatures.
 [{denotation}]
 ++++
-\mbox{\it expand} : \mbox{\bf TRVal*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
+\mbox{\it expand} : \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
 ++++
 
 That is, given a sequence of raw top-level values and a catalog (that is, a set
 of shared symbol tables), we produce a sequence of application values.
 
 
-=== Safe Values
+=== The Ion Data Model
+
+Before we get into the mechanics of expansion, we need to define the data model
+that flows through that process.
+
+
+==== Safe Values
 
 We'll start defining our data model with the easy cases: data types that cannot
 contain SIDS and therefore don't require expansion.
@@ -165,7 +171,8 @@ NOTE: This denotation currently doesn't cover Ion's decimal, float, timestamp,
 blob, and clob types.  If it did, they would be part of **SafeVal**,
 with little effect on the remainder of the model.
 
-=== Symbols
+
+==== Symbols
 
 Symbols form the core of this denotation, which would be trivial if we didn't
 need to expand SIDs into their text.
@@ -216,8 +223,141 @@ _Symbol_matches_ similarly checks whether the **Symbol** is a **SymTok** (as
 opposed to **DotNull**) before calling _SymTok_matches_.
 
 
+==== Lists
+
+Now that we've defined all of Ion's scalar types, we need to address containers.
+Because these types can include symbols, we need both raw and non-raw domains.
+
+Lists are simple to define: they are just sequences of values, or null.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RList]
+\newline
+include::{modeltex}[tag=List]
+++++
+
+Here we introduce recursion into the domain model by using the (forthcoming)
+aggregate domains covering all Ion values in both the raw and non-raw layers.
+
+We'll eventually need to extract the sequence of values inside a list, so let's
+create a little accessor function to make the math more clear:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=List_elts]
+++++
+
+NOTE: This denotation currently doesn't cover Ion S-expressions; they would work
+identically to lists.
+
+
+==== Structs
+
+The domain model for structs is not much more complicated.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RField]
+\newline
+include::{modeltex}[tag=RStruct]
+\newline
+include::{modeltex}[tag=Field]
+\newline
+include::{modeltex}[tag=Struct]
+++++
+
+This shouldn't be surprising: a struct is either null or a set of fields,
+and a field is a tuple with a symbol token and a value.
+
+IMPORTANT: This model is subtly incorrect, since its fields are ordered within a
+struct.  Modeling unordered collections in lambda calculus is quite tricky, so
+for now we'll settle for this defective approach.
+
+As before, we introduce some helper notation to deconstruct fields:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RField_name]
+\newline
+include::{modeltex}[tag=RField_value]
+\newline
+include::{modeltex}[tag=Field_name]
+\newline
+include::{modeltex}[tag=Field_value]
+++++
+
+To get data out of a struct by field name, we need a lookup function:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Struct_get]
+++++
+
+This defines a local recursive function _seek_ which walks the struct's
+**Field**{asterisk} to accumulate a **Value**{asterisk}.
+To perform the recursion, we remove the first of the current fields via
+stem:[f^{\ast}\dagger 1], invoke _seek_, and call the results stem:[v^\ast].
+If the current field's name matches _u_ we prepend (stem:[\S]) its value
+onto the recursive results.
+
+That function returns the values of all fields with the given name, but it turns
+out that the Ion processor never accepts more than one.
+Here's a sibling function that signals an error when the lookup is ambiguous:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Struct_get1]
+++++
+
+Note that this still returns a **Value**{asterisk} but the sequence always has
+zero or one elements.
+
+
+==== Annotated Values
+
+Having defined all concrete types in the Ion data model, we can model their
+union, thus representing all Ion data.  This is where we'll attach annotations
+to content.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RContent]
+\newline
+include::{modeltex}[tag=RValue]
+\newline
+include::{modeltex}[tag=Content]
+\newline
+include::{modeltex}[tag=Value]
+++++
+
+Formally, a values consists of its sequence of annotations, which are symbol
+tokens, and its content, which is the union of all data types.
+
+As usual, accessor functions:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RValue_annots]
+\newline
+include::{modeltex}[tag=RValue_content]
+\newline
+include::{modeltex}[tag=Value_annots]
+\newline
+include::{modeltex}[tag=Value_content]
+++++
+
+And finally, a couple of bespoke predicates that we'll use to detect and compile
+local symbol tables.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value_has_first_annot]
+\newline\newline
+include::{modeltex}[tag=Value_is_symbol_matching]
+++++
+
 // TODO LST, Environment, and lst lookup
-// TODO RVals and annotations/content
 // TODO Expansion and continuations
 // TODO SSTs and Catalogs
 
