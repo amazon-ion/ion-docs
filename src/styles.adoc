@@ -7,4 +7,6 @@ ifndef::bnf[]
 :nrm: subs="+normal"
 :sp2: {nbsp}{nbsp}{nbsp}{nbsp}
 
+:denotation: latexmath,role=Denotation
+
 endif::[]
