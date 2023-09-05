@@ -357,10 +357,107 @@ include::{modeltex}[tag=Value_has_first_annot]
 include::{modeltex}[tag=Value_is_symbol_matching]
 ++++
 
-// TODO LST, Environment, and lst lookup
+
+=== The Encoding Environment
+
+The top-level of an Ion document can contain __directives__ that are not part of
+the application-facing data model.
+Instead, directives affect the encoding of the data that follows.
+
+Ion 1.0 has two kinds of directives: Ion version markers, which can only occur
+at top-level, and `$ion_symbol_table::` structs, which are only treated as
+directives at top-level.  We model these top-level-only features through a
+top-level-only domain:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TRValue]
+++++
+
+In other words, the top-level can contain any raw value, as well as IVMs.
+There's no corresponding non-raw domain **TValue** since directives need to be
+removed by the expansion function on the way to producing application data.
+
+Directives effectively change the state of the decoder as it turns bytes on the
+wire into application data.
+We model this state, known as the __environment__, as follows:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Environment]
+\newline
+include::{modeltex}[tag=Catalog]
+\newline
+include::{modeltex}[tag=LocalSymtab]
+++++
+
+The encoding environment is a tuple with three components.
+
+  * The __catalog__ is a collection of shared symbol tables provided to the
+expansion process.  The manner by which SSTs are collected into a catalog is
+outside the scope of the Ion specification.
+  * We track the current Ion version by storing an Ion Version Marker.  This is
+how we select a system symbol table, and gives us a way to alter the expansion
+process based on Ion version.
+  * We model the local symbol table as a sequence of symbol tokens defining all
+current SIDs, starting from zero.
+
+Following our practice for tuples, we'll define environment accessor functions.
+Following computer science tradition, we use the Greek letter rho (stem:[\rho])
+as the variable denoting environments.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Environment_cat]
+\newline
+include::{modeltex}[tag=Environment_ivm]
+\newline
+include::{modeltex}[tag=Environment_lst]
+++++
+
+Ion documents always start in 1.0 mode.  Here's how we construct an appropriate
+environment, parameterized by the user-supplied catalog.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=initial_env]
+++++
+
+
+==== Symbol Token Expansion
+
+We've now set enough context that we can implement the core of the expansion
+process: replacing SIDs with text.  We introduce stem:[{\cal E}] as the base
+name of our various expansion functions, adding the input type as a subscript.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RSymTok]
+++++
+
+Expansion of a raw symbol token requires the current environment.
+If the symbol token already contains Unicode text, we simply wrap it with a
+**SymTok**. Otherwise, the token is an integer SID, so we extract it via
+stem:[\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf I}}}] and then look it up in the
+environment's LST.  That requires a range check, returning `$0` if the SID
+exceeds the size of the local symbol table.
+
+CAUTION: This algorithm is currently defective: Ion specifies that an
+out-of-bounds SID must evoke an error and stop parsing. Proper modeling of such
+failures is WIP.
+
+To handle annotations, we'll need a recursive function expanding a sequence of
+symbol tokens:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RSymTok*]
+++++
+
+
 // TODO Expansion and continuations
 // TODO SSTs and Catalogs
-
+//  * Catalog cannot be affected by expansion
 // TODO Document known issues
 
 
