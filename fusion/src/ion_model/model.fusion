@@ -235,7 +235,7 @@ Spec Problems
 
     (fn expand_RSymToks ((r Environment) (s 'RSymTok*') -> 'SymTok*')
       (if (seq_is_empty s)
-        EMPTY_SYMBOLICS
+        EMPTY_SYMTOKS
         (seq_prepend (expand_RSymTok  r (seq_head s))
                      (expand_RSymToks r (seq_tail s)))))
 
@@ -248,7 +248,7 @@ Spec Problems
 
     (fn symbol_padding ((len I) -> 'SymTok*')
       (if (=== 0 (eject len))
-        EMPTY_SYMBOLICS
+        EMPTY_SYMTOKS
         (seq_prepend (lift SYM0 SymTok)
           (symbol_padding (- (eject len) 1)))))
 
@@ -262,14 +262,14 @@ Spec Problems
     (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'SymTok*')
       (if (or (=== (eject name) "")
               (=== (eject name) "$ion"))
-        EMPTY_SYMBOLICS
+        EMPTY_SYMTOKS
         (let [(found (Catalog_lookup c name version))]
           (if (element_of found Nothing)
             // The Catalog has nothing with this name.
             (if (< (eject max) 0)
               // If max_id is invalid or absent, must have exact match.
               (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
-              (adjust_length EMPTY_SYMBOLICS max))  // Or, (symbol_padding max)
+              (adjust_length EMPTY_SYMTOKS max))  // Or, (symbol_padding max)
             // We found something in the catalog
             (let [(symtab (lower found SharedSymtab))]
               (if (=== (eject version) (eject (SST_version symtab)))
@@ -314,11 +314,11 @@ Spec Problems
 
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty vs)
-        EMPTY_SYMBOLICS
+        EMPTY_SYMTOKS
         (seq_append (let [(c (Value_content (seq_head vs)))]
                       (if (and (element_of c Struct) (not (element_of c DotNull)))
                         (compile_import_struct (lower c Struct) r)
-                        EMPTY_SYMBOLICS))
+                        EMPTY_SYMTOKS))
                     (compile_imports_elts (seq_tail vs) r))))
 
     (fn compile_imports_field ((v Value) (r Environment) -> 'SymTok*')
@@ -327,7 +327,7 @@ Spec Problems
         (let [(ls (let [(c (Value_content v))]
                     (if (and (element_of c List) (not (element_of c DotNull)))
                     (compile_imports_elts (List_elts (lower c List)) r)
-                    EMPTY_SYMBOLICS)))]
+                    EMPTY_SYMTOKS)))]
         (seq_append (system_symbols (Environment_ivm r)) ls))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
@@ -339,7 +339,7 @@ Spec Problems
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
-        EMPTY_SYMBOLICS
+        EMPTY_SYMTOKS
         (seq_prepend (let [(c (Value_content (seq_head vs)))]
                        (lift_to SymTok
                          (if (and (element_of c String) (not (element_of c DotNull)))
@@ -350,11 +350,11 @@ Spec Problems
     (fn declared_symbols ((s Struct) -> 'SymTok*')
       (let [(vals (Struct_get1 s "symbols"))]
         (if (seq_is_empty vals)
-          EMPTY_SYMBOLICS
+          EMPTY_SYMTOKS
           (let [(c (Value_content (seq_head vals)))]
             (if (element_of c List)
               (compile_symbols_elts (List_elts (lower c List)))
-              EMPTY_SYMBOLICS)))))
+              EMPTY_SYMTOKS)))))
 
 
     // LST and Environment construction
@@ -517,6 +517,6 @@ Spec Problems
   (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
   (define EMPTY_UNICODE    (inject_into Unicode ""))
-  (define EMPTY_SYMBOLICS  (seq 'SymTok*'))
+  (define EMPTY_SYMTOKS    (seq 'SymTok*'))
   (define EMPTY_STRUCT     (lift (seq 'Field*') Struct))
 )
