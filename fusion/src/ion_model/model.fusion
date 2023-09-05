@@ -226,19 +226,6 @@ Spec Problems
     (fn Environment_lst ((r Environment) -> LocalSymtab) (ith r 2))
 
 
-    // Returns SymTok so it can represent SYM0 when the sid
-    // doesn't map to text.
-    (fn expand_RSymTok ((r Environment) (s RSymTok) -> SymTok)
-      (if (element_of s Unicode)
-        (lift (lower s Unicode) SymTok)
-        (LST_lookup (Environment_lst r) (lower s I))))
-
-    (fn expand_RSymToks ((r Environment) (s 'RSymTok*') -> 'SymTok*')
-      (if (seq_is_empty s)
-        EMPTY_SYMTOKS
-        (seq_prepend (expand_RSymTok  r (seq_head s))
-                     (expand_RSymToks r (seq_tail s)))))
-
 
     // $ion_symbol_table "compilation"
 
@@ -392,75 +379,65 @@ Spec Problems
     //=======================
     // Denotations
 
-    (dom Continuation = (-> 'Value*' 'Value*')
-      "Continuation where the environment cannot be changed.")
-
-    (fn E ((rv RValue) (r Environment) (k Continuation) -> 'Value*')
+    (fn E ((rv RValue) (r Environment) -> 'Value*')
       // General value evaluation
-      (E_RContent (RValue_content rv) r
-        (mk_fn CContinuation (c1)
-          (k (seq 'Value*' (tuple Value (expand_RSymToks r (RValue_annots rv)) c1))))))
+      (seq 'Value*' (tuple Value ('E_RSymTok*' (RValue_annots rv) r)
+                                 (E_RContent (RValue_content rv) r))))
 
-    (dom CContinuation = (-> Content 'Value*')
-      "Continuation when expanding a value's content.")
+    (fn 'E*' ((rvs 'RValue*') (r Environment) -> 'Value*')
+      (if (seq_is_empty rvs)
+        (seq 'Value*')
+        (seq_append (E (seq_head rvs) r) ('E*' (seq_tail rvs) r))))
 
-    (fn E_RContent ((rv RContent) (r Environment) (k CContinuation) -> 'Value*')
+
+    (fn E_RContent ((rv RContent) (r Environment) -> Content)
       // General value evaluation
       (if (element_of rv SafeVal)
-        (k (lift (lower rv SafeVal) Content))
+        (lift (lower rv SafeVal) Content)
         (if (element_of rv RSymbol)
-          (E_RSymbol (lower rv RSymbol) r k)
+          (lift (E_RSymbol (lower rv RSymbol) r) Content)
           (if (element_of rv RList)
-            (E_RList (lower rv RList) r k)
+            (lift (E_RList (lower rv RList) r) Content)
             (if (element_of rv RStruct)
-              (E_RStruct (lower rv RStruct) r k)
+              (lift (E_RStruct (lower rv RStruct) r) Content)
               (raise "not implemented"))))))
 
-    (fn E_RSymbol ((v RSymbol) (r Environment) (k CContinuation) -> 'Value*')
-      (k (lift (if (element_of v DotNull)
-                 DOTNULL
-                 (expand_RSymTok r (lower v RSymTok))) Symbol Content)))
 
-    (fn E_RList ((v RList) (r Environment) (k CContinuation) -> 'Value*')
+    (fn E_RSymTok ((s RSymTok) (r Environment) -> SymTok)
+      (if (element_of s Unicode)
+        (lift (lower s Unicode) SymTok)
+        (LST_lookup (Environment_lst r) (lower s I))))
+
+    (fn 'E_RSymTok*' ((ss 'RSymTok*') (r Environment) -> 'SymTok*')
+      (if (seq_is_empty ss)
+        EMPTY_SYMTOKS
+        (seq_prepend (E_RSymTok  (seq_head ss) r)
+                     ('E_RSymTok*' (seq_tail ss) r))))
+
+    (fn E_RSymbol ((v RSymbol) (r Environment) -> Symbol)
       (if (element_of v DotNull)
-        (k (lift DOTNULL List Content))
-        ('E*' (lower v 'RValue*') r
-          (mk_fn Continuation (vs1)
-            (k (lift vs1 List Content))))))
+        (lift DOTNULL Symbol)
+        (lift (E_RSymTok (lower v RSymTok) r) Symbol)))
 
 
-    (dom FContinuation = (-> 'Field*' 'Value*')
-      "Continuation when expanding struct fields.")
+    (fn E_RList ((v RList) (r Environment) -> List)
+      (if (element_of v DotNull)
+        (lift DOTNULL List)
+        (lift ('E*' (lower v 'RValue*') r) List)))
 
-    (fn 'E_RField*' ((rfs 'RField*') (r Environment) (k FContinuation) -> 'Value*')
+
+    (fn 'E_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
       (if (seq_is_empty rfs)
-        (k (seq 'Field*'))
-        (E (RField_value (seq_head rfs)) r
-          (mk_fn Continuation (vs1)                  // Value(s) from head field
-            // TODO Verify that vs1 is singleton?
-            ('E_RField*' (seq_tail rfs) r
-              (mk_fn FContinuation (fs2)             // Field* from tail fields
-                (k (seq_prepend (tuple Field
-                                  (expand_RSymTok r (RField_name (seq_head rfs)))
-                                  (seq_head vs1))
-                     fs2))))))))
+        (seq 'Field*')
+        (seq_prepend (tuple Field (E_RSymTok (RField_name (seq_head rfs)) r)
+                                  // TODO Verify that field values expands to singleton?
+                                  (seq_head (E (RField_value (seq_head rfs)) r)))
+            ('E_RField*' (seq_tail rfs) r))))
 
-    (fn E_RStruct ((v RStruct) (r Environment) (k CContinuation) -> 'Value*')
+    (fn E_RStruct ((v RStruct) (r Environment)-> Struct)
       (if (element_of v DotNull)
-        (k (lift DOTNULL Struct Content))
-        ('E_RField*' (lower v 'RField*') r
-          (mk_fn FContinuation (fs1)
-            (k (lift fs1 Struct Content))))))
-
-
-    (fn 'E*' ((vrs 'RValue*') (r Environment) (k Continuation) -> 'Value*')
-      (if (seq_is_empty vrs)
-        (k (seq 'Value*'))
-        (E (seq_head vrs) r
-          (mk_fn Continuation (vs1)
-            ('E*' (seq_tail vrs) r
-              (mk_fn Continuation (vs2)
-                (k (seq_append vs1 vs2))))))))
+        (lift DOTNULL Struct)
+        (lift ('E_RField*' (lower v 'RField*') r) Struct)))
 
 
     // Top-level expansion
@@ -471,8 +448,7 @@ Spec Problems
     (fn TE ((rv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of rv IVM)
         (k (env_for_ivm r (lower rv IVM)) (seq 'Value*'))
-        (E (lower rv RValue) r
-          (mk_fn Continuation (vs1)
+        (let [(vs1 (E (lower rv RValue) r))]
             (if (seq_is_empty vs1)
               (k r vs1)
               (if (eject (is_$ion_symbol_table (seq_head vs1)))
@@ -480,7 +456,7 @@ Spec Problems
                      (lower (Value_content (seq_head vs1)) Struct))
                    (seq_tail vs1))                             // TODO what if more than one value?
                 // Expand normally
-                (k r vs1)))))))
+                (k r vs1))))))
 
     (fn 'TE*' ((vrs 'TRValue*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty vrs)
