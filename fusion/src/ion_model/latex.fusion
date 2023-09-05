@@ -55,8 +55,16 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method Value_annots    (|v e| (pp_ith (append v (quote (annots ))) e)))
       (form_method Value_content   (|v e| (pp_ith (append v (quote (content))) e)))
 
-      (sym_image "{\\cal E}"                     E)
-      (sym_image "{\\cal E}^{\\ast}"             'E*')
+      (sym_image "{\\cal E}"                                      'E')
+      (sym_image "{\\cal E}^{\\ast}"                              'E*')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RContent}}"        'E_RContent')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RSymTok}}"         'E_RSymTok')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RSymTok}}^{\\ast}" 'E_RSymTok*')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RSymbol}}"         'E_RSymbol')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RList}}"           'E_RList')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RField}}^{\\ast}"  'E_RField*')
+      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RStruct}}"         'E_RStruct')
+
       (sym_image "\\overline{\\cal E}"           TE)
       (sym_image "\\overline{{\\cal E}^{\\ast}}" 'TE*')
 
@@ -70,7 +78,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\rho_{1}"                     r1)
       (sym_image "\\rho_{2}"                     r2)
       (sym_image "\\mbox{\\it rf\\/}^{\\ast}"    rfs)
-      (sym_image "\\mbox{\\it vr\\/}^{\\ast}"    rvs)
+      (sym_image "\\mbox{\\it rv\\/}^{\\ast}"    rvs)
+      (sym_image "\\mbox{\\it s\\/}^{\\ast}"     ss)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}"     vs vals)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{1}" vs1)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{2}" vs2)
