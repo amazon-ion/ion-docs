@@ -15,6 +15,7 @@
   <xsl:param name="literal.extensions">0</xsl:param>
 
 
+  <xsl:include href="equation.xsl"/>
   <xsl:include href="lang.xsl"/>
   <xsl:include href="verbatim.xsl"/>
 

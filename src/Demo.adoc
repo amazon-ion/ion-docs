@@ -54,3 +54,43 @@ A problematic char: ┌  and the heavy version ┏
 └─────┬─────┘
 unsigned int 14
 ----
+
+
+The following math should be displayed in a block:
+
+[latexmath]
+++++
+x+y_2=[3,4]
+++++
+
+So should the following, along with a title:
+
+.Figure {counter:figure-number}. Some math in a figure
+[latexmath]
+++++
+x+y_2=[3,4]
+++++
+
+
+Here we have a semantic denotation.
+
+[{denotation}]
+++++
+\mbox{\it Fields\_get1\/}(\mbox{\it fs\/}, \mbox{\it u\/}) = \newline
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it fs\/}=0\newline   % Test that comments don't break things
+\:\mbox{\bf{then}}\:⟨⟩\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:(\mbox{\it Symbolic\_text\_matches\/}\:(\mbox{\it Field\_name\/}\:\mbox{\it fs\/}↓0)\:\mbox{\it u\/})\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#(\mbox{\it Fields\_get1\/}\:\mbox{\it fs\/}†1\:\mbox{\it u\/})=0\newline
+\:\mbox{\bf{then}}\:⟨(\mbox{\it Field\_value\/}\:\mbox{\it fs\/}↓0)⟩\newline
+\:\mbox{\bf{else}}\:(\mbox{\it raise\/}\:"repeated field")\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\:(\mbox{\it Fields\_get1\/}\:\mbox{\it fs\/}†1\:\mbox{\it u\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+++++
