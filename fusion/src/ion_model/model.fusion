@@ -212,13 +212,6 @@ Spec Problems
 
     (dom LocalSymtab  = (+ 'SymTok*'))   // includes imported and local symbols
 
-    (fn LST_lookup ((lst LocalSymtab) (i I) -> SymTok)
-      (let [(sid (if (< (eject i) (seq_length (lower lst 'SymTok*')))
-                   (eject i)
-                   0))]
-        (ith (lower lst 'SymTok*') sid)))
-
-
     (dom Environment  = (* Catalog IVM LocalSymtab))
 
     (fn Environment_cat ((r Environment) -> Catalog)     (ith r 0))
@@ -406,7 +399,11 @@ Spec Problems
     (fn E_RSymTok ((s RSymTok) (r Environment) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
-        (LST_lookup (Environment_lst r) (lower s I))))
+        (let [(i  (eject (lower s I))),
+              (ts (lower (Environment_lst r) 'SymTok*'))]
+          (if (< i (seq_length ts))
+            (ith ts i)
+            (lift_to SymTok SYM0)))))
 
     (fn 'E_RSymTok*' ((ss 'RSymTok*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty ss)

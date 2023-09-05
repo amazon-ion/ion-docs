@@ -80,6 +80,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it rf\\/}^{\\ast}"    rfs)
       (sym_image "\\mbox{\\it rv\\/}^{\\ast}"    rvs)
       (sym_image "\\mbox{\\it s\\/}^{\\ast}"     ss)
+      (sym_image "\\mbox{\\it t\\/}^{\\ast}"     ts)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}"     vs vals)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{1}" vs1)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{2}" vs2)
