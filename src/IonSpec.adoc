@@ -39,6 +39,8 @@ include::directives.adoc[]
 
 include::modules.adoc[]
 
+include::signatures.adoc[]
+
 include::system-module.adoc[]
 
 include::template-expr.adoc[]
