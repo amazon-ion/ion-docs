@@ -841,7 +841,65 @@ include::{modeltex}[tag=adjust_length]
 ++++
 
 
-// TODO SSTs and Catalogs
+=== Shared Symbol Tables and Catalogs
+
+We are down to our final denotations: the behavior of catalogs and the shared
+symbol tables they contain.  We've already defined the relevant domains:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SharedSymtab]
+\newline
+include::{modeltex}[tag=Catalog]
+++++
+
+A shared symbol table consists of a name, a version, and a sequence of
+**SymTok**s, each of which is either *Unicode* text or *Sym0* (that is, `$0`).
+Accessor functions help clarify:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SST_name]
+\newline
+include::{modeltex}[tag=SST_version]
+\newline
+include::{modeltex}[tag=SST_symbols]
+++++
+
+Ion defines a standard serialization of SSTs, which we can easily parse:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=is_$ion_shared_symbol_table]
+\newline\newline
+include::{modeltex}[tag=SST_for_$ion_shared_symbol_table]
+++++
+
+CAUTION: The above needs error handling similar to local symbol tables.
+
+A catalog is just a sequence of shared symtabs.
+What's tricky is implementing the "`best match`" semantics required by the Ion
+specification: if there's no exact match to the requested version, we must
+return the largest version available.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Catalog_lookup]
+++++
+
+_Catalog_lookup_ recursively walks the catalog to find the best match.
+The signature of _seek_ is a bit subtle.
+The first argument stem:[s^{\ast}] is the set of symtabs still-to-be-scanned,
+followed by the requested name _n_ and version _v_.
+The fourth argument stem:[b^{\ast}] is an at-most-one sequence holding the best
+match (largest version) found so far with the requested name.
+The result is an at-most-one sequence holding the best match.
+
+If the current _sst_ has the requested name and version, we skip recursion and
+return it directly. Otherwise, we check whether its version is larger than the
+_best_ so far, in which case we replace _best_ for the recursive call.
+
+
 //  * Catalog cannot be affected by expansion
 // TODO Document known issues
 
