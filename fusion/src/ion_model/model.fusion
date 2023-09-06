@@ -295,37 +295,32 @@ Spec Problems
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
-        (seq_append (let [(c (Value_content (seq_head vs)))]
-                      (if (and (element_of c Struct) (not (element_of c DotNull)))
-                        (compile_import_struct (lower c Struct) r)
-                        EMPTY_SYMTOKS))
-                    (compile_imports_elts (seq_tail vs) r))))
-
-    (fn compile_imports_field ((v Value) (r Environment) -> 'SymTok*')
-      (if (eject (Value_is_symbol_matching v "$ion_symbol_table"))
-        (lower (Environment_lst r) 'SymTok*')
-        (let [(ls (let [(c (Value_content v))]
-                    (if (and (element_of c List) (not (element_of c DotNull)))
-                    (compile_imports_elts (List_elts (lower c List)) r)
-                    EMPTY_SYMTOKS)))]
-        (seq_append (system_symbols (Environment_ivm r)) ls))))
+        (let [(c (Value_content (seq_head vs)))]
+          (let [(ts (if (and (element_of c Struct) (not (element_of c DotNull)))
+                      (compile_import_struct (lower c Struct) r)
+                      EMPTY_SYMTOKS))]
+            (seq_append ts (compile_imports_elts (seq_tail vs) r))))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
       (let [(vals (Struct_get1 s "imports"))]
         (if (seq_is_empty vals)
           (system_symbols (Environment_ivm r))
-          (compile_imports_field (seq_head vals) r))))
-
+          (if (eject (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table"))
+            (lower (Environment_lst r) 'SymTok*')
+            (let [(c (Value_content (seq_head vals)))]
+              (if (and (element_of c List) (not (element_of c DotNull)))
+                (seq_append (system_symbols (Environment_ivm r))
+                            (compile_imports_elts (List_elts (lower c List)) r))
+                (system_symbols (Environment_ivm r))))))))
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
-        (seq_prepend (let [(c (Value_content (seq_head vs)))]
-                       (lift_to SymTok
-                         (if (and (element_of c String) (not (element_of c DotNull)))
-                           (lower c SafeVal String Unicode)
-                           SYM0)))
-                     (compile_symbols_elts (seq_tail vs)))))
+        (let [(c (Value_content (seq_head vs)))]
+          (let [(t (if (and (element_of c String) (not (element_of c DotNull)))
+                     (lift_to SymTok (lower c SafeVal String Unicode))
+                     (lift_to SymTok SYM0)))]
+            (seq_prepend t (compile_symbols_elts (seq_tail vs)))))))
 
     (fn declared_symbols ((s Struct) -> 'SymTok*')
       (let [(vals (Struct_get1 s "symbols"))]
@@ -339,34 +334,28 @@ Spec Problems
 
     // LST and Environment construction
 
-    (fn lst_for_ivm ((ivm IVM) -> LocalSymtab)
+    (fn LST_for_ivm ((ivm IVM) -> LocalSymtab)
       (lift (system_symbols ivm) LocalSymtab))
 
-    (fn lst_for_$ion_symbol_table ((r Environment) (s Struct) -> LocalSymtab)
+    (fn LST_for_$ion_symbol_table ((r Environment) (s Struct) -> LocalSymtab)
       (if (element_of s DotNull)
-        (lst_for_$ion_symbol_table r EMPTY_STRUCT)
+        (LST_for_$ion_symbol_table r EMPTY_STRUCT)
         (lift_to LocalSymtab
           (seq_append (imported_symbols s r)
                       (declared_symbols s)))))
 
 
-    (fn initial_env ((c Catalog)-> Environment)
-      (tuple Environment
-        c
-        IVM_1_0
-        (lst_for_ivm IVM_1_0)))
-
-    (fn env_for_ivm ((r Environment) (ivm IVM) -> Environment)
+    (fn Environment_after_ivm ((ivm IVM) (r Environment) -> Environment)
       (tuple Environment
         (Environment_cat r)
         ivm
-        (lst_for_ivm ivm)))
+        (LST_for_ivm ivm)))
 
-    (fn env_for_$ion_symbol_table ((r Environment) (s Struct) -> Environment)
+    (fn Environment_after_$ion_symbol_table ((s Struct) (r Environment) -> Environment)
       (tuple Environment
         (Environment_cat r)
         (Environment_ivm r)
-        (lst_for_$ion_symbol_table r s)))
+        (LST_for_$ion_symbol_table r s)))
 
 
     //=======================
@@ -443,11 +432,11 @@ Spec Problems
 
     (fn TE ((trv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of trv IVM)
-        (k (env_for_ivm r (lower trv IVM)) (seq 'Value*'))
+        (k (Environment_after_ivm (lower trv IVM) r) (seq 'Value*'))
         (let [(v (E (lower trv RValue) r))]
           (if (eject (is_$ion_symbol_table v))
-            (k (env_for_$ion_symbol_table r
-                 (lower (Value_content v) Struct))
+            (k (Environment_after_$ion_symbol_table
+                 (lower (Value_content v) Struct) r)
                (seq 'Value*'))
             // Expand normally
             (k r (seq 'Value*' v))))))
@@ -473,12 +462,10 @@ Spec Problems
       ('TRValue*' x Environment x Continuation -> 'Value*'))
   */
 
-    (fn k0 TContinuation (r vs) vs)                // The bootstrap continuation
-
     (fn expand ((trvs 'TRValue*') (c Catalog) -> 'Value*')
-      ('TE*' (seq_prepend (lift IVM_1_0 TRValue) trvs)
-             (initial_env c)
-             k0))
+      (let [(r0 (tuple Environment c IVM_1_0 (LST_for_ivm IVM_1_0))),
+            (k0 (mk_fn TContinuation (r vs) vs))]
+        ('TE*' trvs r0 k0)))
   )
 
   (define NOTHING          (singleton Nothing))
