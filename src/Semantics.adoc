@@ -358,6 +358,26 @@ include::{modeltex}[tag=Value_has_first_annot]
 include::{modeltex}[tag=Value_is_symbol_matching]
 ++++
 
+This concludes our semantics of the raw and application-level data models.
+These are the inputs and outputs, respectively, of the expansion process, which
+we will now explore.
+
+
+== Expansion
+
+Circling back a bit, remember that our goal is to define how Ion expands the raw
+document data produced by its parser to eliminate encoding features such as
+symbol IDs and produce the document's application-facing data.
+We'll encapsulate that process in this function:
+
+// TODO Generate these function signatures.
+[{denotation}]
+++++
+\mbox{\it expand} : \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
+++++
+
+To begin, let's consider the top-level structure of an Ion document.
+
 
 === The Encoding Environment
 
@@ -512,6 +532,7 @@ At this point we have fully denoted the expansion of non-top-level raw values,
 and can turn to the top level.
 
 
+[id=eg_TE]
 === Top-Level Expansion
 
 Expansion of top-level sequences requires us to use a new technique in our model,
@@ -563,7 +584,7 @@ The continuation is responsible for assembling those results with anything
 that happens afterward, and the **Value**s returned from the continuation denote
 the expansion of _the entire stream_.
 
-This my become more clear by considering the definition of top-level streams:
+This may become more clear by considering the definition of top-level streams:
 
 [{denotation}]
 ++++
@@ -611,6 +632,85 @@ symbol IDs and the handling of encoding directives in Ion 1.0 documents.
 However, we've glossed over the mechanics of those directives by using some
 helper functions we've yet to define.
 The next sections will drill down into those details.
+
+
+== Symbol Table Management
+
+The handling of symbol tables brings us to some of the more lengthy functions
+in this denotational model. The specified algorithms include a fair
+amount of type-checking and default values to ensure that even nonsensical
+directives have a well-defined and stable interpretation across implementations.
+Put another way, the spec must leave nothing unspecified, so that whatever
+gobbledygook appears inside an `$ion_symbol_table` directive, all
+implementations will behave the same way.
+
+
+=== System Symbol Tables
+
+At the start of any Ion document, and following any IVM, the current symbol
+table is set to the system symbol table of the relevant Ion version.
+This is straightforward to define.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=system_symbols]
+\newline\newline
+include::{modeltex}[tag=LST_for_ivm]
+\newline\newline
+include::{modeltex}[tag=Environment_after_ivm]
+++++
+
+The __system_symbols__ function produces the content of the system symbol table
+for a given Ion version.  At present, the argument is ignored, but the future
+Ion 1.1 symtab will go here.  __LST_for_ivm__ simply lifts those tokens into
+the **LocalSymtab** domain.
+
+_Environment_after_ivm__ defines the environment that becomes current after the
+IVM directive is encountered.  It retains the current environment's catalog,
+but replaces its IVM and resets the symbol table to that of the Ion version.
+
+
+=== Installing Local Symbol Tables
+
+To start handling local symbol table directives, we must first recognize them by
+checking the annotation and content type:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=is_$ion_symbol_table]
+++++
+
+We can then turn the annotated struct into a LST:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=LST_for_$ion_symbol_table]
+++++
+
+Here we encounter the first of many null checks. In particular, top-level
+`$ion_symbol_table::null.symbol` is equivalent to `$ion_symbol_table::{}`.
+When the directive is not null, we produce a LST by concatenating the imported
+symbols and the locally-declared symbols.
+The former sequence includes any symbols implicitly imported from the current
+Ion version.
+
+The resulting environment after such a directive is as follows:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Environment_after_$ion_symbol_table]
+++++
+
+Here we see that the directive has the effect of retaining the current catalog
+and Ion version, replacing only the local symtab.
+More importantly, we see that an LST is fully expanded using the environment in
+effect when it begins.
+The locally-declared symbols have no effect on the encoding of any part of the
+enclosing struct.
+Their scope only starts with the next top-level value.
+
+TIP: At this point it may be worth reviewing the definition of
+stem:[\overline{\cal E}] in xref:eg_TE[xrefstyle=short].
 
 
 // TODO SSTs and Catalogs
