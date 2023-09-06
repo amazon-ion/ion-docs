@@ -3,16 +3,16 @@
 #  version_string = '0'
 #end
 
-version_string = "0.1"
-date_string = Time.now.strftime("%Y-%m-%d")
-params = "--attribute revnumber='#{version_string}' --attribute revdate='#{date_string}'"
+Version_string = "0.1"
+Date_string = Time.now.strftime("%Y-%m-%d")
+
+books = %w{IonSpec}
 
 image_files = Rake::FileList.new("src/images/*.png", "src/images/*.svg") do |fl|
   fl.exclude("~*")
   fl.exclude(/^scratch\//)
 end
 
-doc_name = "Ion-Specification"
 
 namespace :spec do
   directory 'build/images'
@@ -28,36 +28,87 @@ namespace :spec do
         `pngquant -f #{target}`
       end
     end
-    desc "copies all data files"
     task :images => target
   end
 
   task :prereqs => [:images]
-  
-  desc 'build basic spec formats'
-  task :html => :prereqs do
-    begin
-      puts "Converting to HTML..."
-      `bundle exec asciidoctor -b html5 #{params} src/main.adoc -o build/#{doc_name}.html`
+
+
+  #=============================================================================
+  # AsciiDoctor Processing
+
+  def safe_system(app, *args)
+    ok = system(app,  *args)
+    raise "Could not find #{app}" if ok.nil?
+    raise "#{app} failed with status #{$?.exitstatus}" unless $?.exitstatus == 0
+  end
+
+  def asciidoctor(*args)
+    params = [
+      "--attribute", "revnumber=#{Version_string}",
+      "--attribute", "revdate=#{Date_string}",
+      "--trace",
+      "--verbose",
+    ]
+    safe_system 'bundle', 'exec', 'asciidoctor', *params, *args
+  end
+
+
+  def adoc_to_html(adoc, html)
+    puts "Converting #{adoc} to HTML..."
+    asciidoctor('--backend', 'html5',
+                '--out-file', html,
+                adoc)
+  end
+
+  def adoc_to_xml(adoc, xml)
+    puts "Converting #{adoc} to DocBook XML..."
+    asciidoctor('--backend', 'docbook',
+                '--out-file', xml,
+                adoc)
+  end
+
+  def adoc_to_pdf(adoc, pdf)
+    puts "Converting #{adoc} to PDF..."
+
+    theming = %w(-a pdf-themesdir=src/themes -a pdf-theme=basic -a pdf-fontsdir=fonts)
+    stem = %w(-r asciidoctor-mathematical -a mathematical-format=svg)
+    pdf_params = %w(-a compress)
+
+    asciidoctor(*theming, *stem, *pdf_params,
+                '--require', 'asciidoctor-pdf',
+                '--backend', 'pdf',
+                '--out-file', pdf,
+                adoc)
+  end
+
+
+  #=============================================================================
+  # Generate tasks for each book
+
+  books.each do |book|
+    adoc = "src/#{book}.adoc"
+    xml  = "build/#{book}.xml"
+    pdf  = "build/#{book}.pdf"
+    html = "build/#{book}.html"
+
+    file xml => [:prereqs, adoc] do
+      adoc_to_xml adoc, xml
+    end
+
+    file html => [:prereqs, adoc] do
+      adoc_to_html adoc, html
+    end
+
+    file pdf => [:prereqs, adoc] do
+      adoc_to_pdf adoc, pdf
     end
   end
 
-  task :pdf => :prereqs do
-    begin
-      theming = "-a pdf-themesdir=src/themes -a pdf-theme=basic -a pdf-fontsdir=fonts"
-      stem = "-r asciidoctor-mathematical -a mathematical-format=svg"
-      pdf_params = "-a compress"
-      puts "Converting to PDF..."
-      `bundle exec asciidoctor-pdf -v #{params} #{theming} #{stem} #{pdf_params} src/main.adoc -o build/#{doc_name}.pdf --trace`
-    end
-  end
 
-  task :docbook => :prereqs do
-    begin
-      puts "Converting to Docbook..."
-      `bundle exec asciidoctor -b docbook #{params} src/main.adoc -o build/#{doc_name}.xml`
-    end
-  end
+  task :html    => "build/IonSpec.html"
+  task :pdf     => "build/IonSpec.pdf"
+  task :docbook => "build/IonSpec.xml"
 
   task :build => [:html, :pdf, :docbook]
 
@@ -75,7 +126,14 @@ end
 task :default => "spec:build"
 
 task :clean => "spec:clean"
+
+desc "Build the book as HTML"
 task :html  => "spec:html"
+
+desc "Build the book as PDF"
 task :pdf   => "spec:pdf"
+
+desc "Build the book in all formats"
 task :build => "spec:build"
+
 task :watch => "spec:watch"
