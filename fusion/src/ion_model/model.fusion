@@ -372,15 +372,14 @@ Spec Problems
     //=======================
     // Denotations
 
-    (fn E ((rv RValue) (r Environment) -> 'Value*')
-      // General value evaluation
-      (seq 'Value*' (tuple Value ('E_RSymTok*' (RValue_annots rv) r)
-                                 (E_RContent (RValue_content rv) r))))
+    (fn E ((rv RValue) (r Environment) -> Value)
+      (tuple Value ('E_RSymTok*' (RValue_annots rv) r)
+                   (E_RContent (RValue_content rv) r)))
 
     (fn 'E*' ((rvs 'RValue*') (r Environment) -> 'Value*')
       (if (seq_is_empty rvs)
         (seq 'Value*')
-        (seq_append (E (seq_head rvs) r) ('E*' (seq_tail rvs) r))))
+        (seq_prepend (E (seq_head rvs) r) ('E*' (seq_tail rvs) r))))
 
 
     (fn E_RContent ((rv RContent) (r Environment) -> Content)
@@ -427,8 +426,7 @@ Spec Problems
       (if (seq_is_empty rfs)
         (seq 'Field*')
         (seq_prepend (tuple Field (E_RSymTok (RField_name (seq_head rfs)) r)
-                                  // TODO Verify that field values expands to singleton?
-                                  (seq_head (E (RField_value (seq_head rfs)) r)))
+                                  (E (RField_value (seq_head rfs)) r))
             ('E_RField*' (seq_tail rfs) r))))
 
     (fn E_RStruct ((v RStruct) (r Environment)-> Struct)
@@ -445,15 +443,13 @@ Spec Problems
     (fn TE ((rv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of rv IVM)
         (k (env_for_ivm r (lower rv IVM)) (seq 'Value*'))
-        (let [(vs (E (lower rv RValue) r))]
-            (if (seq_is_empty vs)
-              (k r vs)
-              (if (eject (is_$ion_symbol_table (seq_head vs)))
-                (k (env_for_$ion_symbol_table r
-                     (lower (Value_content (seq_head vs)) Struct))
-                   (seq_tail vs))                             // TODO what if more than one value?
-                // Expand normally
-                (k r vs))))))
+        (let [(v (E (lower rv RValue) r))]
+          (if (eject (is_$ion_symbol_table v))
+            (k (env_for_$ion_symbol_table r
+                 (lower (Value_content v) Struct))
+               (seq 'Value*'))
+            // Expand normally
+            (k r (seq 'Value*' v))))))
 
     (fn 'TE*' ((rvs 'TRValue*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty rvs)
