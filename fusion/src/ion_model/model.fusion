@@ -425,9 +425,10 @@ Spec Problems
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
       (if (seq_is_empty rfs)
         (seq 'Field*')
-        (seq_prepend (tuple Field (E_RSymTok (RField_name (seq_head rfs)) r)
-                                  (E (RField_value (seq_head rfs)) r))
-            ('E_RField*' (seq_tail rfs) r))))
+        (let [(t (E_RSymTok (RField_name (seq_head rfs)) r)),
+              (v (E (RField_value (seq_head rfs)) r))]
+          (seq_prepend (tuple Field t v)
+            ('E_RField*' (seq_tail rfs) r)))))
 
     (fn E_RStruct ((v RStruct) (r Environment)-> Struct)
       (if (element_of v DotNull)
@@ -440,10 +441,10 @@ Spec Problems
     (dom TContinuation = (-> Environment 'Value*' 'Value*')
       "Continuation when expanding top-level values")
 
-    (fn TE ((rv TRValue) (r Environment) (k TContinuation) -> 'Value*')
-      (if (element_of rv IVM)
-        (k (env_for_ivm r (lower rv IVM)) (seq 'Value*'))
-        (let [(v (E (lower rv RValue) r))]
+    (fn TE ((trv TRValue) (r Environment) (k TContinuation) -> 'Value*')
+      (if (element_of trv IVM)
+        (k (env_for_ivm r (lower trv IVM)) (seq 'Value*'))
+        (let [(v (E (lower trv RValue) r))]
           (if (eject (is_$ion_symbol_table v))
             (k (env_for_$ion_symbol_table r
                  (lower (Value_content v) Struct))
@@ -451,12 +452,12 @@ Spec Problems
             // Expand normally
             (k r (seq 'Value*' v))))))
 
-    (fn 'TE*' ((rvs 'TRValue*') (r Environment) (k TContinuation) -> 'Value*')
-      (if (seq_is_empty rvs)
+    (fn 'TE*' ((trvs 'TRValue*') (r Environment) (k TContinuation) -> 'Value*')
+      (if (seq_is_empty trvs)
         (k r (seq 'Value*'))
-        (TE (seq_head rvs) r
+        (TE (seq_head trvs) r
           (mk_fn TContinuation (r1 vs1)
-            ('TE*' (seq_tail rvs) r1
+            ('TE*' (seq_tail trvs) r1
               (mk_fn TContinuation (r2 vs2)
                 (k r2 (seq_append vs1 vs2))))))))
 
@@ -474,8 +475,8 @@ Spec Problems
 
     (fn k0 TContinuation (r vs) vs)                // The bootstrap continuation
 
-    (fn expand ((rvs 'TRValue*') (c Catalog) -> 'Value*')
-      ('TE*' (seq_prepend (lift IVM_1_0 TRValue) rvs)
+    (fn expand ((trvs 'TRValue*') (c Catalog) -> 'Value*')
+      ('TE*' (seq_prepend (lift IVM_1_0 TRValue) trvs)
              (initial_env c)
              k0))
   )
