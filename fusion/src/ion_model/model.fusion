@@ -21,6 +21,7 @@ Cleanup:
 * Remove use of non-functional features in modeled functions
   * if
   * raise
+* `lambda`s should instead use `mk_fn` with ad-hoc signature.
 
 
 Spec Problems
@@ -49,7 +50,6 @@ Spec Problems
     (dom IVM    = (+ Ion1_0) "Ion version markers")
 
     (dom Sym0    = "The undefined symbol")
-
 
 
     //=============================
@@ -174,6 +174,10 @@ Spec Problems
     (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
     (fn SST_symbols ((s SharedSymtab) -> 'SymTok*') (ith s 2))
 
+    (fn is_$ion_shared_symbol_table ((v Value) -> B)
+      (and (eject (Value_has_first_annot v "$ion_shared_symbol_table"))
+           (element_of (Value_content v) Struct)))
+
     (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
       (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
                  SafeVal String Unicode)),
@@ -184,24 +188,23 @@ Spec Problems
 
     (dom Catalog = (+ 'SharedSymtab*'))  // TODO * would be better
 
-    (fn Catalog_scan ((c 'SharedSymtab*') (n Unicode) (v I) (best 'SharedSymtab*') -> 'SharedSymtab*')
-      (if (seq_is_empty c)
-        best
-        (let [(sst (seq_head c))]
-          (if (=== (eject n) (eject (SST_name sst)))
-            (if (=== (eject v) (eject (SST_version sst)))
-              // Exact match
-              (seq 'SharedSymtab*' sst)
-              (if (or (seq_is_empty best)
-                      (< (eject (SST_version (ith best 0)))
-                         (eject (SST_version sst))))
-                // Found a new best match
-                (Catalog_scan (seq_tail c) n v (seq 'SharedSymtab*' sst))
-                (Catalog_scan (seq_tail c) n v best)))
-            (Catalog_scan (seq_tail c) n v best)))))
-
     (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab*')
-      (Catalog_scan (lower c 'SharedSymtab*') name version (seq 'SharedSymtab*')))
+      (letrec [(seek (lambda (ssts n v bs)
+                       (if (seq_is_empty ssts)
+                         bs
+                         (let [(sst (seq_head ssts))]
+                           (if (=== (eject n) (eject (SST_name sst)))
+                             (if (=== (eject v) (eject (SST_version sst)))
+                               // Exact match
+                               (seq 'SharedSymtab*' sst)
+                               (if (or (seq_is_empty bs)
+                                       (< (eject (SST_version (ith bs 0)))
+                                          (eject (SST_version sst))))
+                                 // Found a new best match
+                                 (seek (seq_tail ssts) n v (seq 'SharedSymtab*' sst))
+                                 (seek (seq_tail ssts) n v bs)))
+                             (seek (seq_tail ssts) n v bs))))))]
+        (seek (lower c 'SharedSymtab*') name version (seq 'SharedSymtab*'))))
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
