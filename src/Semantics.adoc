@@ -900,8 +900,68 @@ return it directly. Otherwise, we check whether its version is larger than the
 _best_ so far, in which case we replace _best_ for the recursive call.
 
 
-//  * Catalog cannot be affected by expansion
-// TODO Document known issues
+== Known Issues
+
+This denotational model is currently defective with respect to the published Ion
+specification in the following ways.
+
+
+=== Improper ordering of structs fields
+
+Structs are unordered, but this model currently denotes them as sequences.
+This means that the same field-values in different order will _not_ be
+equivalent per lambda calculus.  Denoting this properly is possible (by
+constructing the set of all permutations) but requires a fair amount of code.
+
+
+=== Improper equivalence of unknown shared symbols
+
+The model maps all unknown shared symbols to `$0` and therefore they are all
+equivalent to the model.  This is incorrect per
+https://amazon-ion.github.io/ion-docs/docs/symbols.html#data-model[the spec],
+which says:
+
+[quote]
+____
+For symbols defined from shared symbol table imports, [unknown] symbols are
+equivalent only if all of the following hold:
+
+* The name of the table that the symbols were imported from is the same string.
+* The position in the table that the symbols were imported from is the same
+spot.
+____
+
+https://amazon-ion.github.io/ion-docs/docs/symbols.html#symbol-zero[Further],
+
+[quote]
+____
+It is important to note that `$0` is only semantically equivalent to itself and
+to locally-declared SIDs with unknown text. It is not semantically equivalent to
+SIDs with unknown text from shared symbol tables, so replacing such SIDs with
+`$0` is a destructive operation to the semantics of the data.
+____
+
+To handle this, *SymTok* needs a subdomain to capture the SST and index.
+
+=== Error handling is too informal
+
+At present our model skirts around error handling by way of _raise_ but
+conventional handling uses a bottom-type stem:[\bot] to denote failures and
+strictness rules to forcibly propagate them.  We simply haven't implemented this
+in the framework that underlies this model.
+
+=== Out of bounds SIDs must raise an error
+
+This is primarily a result of the above lack of framework support and our desire
+to test the size of local symbol tables.
+
+=== Shared symbol table compilation is weak
+
+We don't type check the inputs, which "`crashes`" the math when given bad data.
+This doesn't really affect the important parts of the model.
+
+On a related note, catalog construction should reject duplicate keys, so we
+don't imply anything about selection criteria.
 
 
 == The (Practically) Complete Denotation
