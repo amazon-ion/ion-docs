@@ -17,45 +17,77 @@
 include::styles.adoc[]
 
 
-== Reading the Math
+== Introduction
 
-Our denotational model is expressed in terms of lambda calculus, and the
-functions below use pretty-printed forms of numerous lambda calculus patterns.
-This section introduces the primary domains and notations used by the model.
+This document describes the _denotational semantics_ of the Ion data language,
+mapping Ion syntax to typed _domains_ in lambda calculus and using mathematical
+functions to define the meaning of the computational elements that translate
+that syntax into application data.
 
-We use three fundamental domains, representing the primitive types.
+Our primary goal is to illuminate and clarify the process of _expansion_ by
+which certain Ion encoding artifacts are transformed to produce the user's data.
+In Ion 1.0 these artifacts include version markers, local symbol table
+directives, and symbol tokens.
+Ion 1.1 introduces much more sophisticated encoding features--new directives,
+modules, encoding expressions--and this document is intended to lay the
+groundwork for a formal presentation of those features.
 
-[{denotation}]
-++++
-include::{modeltex}[tag=B]
-\newline
-include::{modeltex}[tag=I]
-\newline
-include::{modeltex}[tag=Unicode]
-++++
+TIP: We assume a basic familiarity with lambda calculus, though not much more
+than the ability to recognize that stem:[\lambda xy.\mbox{\it body}]
+represents a function of two arguments.
 
-Domain stem:[\mbox{\bf B}] has two values, stem:[\mbox{\bf true}] and
-stem:[\mbox{\bf false}].
-We test boolean values with a function _if_(_c_, _d_, _e_) that we pretty-print
-as:
 
-[{denotation}]
-++++
-\mbox{{\bf if} {\it c}\:{\bf then}\:{\it d}\:{\bf else}\:{\it e} {\bf endif}}
-++++
+=== A Primer
 
-We write **D**{asterisk} to mean the domain of sequences of **D**.
-We pretty-print such values between angle brackets
-stem:[\langle...\rangle].  For example,
+Lambda calculus is a mathematical formalism for computing that uses only
+anonymous functions (i.e., abstractions or lambda), terms (i.e., variables),
+and application (i.e., invocation of functions).
+This minimal set of operations has been shown to be Turing complete and can
+encode mathematical concepts such as Booleans and natural numbers (and the
+operations on them).
+It is similarly straightforward to model data types such as _sequences_ and
+_tuples_ using lambda calculus.
+
+With these primitives we define types of values over lambda calculus as a
+_domain_.  For our purposes, a _domain_ can be thought of as a set of tagged
+values, where each value knows what type it is.  This allows the math to be
+strongly-typed, at the expense of some bookkeeping to convert values across
+domains.
+
+
+// == Reading the Math
+
+// Our denotational model is expressed in terms of lambda calculus, and the
+// functions below use pretty-printed forms of numerous lambda calculus patterns.
+// This section introduces the primary domains and notations used by the model.
+
+Our first fundamental domain stem:[\mbox{\bf B}] denotes Boolean values.
+It has two elements, the constants *true* and *false*.
+We test Boolean values with a function _if_(_b_, _d_, _e_), where
+stem:[b \in \mbox{\bf B}], which we pretty-print as
+stem:[
+\mbox{{\bf if} {\it b}\:{\bf then}\:{\it d}\:{\bf else}\:{\it e} {\bf endif}}
+].  We assume the presence of related Boolean operators _and_ (stem:[\wedge]),
+_or_ (stem:[\vee]) and _not_ (stem:[\lnot]).
+
+Our second fundamental domain, *I*, denotes integer values, which comes along
+with the obvious arithmetic operators.
+
+We write **D**{asterisk} to mean the domain of sequences of **D** and
+pretty-print such values between angle brackets stem:[\langle...\rangle].
+For example,
 stem:[\langle\mbox{\bf true}, \mbox{\bf false}\rangle \in \mbox{\bf B}^{\ast}].
+To make variable names somewhat self-describing, we use asterisks there too,
+as in stem:[d^\ast \in \mbox{\bf D}^\ast].
 We concatenate sequences with stem:[\S]; to push the element _d_ onto the front
 of sequence stem:[d^{\ast}] we can write stem:[\langle d \rangle\S d^{\ast}].
-To extract the stem:[i^{th}] element of sequence
-stem:[d^{\ast} = \langle e_1, e_2, ..., e_n\rangle] we write
+To extract an individual element of sequence
+stem:[d^{\ast} = \langle e_0, e_1, ..., e_n\rangle] we write
 stem:[d^{\ast}\!\downarrow_{i} = e_i].
 To discard the first _i_ elements of a sequence, we write
-stem:[d^{\ast}\!\dagger i = \langle e_{i+1}, ..., e_n\rangle].
-Finally, write stem:[\#d^{\ast}] to mean the number of items in stem:[d^{\ast}].
+stem:[d^{\ast}\!\dagger i = \langle e_i, ..., e_n\rangle].
+Finally, we write stem:[\#d^{\ast}] to mean the number of items in
+stem:[d^{\ast}].
 
 We write stem:[\mbox{\bf Sum} = \mbox{\bf D} + \mbox{\bf E}] to mean the
 disjoint sum of domains **D** and **E**: every element of **Sum** is an element
@@ -64,7 +96,7 @@ Elements of sum domains are effectively "`tagged`", so we know which component
 domain they come from, and we can project or "`lower`" a value
 stem:[v \in \mbox{\bf Sum}] back there via stem:[v\mid_{\mbox{\tiny\bf D}}],
 assuming stem:[v \in \mbox{\bf D}].
-Conversely, we can inject or "lift`" a component value into **Sum** using the
+Conversely, we can inject or "`lift`" a component value into **Sum** using the
 function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
 assuming stem:[v \in \mbox{\bf D} \vee v \in \mbox{\bf E}].
 
@@ -75,21 +107,27 @@ To extract elements from a tuple we can overload the stem:[\downarrow]
 operator, so that when stem:[p \in \mbox{\bf Prod}] we have
 stem:[p \downarrow_{1} \in \mbox{\bf D}] and
 stem:[p \downarrow_{2} \in \mbox{\bf E}].
+To improve readability, our model generally introduces additional overloads
+addressing tuple fields by name.
+
+Perhaps stretching credibility, we assume another primitive domain, *Unicode*,
+denoting Unicode strings.
+While we have not explicitly modeled it as such, this is just a sequence of
+Unicode code points, effectively **I**{asterisk}.
 
 
-== Understanding the Denotation
+=== A Roadmap
 
-At a high level, the goal of this model is to define how an Ion processor turns
+At a high level, the goal of our model is to define how an Ion processor turns
 "`raw values`" into "`application values`".  Raw values are fresh off the parser,
-without any interpretation of symbol tables or translation of SIDs into text.
-The IonJava library calls these "`system values`", and here we model them via
-the domain **RValue**, which we'll define later.
-We likewise model application values via the domain **Value**.
+without any interpretation of directives or translation of SIDs into text.
+Some Ion products and documents call these "`system values`", and here we model
+them via the domain **RValue**, which we'll define later.
+We likewise model fully-expanded application values via the domain **Value**.
 
-Ion gives special treatment to top-level values: IVMs and encoding directives
-do not exist below top level.
-We model an Ion document or datastream as a sequence of these top-level raw
-values:
+Syntactically, IVMs are keywords/opcodes reserved only at top-level.
+To similarly constrain their appearance in the model, we define them in a
+separate domain for top-level raw values:
 
 [{denotation}]
 ++++
@@ -105,6 +143,9 @@ IVMs.
 **Ion1_0** is a singleton domain containing only the opaque constant
 __ION_1_0__, and **IVM** is an extensible union of it with future IVMs.
 
+We model an Ion document or datastream as a sequence of these, namely
+**TRValue**{asterisk}.
+
 Our goal then is to implement the following function:
 
 // TODO Generate these function signatures.
@@ -113,17 +154,38 @@ Our goal then is to implement the following function:
 \mbox{\it expand} : \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
 ++++
 
-That is, given a sequence of raw top-level values and a catalog (a set
+That is, given a sequence of raw top-level values and a catalog (a collection
 of shared symbol tables), we produce a sequence of application values.
 
+Here's how we'll reach that goal:
 
-=== The Ion Data Model
+* xref:datamodel[xrefstyle=short] defines a number of domains that collectively
+specify the Ion data model in both its raw (*RValue*) and application (*Value*)
+forms.
+Along the way, we'll ease into denotational functions by implementing some
+useful operators over this data.
+
+* xref:expansion[xrefstyle=short] visits each corner of the data model,
+incrementally defining layers of functions that build up to _expand_.
+
+* xref:symtabs[xrefstyle=short] specifies the handling of encoding directives,
+then the far more complicated process of compiling local symbol tables.
+
+* xref:issues[xrefstyle=short] documents the known defects with the model in its
+current draft.
+
+
+[#datamodel]
+== The Ion Data Model
 
 Before we get into the mechanics of expansion, we need to define the data model
 that flows through that process.
 
 
-==== Safe Values
+=== Safe Values
+
+TIP: We know that "`safe`" is not the best discriminator for this set of values.
+Please suggest better alternatives!
 
 We'll start defining our data model with the easy cases: data types that cannot
 contain SIDS and therefore don't require expansion.
@@ -172,7 +234,7 @@ blob, and clob types.  If it did, they would be part of **SafeVal**,
 with little effect on the remainder of the model.
 
 
-==== Symbols
+=== Symbols
 
 Symbols form the core of this denotation, which would be trivial if we didn't
 need to expand SIDs into their text.
@@ -223,7 +285,7 @@ _Symbol_matches_ similarly checks whether the **Symbol** is a **SymTok** (as
 opposed to **DotNull**) before calling _SymTok_matches_.
 
 
-==== Lists
+=== Lists
 
 Now that we've defined all of Ion's scalar types, we need to address containers.
 Because these types can include symbols, we need both raw and non-raw domains.
@@ -252,7 +314,7 @@ NOTE: This denotation currently doesn't cover Ion S-expressions; they would work
 identically to lists.
 
 
-==== Structs
+=== Structs
 
 The domain model for structs is not much more complicated.
 
@@ -314,7 +376,7 @@ Note that this still returns a **Value**{asterisk} but the sequence always has
 zero or one elements.
 
 
-==== Annotated Values
+=== Annotated Values
 
 Having defined all concrete types in the Ion data model, we can model their
 union, thus representing all Ion data.  This is where we'll attach annotations
@@ -363,6 +425,7 @@ These are the inputs and outputs, respectively, of the expansion process, which
 we will now explore.
 
 
+[#expansion]
 == Expansion
 
 Circling back a bit, remember that our goal is to define how Ion expands the raw
@@ -385,6 +448,7 @@ The top-level of an Ion document can contain __directives__ that are not part of
 the application-facing data model.
 Instead, directives affect the encoding of the data that follows.
 
+// FIXME LSTs are not relevant to TRValue, but explain why.
 Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
 tables (LSTs).
 We model these top-level-only features through a top-level-only domain:
@@ -630,6 +694,7 @@ helper functions we've yet to define.
 The next sections will drill down into those details.
 
 
+[#symtabs]
 == Symbol Table Management
 
 The handling of symbol tables brings us to some of the more lengthy functions
@@ -894,6 +959,7 @@ return it directly. Otherwise, we check whether its version is larger than the
 _best_ so far, in which case we replace _best_ for the recursive call.
 
 
+[#issues]
 == Known Issues
 
 This denotational model is currently defective with respect to the published Ion
@@ -958,7 +1024,8 @@ On a related note, catalog construction should reject duplicate keys, so we
 don't imply anything about selection criteria.
 
 
-== The (Practically) Complete Denotation
+[appendix]
+== The Full Denotation
 
 [{denotation}]
 ++++
