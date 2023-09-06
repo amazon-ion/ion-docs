@@ -424,7 +424,7 @@ include::{modeltex}[tag=initial_env]
 ++++
 
 
-==== Symbol Token Expansion
+=== Symbol Token Expansion
 
 We've now set enough context that we can implement the core of the expansion
 process: replacing SIDs with text.  We introduce stem:[{\cal E}] as the base
@@ -453,6 +453,71 @@ symbol tokens:
 ++++
 include::{modeltex}[tag=E_RSymTok*]
 ++++
+
+
+=== Non-Top Value Expansion
+
+Now we can define how non-top raw values are expanded.
+Expansion of a single **RValue** requires separate expansion of its annotations
+and content, combining the results into a **Value**:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E]
+++++
+
+We expand a sequence of **RValue**s by simple recursion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E*]
+++++
+
+To expand **RContent** we must perform a type-switch.
+**SafeVal**s pass through easily by being re-wrapped as **Content**.
+Anything else can contain symbol tokens to be expanded, and in each case we
+downcast the content, call a type-specific function, then rewrap the result.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RContent]
+++++
+
+Expanding **RSymbol** just requires distinguishing `symbol.null`:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RSymbol]
+++++
+
+Expanding **RList** is similar, with recursion on its sequence of elements:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RList]
+++++
+
+To handle **RStruct** with the same pattern, we'll add a helper to expand its
+sequence of fields:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RStruct]
+++++
+
+Field-sequence expansion takes a bit more work.  When the sequence is not empty,
+we expand the field's name and value using the appropriately-typed variants of
+stem:[{\cal E}].  We turn those into a field and prepend it onto the result of
+(self-recursively) expanding the sequence's tail.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=E_RField*]
+++++
+
+At this point we have fully denoted the expansion of non-top-level raw values,
+and can turn to the top level.
+
 
 
 // TODO Expansion and continuations
