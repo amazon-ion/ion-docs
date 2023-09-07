@@ -1,0 +1,20 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+(define SYMTOK0     (lift SYM0 SymTok))
+(define SYMBOL0     (lift SYMTOK0 Symbol))
+(define SYMBOL_NULL (lift DOTNULL Symbol))
+
+(check_false (eject (SymTok_matches SYMTOK0     "")))
+(check_false (eject (Symbol_matches SYMBOL0     "")))
+(check_false (eject (Symbol_matches SYMBOL_NULL "")))
+
+
+"SUCCESS (symbols.test)"
