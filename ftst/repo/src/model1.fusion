@@ -8,9 +8,10 @@
 
 
   (define_model M1
+    (import B)
+
     (dom Single = "singleton")
 
-    (dom B = (^ is_bool)      "Booleans")
     (dom Z = (^ is_int)       "Integers")
     (dom D = (^ is_decimal)   "Decimals")
     (dom F = (^ is_float)     "Floats")

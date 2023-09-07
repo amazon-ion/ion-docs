@@ -36,6 +36,7 @@ Domains come in several types:
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
+    "/fusioncontrib/denotation/private/predefs"
     "/fusioncontrib/denotation/private/sequence"
   )
 
@@ -45,6 +46,7 @@ Domains come in several types:
     is_model
     dom
     fn
+    import
 
     // Core domain operators
     is_domain
@@ -87,6 +89,9 @@ Domains come in several types:
     define_fn
     mk_fn
     is_fn
+
+    // Pre-defined domains and functions
+    B
   )
 
 

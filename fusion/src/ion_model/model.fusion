@@ -41,8 +41,8 @@ Spec Problems
 
 
   (define_model Ion
+    (import B)
 
-    (dom B       = (^ is_bool)   "Booleans")
     (dom I       = (^ is_int)    "Integers")
     (dom Unicode = (^ is_string) "Sequences of Unicode code points")
 

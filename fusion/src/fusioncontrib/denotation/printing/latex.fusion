@@ -32,8 +32,6 @@ in math mode.
 
 TODO
 ====
-  * Render stylized LHS for functions.
-  * Render tuple-getters using ↓
   * Print sequence-domain names with non-bold superscript asterisk.
   * Insert some vertical space between function definitions.
     * Perhaps: 	\\smallskip, \\medskip, \\bigskip

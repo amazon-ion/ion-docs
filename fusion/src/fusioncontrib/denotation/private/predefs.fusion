@@ -1,0 +1,25 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module boolean "/fusion"
+
+  '''
+Predefined denotational model of Boolean values and related logical functions.
+  '''
+
+  (require
+    "/fusioncontrib/denotation/private/domain"
+  )
+
+  (provide
+//    AND
+    B
+//    FALSE
+//    IF
+//    NOT
+//    OR
+//    TRUE
+  )
+
+
+  (define_base_domain B "Booleans" is_bool)
+)

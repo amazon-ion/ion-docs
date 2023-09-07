@@ -84,7 +84,7 @@
 (define_model Tiny
   (dom Nada = "nothing")
   (dom Single = "single")
-  (dom B = (^ is_bool))
+  (import B)
   (dom I = (^ is_int) "integers")
   (dom U = (+ B I))
   (dom V = (+ U Single))
@@ -120,7 +120,7 @@ Domains
 =======
 Nada = <nothing>
 Single = <single>
-B = <null.string>
+B = <Booleans>
 I = <integers>
 U = B + I
 V = U + Single
@@ -155,7 +155,6 @@ mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
 // LaTeX printing
 
 (define_model Tricksy
-  (dom B = (^ is_bool))
   (dom I = (^ is_int))
   (dom '$V?' = (+ B I))
 

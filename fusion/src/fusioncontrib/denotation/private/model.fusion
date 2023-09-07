@@ -16,6 +16,7 @@
     define_model
     dom
     fn
+    import
     is_model
     model_domains
     model_fns
@@ -33,9 +34,16 @@
     '''
 Generates definitions from the body of a model.
 
-Returns:
-  * sexp of element define-forms in reverse order defined
-  * sexp of domain identifiers in reverse order defined
+This function returns two values:
+  * A sexp of element define-forms in reverse order defined;
+  * A sexp of bound identifiers in reverse order declared.
+
+Different clauses are processed by handlers that each return:
+  * A single syntax-able object for a definition or a `begin` of definitions;
+  * A sexp of bound identifiers in reverse order declared.
+
+We preserve the order of declaration so that the printer will output elements
+in the same order the author used.
     '''
     (for_fold [(define_forms  (sexp)),
                (element_names (sexp))]
@@ -45,13 +53,18 @@ Returns:
       (lets [(type (syntax_get d 0)),
              (name (syntax_get d 1)),
              (handler (cond
+                        ((free_identifier_equal (QS import) type) handle_import)
                         ((free_identifier_equal (QS dom) type) handle_dom)
                         ((free_identifier_equal (QS fn ) type) handle_fn)
                         (true (wrong_syntax type "Unexpected model type"))))]
-        (values
-          (pair (handler d name) define_forms)
-          (pair name element_names)))))
+        (let_values [((forms names) (handler d name))]
+          (assert (is_sexp names))
+          (values
+            (pair   forms define_forms)
+            (append names element_names))))))
 
+  (define (handle_import import_stx name)
+    (values (QS (begin)) (sexp name)))
 
   (define (handle_dom dom_stx name)
     // TODO Ensure `name` doesn't end with "*" to prevent clash with sequences.
@@ -60,39 +73,56 @@ Returns:
              (def  (syntax_get dom_stx 3)),
              (def_val (syntax_unwrap def)),
              (desc (if (< 4 (syntax_size dom_stx)) (syntax_get dom_stx 4) null.string))]
-        (sexp
-          (quote begin)
-          (if (is_string def_val)
-            (result (QQ (define_singleton_domain (UQ name) (UQ def))))
-            (if (is_pair def_val)
-                (let [(op   (syntax_unwrap (head def_val))),
-                      (args (tail def_val))]
-                  (cond
-                    ((=== (quote ^) op)
-                     (result
-                       (pair (quote define_base_domain) (pair name (pair desc args)))))
-                    ((=== (quote +) op)
-                     (result
-                       (pair (quote define_union_domain) (pair name (pair desc args)))))
-                    ((=== (quote *) op)
-                      (result
-                        (pair (quote define_product_domain) (pair name (pair desc args)))))
-                    ((=== (quote ->) op)
-                      (result
-                        (pair (quote define_func_domain) (pair name (pair desc args)))))
-                    (true (wrong_syntax def
-                            "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
-                (wrong_syntax def "Expected string or sexp for domain definition")))
-            (result (sexp (quote define_seq_domain)
-                      (datum_to_syntax (symbol_append (syntax_unwrap name) "*") name)
-                      (string_append "Sequence of " (syntax_unwrap name))
-                      name))))))
+        (values
+          (sexp
+            (quote begin)
+            (if (is_string def_val)
+              (result (QQ (define_singleton_domain (UQ name) (UQ def))))
+              (if (is_pair def_val)
+                  (let [(op   (syntax_unwrap (head def_val))),
+                        (args (tail def_val))]
+                    (cond
+                      ((=== (quote ^) op)
+                       (result
+                         (pair (quote define_base_domain) (pair name (pair desc args)))))
+                      ((=== (quote +) op)
+                       (result
+                         (pair (quote define_union_domain) (pair name (pair desc args)))))
+                      ((=== (quote *) op)
+                        (result
+                          (pair (quote define_product_domain) (pair name (pair desc args)))))
+                      ((=== (quote ->) op)
+                        (result
+                          (pair (quote define_func_domain) (pair name (pair desc args)))))
+                      (true (wrong_syntax def
+                              "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+                  (wrong_syntax def "Expected string or sexp for domain definition")))
+              (result (sexp (quote define_seq_domain)
+                        (datum_to_syntax (symbol_append (syntax_unwrap name) "*") name)
+                        (string_append "Sequence of " (syntax_unwrap name))
+                        name)))
+          (sexp name)))))
 
 
   (define (handle_fn fn_stx name)
     (lets [(result (|d| (datum_to_syntax d CTX fn_stx))),
            (tail (tail (syntax_unwrap fn_stx)))]
-      (result (pair (quote_syntax define_fn) tail))))
+      (values
+        (result (pair (quote_syntax define_fn) tail))
+        (sexp name))))
+
+
+  (define_syntax import
+    '''
+    (import id)
+
+Imports domains and domain values defined elsewhere.
+
+The primary effect of this is to include the imported elements in the model's
+indexes, as exposed through `model_domains` and `model_fns`.
+    '''
+    (lambda (stx)
+      (wrong_syntax stx "This form can only be used inside `define_model`")))
 
 
   (define_syntax dom
