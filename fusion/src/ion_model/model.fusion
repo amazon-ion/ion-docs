@@ -154,7 +154,7 @@ Spec Problems
     //=======================
     // Environment Management
 
-    (fn system_symbols ((i IVM) -> 'SymTok*')
+    (fn SymToks_for_IVM ((i IVM) -> 'SymTok*')
       (seq 'SymTok*'
         (lift_to SymTok SYM0)
         (lift_to SymTok (inject_into Unicode "$ion"))
@@ -174,11 +174,11 @@ Spec Problems
     (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
     (fn SST_symbols ((s SharedSymtab) -> 'SymTok*') (ith s 2))
 
-    (fn is_$ion_shared_symbol_table ((v Value) -> B)
+    (fn is_SST ((v Value) -> B)
       (and (eject (Value_has_first_annot v "$ion_shared_symbol_table"))
            (element_of (Value_content v) Struct)))
 
-    (fn SST_for_$ion_shared_symbol_table ((s Struct) -> SharedSymtab)
+    (fn compile_SST ((s Struct) -> SharedSymtab)
       (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
                  SafeVal String Unicode)),
             (v (lower (Value_content (seq_head (Struct_get1 s "version")))
@@ -211,19 +211,17 @@ Spec Problems
       (lift (seq_prepend s (lower c 'SharedSymtab*')) Catalog))
 
 
-    (dom LocalSymtab  = (+ 'SymTok*'))   // includes imported and local symbols
+    (dom Environment = (* Catalog IVM 'SymTok*'))
 
-    (dom Environment  = (* Catalog IVM LocalSymtab))
-
-    (fn Environment_cat ((r Environment) -> Catalog)     (ith r 0))
-    (fn Environment_ivm ((r Environment) -> IVM)         (ith r 1))
-    (fn Environment_lst ((r Environment) -> LocalSymtab) (ith r 2))
+    (fn Environment_catalog ((r Environment) -> Catalog)   (ith r 0))
+    (fn Environment_IVM     ((r Environment) -> IVM)       (ith r 1))
+    (fn Environment_symbols ((r Environment) -> 'SymTok*') (ith r 2))
 
 
 
     // $ion_symbol_table "compilation"
 
-    (fn is_$ion_symbol_table ((v Value) -> B)
+    (fn is_LST ((v Value) -> B)
       (and (eject (Value_has_first_annot v "$ion_symbol_table"))
            (element_of (Value_content v) Struct)))
 
@@ -289,7 +287,7 @@ Spec Problems
       (let [(n (normalize_name    (Struct_get1 s "name"))),
             (v (normalize_version (Struct_get1 s "version"))),
             (m (normalize_max_id  (Struct_get1 s "max_id")))]
-        (compile_import n v m (Environment_cat r))))
+        (compile_import n v m (Environment_catalog r))))
 
     (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty vs)
@@ -303,14 +301,14 @@ Spec Problems
     (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
       (let [(vals (Struct_get1 s "imports"))]
         (if (seq_is_empty vals)
-          (system_symbols (Environment_ivm r))
+          (SymToks_for_IVM (Environment_IVM r))
           (if (eject (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table"))
-            (lower (Environment_lst r) 'SymTok*')
+            (Environment_symbols r)
             (let [(c (Value_content (seq_head vals)))]
               (if (and (element_of c List) (not (element_of c DotNull)))
-                (seq_append (system_symbols (Environment_ivm r))
+                (seq_append (SymToks_for_IVM (Environment_IVM r))
                             (compile_imports_elts (List_elts (lower c List)) r))
-                (system_symbols (Environment_ivm r))))))))
+                (SymToks_for_IVM (Environment_IVM r))))))))
 
     (fn compile_symbols_elts ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
@@ -331,30 +329,26 @@ Spec Problems
               EMPTY_SYMTOKS)))))
 
 
-    // LST and Environment construction
-
-    (fn LST_for_ivm ((ivm IVM) -> LocalSymtab)
-      (lift (system_symbols ivm) LocalSymtab))
-
-    (fn LST_for_$ion_symbol_table ((r Environment) (s Struct) -> LocalSymtab)
+    // Environment construction
+    
+    (fn SymToks_for_LST ((s Struct) (r Environment) -> 'SymTok*')
       (if (element_of s DotNull)
-        (LST_for_$ion_symbol_table r EMPTY_STRUCT)
-        (lift_to LocalSymtab
-          (seq_append (imported_symbols s r)
-                      (declared_symbols s)))))
+        (SymToks_for_LST EMPTY_STRUCT r)
+        (seq_append (imported_symbols s r)
+                    (declared_symbols s))))
 
 
-    (fn Environment_after_ivm ((ivm IVM) (r Environment) -> Environment)
+    (fn Environment_after_IVM ((ivm IVM) (r Environment) -> Environment)
       (tuple Environment
-        (Environment_cat r)
+        (Environment_catalog r)
         ivm
-        (LST_for_ivm ivm)))
+        (SymToks_for_IVM ivm)))
 
-    (fn Environment_after_$ion_symbol_table ((s Struct) (r Environment) -> Environment)
+    (fn Environment_after_LST ((s Struct) (r Environment) -> Environment)
       (tuple Environment
-        (Environment_cat r)
-        (Environment_ivm r)
-        (LST_for_$ion_symbol_table r s)))
+        (Environment_catalog r)
+        (Environment_IVM r)
+        (SymToks_for_LST s r)))
 
 
     //=======================
@@ -387,7 +381,7 @@ Spec Problems
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
         (let [(i  (eject (lower s I))),
-              (ts (lower (Environment_lst r) 'SymTok*'))]
+              (ts (Environment_symbols r))]
           (if (< i (seq_length ts))
             (ith ts i)
             (lift_to SymTok SYM0)))))
@@ -431,10 +425,10 @@ Spec Problems
 
     (fn TE ((trv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of trv IVM)
-        (k (Environment_after_ivm (lower trv IVM) r) (seq 'Value*'))
+        (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
         (let [(v (E (lower trv RValue) r))]
-          (if (eject (is_$ion_symbol_table v))
-            (k (Environment_after_$ion_symbol_table
+          (if (eject (is_LST v))
+            (k (Environment_after_LST
                  (lower (Value_content v) Struct) r)
                (seq 'Value*'))
             // Expand normally
@@ -462,7 +456,7 @@ Spec Problems
   */
 
     (fn expand ((trvs 'TRValue*') (c Catalog) -> 'Value*')
-      (let [(r0 (tuple Environment c IVM_1_0 (LST_for_ivm IVM_1_0))),
+      (let [(r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
             (k0 (mk_fn TContinuation (r vs) vs))]
         ('TE*' trvs r0 k0)))
   )
