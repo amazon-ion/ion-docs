@@ -385,10 +385,9 @@ The top-level of an Ion document can contain __directives__ that are not part of
 the application-facing data model.
 Instead, directives affect the encoding of the data that follows.
 
-Ion 1.0 has two kinds of directives: Ion version markers, which can only occur
-at top-level, and `$ion_symbol_table::` structs, which are only treated as
-directives at top-level.  We model these top-level-only features through a
-top-level-only domain:
+Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
+tables (LSTs).
+We model these top-level-only features through a top-level-only domain:
 
 [{denotation}]
 ++++
@@ -408,8 +407,6 @@ We model this state, known as the __environment__, as follows:
 include::{modeltex}[tag=Environment]
 \newline
 include::{modeltex}[tag=Catalog]
-\newline
-include::{modeltex}[tag=LocalSymtab]
 ++++
 
 The encoding environment is a tuple with three components.
@@ -417,11 +414,11 @@ The encoding environment is a tuple with three components.
   * The __catalog__ is a collection of shared symbol tables provided to the
 expansion process.  The manner by which SSTs are collected into a catalog is
 outside the scope of the Ion specification.
-  * We track the current Ion version by storing an Ion Version Marker.  This is
-how we select a system symbol table, and gives us a way to alter the expansion
+  * We model the current Ion version as an Ion Version Marker.  This is used to
+select a system symbol table, and gives us a way to alter the expansion
 process based on Ion version.
-  * We model the local symbol table as a sequence of symbol tokens defining all
-current SIDs, starting from zero.
+  * We model the current symbol table as a sequence of symbol tokens defining
+all current SIDs, starting from zero.
 
 Following our practice for tuples, we'll define environment accessor functions.
 Following computer science tradition, we use the Greek letter rho (stem:[\rho])
@@ -429,11 +426,11 @@ as the variable denoting environments.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=Environment_cat]
+include::{modeltex}[tag=Environment_catalog]
 \newline
-include::{modeltex}[tag=Environment_ivm]
+include::{modeltex}[tag=Environment_IVM]
 \newline
-include::{modeltex}[tag=Environment_lst]
+include::{modeltex}[tag=Environment_symbols]
 ++++
 
 
@@ -452,8 +449,8 @@ Expansion of a raw symbol token requires the current environment.
 If the symbol token already contains Unicode text, we simply wrap it with a
 **SymTok**. Otherwise, the token is an integer SID, so we extract it via
 stem:[\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf I}}}] and then look it up in the
-environment's LST.  That requires a range check, returning `$0` if the SID
-exceeds the size of the local symbol table.
+current symbol table.  That requires a range check, returning `$0` if the SID
+exceeds the size of the current symbol table.
 
 CAUTION: This algorithm is currently defective: Ion specifies that an
 out-of-bounds SID must evoke an error and stop parsing. Proper modeling of such
@@ -537,8 +534,7 @@ and can turn to the top level.
 
 Expansion of top-level sequences requires us to use a new technique in our model,
 since it involves changes to the environment.  For example, the expansion of an
-IVM or an `$ion_symbol_table::` struct must produce a new environment, but no
-application values.
+IVM or LST must produce a new environment, but no application values.
 
 The conventional way to represent order of evaluation and mutation of state in
 denotational semantics is via _continuation-passing style_.
@@ -570,8 +566,8 @@ therefore inaccessible to any remaining data on the stream.
 
 * Top-level raw values that are not IVMs are expanded using stem:[\cal E] and the
 current environment stem:[\rho].
-The resulting **Value** _v_ is then checked to see if it's a symbol table
-directive, in which case e use its content, downcast to **Struct**, to construct the new
+The resulting *Value* _v_ is then checked to see if it's an LST directive, in
+which case we use its content, downcast to *Struct*, to construct the new
 environment.
 
 * In the final case, our result _v_ is just a user value, so we pass it to the
@@ -641,7 +637,7 @@ in this denotational model. The specified algorithms include a fair
 amount of type-checking and default values to ensure that even nonsensical
 directives have a well-defined and stable interpretation across implementations.
 Put another way, the spec must leave nothing unspecified, so that whatever
-gobbledygook appears inside an `$ion_symbol_table` directive, all
+gobbledygook appears inside an LST directive, all
 implementations will behave the same way.
 
 
@@ -653,19 +649,16 @@ This is straightforward to define.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=system_symbols]
+include::{modeltex}[tag=SymToks_for_IVM]
 \newline\newline
-include::{modeltex}[tag=LST_for_ivm]
-\newline\newline
-include::{modeltex}[tag=Environment_after_ivm]
+include::{modeltex}[tag=Environment_after_IVM]
 ++++
 
-The __system_symbols__ function produces the content of the system symbol table
+The _SymToks_for_IVM_ function produces the content of the system symbol table
 for a given Ion version.  At present, the argument is ignored, but the future
-Ion 1.1 symtab will go here.  __LST_for_ivm__ simply lifts those tokens into
-the **LocalSymtab** domain.
+Ion 1.1 symtab will go here.
 
-_Environment_after_ivm__ defines the environment that becomes current after the
+_Environment_after_IVM__ defines the environment that becomes current after the
 IVM directive is encountered.  It retains the current environment's catalog,
 but replaces its IVM and resets the symbol table to that of the Ion version.
 
@@ -677,20 +670,21 @@ checking the annotation and content type:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=is_$ion_symbol_table]
+include::{modeltex}[tag=is_LST]
 ++++
 
-We can then turn the annotated struct into a LST:
+We can then turn the annotated struct into a sequence of symbol tokens that will
+soon become the current symbol table:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=LST_for_$ion_symbol_table]
+include::{modeltex}[tag=SymToks_for_LST]
 ++++
 
 Here we encounter the first of many null checks. In particular, top-level
 `$ion_symbol_table::null.symbol` is equivalent to `$ion_symbol_table::{}`.
-When the directive is not null, we produce a LST by concatenating the imported
-symbols and the locally-declared symbols.
+When the directive is not null, we concatenate the imported symbols and the
+locally-declared symbols.
 The former sequence includes any symbols implicitly imported from the current
 Ion version.
 
@@ -698,13 +692,13 @@ The resulting environment after such a directive is as follows:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=Environment_after_$ion_symbol_table]
+include::{modeltex}[tag=Environment_after_LST]
 ++++
 
 Here we see that the directive has the effect of retaining the current catalog
-and Ion version, replacing only the local symtab.
-More importantly, we see that an LST is fully expanded using the environment in
-effect when it begins.
+and Ion version, replacing only the current symbols.
+More importantly, we see that an LST directive is fully expanded using the
+environment in effect when it begins.
 The locally-declared symbols have no effect on the encoding of any part of the
 enclosing struct.
 Their scope only starts with the next top-level value.
@@ -716,7 +710,7 @@ stem:[\overline{\cal E}] in xref:eg_TE[xrefstyle=short].
 === Compiling Local Symbol Tables
 
 The functions above sidestep the more heavy-duty work of turning a symbol-table
-directive into a *LocalSymtab*. by delegating to helper functions
+directive into **SymTok**{asterisk} by delegating to helper functions
 __imported_symbols__ and __declared_symbols__.
 For lack of a better word, we'll refer to this process as "`compilation`" of the
 directive.  What follows is effectively a recursive-descent process over the
@@ -870,9 +864,9 @@ Ion defines a standard serialization of SSTs, which we can easily parse:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=is_$ion_shared_symbol_table]
+include::{modeltex}[tag=is_SST]
 \newline\newline
-include::{modeltex}[tag=SST_for_$ion_shared_symbol_table]
+include::{modeltex}[tag=compile_SST]
 ++++
 
 CAUTION: The above needs error handling similar to local symbol tables.
@@ -953,7 +947,7 @@ in the framework that underlies this model.
 === Out of bounds SIDs must raise an error
 
 This is primarily a result of the above lack of framework support and our desire
-to test the size of local symbol tables.
+to test the size of the current symbol table.
 
 === Shared symbol table compilation is weak
 
