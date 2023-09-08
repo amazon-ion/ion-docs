@@ -12,7 +12,7 @@
 :stem: latexmath
 
 // Now custom attributes and styles.
-:modeltex: ../build/ion-model.tex
+:modeltex: tex/ion-model.tex
 
 include::styles.adoc[]
 

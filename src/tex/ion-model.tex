@@ -1,0 +1,835 @@
+%%%---------------------------------------------------------
+%%% This file was generated at 2023-09-08T21:46:32.989-00:00
+%%%---------------------------------------------------------
+% tag::B[]
+\mbox{\bf B} = \mbox{(Booleans)}
+% end::B[]
+\newline
+% tag::I[]
+\mbox{\bf I} = \mbox{(Integers)}
+% end::I[]
+\newline
+% tag::Unicode[]
+\mbox{\bf Unicode} = \mbox{(Sequences of Unicode code points)}
+% end::Unicode[]
+\newline
+% tag::IVM[]
+\mbox{\bf IVM} = \mbox{\bf I} \times \mbox{\bf I}
+% end::IVM[]
+\newline
+% tag::Sym0[]
+\mbox{\bf Sym0} = \mbox{(The undefined symbol)}
+% end::Sym0[]
+\newline
+% tag::DotNull[]
+\mbox{\bf DotNull} = \mbox{(Sentinel for typed nulls)}
+% end::DotNull[]
+\newline
+% tag::NullNull[]
+\mbox{\bf NullNull} = \mbox{\bf DotNull}
+% end::NullNull[]
+\newline
+% tag::Boolean[]
+\mbox{\bf Boolean} = \mbox{\bf B} + \mbox{\bf DotNull}
+% end::Boolean[]
+\newline
+% tag::Int[]
+\mbox{\bf Int} = \mbox{\bf I} + \mbox{\bf DotNull}
+% end::Int[]
+\newline
+% tag::String[]
+\mbox{\bf String} = \mbox{\bf Unicode} + \mbox{\bf DotNull}
+% end::String[]
+\newline
+% tag::SafeVal[]
+\mbox{\bf SafeVal} = \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
+% end::SafeVal[]
+\newline
+% tag::RSymTok[]
+\mbox{\bf RSymTok} = \mbox{\bf Unicode} + \mbox{\bf I}
+% end::RSymTok[]
+\newline
+% tag::RSymbol[]
+\mbox{\bf RSymbol} = \mbox{\bf RSymTok} + \mbox{\bf DotNull}
+% end::RSymbol[]
+\newline
+% tag::RList[]
+\mbox{\bf RList} = \mbox{\bf RValue*} + \mbox{\bf DotNull}
+% end::RList[]
+\newline
+% tag::RField[]
+\mbox{\bf RField} = \mbox{\bf RSymTok} \times \mbox{\bf RValue}
+% end::RField[]
+\newline
+% tag::RStruct[]
+\mbox{\bf RStruct} = \mbox{\bf RField*} + \mbox{\bf DotNull}
+% end::RStruct[]
+\newline
+% tag::RContent[]
+\mbox{\bf RContent} = \mbox{\bf SafeVal} + \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RStruct}
+% end::RContent[]
+\newline
+% tag::RValue[]
+\mbox{\bf RValue} = \mbox{\bf RSymTok*} \times \mbox{\bf RContent}
+% end::RValue[]
+\newline
+% tag::TRValue[]
+\mbox{\bf TRValue} = \mbox{\bf RValue} + \mbox{\bf IVM}
+% end::TRValue[]
+\newline
+% tag::SymTok[]
+\mbox{\bf SymTok} = \mbox{\bf Unicode} + \mbox{\bf Sym0}
+% end::SymTok[]
+\newline
+% tag::Symbol[]
+\mbox{\bf Symbol} = \mbox{\bf SymTok} + \mbox{\bf DotNull}
+% end::Symbol[]
+\newline
+% tag::List[]
+\mbox{\bf List} = \mbox{\bf Value*} + \mbox{\bf DotNull}
+% end::List[]
+\newline
+% tag::Field[]
+\mbox{\bf Field} = \mbox{\bf SymTok} \times \mbox{\bf Value}
+% end::Field[]
+\newline
+% tag::Struct[]
+\mbox{\bf Struct} = \mbox{\bf Field*} + \mbox{\bf DotNull}
+% end::Struct[]
+\newline
+% tag::Content[]
+\mbox{\bf Content} = \mbox{\bf SafeVal} + \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Struct}
+% end::Content[]
+\newline
+% tag::Value[]
+\mbox{\bf Value} = \mbox{\bf SymTok*} \times \mbox{\bf Content}
+% end::Value[]
+\newline
+% tag::SharedSymtab[]
+\mbox{\bf SharedSymtab} = \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf SymTok*}
+% end::SharedSymtab[]
+\newline
+% tag::Catalog[]
+\mbox{\bf Catalog} = \mbox{\bf SharedSymtab*}
+% end::Catalog[]
+\newline
+% tag::Environment[]
+\mbox{\bf Environment} = \mbox{\bf Catalog} \times \mbox{\bf IVM} \times \mbox{\bf SymTok*}
+% end::Environment[]
+\newline
+% tag::TContinuation[]
+\mbox{\bf TContinuation} = \mbox{\bf Environment} \times \mbox{\bf Value*} \rightarrow \mbox{\bf Value*}
+% end::TContinuation[]
+\newline
+\newline
+% tag::RValue_annots[]
+\mbox{\it rv\/}\!\downarrow_{\mbox{\it annots\/}} = $\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RSymTok*}\newline
+\:\: \setandincrindent
+\mbox{\it rv\/}\!\downarrow_{0} \decrindent
+% end::RValue_annots[]
+\newline
+\newline
+% tag::RValue_content[]
+\mbox{\it rv\/}\!\downarrow_{\mbox{\it content\/}} = $\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RContent}\newline
+\:\: \setandincrindent
+\mbox{\it rv\/}\!\downarrow_{1} \decrindent
+% end::RValue_content[]
+\newline
+\newline
+% tag::RField_name[]
+\mbox{\it rf\/}\!\downarrow_{\mbox{\it name\/}} = $\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RSymTok}\newline
+\:\: \setandincrindent
+\mbox{\it rf\/}\!\downarrow_{0} \decrindent
+% end::RField_name[]
+\newline
+\newline
+% tag::RField_value[]
+\mbox{\it rf\/}\!\downarrow_{\mbox{\it value\/}} = $\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RValue}\newline
+\:\: \setandincrindent
+\mbox{\it rf\/}\!\downarrow_{1} \decrindent
+% end::RField_value[]
+\newline
+\newline
+% tag::List_elts[]
+\mbox{\it v\/}\!\downarrow_{\mbox{\it elts\/}} = $\`$ \mbox{\bf List} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+\mbox{\it v\/}\mid_{\mbox{\tiny \mbox{\bf Value*}}} \decrindent
+% end::List_elts[]
+\newline
+\newline
+% tag::Value_annots[]
+\mbox{\it v\/}\!\downarrow_{\mbox{\it annots\/}} = $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+\mbox{\it v\/}\!\downarrow_{0} \decrindent
+% end::Value_annots[]
+\newline
+\newline
+% tag::Value_content[]
+\mbox{\it v\/}\!\downarrow_{\mbox{\it content\/}} = $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf Content}\newline
+\:\: \setandincrindent
+\mbox{\it v\/}\!\downarrow_{1} \decrindent
+% end::Value_content[]
+\newline
+\newline
+% tag::Field_name[]
+\mbox{\it f\/}\!\downarrow_{\mbox{\it name\/}} = $\`$ \mbox{\bf Field} \rightarrow \mbox{\bf SymTok}\newline
+\:\: \setandincrindent
+\mbox{\it f\/}\!\downarrow_{0} \decrindent
+% end::Field_name[]
+\newline
+\newline
+% tag::Field_value[]
+\mbox{\it f\/}\!\downarrow_{\mbox{\it value\/}} = $\`$ \mbox{\bf Field} \rightarrow \mbox{\bf Value}\newline
+\:\: \setandincrindent
+\mbox{\it f\/}\!\downarrow_{1} \decrindent
+% end::Field_value[]
+\newline
+\newline
+% tag::SymTok_matches[]
+\mbox{\it SymTok\_matches\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf Unicode}\newline
+\:\mbox{\bf{then}}\:\mbox{\it u\/} = \mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
+\:\mbox{\bf{else}}\:\mbox{\bf false}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::SymTok_matches[]
+\newline
+\newline
+% tag::Symbol_matches[]
+\mbox{\it Symbol\_matches\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf SymTok}\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymTok\_matches\/}(\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf SymTok}}}, \mbox{\it u\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\bf false}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::Symbol_matches[]
+\newline
+\newline
+% tag::Value_is_symbol_matching[]
+\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\it content\/}}\in \mbox{\bf Symbol}\newline
+\:\mbox{\bf{then}}\:\mbox{\it Symbol\_matches\/}(\mbox{\it v\/}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf Symbol}}}, \mbox{\it u\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\bf false}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::Value_is_symbol_matching[]
+\newline
+\newline
+% tag::Struct_get[]
+\mbox{\it Struct\_get\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{letrec}}\:\mbox{\it seek\/} = \lambda \mbox{\it f\/}^{\ast} \mbox{\it u\/}. \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it f\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\langle \rangle \newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it f\/} = \mbox{\it f\/}^{\ast}\!\downarrow_{0}\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/}^{\ast} = \mbox{\it seek\/}(\mbox{\it f\/}^{\ast}\dagger1, \mbox{\it u\/})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it SymTok\_matches\/}(\mbox{\it f\/}\!\downarrow_{\mbox{\it name\/}}, \mbox{\it u\/})\newline
+\:\mbox{\bf{then}}\:\langle \mbox{\it f\/}\!\downarrow_{\mbox{\it value\/}}\rangle \S\mbox{\it v\/}^{\ast}\newline
+\:\mbox{\bf{else}}\:\mbox{\it v\/}^{\ast}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\mbox{\it seek\/}(\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf Field*}}}, \mbox{\it u\/}) \decrindent
+ \decrindent
+% end::Struct_get[]
+\newline
+\newline
+% tag::Struct_get1[]
+\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get\/}(\mbox{\it s\/}, \mbox{\it u\/})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast} > 1\newline
+\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt repeated field}''})\newline
+\:\mbox{\bf{else}}\:\mbox{\it v\/}^{\ast}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+ \decrindent
+% end::Struct_get1[]
+\newline
+\newline
+% tag::Value_has_first_annot[]
+\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}\!\downarrow_{\mbox{\it annots\/}}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\bf false}\newline
+\:\mbox{\bf{else}}\:\mbox{\it SymTok\_matches\/}(\mbox{\it v\/}\!\downarrow_{\mbox{\it annots\/}}\!\downarrow_{0}, \mbox{\it u\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::Value_has_first_annot[]
+\newline
+\newline
+% tag::SymToks_for_IVM[]
+\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/}) = $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it i\/}\!\downarrow_{0} = 1\ \wedge\ \mbox{\it i\/}\!\downarrow_{1} = 0\newline
+\:\mbox{\bf{then}}\:\langle \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/}), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \newline
+\:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt Unsupported Ion version}''})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::SymToks_for_IVM[]
+\newline
+\newline
+% tag::SST_name[]
+\mbox{\it s\/}\!\downarrow_{\mbox{\it name\/}} = $\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Unicode}\newline
+\:\: \setandincrindent
+\mbox{\it s\/}\!\downarrow_{0} \decrindent
+% end::SST_name[]
+\newline
+\newline
+% tag::SST_version[]
+\mbox{\it s\/}\!\downarrow_{\mbox{\it version\/}} = $\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf I}\newline
+\:\: \setandincrindent
+\mbox{\it s\/}\!\downarrow_{1} \decrindent
+% end::SST_version[]
+\newline
+\newline
+% tag::SST_symbols[]
+\mbox{\it s\/}\!\downarrow_{\mbox{\it symbols\/}} = $\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+\mbox{\it s\/}\!\downarrow_{2} \decrindent
+% end::SST_symbols[]
+\newline
+\newline
+% tag::is_SST[]
+\mbox{\it is\_SST\/}(\mbox{\it v\/}) = $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''})\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\it content\/}}\in \mbox{\bf Struct} \decrindent
+% end::is_SST[]
+\newline
+\newline
+% tag::compile_SST[]
+\mbox{\it compile\_SST\/}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedSymtab}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''})\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''})\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{in}}\:\mbox{\it{in}\small \mbox{\bf SharedSymtab}}(\langle \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it declared\_symbols\/}(\mbox{\it s\/})\rangle ) \decrindent
+ \decrindent
+% end::compile_SST[]
+\newline
+\newline
+% tag::Catalog_lookup[]
+\mbox{\it Catalog\_lookup\/}(\mbox{\it c\/}, \mbox{\it name\/}, \mbox{\it version\/}) = $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedSymtab*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{letrec}}\:\mbox{\it seek\/} = \lambda \mbox{\it s\/}^{\ast} \mbox{\it n\/} \mbox{\it v\/} \mbox{\it b\/}^{\ast}. \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it b\/}^{\ast}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it sst\/} = \mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\it sst\/}\!\downarrow_{\mbox{\it name\/}}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/} = \mbox{\it sst\/}\!\downarrow_{\mbox{\it version\/}}\newline
+\:\mbox{\bf{then}}\:\langle \mbox{\it sst\/}\rangle \newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it b\/}^{\ast}=0\ \vee\ \mbox{\it b\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it version\/}} < \mbox{\it sst\/}\!\downarrow_{\mbox{\it version\/}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it seek\/}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/}, \langle \mbox{\it sst\/}\rangle )\newline
+\:\mbox{\bf{else}}\:\mbox{\it seek\/}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it b\/}^{\ast})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\:\mbox{\it seek\/}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it b\/}^{\ast})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\mbox{\it seek\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SharedSymtab*}}}, \mbox{\it name\/}, \mbox{\it version\/}, \langle \rangle ) \decrindent
+ \decrindent
+% end::Catalog_lookup[]
+\newline
+\newline
+% tag::Catalog_extend[]
+\mbox{\it Catalog\_extend\/}(\mbox{\it c\/}, \mbox{\it s\/}) = $\`$ \mbox{\bf Catalog} \times \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Catalog}\newline
+\:\: \setandincrindent
+\mbox{\it{in}\small \mbox{\bf Catalog}}(\langle \mbox{\it s\/}\rangle \S\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SharedSymtab*}}}) \decrindent
+% end::Catalog_extend[]
+\newline
+\newline
+% tag::Environment_catalog[]
+\mbox{\it Environment\_catalog\/}(\rho) = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf Catalog}\newline
+\:\: \setandincrindent
+\rho\!\downarrow_{0} \decrindent
+% end::Environment_catalog[]
+\newline
+\newline
+% tag::Environment_IVM[]
+\mbox{\it Environment\_IVM\/}(\rho) = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf IVM}\newline
+\:\: \setandincrindent
+\rho\!\downarrow_{1} \decrindent
+% end::Environment_IVM[]
+\newline
+\newline
+% tag::Environment_symbols[]
+\mbox{\it Environment\_symbols\/}(\rho) = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+\rho\!\downarrow_{2} \decrindent
+% end::Environment_symbols[]
+\newline
+\newline
+% tag::is_LST[]
+\mbox{\it is\_LST\/}(\mbox{\it v\/}) = $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\rm ``{\tt \$ion\_symbol\_table}''})\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\it content\/}}\in \mbox{\bf Struct} \decrindent
+% end::is_LST[]
+\newline
+\newline
+% tag::symbol_padding[]
+\mbox{\it symbol\_padding\/}(\mbox{\it n\/}) = $\`$ \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:0 = \mbox{\it n\/}\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\:\langle \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/})\rangle \S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - 1)\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::symbol_padding[]
+\newline
+\newline
+% tag::adjust_length[]
+\mbox{\it adjust\_length\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}) = $\`$ \mbox{\bf SymTok*} \times \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it n\/} < \#\mbox{\it s\/}^{\ast}\newline
+\:\mbox{\bf{then}}\:\mbox{\it seq\_truncate\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it s\/}^{\ast}\S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - \#\mbox{\it s\/}^{\ast})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::adjust_length[]
+\newline
+\newline
+% tag::compile_import[]
+\mbox{\it compile\_import\/}(\mbox{\it name\/}, \mbox{\it version\/}, \mbox{\it max\/}, \mbox{\it c\/}) = $\`$ \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf I} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it name\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it name\/} = \mbox{\rm ``{\tt \$ion}''}\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it found\/} = \mbox{\it Catalog\_lookup\/}(\mbox{\it c\/}, \mbox{\it name\/}, \mbox{\it version\/})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it found\/}=0\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it max\/} < 0\newline
+\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\it display\_to\_string\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it name\/}, \mbox{\rm ``{\tt  @}''}, \mbox{\it version\/}))\newline
+\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it max\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it best\/} = \mbox{\it found\/}\!\downarrow_{0}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it version\/} = \mbox{\it best\/}\!\downarrow_{\mbox{\it version\/}}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it max\/} < 0\newline
+\:\mbox{\bf{then}}\:\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}\newline
+\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}, \mbox{\it max\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it max\/} < 0\newline
+\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\it display\_to\_string\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it name\/}, \mbox{\rm ``{\tt  @}''}, \mbox{\it version\/}))\newline
+\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}, \mbox{\it max\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::compile_import[]
+\newline
+\newline
+% tag::normalize_name[]
+\mbox{\it normalize\_name\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf Unicode}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_UNICODE\/}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
+\:\mbox{\bf{else}}\:\mbox{\it EMPTY\_UNICODE\/}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::normalize_name[]
+\newline
+\newline
+% tag::normalize_version[]
+\mbox{\it normalize\_version\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:1\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it i\/} < 1\newline
+\:\mbox{\bf{then}}\:1\newline
+\:\mbox{\bf{else}}\:\mbox{\it i\/}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{else}}\:1\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::normalize_version[]
+\newline
+\newline
+% tag::normalize_max_id[]
+\mbox{\it normalize\_max\_id\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:-1\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{else}}\:-1\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::normalize_max_id[]
+\newline
+\newline
+% tag::compile_import_struct[]
+\mbox{\it compile\_import\_struct\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it normalize\_name\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''}))\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it normalize\_version\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''}))\newline
+\:\mbox{\bf{and}}\:\mbox{\it m\/} = \mbox{\it normalize\_max\_id\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt max\_id}''}))\newline
+\:\mbox{\bf{in}}\:\mbox{\it compile\_import\/}(\mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it m\/}, \mbox{\it Environment\_catalog\/}(\rho)) \decrindent
+ \decrindent
+% end::compile_import_struct[]
+\newline
+\newline
+% tag::compile_imports_elts[]
+\mbox{\it compile\_imports\_elts\/}(\mbox{\it v\/}^{\ast}, \rho) = $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Struct}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it compile\_import\_struct\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Struct}}}, \rho)\newline
+\:\mbox{\bf{else}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\mbox{\it t\/}^{\ast}\S\mbox{\it compile\_imports\_elts\/}(\mbox{\it v\/}^{\ast}\dagger1, \rho) \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::compile_imports_elts[]
+\newline
+\newline
+% tag::imported_symbols[]
+\mbox{\it imported\_symbols\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt imports}''})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it Environment\_IVM\/}(\rho))\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}^{\ast}\!\downarrow_{0}, \mbox{\rm ``{\tt \$ion\_symbol\_table}''})\newline
+\:\mbox{\bf{then}}\:\mbox{\it Environment\_symbols\/}(\rho)\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it Environment\_IVM\/}(\rho))\S\mbox{\it compile\_imports\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}}, \rho)\newline
+\:\mbox{\bf{else}}\:\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it Environment\_IVM\/}(\rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+ \decrindent
+% end::imported_symbols[]
+\newline
+\newline
+% tag::compile_symbols_elts[]
+\mbox{\it compile\_symbols\_elts\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S\mbox{\it compile\_symbols\_elts\/}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::compile_symbols_elts[]
+\newline
+\newline
+% tag::declared_symbols[]
+\mbox{\it declared\_symbols\/}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt symbols}''})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\newline
+\:\mbox{\bf{then}}\:\mbox{\it compile\_symbols\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}})\newline
+\:\mbox{\bf{else}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+ \decrindent
+% end::declared_symbols[]
+\newline
+\newline
+% tag::SymToks_for_LST[]
+\mbox{\it SymToks\_for\_LST\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_LST\/}(\mbox{\it EMPTY\_STRUCT\/}, \rho)\newline
+\:\mbox{\bf{else}}\:\mbox{\it imported\_symbols\/}(\mbox{\it s\/}, \rho)\S\mbox{\it declared\_symbols\/}(\mbox{\it s\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::SymToks_for_LST[]
+\newline
+\newline
+% tag::Environment_after_IVM[]
+\mbox{\it Environment\_after\_IVM\/}(\mbox{\it ivm\/}, \rho) = $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
+\:\: \setandincrindent
+\mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it Environment\_catalog\/}(\rho), \mbox{\it ivm\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it ivm\/})\rangle ) \decrindent
+% end::Environment_after_IVM[]
+\newline
+\newline
+% tag::Environment_after_LST[]
+\mbox{\it Environment\_after\_LST\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
+\:\: \setandincrindent
+\mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it Environment\_catalog\/}(\rho), \mbox{\it Environment\_IVM\/}(\rho), \mbox{\it SymToks\_for\_LST\/}(\mbox{\it s\/}, \rho)\rangle ) \decrindent
+% end::Environment_after_LST[]
+\newline
+\newline
+% tag::E[]
+{\cal E}(\mbox{\it rv\/}, \rho) = $\`$ \mbox{\bf RValue} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Value}\newline
+\:\: \setandincrindent
+\mbox{\it{in}\small \mbox{\bf Value}}(\langle {\cal E}_{\mbox{\tiny\bf RSymTok}}^{\ast}(\mbox{\it rv\/}\!\downarrow_{\mbox{\it annots\/}}, \rho), {\cal E}_{\mbox{\tiny\bf RContent}}(\mbox{\it rv\/}\!\downarrow_{\mbox{\it content\/}}, \rho)\rangle ) \decrindent
+% end::E[]
+\newline
+\newline
+% tag::E*[]
+{\cal E}^{\ast}(\mbox{\it rv\/}^{\ast}, \rho) = $\`$ \mbox{\bf RValue*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it rv\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\langle \rangle \newline
+\:\mbox{\bf{else}}\:\langle {\cal E}(\mbox{\it rv\/}^{\ast}\!\downarrow_{0}, \rho)\rangle \S{\cal E}^{\ast}(\mbox{\it rv\/}^{\ast}\dagger1, \rho)\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E*[]
+\newline
+\newline
+% tag::E_RContent[]
+{\cal E}_{\mbox{\tiny\bf RContent}}(\mbox{\it rv\/}, \rho) = $\`$ \mbox{\bf RContent} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Content}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf SafeVal}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}})\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RSymbol}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RSymbol}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RSymbol}}}, \rho))\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RList}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RList}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RList}}}, \rho))\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RStruct}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RStruct}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RStruct}}}, \rho))\newline
+\:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt not implemented}''})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RContent[]
+\newline
+\newline
+% tag::E_RSymTok[]
+{\cal E}_{\mbox{\tiny\bf RSymTok}}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf RSymTok} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf Unicode}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf Unicode}}})\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{and}}\:\mbox{\it t\/}^{\ast} = \mbox{\it Environment\_symbols\/}(\rho)\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it i\/} < \#\mbox{\it t\/}^{\ast}\newline
+\:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\!\downarrow_{\mbox{\it i\/}}\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RSymTok[]
+\newline
+\newline
+% tag::E_RSymTok*[]
+{\cal E}_{\mbox{\tiny\bf RSymTok}}^{\ast}(\mbox{\it s\/}^{\ast}, \rho) = $\`$ \mbox{\bf RSymTok*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\:\langle {\cal E}_{\mbox{\tiny\bf RSymTok}}(\mbox{\it s\/}^{\ast}\!\downarrow_{0}, \rho)\rangle \S{\cal E}_{\mbox{\tiny\bf RSymTok}}^{\ast}(\mbox{\it s\/}^{\ast}\dagger1, \rho)\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RSymTok*[]
+\newline
+\newline
+% tag::E_RSymbol[]
+{\cal E}_{\mbox{\tiny\bf RSymbol}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RSymbol} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Symbol}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Symbol}}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf Symbol}}({\cal E}_{\mbox{\tiny\bf RSymTok}}(\mbox{\it v\/}\mid_{\mbox{\tiny \mbox{\bf RSymTok}}}, \rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RSymbol[]
+\newline
+\newline
+% tag::E_RList[]
+{\cal E}_{\mbox{\tiny\bf RList}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RList} \times \mbox{\bf Environment} \rightarrow \mbox{\bf List}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf List}}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf List}}({\cal E}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\tiny \mbox{\bf RValue*}}}, \rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RList[]
+\newline
+\newline
+% tag::E_RField*[]
+{\cal E}_{\mbox{\tiny\bf RField}}^{\ast}(\mbox{\it rf\/}^{\ast}, \rho) = $\`$ \mbox{\bf RField*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Field*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it rf\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\langle \rangle \newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it t\/} = {\cal E}_{\mbox{\tiny\bf RSymTok}}(\mbox{\it rf\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it name\/}}, \rho)\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal E}(\mbox{\it rf\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it value\/}}, \rho)\newline
+\:\mbox{\bf{in}}\:\langle \mbox{\it{in}\small \mbox{\bf Field}}(\langle \mbox{\it t\/}, \mbox{\it v\/}\rangle )\rangle \S{\cal E}_{\mbox{\tiny\bf RField}}^{\ast}(\mbox{\it rf\/}^{\ast}\dagger1, \rho) \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RField*[]
+\newline
+\newline
+% tag::E_RStruct[]
+{\cal E}_{\mbox{\tiny\bf RStruct}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RStruct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Struct}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Struct}}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf Struct}}({\cal E}_{\mbox{\tiny\bf RField}}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\tiny \mbox{\bf RField*}}}, \rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RStruct[]
+\newline
+\newline
+% tag::TE[]
+\overline{\cal E}(\overline{\mbox{\it rv\/}}, \rho, \kappa) = $\`$ \mbox{\bf TRValue} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\overline{\mbox{\it rv\/}}\in \mbox{\bf IVM}\newline
+\:\mbox{\bf{then}}\:\kappa(\mbox{\it Environment\_after\_IVM\/}(\overline{\mbox{\it rv\/}}\mid_{\mbox{\tiny \mbox{\bf IVM}}}, \rho), \langle \rangle )\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it v\/} = {\cal E}(\overline{\mbox{\it rv\/}}\mid_{\mbox{\tiny \mbox{\bf RValue}}}, \rho)\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it is\_LST\/}(\mbox{\it v\/})\newline
+\:\mbox{\bf{then}}\:\kappa(\mbox{\it Environment\_after\_LST\/}(\mbox{\it v\/}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf Struct}}}, \rho), \langle \rangle )\newline
+\:\mbox{\bf{else}}\:\kappa(\rho, \langle \mbox{\it v\/}\rangle )\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::TE[]
+\newline
+\newline
+% tag::TE*[]
+\overline{{\cal E}^{\ast}}(\overline{\mbox{\it rv\/}^{\ast}}, \rho, \kappa) = $\`$ \mbox{\bf TRValue*} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\overline{\mbox{\it rv\/}^{\ast}}=0\newline
+\:\mbox{\bf{then}}\:\kappa(\rho, \langle \rangle )\newline
+\:\mbox{\bf{else}}\:\overline{\cal E}(\overline{\mbox{\it rv\/}^{\ast}}\!\downarrow_{0}, \rho, \lambda \rho_{1} \mbox{\it v\/}^{\ast}_{1}.\overline{{\cal E}^{\ast}}(\overline{\mbox{\it rv\/}^{\ast}}\dagger1, \rho_{1}, \lambda \rho_{2} \mbox{\it v\/}^{\ast}_{2}.\kappa(\rho_{2}, \mbox{\it v\/}^{\ast}_{1}\S\mbox{\it v\/}^{\ast}_{2})))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::TE*[]
+\newline
+\newline
+% tag::expand[]
+\mbox{\it expand\/}(\overline{\mbox{\it rv\/}^{\ast}}, \mbox{\it c\/}) = $\`$ \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\rho_{0} = \mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it c\/}, \mbox{\it IVM\_1\_0\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it IVM\_1\_0\/})\rangle )\newline
+\:\mbox{\bf{and}}\:\kappa_{0} = \lambda \rho \mbox{\it v\/}^{\ast}.\mbox{\it v\/}^{\ast}\newline
+\:\mbox{\bf{in}}\:\overline{{\cal E}^{\ast}}(\overline{\mbox{\it rv\/}^{\ast}}, \rho_{0}, \kappa_{0}) \decrindent
+ \decrindent
+% end::expand[]
