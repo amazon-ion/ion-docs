@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-08T23:09:55.177-00:00
+%%% This file was generated at 2023-09-08T23:21:12.985-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -367,21 +367,21 @@
 \newline
 \newline
 % tag::Environment_catalog[]
-\mbox{\it Environment\_catalog\/}(\rho) = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf Catalog}\newline
+\rho\!\downarrow_{\mbox{\it catalog\/}} = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf Catalog}\newline
 \:\: \setandincrindent
 \rho\!\downarrow_{0} \decrindent
 % end::Environment_catalog[]
 \newline
 \newline
 % tag::Environment_IVM[]
-\mbox{\it Environment\_IVM\/}(\rho) = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf IVM}\newline
+\rho\!\downarrow_{\mbox{\it IVM\/}} = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf IVM}\newline
 \:\: \setandincrindent
 \rho\!\downarrow_{1} \decrindent
 % end::Environment_IVM[]
 \newline
 \newline
 % tag::Environment_symbols[]
-\mbox{\it Environment\_symbols\/}(\rho) = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\rho\!\downarrow_{\mbox{\it symbols\/}} = $\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
 \rho\!\downarrow_{2} \decrindent
 % end::Environment_symbols[]
@@ -536,7 +536,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it normalize\_name\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''}))\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it normalize\_version\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''}))\newline
 \:\mbox{\bf{and}}\:\mbox{\it m\/} = \mbox{\it normalize\_max\_id\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt max\_id}''}))\newline
-\:\mbox{\bf{in}}\:\mbox{\it compile\_import\/}(\mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it m\/}, \mbox{\it Environment\_catalog\/}(\rho)) \decrindent
+\:\mbox{\bf{in}}\:\mbox{\it compile\_import\/}(\mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it m\/}, \rho\!\downarrow_{\mbox{\it catalog\/}}) \decrindent
  \decrindent
 % end::compile_import_struct[]
 \newline
@@ -571,16 +571,16 @@
 \:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt imports}''})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it Environment\_IVM\/}(\rho))\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\it IVM\/}})\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}^{\ast}\!\downarrow_{0}, \mbox{\rm ``{\tt \$ion\_symbol\_table}''})\newline
-\:\mbox{\bf{then}}\:\mbox{\it Environment\_symbols\/}(\rho)\newline
+\:\mbox{\bf{then}}\:\rho\!\downarrow_{\mbox{\it symbols\/}}\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it Environment\_IVM\/}(\rho))\S\mbox{\it compile\_imports\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}}, \rho)\newline
-\:\mbox{\bf{else}}\:\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it Environment\_IVM\/}(\rho))\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\it IVM\/}})\S\mbox{\it compile\_imports\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}}, \rho)\newline
+\:\mbox{\bf{else}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\it IVM\/}})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 \newline
@@ -653,14 +653,14 @@
 % tag::Environment_after_IVM[]
 \mbox{\it Environment\_after\_IVM\/}(\mbox{\it ivm\/}, \rho) = $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \:\: \setandincrindent
-\mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it Environment\_catalog\/}(\rho), \mbox{\it ivm\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it ivm\/})\rangle ) \decrindent
+\mbox{\it{in}\small \mbox{\bf Environment}}(\langle \rho\!\downarrow_{\mbox{\it catalog\/}}, \mbox{\it ivm\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it ivm\/})\rangle ) \decrindent
 % end::Environment_after_IVM[]
 \newline
 \newline
 % tag::Environment_after_LST[]
 \mbox{\it Environment\_after\_LST\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \:\: \setandincrindent
-\mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it Environment\_catalog\/}(\rho), \mbox{\it Environment\_IVM\/}(\rho), \mbox{\it SymToks\_for\_LST\/}(\mbox{\it s\/}, \rho)\rangle ) \decrindent
+\mbox{\it{in}\small \mbox{\bf Environment}}(\langle \rho\!\downarrow_{\mbox{\it catalog\/}}, \rho\!\downarrow_{\mbox{\it IVM\/}}, \mbox{\it SymToks\_for\_LST\/}(\mbox{\it s\/}, \rho)\rangle ) \decrindent
 % end::Environment_after_LST[]
 \newline
 \newline
@@ -718,7 +718,7 @@
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf Unicode}}})\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
-\:\mbox{\bf{and}}\:\mbox{\it t\/}^{\ast} = \mbox{\it Environment\_symbols\/}(\rho)\newline
+\:\mbox{\bf{and}}\:\mbox{\it t\/}^{\ast} = \rho\!\downarrow_{\mbox{\it symbols\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it i\/} < \#\mbox{\it t\/}^{\ast}\newline
 \:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\!\downarrow_{\mbox{\it i\/}}\newline
