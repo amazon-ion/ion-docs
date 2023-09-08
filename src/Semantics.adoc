@@ -1029,7 +1029,16 @@ don't imply anything about selection criteria.
 [appendix]
 == The Full Denotation
 
+=== Domains
+
 [{denotation}]
 ++++
-include::{modeltex}[]
+include::{modeltex}[tag=domains]
+++++
+
+=== Functions
+
+[{denotation}]
+++++
+include::{modeltex}[tag=functions]
 ++++
