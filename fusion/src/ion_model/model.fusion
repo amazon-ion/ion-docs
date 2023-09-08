@@ -46,8 +46,7 @@ Spec Problems
     (dom I       = (^ is_int)    "Integers")
     (dom Unicode = (^ is_string) "Sequences of Unicode code points")
 
-    (dom Ion1_0 = "IVM for Ion 1.0")
-    (dom IVM    = (+ Ion1_0) "Ion version markers")
+    (dom IVM     = (* I I) "Ion version markers")
 
     (dom Sym0    = "The undefined symbol")
 
@@ -155,17 +154,19 @@ Spec Problems
     // Environment Management
 
     (fn SymToks_for_IVM ((i IVM) -> 'SymTok*')
-      (seq 'SymTok*'
-        (lift_to SymTok SYM0)
-        (lift_to SymTok (inject_into Unicode "$ion"))
-        (lift_to SymTok (inject_into Unicode "$ion_1_0"))
-        (lift_to SymTok (inject_into Unicode "$ion_symbol_table"))
-        (lift_to SymTok (inject_into Unicode "name"))
-        (lift_to SymTok (inject_into Unicode "version"))
-        (lift_to SymTok (inject_into Unicode "imports"))
-        (lift_to SymTok (inject_into Unicode "symbols"))
-        (lift_to SymTok (inject_into Unicode "max_id"))
-        (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table"))))
+      (if (and (=== (eject (ith i 0)) 1) (=== (eject (ith i 1)) 0))
+        (seq 'SymTok*'
+          (lift_to SymTok SYM0)
+          (lift_to SymTok (inject_into Unicode "$ion"))
+          (lift_to SymTok (inject_into Unicode "$ion_1_0"))
+          (lift_to SymTok (inject_into Unicode "$ion_symbol_table"))
+          (lift_to SymTok (inject_into Unicode "name"))
+          (lift_to SymTok (inject_into Unicode "version"))
+          (lift_to SymTok (inject_into Unicode "imports"))
+          (lift_to SymTok (inject_into Unicode "symbols"))
+          (lift_to SymTok (inject_into Unicode "max_id"))
+          (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table")))
+        (raise "Unsupported Ion version")))
 
 
     (dom SharedSymtab    = (* Unicode I 'SymTok*'))     // name, version, symbols
@@ -461,7 +462,7 @@ Spec Problems
         ('TE*' trvs r0 k0)))
   )
 
-  (define IVM_1_0          (lift (singleton Ion1_0) IVM))
+  (define IVM_1_0          (tuple IVM (inject_into I 1) (inject_into I 0)))
   (define SYM0             (singleton Sym0))
   (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
