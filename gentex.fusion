@@ -1,0 +1,15 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/ion_model/latex"
+  "/ion_model/model"
+)
+
+
+(displayln "%%%---------------------------------------------------------")
+(displayln "%%% This file was generated at " (timestamp_now))
+(displayln "%%%---------------------------------------------------------")
+// Adding any blank lines will cause TeX to complain if this whole file is
+// included into AsciiDoc.
+
+(ion_print_latex Ion)
