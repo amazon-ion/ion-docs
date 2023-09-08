@@ -1,6 +1,7 @@
 // Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
 
 (require
+  "/fusioncontrib/denotation/printing"
   "/ion_model/latex"
   "/ion_model/model"
 )
@@ -12,4 +13,25 @@
 // Adding any blank lines will cause TeX to complain if this whole file is
 // included into AsciiDoc.
 
-(ion_print_latex Ion)
+
+// Print AsciiDoc tags around each definition, so they can be included into
+// the document individually.
+
+(displayln "% tag::domains[]")
+(for [(v (model_domains Ion))]
+  (displayln "% tag::" (domain_name v) "[]")
+  (ion_print_latex v)
+  (displayln "% end::" (domain_name v) "[]")
+  (displayln "\\newline")
+)
+(displayln "% end::domains[]")
+
+(displayln "% tag::functions[]")
+(for [(v (model_fns Ion))]
+  (displayln "\\newline")
+  (displayln "% tag::" (fn_name v) "[]")
+  (ion_print_latex v)
+  (displayln "% end::" (fn_name v) "[]")
+  (displayln "\\newline")
+)
+(displayln "% end::functions[]")
