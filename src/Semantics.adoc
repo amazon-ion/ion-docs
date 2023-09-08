@@ -126,27 +126,26 @@ them via the domain **RValue**, which we'll define later.
 We likewise model fully-expanded application values via the domain **Value**.
 
 Syntactically, IVMs are keywords/opcodes reserved only at top-level.
-To similarly constrain their appearance in the model, we define them in a
-separate domain for top-level raw values:
+We model them as a tuple holding major and minor version numbers:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=IVM]
+++++
+
+To constrain where IVMs can appear in the data model, we define a separate
+domain for top-level raw values:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=TRValue]
-\newline
-include::{modeltex}[tag=IVM]
-\newline
-include::{modeltex}[tag=Ion1_0]
 ++++
 
-The **TRValue** domain indicates that the (raw) top-level contains raw values and
-IVMs.
-**Ion1_0** is a singleton domain containing only the opaque constant
-__ION_1_0__, and **IVM** is an extensible union of it with future IVMs.
-
+This domain specifies that the (raw) top-level contains raw values and IVMs.
 We model an Ion document or datastream as a sequence of these, namely
 **TRValue**{asterisk}.
 
-Our goal then is to implement the following function:
+We can now clarify that our goal is to implement the following function:
 
 // TODO Generate these function signatures.
 [{denotation}]
@@ -448,10 +447,11 @@ The top-level of an Ion document can contain __directives__ that are not part of
 the application-facing data model.
 Instead, directives affect the encoding of the data that follows.
 
-// FIXME LSTs are not relevant to TRValue, but explain why.
 Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
-tables (LSTs).
-We model these top-level-only features through a top-level-only domain:
+tables (LSTs).  Syntactically, IVMs are expressed through a dedicated keyword
+(opcode in binary); in particular, they are not symbols.
+Since we cannot express IVMs within *RValue*, we model these top-level-only
+features through a top-level-only domain:
 
 [{denotation}]
 ++++
@@ -708,24 +708,26 @@ implementations will behave the same way.
 
 === System Symbol Tables
 
-At the start of any Ion document, and following any IVM, the current symbol
-table is set to the system symbol table of the relevant Ion version.
+Following an IVM, the current symbol table is set to the system symbols for the
+given major and minor version of Ion.
 This is straightforward to define.
+First we define the content of the system symbol table for a given Ion version:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=SymToks_for_IVM]
-\newline\newline
-include::{modeltex}[tag=Environment_after_IVM]
 ++++
 
-The _SymToks_for_IVM_ function produces the content of the system symbol table
-for a given Ion version.  At present, the argument is ignored, but the future
-Ion 1.1 symtab will go here.
+(Apologies for the failure of our pretty printer, but you get the idea.)
 
-_Environment_after_IVM__ defines the environment that becomes current after the
-IVM directive is encountered.  It retains the current environment's catalog,
-but replaces its IVM and resets the symbol table to that of the Ion version.
+Then we define the environment that becomes current after the IVM is
+encountered.  It retains the current environment's catalog,
+but replaces the IVM and resets the symbol table to that of the new Ion version.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Environment_after_IVM]
+++++
 
 
 === Installing Local Symbol Tables
