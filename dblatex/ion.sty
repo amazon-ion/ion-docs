@@ -40,6 +40,20 @@
 }
 
 
+%% Include copyright and date in the footer.
+%% Overrides defaults in dbk_headfoot.sty
+%%
+%% These (deprecated) commands are part of the fancyhdr package.
+%% https://mirrors.rit.edu/CTAN/macros/latex/contrib/fancyhdr/fancyhdr.pdf
+
+\def\mainmatter{\cleardoublepage\pagenumbering{arabic}
+  \lhead[]{\DBKtitle}
+  \chead[]{\releasebox}
+  \rhead[]{\thepage{} / \getpagerefnumber{LastPage}}
+  \lfoot[]{\DBKcopyright}
+  \rfoot[]{\DBKdate}}
+
+
 %% Adapted from Lisp2Tex.sty
 
 %% This is added when equations have the Denotation role.
