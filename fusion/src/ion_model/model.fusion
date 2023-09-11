@@ -12,6 +12,11 @@ Functional:
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
   * Probably SymTok needs to track symbol source: SharedSymtab x N::index
+* [SST Semantics] "When mapping from string to symbol ID, there may be multiple
+  associated IDs (the same string could appear twice as children of the symbols
+  field). Implementations MUST select the lowest known ID, and all other
+  associated IDs MUST be handled as if undefined."
+  * Not sure what "handled as undefined" implies.
 * SST compilation is very weak.
 * Catalog construction should reject duplicate keys, so we don't imply anything
   about selection criteria.
@@ -27,7 +32,22 @@ Cleanup:
 Spec Problems
 -------------
 * No mention of possible annotations on imports field or its entries.
-
+* "A version marker can also occur at non-initial positions at the top level,
+  and it will have the same effect; when encountered below top-level, it has no
+  processing effect and is treated as an ordinary user value."
+  * Wrong, IVMs are syntactically distinct and cannot appear elsewhere.
+* "Null elements declare undefined symbol IDs (“gaps”) within the sequence;
+  implementations must handle requests for such symbols the same as if the
+  requested ID beyond the end of the list."
+  * BUT: "beyond the end" is an error.
+  * AND: what does "requests for such symbols" mean?
+* Content under "Imports" should use present/absent instead of defined/undefined
+  since the latter has other meaning.
+* [Symbol Zero] "$0 is only semantically equivalent to itself and to
+  locally-declared SIDs with unknown text."
+  * Probably better to treat the local case as something other than "unknown"
+    so that term only applies to the SST case.  A local null entry is _known_ to
+    be $0, but we know _nothing_ about an absent (or undersized substitute) SST.
   '''
 
 
