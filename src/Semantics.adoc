@@ -1025,6 +1025,18 @@ This doesn't really affect the important parts of the model.
 On a related note, catalog construction should reject duplicate keys, so we
 don't imply anything about selection criteria.
 
+=== Repeated text in SSTs should become undefined
+
+[quote]
+____
+When mapping from string to symbol ID, there may be multiple associated IDs (the
+same string could appear twice as children of the symbols field).
+Implementations MUST select the lowest known ID, and all other associated IDs
+MUST be handled as if undefined.
+____
+
+It's a bit unclear why this clause exists, but the model doesn't specify it.
+
 
 [appendix]
 == The Full Denotation
