@@ -87,6 +87,26 @@ TODO
   (quote_top a::'#$0' a)
   (quote_top $ion_symbol_table::{symbols:["a"]} '#$10'::'#$11' '#$10'))
 
+
+// Empty, null, or malformed `symbols` field is ignored
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:[]} '#$10'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:null.list} '#$10'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:null} '#$10'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:42} '#$10'))
+// TODO [SEXP]
+//(check_expansion
+//  (quote_top a '#$0')
+//  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:("b")} '#$10'))
+
+
 // Non-string and null `symbols` entries act like $0
 (check_expansion
   (quote_top '#$0' '#$0' '#$0')

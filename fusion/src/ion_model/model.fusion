@@ -6,7 +6,14 @@ A denotational semantic model of Ion.
 
 TODO
 ----
-Functional:
+Terminology:
+* Rename "raw value" etc to "encoding value"?
+  * Safe values -> literals?
+
+Features:
+* [SEXP] Model sexps, we need them for everything in 1.1.
+
+Defects:
 * SID too large must raise an error. Need new way to test the LST maxid.
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
@@ -23,6 +30,7 @@ Functional:
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
+* Add not_element_of for better rendering.
 * Remove use of non-functional features in modeled functions
   * if
   * raise
@@ -350,7 +358,7 @@ Spec Problems
         (if (seq_is_empty vals)
           EMPTY_SYMTOKS
           (let [(c (Value_content (seq_head vals)))]
-            (if (element_of c List)
+            (if (and (element_of c List) (not (element_of c DotNull)))
               (compile_symbols_elts (List_elts (lower c List)))
               EMPTY_SYMTOKS)))))
 
