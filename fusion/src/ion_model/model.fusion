@@ -68,6 +68,11 @@ Spec Problems
 
     (dom IVM     = (* I I) "Ion version markers")
 
+    (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
+      (and (=== (ith i1 0) (ith i2 0))
+           (=== (ith i1 1) (ith i2 1))))
+
+
     (dom Sym0    = "The undefined symbol")
 
 
@@ -174,7 +179,7 @@ Spec Problems
     // Environment Management
 
     (fn SymToks_for_IVM ((i IVM) -> 'SymTok*')
-      (if (and (=== (eject (ith i 0)) 1) (=== (eject (ith i 1)) 0))
+      (if (eject (IVM_eq i IVM_1_0))
         (seq 'SymTok*'
           (lift_to SymTok SYM0)
           (lift_to SymTok (inject_into Unicode "$ion"))

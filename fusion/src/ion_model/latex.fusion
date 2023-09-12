@@ -37,6 +37,12 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method Value_annots        (|v e| (pp_ith (append v (quote (annots ))) e)))
       (form_method Value_content       (|v e| (pp_ith (append v (quote (content))) e)))
 
+      // The outer parens make the function definition less confusing; without
+      // them it prints as "i1 = i2 = ..." but now its (i1 = i2) = ...".
+      // The downside is irregular (though not confusing) rendering where the
+      // function is invoked.
+      (form_method IVM_eq              (pp_binary "(" " = " ")"))
+
       (sym_image "{\\cal E}"                                      'E')
       (sym_image "{\\cal E}^{\\ast}"                              'E*')
       (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RContent}}"        'E_RContent')
@@ -55,6 +61,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it f\\/}^{\\ast}"               fs)
       (sym_image "\\mbox{\\it f\\/}^{\\ast}_{1}"           fs1)
       (sym_image "\\mbox{\\it f\\/}^{\\ast}_{2}"           fs2)
+      (sym_image "\\mbox{\\it i\\/}_{1}"                   i1)
+      (sym_image "\\mbox{\\it i\\/}_{2}"                   i2)
       (sym_image "\\kappa"                                 k)
       (sym_image "\\kappa_{0}"                             k0)
       (sym_image "\\rho"                                   r)
