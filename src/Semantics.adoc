@@ -876,7 +876,7 @@ Given a list, we compile its elements as follows:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=compile_symbols_elts]
+include::{modeltex}[tag=compile_symbols]
 ++++
 
 This recursively compiles each list element into a *SymTok*.
@@ -901,24 +901,18 @@ current symbol table.  When the content is a non-null *List*, we compile its
 elements and append them to the current system symbols; otherwise the field
 has an unexpected value, and we act is if it were absent.
 
-Compiling the `imports` elements is similar to _compile_symbols_elts_ but each
+Compiling the `imports` elements is similar to _compile_symbols_ but each
 element produces a list of tokens, not just one:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=compile_imports_elts]
+include::{modeltex}[tag=compile_imports]
 ++++
 
 As expected, we recurse through the elements of stem:[v^{\ast}], compiling
 non-null **Struct**s and ignoring the rest.  To compile one such struct, we
-first normalize its meaningful fields, ignoring the rest:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=compile_import_struct]
-++++
-
-The normalization of each field involves checking for absence, type, and nulls.
+will need to normalize its meaningful fields, checking presence, type, and
+nullness.
 For `name` we return the text of non-null **String**s, normalizing everything
 else to the empty string:
 
@@ -934,8 +928,8 @@ For `version` we normalize to 1 when absent, malformed, or less than one:
 include::{modeltex}[tag=normalize_version]
 ++++
 
-For `max_id` we normalize to -1 when absent or malformed.
-Later, we'll handle all negative values uniformly as if the field were absent.
+For `max_id` we normalize to stem:[\langle \rangle] when absent, malformed, or
+less than zero:
 
 [{denotation}]
 ++++
@@ -950,7 +944,7 @@ Having extracted the field values from the struct, we can produce a sequence of
 include::{modeltex}[tag=compile_import]
 ++++
 
-First, we ignore malformed/absent names, as well as the name `$ion`: you cannot
+First, we ignore malformed/absent names, as well as the name `$ion`; you cannot
 explicitly import a system symbol table.
 _Catalog_lookup_ (coming soon!) searches the catalog for the best match to the
 name and version; it returns a sequence of at-most-one *SharedSymtab*.

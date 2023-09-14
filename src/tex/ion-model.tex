@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-14T18:45:56.836-00:00
+%%% This file was generated at 2023-09-14T19:38:43.595-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -413,7 +413,7 @@
 \mbox{\it symbol\_padding\/}(\mbox{\it n\/}) = $\`$ \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:0 = \mbox{\it n\/}\newline
+\:\mbox{\bf{if}}\:\mbox{\it n\/} = 0\newline
 \:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
 \:\mbox{\bf{else}}\:\langle \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/})\rangle \S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - 1)\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -431,49 +431,6 @@
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::adjust_length[]
-\newline
-\newline
-% tag::compile_import[]
-\mbox{\it compile\_import\/}(\mbox{\it name\/}, \mbox{\it version\/}, \mbox{\it max\/}, \mbox{\it c\/}) = $\`$ \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf I} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf SymTok*}\newline
-\:\: \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it name\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it name\/} = \mbox{\rm ``{\tt \$ion}''}\newline
-\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it found\/} = \mbox{\it Catalog\_lookup\/}(\mbox{\it c\/}, \mbox{\it name\/}, \mbox{\it version\/})\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it found\/}=0\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it max\/} < 0\newline
-\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\it display\_to\_string\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it name\/}, \mbox{\rm ``{\tt  @}''}, \mbox{\it version\/}))\newline
-\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it max\/})\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it best\/} = \mbox{\it found\/}\!\downarrow_{0}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it version\/} = \mbox{\it best\/}\!\downarrow_{\mbox{\it version\/}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it max\/} < 0\newline
-\:\mbox{\bf{then}}\:\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}\newline
-\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}, \mbox{\it max\/})\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it max\/} < 0\newline
-\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\it display\_to\_string\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it name\/}, \mbox{\rm ``{\tt  @}''}, \mbox{\it version\/}))\newline
-\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}, \mbox{\it max\/})\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::compile_import[]
 \newline
 \newline
 % tag::normalize_name[]
@@ -525,17 +482,25 @@
 \newline
 \newline
 % tag::normalize_max_id[]
-\mbox{\it normalize\_max\_id\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I}\newline
+\mbox{\it normalize\_max\_id\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\:-1\newline
+\:\mbox{\bf{then}}\:\langle \rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
-\:\mbox{\bf{else}}\:-1\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it n\/} < 0\newline
+\:\mbox{\bf{then}}\:\langle \rangle \newline
+\:\mbox{\bf{else}}\:\langle \mbox{\it n\/}\rangle \newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{else}}\:\langle \rangle \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 \newline
@@ -544,20 +509,57 @@
 % end::normalize_max_id[]
 \newline
 \newline
-% tag::compile_import_struct[]
-\mbox{\it compile\_import\_struct\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::compile_import[]
+\mbox{\it compile\_import\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it normalize\_name\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''}))\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it normalize\_version\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''}))\newline
 \:\mbox{\bf{and}}\:\mbox{\it m\/} = \mbox{\it normalize\_max\_id\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt max\_id}''}))\newline
-\:\mbox{\bf{in}}\:\mbox{\it compile\_import\/}(\mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it m\/}, \rho\!\downarrow_{\mbox{\it catalog\/}}) \decrindent
+\:\mbox{\bf{and}}\:\mbox{\it c\/} = \rho\!\downarrow_{\mbox{\it catalog\/}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
+\:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it found\/} = \mbox{\it Catalog\_lookup\/}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it found\/}=0\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\it display\_to\_string\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt  @}''}, \mbox{\it v\/}))\newline
+\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\!\downarrow_{0})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it best\/} = \mbox{\it found\/}\!\downarrow_{0}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/} = \mbox{\it best\/}\!\downarrow_{\mbox{\it version\/}}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}\newline
+\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}, \mbox{\it m\/}\!\downarrow_{0})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\it display\_to\_string\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt  @}''}, \mbox{\it v\/}))\newline
+\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it best\/}\!\downarrow_{\mbox{\it symbols\/}}, \mbox{\it m\/}\!\downarrow_{0})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::compile_import_struct[]
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+ \decrindent
+% end::compile_import[]
 \newline
 \newline
-% tag::compile_imports_elts[]
-\mbox{\it compile\_imports\_elts\/}(\mbox{\it v\/}^{\ast}, \rho) = $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::compile_imports[]
+\mbox{\it compile\_imports\/}(\mbox{\it v\/}^{\ast}, \rho) = $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -567,16 +569,16 @@
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Struct}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it compile\_import\_struct\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Struct}}}, \rho)\newline
+\:\mbox{\bf{then}}\:\mbox{\it compile\_import\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Struct}}}, \rho)\newline
 \:\mbox{\bf{else}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
-\:\mbox{\bf{in}}\:\mbox{\it t\/}^{\ast}\S\mbox{\it compile\_imports\_elts\/}(\mbox{\it v\/}^{\ast}\dagger1, \rho) \decrindent
+\:\mbox{\bf{in}}\:\mbox{\it t\/}^{\ast}\S\mbox{\it compile\_imports\/}(\mbox{\it v\/}^{\ast}\dagger1, \rho) \decrindent
  \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::compile_imports_elts[]
+% end::compile_imports[]
 \newline
 \newline
 % tag::imported_symbols[]
@@ -594,7 +596,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\it IVM\/}})\S\mbox{\it compile\_imports\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}}, \rho)\newline
+\:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\it IVM\/}})\S\mbox{\it compile\_imports\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}}, \rho)\newline
 \:\mbox{\bf{else}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\it IVM\/}})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -607,8 +609,8 @@
 % end::imported_symbols[]
 \newline
 \newline
-% tag::compile_symbols_elts[]
-\mbox{\it compile\_symbols\_elts\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::compile_symbols[]
+\mbox{\it compile\_symbols\/}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -622,12 +624,12 @@
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
-\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S\mbox{\it compile\_symbols\_elts\/}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
+\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S\mbox{\it compile\_symbols\/}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
  \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::compile_symbols_elts[]
+% end::compile_symbols[]
 \newline
 \newline
 % tag::declared_symbols[]
@@ -642,7 +644,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it compile\_symbols\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}})\newline
+\:\mbox{\bf{then}}\:\mbox{\it compile\_symbols\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}})\newline
 \:\mbox{\bf{else}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
