@@ -37,13 +37,6 @@ Utilities for testing the Ion denotational model.
                (remove_first (|v2| (equal v1 v2)) list2)))))))
 
 
-  (define (is_safe v)
-    (or (is_null_null v)
-        (is_bool      v)
-        (is_int       v)
-        (is_string    v)))
-
-
   //============================================================================
   // Creating model values for the input domains like RValue
 
@@ -66,15 +59,6 @@ Utilities for testing the Ion denotational model.
     (lift_to String
       (if (is_null c) DOTNULL
         (inject_into Unicode c))))
-
-  (define (mk_SafeVal c)
-    (lift_to SafeVal
-      (cond
-        ((is_null_null c) (mk_NullNull c))
-        ((is_bool      c) (mk_Boolean  c))
-        ((is_int       c) (mk_Int      c))
-        ((is_string    c) (mk_String   c))
-        (true (raise_argument_error "mk_SafeVal" "null/bool/int/string" 0 c)))))
 
 
   // Symbols
@@ -117,10 +101,13 @@ Utilities for testing the Ion denotational model.
       (lift_to RContent
         (let [(c (annotate c))]  // Remove any annotations
           (cond
-            ((is_safe   c) (mk_SafeVal c))
             ((is_symbol c) (mk_RSymbol    c))
             ((is_list   c) (mk_RList   c))
             ((is_struct c) (mk_RStruct c))
+            ((is_null_null c) (mk_NullNull c))
+            ((is_bool      c) (mk_Boolean  c))
+            ((is_int       c) (mk_Int      c))
+            ((is_string    c) (mk_String   c))
             (true (raise_argument_error "mk_RValue" "symbol/bool/int/string/list" 0 c)))))))
 
   (define (mk_TRValue c)
@@ -153,15 +140,6 @@ Utilities for testing the Ion denotational model.
     (if (element_of v DotNull)
       null.string
       (eject (unwrap v))))
-
-  (define (eject_SafeVal v)
-    (let [(ejector (cond
-                     ((element_of v NullNull) eject_NullNull)
-                     ((element_of v Boolean ) eject_Boolean )
-                     ((element_of v Int     ) eject_Int     )
-                     ((element_of v String  ) eject_String  )
-                     (true (raise (subdomain v)))))]
-      (ejector (unwrap v))))
 
 
   // Symbols
@@ -200,10 +178,13 @@ Utilities for testing the Ion denotational model.
 
   (define (eject_Content v)
     (let [(ejector (cond
-                     ((element_of v SafeVal) eject_SafeVal)
-                     ((element_of v Symbol ) eject_Symbol)
-                     ((element_of v List   ) eject_List)
-                     ((element_of v Struct ) eject_Struct)
+                     ((element_of v Symbol  ) eject_Symbol  )
+                     ((element_of v List    ) eject_List    )
+                     ((element_of v Struct  ) eject_Struct  )
+                     ((element_of v NullNull) eject_NullNull)
+                     ((element_of v Boolean ) eject_Boolean )
+                     ((element_of v Int     ) eject_Int     )
+                     ((element_of v String  ) eject_String  )
                      (true (raise (subdomain v)))))]
       (ejector (unwrap v))))
 
@@ -228,9 +209,9 @@ Utilities for testing the Ion denotational model.
         stx)))
 
   (define parse
-    "Construct a `TRValue*` denoting the input values."
+    "Construct a `Document` denoting the input syntax."
     (lambda input
-      (apply seq 'TRValue*' (map mk_TRValue input))))
+      (lift_to Document (apply seq 'TRValue*' (map mk_TRValue input)))))
 
 
   //============================================================================

@@ -6,7 +6,6 @@ TODOs
 -----
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
-  * B = booleans
   * Z = integers
   * N = natural numbers?
   * S = strings of Unicode code points?

@@ -7,6 +7,7 @@ A denotational semantic model of Ion.
 TODO
 ----
 Terminology:
+* Rename domain `Boolean` to `Bool` to align with Ion spec.
 * Rename "raw value" etc to "encoding value"?
   * Safe values -> literals?
 
@@ -95,9 +96,6 @@ Spec Problems
     (dom Int      = (+ I DotNull))
     (dom String   = (+ Unicode DotNull))
 
-    (dom SafeVal = (+ NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/)
-      "Values that cannot contain SIDs")
-
 
     //=============================
     // Raw-layer Data Types, which can contain unresolved SIDs
@@ -112,7 +110,7 @@ Spec Problems
 
 
     // The "raw" data model
-    (dom RContent = (+ SafeVal RSymbol RList RStruct))
+    (dom RContent   = (+ RSymbol RList RStruct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom RValue     = (* 'RSymTok*' RContent))
     (dom TRValue    = (+ RValue IVM))
 
@@ -135,7 +133,7 @@ Spec Problems
     (dom Struct   = (+ 'Field*' DotNull))
 
     // The Ion data model, proper
-    (dom Content   = (+ SafeVal Symbol List Struct))
+    (dom Content   = (+ Symbol List Struct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom Value     = (* 'SymTok*' Content))
 
     (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
@@ -214,9 +212,9 @@ Spec Problems
 
     (fn compile_SST ((s Struct) -> SharedSymtab)
       (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
-                 SafeVal String Unicode)),
+                 String Unicode)),
             (v (lower (Value_content (seq_head (Struct_get1 s "version")))
-                 SafeVal Int I))]
+                 Int I))]
         (tuple SharedSymtab n v (declared_symbols s))))
 
 
@@ -298,14 +296,14 @@ Spec Problems
       (if (seq_is_empty vs) EMPTY_UNICODE
         (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c String) (not (element_of c DotNull)))
-            (lower c SafeVal String Unicode)
+            (lower c String Unicode)
             EMPTY_UNICODE))))
 
     (fn normalize_version ((vs 'Value*') -> I)                // 1 = absent or invalid
       (if (seq_is_empty vs) 1
         (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
-            (let [(i (lower c SafeVal Int I))]
+            (let [(i (lower c Int I))]
               (if (< (eject i) 1) 1 i))
             1))))
 
@@ -314,7 +312,7 @@ Spec Problems
         -1
         (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
-            (lower c SafeVal Int I)
+            (lower c Int I)
             -1))))
 
     (fn compile_import_struct ((s Struct) (r Environment) -> 'SymTok*')
@@ -349,7 +347,7 @@ Spec Problems
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
           (let [(t (if (and (element_of c String) (not (element_of c DotNull)))
-                     (lift_to SymTok (lower c SafeVal String Unicode))
+                     (lift_to SymTok (lower c String Unicode))
                      (lift_to SymTok SYM0)))]
             (seq_prepend t (compile_symbols_elts (seq_tail vs)))))))
 
@@ -399,16 +397,21 @@ Spec Problems
 
 
     (fn E_RContent ((rv RContent) (r Environment) -> Content)
-      // General value evaluation
-      (if (element_of rv SafeVal)
-        (lift (lower rv SafeVal) Content)
-        (if (element_of rv RSymbol)
-          (lift (E_RSymbol (lower rv RSymbol) r) Content)
-          (if (element_of rv RList)
-            (lift (E_RList (lower rv RList) r) Content)
-            (if (element_of rv RStruct)
-              (lift (E_RStruct (lower rv RStruct) r) Content)
-              (raise "not implemented"))))))
+      (if (element_of rv RSymbol)
+        (lift (E_RSymbol (lower rv RSymbol) r) Content)
+        (if (element_of rv RList)
+          (lift (E_RList (lower rv RList) r) Content)
+          (if (element_of rv RStruct)
+            (lift (E_RStruct (lower rv RStruct) r) Content)
+            (if (element_of rv NullNull)
+              (lift (lower rv NullNull) Content)
+              (if (element_of rv Boolean)
+                (lift (lower rv Boolean) Content)
+                (if (element_of rv Int)
+                  (lift (lower rv Int) Content)
+                  (if (element_of rv String)
+                    (lift (lower rv String) Content)
+                    (raise "not implemented")))))))))
 
 
     (fn E_RSymTok ((s RSymTok) (r Environment) -> SymTok)
@@ -489,10 +492,12 @@ Spec Problems
       ('TRValue*' x Environment x Continuation -> 'Value*'))
   */
 
-    (fn expand ((trvs 'TRValue*') (c Catalog) -> 'Value*')
+    (dom Document = (+ 'TRValue*'))
+
+    (fn expand ((d Document) (c Catalog) -> 'Value*')
       (let [(r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
             (k0 (mk_fn TContinuation (r vs) vs))]
-        ('TE*' trvs r0 k0)))
+        ('TE*' (lower_to 'TRValue*' d) r0 k0)))
   )
 
   (define IVM_1_0          (tuple IVM (inject_into I 1) (inject_into I 0)))
