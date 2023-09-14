@@ -7,7 +7,6 @@ A denotational semantic model of Ion.
 TODO
 ----
 Terminology:
-* Rename domain `Boolean` to `Bool` to align with Ion spec.
 * Rename "raw value" etc to "encoding value"?
   * Safe values -> literals?
 * Figure out the proper name for `I`.  N? Z?
@@ -93,7 +92,7 @@ Spec Problems
     (dom DotNull = "Sentinel for typed nulls")
 
     (dom NullNull = (+ DotNull))
-    (dom Boolean  = (+ B DotNull))
+    (dom Bool     = (+ B DotNull))
     (dom Int      = (+ I DotNull))
     (dom String   = (+ Unicode DotNull))
 
@@ -112,7 +111,7 @@ Spec Problems
 
 
     // The "raw" data model
-    (dom RContent   = (+ RSymbol RList RSexp RStruct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
+    (dom RContent   = (+ RSymbol RList RSexp RStruct NullNull Bool Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom RValue     = (* 'RSymTok*' RContent))
     (dom TRValue    = (+ RValue IVM))
 
@@ -136,7 +135,7 @@ Spec Problems
     (dom Struct   = (+ 'Field*' DotNull))
 
     // The Ion data model, proper
-    (dom Content   = (+ Symbol List Sexp Struct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
+    (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom Value     = (* 'SymTok*' Content))
 
     (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
@@ -412,8 +411,8 @@ Spec Problems
               (lift (E_RStruct (lower rv RStruct) r) Content)
               (if (element_of rv NullNull)
                 (lift (lower rv NullNull) Content)
-                (if (element_of rv Boolean)
-                  (lift (lower rv Boolean) Content)
+                (if (element_of rv Bool)
+                  (lift (lower rv Bool) Content)
                   (if (element_of rv Int)
                     (lift (lower rv Int) Content)
                     (if (element_of rv String)

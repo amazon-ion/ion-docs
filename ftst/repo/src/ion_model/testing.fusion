@@ -45,8 +45,8 @@ Utilities for testing the Ion denotational model.
   (define (mk_NullNull c)
     (lift DOTNULL NullNull))
 
-  (define (mk_Boolean c)
-    (lift_to Boolean
+  (define (mk_Bool c)
+    (lift_to Bool
       (if (is_null c) DOTNULL
         (inject_into B c))))
 
@@ -111,7 +111,7 @@ Utilities for testing the Ion denotational model.
             ((is_sexp      c) (mk_RSexp    c))
             ((is_struct    c) (mk_RStruct  c))
             ((is_null_null c) (mk_NullNull c))
-            ((is_bool      c) (mk_Boolean  c))
+            ((is_bool      c) (mk_Bool  c))
             ((is_int       c) (mk_Int      c))
             ((is_string    c) (mk_String   c))
             (true (raise_argument_error "mk_RValue" "symbol/bool/int/string/list" 0 c)))))))
@@ -132,7 +132,7 @@ Utilities for testing the Ion denotational model.
     (assert (element_of v DotNull))
     null.null)
 
-  (define (eject_Boolean v)
+  (define (eject_Bool v)
     (if (element_of v DotNull)
       null.bool
       (eject (unwrap v))))
@@ -194,7 +194,7 @@ Utilities for testing the Ion denotational model.
                      ((element_of v Sexp    ) eject_Sexp    )
                      ((element_of v Struct  ) eject_Struct  )
                      ((element_of v NullNull) eject_NullNull)
-                     ((element_of v Boolean ) eject_Boolean )
+                     ((element_of v Bool ) eject_Bool )
                      ((element_of v Int     ) eject_Int     )
                      ((element_of v String  ) eject_String  )
                      (true (raise (subdomain v)))))]
