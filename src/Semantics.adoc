@@ -40,7 +40,7 @@ to introduce a template mechanism fell squarely into this zone of
 uncertainty, where misalignment on terminology and semantics caused frustration
 and delay.  As the design grew to include a full-blown macro system, we knew
 we needed a more robust way to communicate--to ourselves and to others--about the
-intended semantics and behavior.  When a day at the whiteboard sketching a
+proposed feature's semantics and behavior.  When a day at the whiteboard sketching a
 formal model of the raw-layer semantics led to a-ha moments and bug discoveries
 within the spec, we knew this would be a fruitful approach.
 
@@ -208,19 +208,45 @@ current draft.
 [#datamodel]
 == The Ion Data Model
 
-Before we get into the mechanics of expansion, we need to define the data model
-that flows through that process.
+We start our model by defining the domain of Ion data.
+In other words, what values can be encoded in an Ion document, and what do they
+mean?
+
+At a high level, the definition will be unsurprising to those familiar with Ion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value]
+\newline
+include::{modeltex}[tag=Content]
+++++
+
+An Ion value is a potentially-empty sequence of symbol tokens annotating some
+content, which is partitioned into several typed domains.
+
+NOTE: This denotation currently doesn't cover Ion's decimal, float, timestamp,
+blob, and clob types, since they are "`atomic`" from the perspective of the
+expansion process and thus have little effect on the remainder of the model.
+
+We'll take the opportunity to introduce a syntactic habit that we'll use for
+tuple domains like *Value*: simple functions that provide access to the tuple's
+components by name:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value_annots]
+\newline
+include::{modeltex}[tag=Value_content]
+++++
+
+This notation further overloads the stem:[\downarrow] operator, but everything
+here is strongly-typed so things remain well-defined.
 
 
-=== Safe Values
+=== Simple Values
 
-TIP: We know that "`safe`" is not the best discriminator for this set of values.
-Please suggest better alternatives!
-
-We'll start defining our data model with the easy cases: data types that cannot
-contain SIDS and therefore don't require expansion.
-For the moment, we are ignoring Ion annotations; we'll handle them elsewhere in
-the domain model.
+We'll continue defining our data model with the easy cases: data types that
+cannot contain symbols and therefore don't require expansion.
 
 [{denotation}]
 ++++
@@ -248,89 +274,43 @@ For example, if we have a value _v_ such that
 stem:[v \in \mbox{\bf Boolean} \wedge v \in \mbox{\bf DotNull}]
 then we know that _v_ denotes `null.bool`.
 
-In order to streamline some of the denotational functions, we'll group these
-together into a common domain:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=SafeVal]
-++++
-
-Whereas the data types collected under **SafeVal** are modeled identically in
-the raw and application layers, the remaining types must distinguish them.
-
-NOTE: This denotation currently doesn't cover Ion's decimal, float, timestamp,
-blob, and clob types.  If it did, they would be part of **SafeVal**,
-with little effect on the remainder of the model.
-
 
 === Symbols
 
 Symbols form the core of this denotation, which would be trivial if we didn't
-need to expand SIDs into their text.
+need to expand symbol addresses into their text.
 The following domains define their meaning:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RSymTok]
+include::{modeltex}[tag=Sym0]
 \newline
 include::{modeltex}[tag=SymTok]
-\newline
-include::{modeltex}[tag=Sym0]
-++++
-
-The on-the-wire representation of a symbol is denoted by a _raw symbol token_
-**RSymTok** which is either a Unicode string or an integer SID.
-After expansion, we get a non-raw **SymTok**, where a SID isn't possible,
-but we can still get `$0`.
-To express that, we use a singleton domain **Sym0** containing only an opaque
-constant named `SYM0`.
-
-Symbol tokens are used to define annotations, field names, and symbol values.
-The latter are denoted as follows, where the value is either a symbol token or
-`null.symbol`.
-
-[{denotation}]
-++++
-include::{modeltex}[tag=RSymbol]
 \newline
 include::{modeltex}[tag=Symbol]
 ++++
 
-To support our ability to match annotations and locate struct fields, we define
-a couple helper functions.
+*Sym0* is a singleton domain containing only an opaque constant named `SYM0`.
+As we'll see, this is our denotation for the syntactic token `$0`, symbol zero.
 
-[{denotation}]
-++++
-include::{modeltex}[tag=SymTok_matches]
-\newline\newline
-include::{modeltex}[tag=Symbol_matches]
-++++
+*SymTok* denotes an expanded symbol token, either a Unicode string or `$0`.
+Symbol tokens are used to define annotations, field names, and symbol values.
 
-_SymTok_matches_ is straightforward: if the given **SymTok** is **Unicode** then
-we lower into that domain and compare with the argument.
-Otherwise, the token must be **Sym0**, so we return **false**.
-
-_Symbol_matches_ similarly checks whether the **Symbol** is a **SymTok** (as
-opposed to **DotNull**) before calling _SymTok_matches_.
+*Symbol* denotes the latter, being either a symbol token or `null.symbol`.
 
 
-=== Lists
+=== Containers
 
 Now that we've defined all of Ion's scalar types, we need to address containers.
-Because these types can include symbols, we need both raw and non-raw domains.
 
 Lists are simple to define: they are just sequences of values, or null.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RList]
-\newline
 include::{modeltex}[tag=List]
 ++++
 
-Here we introduce recursion into the domain model by using the (forthcoming)
-aggregate domains covering all Ion values in both the raw and non-raw layers.
+// TODO note the recursion/reflexivity introduced by using Value?
 
 We'll eventually need to extract the sequence of values inside a list, so let's
 create a little accessor function to make the math more clear:
@@ -343,24 +323,15 @@ include::{modeltex}[tag=List_elts]
 NOTE: This denotation currently doesn't cover Ion S-expressions; they would work
 identically to lists.
 
-
-=== Structs
-
-The domain model for structs is not much more complicated.
+The domain model for structs is not much more complicated: a struct is either
+null or a set of fields, and a field is a tuple with a symbol token and a value.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RField]
-\newline
-include::{modeltex}[tag=RStruct]
+include::{modeltex}[tag=Struct]
 \newline
 include::{modeltex}[tag=Field]
-\newline
-include::{modeltex}[tag=Struct]
 ++++
-
-This shouldn't be surprising: a struct is either null or a set of fields,
-and a field is a tuple with a symbol token and a value.
 
 IMPORTANT: This model is subtly incorrect, since its fields are ordered within a
 struct.  Modeling unordered collections in lambda calculus is quite tricky, so
@@ -370,13 +341,49 @@ As before, we introduce some helper notation to deconstruct fields:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RField_name]
-\newline
-include::{modeltex}[tag=RField_value]
-\newline
 include::{modeltex}[tag=Field_name]
 \newline
 include::{modeltex}[tag=Field_value]
+++++
+
+
+=== Matching Symbols
+
+Before we turn to the syntax model, let's define some functions that will be
+necessary to get from there to here during expansion.  In particular, we need
+to be able to match symbol tokens and symbol values by name, and to extract
+field values from structs.
+
+Matching symbol tokens is straightforward: if the given *SymTok* is *Unicode*
+then we lower into that domain and compare with the argument.
+Otherwise, the token must be *Sym0*, so we return *false*.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SymTok_matches]
+++++
+
+To match a symbol value, we check whether the *Symbol* is a *SymTok* (as
+opposed to *DotNull*) before calling _SymTok_matches_.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Symbol_matches]
+++++
+
+We can now check whether a value is a symbol with specific text:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value_is_symbol_matching]
+++++
+
+And we can match the first annotation on a value, necessary to detect local
+symbol tables at top-level:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value_has_first_annot]
 ++++
 
 To get data out of a struct by field name, we need a lookup function:
@@ -406,25 +413,54 @@ Note that this still returns a **Value**{asterisk} but the sequence always has
 zero or one elements.
 
 
-=== Annotated Values
+[#syntaxmodel]
+== The Syntax Model
 
-Having defined all concrete types in the Ion data model, we can model their
-union, thus representing all Ion data.  This is where we'll attach annotations
-to content.
+The previous section defines the values presented to an Ion application, or
+rather the domain of values that can be encoded into and read from an Ion
+document or stream.
+Here we define domains denoting the _syntax_ used in such documents.
+It is reasonable to think of these domains as representing parse trees coming
+out of the Ion parser before doing anything involving symbols and symbol tables.
+
+NOTE: Historically, Ion documents and implementations have referred to this with
+various combinations of the words "`system`" or "`raw`" with "`view`" or "`layer`".
+The (poorly-specified) intended connotation was that this is the data visible to
+the "`Ion system`", requiring additional processing to generate the "`application`"
+or "`user`" view of the document.
+
+The data and syntax models are identical except for their handling of symbol
+tokens, so the domains mirror each other.
+Here we have the domain names prefixed with **R** to connote their raw nature.
+
+// TODO  This model abstracts over the concrete syntax, so applies to text and binary
+
+In the syntax model, a symbol token is either text like `'name'` or a symbol
+address like `$4`.
+Therefore, a *RSymTok* is either a Unicode string or an integer address:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RContent]
-\newline
-include::{modeltex}[tag=RValue]
-\newline
-include::{modeltex}[tag=Content]
-\newline
-include::{modeltex}[tag=Value]
+include::{modeltex}[tag=RSymTok]
 ++++
 
-Formally, a values consists of its sequence of annotations, which are symbol
-tokens, and its content, which is the union of all data types.
+Everything else in the syntax model simply propagates *RSymTok* in place of *SymTok*.
+All domains are mirrored except the simple types, which cannot contain symbol tokens.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=RValue]
+\newline
+include::{modeltex}[tag=RContent]
+\newline
+include::{modeltex}[tag=RSymbol]
+\newline
+include::{modeltex}[tag=RList]
+\newline
+include::{modeltex}[tag=RStruct]
+\newline
+include::{modeltex}[tag=RField]
+++++
 
 As usual, accessor functions:
 
@@ -434,23 +470,46 @@ include::{modeltex}[tag=RValue_annots]
 \newline
 include::{modeltex}[tag=RValue_content]
 \newline
-include::{modeltex}[tag=Value_annots]
+include::{modeltex}[tag=RField_name]
 \newline
-include::{modeltex}[tag=Value_content]
+include::{modeltex}[tag=RField_value]
 ++++
 
-// TODO Move these down where they're needed.
-And finally, a couple of bespoke predicates that we'll use to detect and compile
-local symbol tables.
+
+=== Top Level
+
+The syntax and data models also diverge at the top level of documents, which can
+contain __directives__ that are not part of the application-facing data model.
+Instead, directives affect the encoding of the data that follows.
+
+Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
+tables (LSTs).  The latter are simply annotated **RStruct**s that require no
+special handling here.  In contrast, IVMs are dedicated syntactic keywords
+(opcode in binary); to everyone's confusion, they are not symbols even though
+they match the grammar for symbols.
+
+Since we cannot express IVMs within *RValue*, we model these top-level-only
+features through a top-level-only domain:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=Value_has_first_annot]
-\newline\newline
-include::{modeltex}[tag=Value_is_symbol_matching]
+include::{modeltex}[tag=TRValue]
+\newline
+include::{modeltex}[tag=IVM]
 ++++
 
-This concludes our semantics of the raw and application-level data models.
+In other words, the top-level can contain any raw value, as well as IVMs.
+There's no corresponding non-raw domain **TValue** since directives need to be
+removed by the expansion function on the way to producing application data.
+
+And finally, we can model an entire Ion document:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Document]
+++++
+
+This concludes our semantics of the syntax and data models.
 These are the inputs and outputs, respectively, of the expansion process, which
 we will now explore.
 
@@ -466,32 +525,14 @@ We'll encapsulate that process in this function:
 // TODO Generate these function signatures.
 [{denotation}]
 ++++
-\mbox{\it expand} : \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
+\mbox{\it expand} : \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
 ++++
 
-To begin, let's consider the top-level structure of an Ion document.
+To begin, let's consider the state that must be maintained while expanding a
+document.
 
 
 === The Encoding Environment
-
-The top-level of an Ion document can contain __directives__ that are not part of
-the application-facing data model.
-Instead, directives affect the encoding of the data that follows.
-
-Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
-tables (LSTs).  Syntactically, IVMs are expressed through a dedicated keyword
-(opcode in binary); in particular, they are not symbols.
-Since we cannot express IVMs within *RValue*, we model these top-level-only
-features through a top-level-only domain:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=TRValue]
-++++
-
-In other words, the top-level can contain any raw value, as well as IVMs.
-There's no corresponding non-raw domain **TValue** since directives need to be
-removed by the expansion function on the way to producing application data.
 
 Directives effectively change the state of the decoder as it turns bytes on the
 wire into application data.
@@ -500,8 +541,6 @@ We model this state, known as the __environment__, as follows:
 [{denotation}]
 ++++
 include::{modeltex}[tag=Environment]
-\newline
-include::{modeltex}[tag=Catalog]
 ++++
 
 The encoding environment is a tuple with three components.
@@ -579,7 +618,8 @@ include::{modeltex}[tag=E*]
 ++++
 
 To expand **RContent** we must perform a type-switch.
-**SafeVal**s pass through easily by being re-wrapped as **Content**.
+The atomic domains **NullNull**, **Boolean**, **Int**, and **String** pass
+through easily by being re-wrapped as **Content**.
 Anything else can contain symbol tokens to be expanded, and in each case we
 downcast the content, call a type-specific function, then rewrap the result.
 
@@ -935,7 +975,7 @@ include::{modeltex}[tag=adjust_length]
 
 === Shared Symbol Tables and Catalogs
 
-We are down to our final denotations: the behavior of catalogs and the shared
+We are down to our final denotations: the meaning of catalogs and the shared
 symbol tables they contain.  We've already defined the relevant domains:
 
 [{denotation}]

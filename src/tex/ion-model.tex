@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-08T23:21:12.985-00:00
+%%% This file was generated at 2023-09-14T01:03:16.828-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -42,10 +42,6 @@
 \mbox{\bf String} = \mbox{\bf Unicode} + \mbox{\bf DotNull}
 % end::String[]
 \newline
-% tag::SafeVal[]
-\mbox{\bf SafeVal} = \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
-% end::SafeVal[]
-\newline
 % tag::RSymTok[]
 \mbox{\bf RSymTok} = \mbox{\bf Unicode} + \mbox{\bf I}
 % end::RSymTok[]
@@ -58,6 +54,10 @@
 \mbox{\bf RList} = \mbox{\bf RValue*} + \mbox{\bf DotNull}
 % end::RList[]
 \newline
+% tag::RSexp[]
+\mbox{\bf RSexp} = \mbox{\bf RValue*} + \mbox{\bf DotNull}
+% end::RSexp[]
+\newline
 % tag::RField[]
 \mbox{\bf RField} = \mbox{\bf RSymTok} \times \mbox{\bf RValue}
 % end::RField[]
@@ -67,7 +67,7 @@
 % end::RStruct[]
 \newline
 % tag::RContent[]
-\mbox{\bf RContent} = \mbox{\bf SafeVal} + \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RStruct}
+\mbox{\bf RContent} = \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
 % end::RContent[]
 \newline
 % tag::RValue[]
@@ -99,7 +99,7 @@
 % end::Struct[]
 \newline
 % tag::Content[]
-\mbox{\bf Content} = \mbox{\bf SafeVal} + \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Struct}
+\mbox{\bf Content} = \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
 % end::Content[]
 \newline
 % tag::Value[]
@@ -122,8 +122,19 @@
 \mbox{\bf TContinuation} = \mbox{\bf Environment} \times \mbox{\bf Value*} \rightarrow \mbox{\bf Value*}
 % end::TContinuation[]
 \newline
+% tag::Document[]
+\mbox{\bf Document} = \mbox{\bf TRValue*}
+% end::Document[]
+\newline
 % end::domains[]
 % tag::functions[]
+\newline
+% tag::IVM_eq[]
+(\mbox{\it i\/}_{1} = \mbox{\it i\/}_{2}) = $\`$ \mbox{\bf IVM} \times \mbox{\bf IVM} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+\mbox{\it i\/}_{1}\!\downarrow_{0} = \mbox{\it i\/}_{2}\!\downarrow_{0}\ \wedge\ \mbox{\it i\/}_{1}\!\downarrow_{1} = \mbox{\it i\/}_{2}\!\downarrow_{1} \decrindent
+% end::IVM_eq[]
+\newline
 \newline
 % tag::RValue_annots[]
 \mbox{\it rv\/}\!\downarrow_{\mbox{\it annots\/}} = $\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RSymTok*}\newline
@@ -279,7 +290,7 @@
 \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/}) = $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it i\/}\!\downarrow_{0} = 1\ \wedge\ \mbox{\it i\/}\!\downarrow_{1} = 0\newline
+\:\mbox{\bf{if}}\:(\mbox{\it i\/} = \mbox{\it IVM\_1\_0\/})\newline
 \:\mbox{\bf{then}}\:\langle \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/}), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \newline
 \:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt Unsupported Ion version}''})\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -319,8 +330,8 @@
 \mbox{\it compile\_SST\/}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedSymtab}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''})\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''})\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''})\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''})\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
 \:\mbox{\bf{in}}\:\mbox{\it{in}\small \mbox{\bf SharedSymtab}}(\langle \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it declared\_symbols\/}(\mbox{\it s\/})\rangle ) \decrindent
  \decrindent
 % end::compile_SST[]
@@ -471,7 +482,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
 \:\mbox{\bf{else}}\:\mbox{\it EMPTY\_UNICODE\/}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -492,7 +503,7 @@
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it i\/} < 1\newline
 \:\mbox{\bf{then}}\:1\newline
@@ -519,7 +530,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
 \:\mbox{\bf{else}}\:-1\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -603,7 +614,7 @@
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}})\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}})\newline
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
@@ -626,7 +637,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\it content\/}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:\mbox{\it compile\_symbols\_elts\/}(\mbox{\it c\/}\mid_{\mbox{\tiny \mbox{\bf List}}}\!\downarrow_{\mbox{\it elts\/}})\newline
 \:\mbox{\bf{else}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -687,9 +698,6 @@
 {\cal E}_{\mbox{\tiny\bf RContent}}(\mbox{\it rv\/}, \rho) = $\`$ \mbox{\bf RContent} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Content}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf SafeVal}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf SafeVal}}})\newline
-\:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RSymbol}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RSymbol}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RSymbol}}}, \rho))\newline
 \:\mbox{\bf{else}}\: \setandincrindent
@@ -698,7 +706,25 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RStruct}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RStruct}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RStruct}}}, \rho))\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf NullNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf NullNull}}})\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf Boolean}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf Boolean}}})\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf Int}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf Int}}})\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf String}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf String}}})\newline
 \:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt not implemented}''})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -828,12 +854,12 @@
 \newline
 \newline
 % tag::expand[]
-\mbox{\it expand\/}(\overline{\mbox{\it rv\/}^{\ast}}, \mbox{\it c\/}) = $\`$ \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}\newline
+\mbox{\it expand\/}(\mbox{\it d\/}, \mbox{\it c\/}) = $\`$ \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\rho_{0} = \mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it c\/}, \mbox{\it IVM\_1\_0\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it IVM\_1\_0\/})\rangle )\newline
 \:\mbox{\bf{and}}\:\kappa_{0} = \lambda \rho \mbox{\it v\/}^{\ast}.\mbox{\it v\/}^{\ast}\newline
-\:\mbox{\bf{in}}\:\overline{{\cal E}^{\ast}}(\overline{\mbox{\it rv\/}^{\ast}}, \rho_{0}, \kappa_{0}) \decrindent
+\:\mbox{\bf{in}}\:\overline{{\cal E}^{\ast}}(\mbox{\it d\/}\mid_{\mbox{\tiny \mbox{\bf TRValue*}}}, \rho_{0}, \kappa_{0}) \decrindent
  \decrindent
 % end::expand[]
 \newline
