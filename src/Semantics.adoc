@@ -16,6 +16,8 @@
 
 include::styles.adoc[]
 
+// TODO Can we write attributes that expand to stem?  eg for domain names.
+
 
 == Introduction
 
@@ -240,7 +242,7 @@ include::{modeltex}[tag=Value_content]
 ++++
 
 This notation further overloads the stem:[\downarrow] operator, but everything
-here is strongly-typed so things remain well-defined.
+here is strongly-typed so things remain unambiguous.
 
 
 === Simple Values
@@ -301,13 +303,13 @@ Symbol tokens are used to define annotations, field names, and symbol values.
 
 === Containers
 
-Now that we've defined all of Ion's scalar types, we need to address containers.
-
-Lists are simple to define: they are just sequences of values, or null.
+Ion sequences are simple to denote using sequence domains of values, or null.
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=List]
+\newline
+include::{modeltex}[tag=Sexp]
 ++++
 
 // TODO note the recursion/reflexivity introduced by using Value?
@@ -320,9 +322,6 @@ create a little accessor function to make the math more clear:
 include::{modeltex}[tag=List_elts]
 ++++
 
-NOTE: This denotation currently doesn't cover Ion S-expressions; they would work
-identically to lists.
-
 The domain model for structs is not much more complicated: a struct is either
 null or a set of fields, and a field is a tuple with a symbol token and a value.
 
@@ -333,10 +332,6 @@ include::{modeltex}[tag=Struct]
 include::{modeltex}[tag=Field]
 ++++
 
-IMPORTANT: This model is subtly incorrect, since its fields are ordered within a
-struct.  Modeling unordered collections in lambda calculus is quite tricky, so
-for now we'll settle for this defective approach.
-
 As before, we introduce some helper notation to deconstruct fields:
 
 [{denotation}]
@@ -345,6 +340,10 @@ include::{modeltex}[tag=Field_name]
 \newline
 include::{modeltex}[tag=Field_value]
 ++++
+
+IMPORTANT: This model is subtly incorrect, since its fields are ordered within a
+struct.  Modeling unordered collections in lambda calculus is quite tricky, so
+for now we'll settle for this defective approach.
 
 
 === Matching Symbols
@@ -456,6 +455,8 @@ include::{modeltex}[tag=RContent]
 include::{modeltex}[tag=RSymbol]
 \newline
 include::{modeltex}[tag=RList]
+\newline
+include::{modeltex}[tag=RSexp]
 \newline
 include::{modeltex}[tag=RStruct]
 \newline
@@ -635,11 +636,13 @@ Expanding **RSymbol** just requires distinguishing `symbol.null`:
 include::{modeltex}[tag=E_RSymbol]
 ++++
 
-Expanding **RList** is similar, with recursion on its sequence of elements:
+Expanding a sequence is similar, with recursion on its sequence of elements:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=E_RList]
+\newline\newline
+include::{modeltex}[tag=E_RSexp]
 ++++
 
 To handle **RStruct** with the same pattern, we'll add a helper to expand its

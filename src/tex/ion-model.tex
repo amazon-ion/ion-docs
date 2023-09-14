@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-14T01:03:16.828-00:00
+%%% This file was generated at 2023-09-14T18:45:56.836-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -67,7 +67,7 @@
 % end::RStruct[]
 \newline
 % tag::RContent[]
-\mbox{\bf RContent} = \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
+\mbox{\bf RContent} = \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RSexp} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
 % end::RContent[]
 \newline
 % tag::RValue[]
@@ -90,6 +90,10 @@
 \mbox{\bf List} = \mbox{\bf Value*} + \mbox{\bf DotNull}
 % end::List[]
 \newline
+% tag::Sexp[]
+\mbox{\bf Sexp} = \mbox{\bf Value*} + \mbox{\bf DotNull}
+% end::Sexp[]
+\newline
 % tag::Field[]
 \mbox{\bf Field} = \mbox{\bf SymTok} \times \mbox{\bf Value}
 % end::Field[]
@@ -99,7 +103,7 @@
 % end::Struct[]
 \newline
 % tag::Content[]
-\mbox{\bf Content} = \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
+\mbox{\bf Content} = \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
 % end::Content[]
 \newline
 % tag::Value[]
@@ -704,6 +708,9 @@
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RList}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RList}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RList}}}, \rho))\newline
 \:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RSexp}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it E\_RSexp\/}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RSexp}}}, \rho))\newline
+\:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RStruct}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}({\cal E}_{\mbox{\tiny\bf RStruct}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf RStruct}}}, \rho))\newline
 \:\mbox{\bf{else}}\: \setandincrindent
@@ -719,6 +726,8 @@
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf String}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf String}}})\newline
 \:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt not implemented}''})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -791,6 +800,18 @@
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::E_RList[]
+\newline
+\newline
+% tag::E_RSexp[]
+\mbox{\it E\_RSexp\/}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RSexp} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Sexp}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Sexp}}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small \mbox{\bf Sexp}}({\cal E}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\tiny \mbox{\bf RValue*}}}, \rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::E_RSexp[]
 \newline
 \newline
 % tag::E_RField*[]
