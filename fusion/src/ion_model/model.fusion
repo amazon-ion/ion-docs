@@ -261,7 +261,7 @@ Spec Problems
            (element_of (Value_content v) Struct)))
 
     (fn symbol_padding ((n I) -> 'SymTok*')
-      (if (=== 0 (eject n))
+      (if (=== (eject n) 0)
         EMPTY_SYMTOKS
         (seq_prepend (lift SYM0 SymTok)
           (symbol_padding (- (eject n) 1)))))
@@ -271,29 +271,6 @@ Spec Problems
         (seq_truncate ss (eject n))
         (seq_append ss (symbol_padding (- (eject n) (seq_length ss))))))
 
-    (fn compile_import ((name Unicode) (version I) (max I) (c Catalog) -> 'SymTok*')
-      (if (or (=== (eject name) "")
-              (=== (eject name) "$ion"))
-        EMPTY_SYMTOKS
-        (let [(found (Catalog_lookup c name version))]
-          (if (seq_is_empty found)
-            // The Catalog has nothing with this name.
-            (if (< (eject max) 0)
-              // If max_id is invalid or absent, must have exact match.
-              (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
-              (symbol_padding max))
-            // We found something in the catalog
-            (let [(best (ith found 0))]
-              (if (=== (eject version) (eject (SST_version best)))
-                // We have an exact match!
-                (if (< (eject max) 0)
-                  // No max_id, use as-is
-                  (SST_symbols best)
-                  (adjust_length (SST_symbols best) max))
-                // Inexact match
-                (if (< (eject max) 0)
-                  (raise (display_to_string "No exact-match for " (eject name) " @" (eject version)))
-                  (adjust_length (SST_symbols best) max))))))))
 
     (fn normalize_name ((vs 'Value*') -> Unicode)             // "" = absent or invalid
       (if (seq_is_empty vs) EMPTY_UNICODE
@@ -310,28 +287,53 @@ Spec Problems
               (if (< (eject i) 1) 1 i))
             1))))
 
-    (fn normalize_max_id ((vs 'Value*') -> I)                // < 0 = absent or invalid
+    (fn normalize_max_id ((vs 'Value*') -> 'I*')              // <> = absent or invalid
       (if (seq_is_empty vs)
-        -1
+        (seq 'I*')
         (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
-            (lower c Int I)
-            -1))))
+            (let [(n (lower c Int I))]
+              (if (< (eject n) 0) (seq 'I*') (seq 'I*' n)))
+            (seq 'I*')))))
 
-    (fn compile_import_struct ((s Struct) (r Environment) -> 'SymTok*')
-      (let [(n (normalize_name    (Struct_get1 s "name"))),
+
+    (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
+      (let [(n (normalize_name    (Struct_get1 s "name"   ))),
             (v (normalize_version (Struct_get1 s "version"))),
-            (m (normalize_max_id  (Struct_get1 s "max_id")))]
-        (compile_import n v m (Environment_catalog r))))
+            (m (normalize_max_id  (Struct_get1 s "max_id" ))),
+            (c (Environment_catalog r))]
+        (if (or (=== (eject n) "")
+                (=== (eject n) "$ion"))
+          EMPTY_SYMTOKS
+          (let [(found (Catalog_lookup c n v))]
+            (if (seq_is_empty found)
+              // The Catalog has nothing with this name.
+              (if (seq_is_empty m)
+                // If max_id is invalid or absent, must have exact match.
+                (raise (display_to_string "No exact-match for " (eject n) " @" (eject v)))
+                (symbol_padding (ith m 0)))
+              // We found something in the catalog
+              (let [(best (ith found 0))]
+                (if (=== (eject v) (eject (SST_version best)))
+                  // We have an exact match!
+                  (if (seq_is_empty m)
+                    // No max_id, use as-is
+                    (SST_symbols best)
+                    (adjust_length (SST_symbols best) (ith m 0)))
+                  // Inexact match
+                  (if (seq_is_empty m)
+                    (raise (display_to_string "No exact-match for " (eject n) " @" (eject v)))
+                    (adjust_length (SST_symbols best) (ith m 0))))))))))
 
-    (fn compile_imports_elts ((vs 'Value*') (r Environment) -> 'SymTok*')
+
+    (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
           (let [(ts (if (and (element_of c Struct) (not (element_of c DotNull)))
-                      (compile_import_struct (lower c Struct) r)
+                      (compile_import (lower c Struct) r)
                       EMPTY_SYMTOKS))]
-            (seq_append ts (compile_imports_elts (seq_tail vs) r))))))
+            (seq_append ts (compile_imports (seq_tail vs) r))))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
       (let [(vals (Struct_get1 s "imports"))]
@@ -342,17 +344,17 @@ Spec Problems
             (let [(c (Value_content (seq_head vals)))]
               (if (and (element_of c List) (not (element_of c DotNull)))
                 (seq_append (SymToks_for_IVM (Environment_IVM r))
-                            (compile_imports_elts (List_elts (lower c List)) r))
+                            (compile_imports (List_elts (lower c List)) r))
                 (SymToks_for_IVM (Environment_IVM r))))))))
 
-    (fn compile_symbols_elts ((vs 'Value*') -> 'SymTok*')
+    (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
           (let [(t (if (and (element_of c String) (not (element_of c DotNull)))
                      (lift_to SymTok (lower c String Unicode))
                      (lift_to SymTok SYM0)))]
-            (seq_prepend t (compile_symbols_elts (seq_tail vs)))))))
+            (seq_prepend t (compile_symbols (seq_tail vs)))))))
 
     (fn declared_symbols ((s Struct) -> 'SymTok*')
       (let [(vals (Struct_get1 s "symbols"))]
@@ -360,7 +362,7 @@ Spec Problems
           EMPTY_SYMTOKS
           (let [(c (Value_content (seq_head vals)))]
             (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_symbols_elts (List_elts (lower c List)))
+              (compile_symbols (List_elts (lower c List)))
               EMPTY_SYMTOKS)))))
 
 
