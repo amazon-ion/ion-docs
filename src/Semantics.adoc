@@ -256,7 +256,7 @@ include::{modeltex}[tag=DotNull]
 \newline
 include::{modeltex}[tag=NullNull]
 \newline
-include::{modeltex}[tag=Boolean]
+include::{modeltex}[tag=Bool]
 \newline
 include::{modeltex}[tag=Int]
 \newline
@@ -266,14 +266,14 @@ include::{modeltex}[tag=String]
 The singleton domain **DotNull** contains only an opaque constant `DOTNULL`
 that we use as a sentinel for the various typed nulls.  Such a thing is the only
 option for the **NullNull** domain, where it denotes `null.null`.  The domains
-**Boolean**, **Int**, and **String** simply combine the obvious primitive
+**Bool**, **Int**, and **String** simply combine the obvious primitive
 domains with the possibility of null.
 
 While we use a single sentinel value for all nulls, they are still
 strongly-typed in the data model, since the sentinel is "`wrapped`" by an
 appropriate domain denoting the data type.
 For example, if we have a value _v_ such that
-stem:[v \in \mbox{\bf Boolean} \wedge v \in \mbox{\bf DotNull}]
+stem:[v \in \mbox{\bf Bool} \wedge v \in \mbox{\bf DotNull}]
 then we know that _v_ denotes `null.bool`.
 
 
@@ -619,7 +619,7 @@ include::{modeltex}[tag=E*]
 ++++
 
 To expand **RContent** we must perform a type-switch.
-The atomic domains **NullNull**, **Boolean**, **Int**, and **String** pass
+The atomic domains **NullNull**, **Bool**, **Int**, and **String** pass
 through easily by being re-wrapped as **Content**.
 Anything else can contain symbol tokens to be expanded, and in each case we
 downcast the content, call a type-specific function, then rewrap the result.

@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-14T19:38:43.595-00:00
+%%% This file was generated at 2023-09-14T23:14:04.351-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -30,9 +30,9 @@
 \mbox{\bf NullNull} = \mbox{\bf DotNull}
 % end::NullNull[]
 \newline
-% tag::Boolean[]
-\mbox{\bf Boolean} = \mbox{\bf B} + \mbox{\bf DotNull}
-% end::Boolean[]
+% tag::Bool[]
+\mbox{\bf Bool} = \mbox{\bf B} + \mbox{\bf DotNull}
+% end::Bool[]
 \newline
 % tag::Int[]
 \mbox{\bf Int} = \mbox{\bf I} + \mbox{\bf DotNull}
@@ -67,7 +67,7 @@
 % end::RStruct[]
 \newline
 % tag::RContent[]
-\mbox{\bf RContent} = \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RSexp} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
+\mbox{\bf RContent} = \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RSexp} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
 % end::RContent[]
 \newline
 % tag::RValue[]
@@ -103,7 +103,7 @@
 % end::Struct[]
 \newline
 % tag::Content[]
-\mbox{\bf Content} = \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Boolean} + \mbox{\bf Int} + \mbox{\bf String}
+\mbox{\bf Content} = \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
 % end::Content[]
 \newline
 % tag::Value[]
@@ -719,8 +719,8 @@
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf NullNull}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf NullNull}}})\newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf Boolean}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf Boolean}}})\newline
+\:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf Bool}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf Bool}}})\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf Int}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small \mbox{\bf Content}}(\mbox{\it rv\/}\mid_{\mbox{\tiny \mbox{\bf Int}}})\newline
