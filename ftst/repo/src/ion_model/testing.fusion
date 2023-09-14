@@ -85,6 +85,11 @@ Utilities for testing the Ion denotational model.
       (if (is_null c) DOTNULL
         (apply seq 'RValue*' (map mk_RValue c)))))
 
+  (define (mk_RSexp c)
+    (lift_to RSexp
+      (if (is_null c) DOTNULL
+        (apply seq 'RValue*' (map mk_RValue c)))))
+
   (define (mk_RStruct c)
     (lift_to RStruct
       (if (is_null c) DOTNULL
@@ -101,9 +106,10 @@ Utilities for testing the Ion denotational model.
       (lift_to RContent
         (let [(c (annotate c))]  // Remove any annotations
           (cond
-            ((is_symbol c) (mk_RSymbol    c))
-            ((is_list   c) (mk_RList   c))
-            ((is_struct c) (mk_RStruct c))
+            ((is_symbol    c) (mk_RSymbol  c))
+            ((is_list      c) (mk_RList    c))
+            ((is_sexp      c) (mk_RSexp    c))
+            ((is_struct    c) (mk_RStruct  c))
             ((is_null_null c) (mk_NullNull c))
             ((is_bool      c) (mk_Boolean  c))
             ((is_int       c) (mk_Int      c))
@@ -166,6 +172,11 @@ Utilities for testing the Ion denotational model.
       null.list
       (apply list (eject_Values (unwrap v)))))
 
+  (define (eject_Sexp v)
+    (if (element_of v DotNull)
+      (quote null.sexp)
+      (apply sexp (eject_Values (unwrap v)))))
+
   (define (eject_Struct v)
     (if (element_of v DotNull)
       null.struct
@@ -180,6 +191,7 @@ Utilities for testing the Ion denotational model.
     (let [(ejector (cond
                      ((element_of v Symbol  ) eject_Symbol  )
                      ((element_of v List    ) eject_List    )
+                     ((element_of v Sexp    ) eject_Sexp    )
                      ((element_of v Struct  ) eject_Struct  )
                      ((element_of v NullNull) eject_NullNull)
                      ((element_of v Boolean ) eject_Boolean )

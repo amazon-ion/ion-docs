@@ -61,6 +61,13 @@ TODO
   (quote_top null.list a::null.list a::[] [[], 1, danny, '#$1']))
 
 
+// Sexps
+
+(check_expansion
+  (quote_top null.sexp a::null.sexp a::() (() 1 danny $ion))
+  (quote_top null.sexp a::null.sexp a::() (() 1 danny '#$1')))
+
+
 // Structs
 
 (check_expansion
@@ -73,6 +80,9 @@ TODO
 (check_expansion                                     // Non-structs pass through
   (quote_top first $ion_symbol_table::[] second)
   (quote_top first $ion_symbol_table::[] second))
+(check_expansion
+  (quote_top first $ion_symbol_table::() second)
+  (quote_top first $ion_symbol_table::() second))
 
 // IST structs are elided from app view
 (check_expansion
@@ -101,16 +111,15 @@ TODO
 (check_expansion
   (quote_top a '#$0')
   (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:42} '#$10'))
-// TODO [SEXP]
-//(check_expansion
-//  (quote_top a '#$0')
-//  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:("b")} '#$10'))
+(check_expansion
+  (quote_top a '#$0')
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:("b")} '#$10'))
 
 
 // Non-string and null `symbols` entries act like $0
 (check_expansion
-  (quote_top '#$0' '#$0' '#$0')
-  (quote_top $ion_symbol_table::{symbols:[a, 1, true]} '#$10' '#$11' '#$12'))
+  (quote_top '#$0' '#$0' '#$0' '#$0')
+  (quote_top $ion_symbol_table::{symbols:[a, 1, true, ()]} '#$10' '#$11' '#$12' '#$13'))
 (check_expansion
   (quote_top a '#$0' '#$0' '#$0' '#$0' b)
   (quote_top $ion_symbol_table::{symbols:["a", null.null, null.symbol, null.string, null.int, "b"]}
@@ -155,6 +164,11 @@ TODO
 (check_expansion
   (quote_top $ion a)
   (quote_top $ion_symbol_table::{symbols:["a"], imports:null.int} '#$1' '#$10'))
+
+// Ensure sexp isn't treated like a list; here the absent import would cause an error
+(check_expansion
+  (quote_top $ion a)
+  (quote_top $ion_symbol_table::{symbols:["a"], imports:({name:"absent"})} '#$1' '#$10'))
 
 
 // Non-exact-match imports
@@ -240,6 +254,9 @@ TODO
 (check_expansion
   (quote_top a)
   (quote_top $ion_symbol_table::{imports:[[],          {name:"abcs"}]} '#$10'))
+(check_expansion
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[(),          {name:"abcs"}]} '#$10'))
 
 
 // Normalise bad version values to 1

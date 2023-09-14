@@ -104,13 +104,14 @@ Spec Problems
     (dom RSymbol   = (+ RSymTok DotNull))
 
     (dom RList     = (+ 'RValue*' DotNull))
+    (dom RSexp     = (+ 'RValue*' DotNull))
 
     (dom RField    = (* RSymTok RValue))
     (dom RStruct   = (+ 'RField*' DotNull))
 
 
     // The "raw" data model
-    (dom RContent   = (+ RSymbol RList RStruct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
+    (dom RContent   = (+ RSymbol RList RSexp RStruct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom RValue     = (* 'RSymTok*' RContent))
     (dom TRValue    = (+ RValue IVM))
 
@@ -128,12 +129,13 @@ Spec Problems
     (dom Symbol    = (+ SymTok DotNull))
 
     (dom List     = (+ 'Value*' DotNull))
+    (dom Sexp     = (+ 'Value*' DotNull))
 
     (dom Field    = (* SymTok Value))
     (dom Struct   = (+ 'Field*' DotNull))
 
     // The Ion data model, proper
-    (dom Content   = (+ Symbol List Struct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
+    (dom Content   = (+ Symbol List Sexp Struct NullNull Boolean Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom Value     = (* 'SymTok*' Content))
 
     (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
@@ -401,17 +403,19 @@ Spec Problems
         (lift (E_RSymbol (lower rv RSymbol) r) Content)
         (if (element_of rv RList)
           (lift (E_RList (lower rv RList) r) Content)
-          (if (element_of rv RStruct)
-            (lift (E_RStruct (lower rv RStruct) r) Content)
-            (if (element_of rv NullNull)
-              (lift (lower rv NullNull) Content)
-              (if (element_of rv Boolean)
-                (lift (lower rv Boolean) Content)
-                (if (element_of rv Int)
-                  (lift (lower rv Int) Content)
-                  (if (element_of rv String)
-                    (lift (lower rv String) Content)
-                    (raise "not implemented")))))))))
+          (if (element_of rv RSexp)
+            (lift (E_RSexp (lower rv RSexp) r) Content)
+            (if (element_of rv RStruct)
+              (lift (E_RStruct (lower rv RStruct) r) Content)
+              (if (element_of rv NullNull)
+                (lift (lower rv NullNull) Content)
+                (if (element_of rv Boolean)
+                  (lift (lower rv Boolean) Content)
+                  (if (element_of rv Int)
+                    (lift (lower rv Int) Content)
+                    (if (element_of rv String)
+                      (lift (lower rv String) Content)
+                      (raise "not implemented"))))))))))
 
 
     (fn E_RSymTok ((s RSymTok) (r Environment) -> SymTok)
@@ -440,6 +444,10 @@ Spec Problems
         (lift DOTNULL List)
         (lift ('E*' (lower v 'RValue*') r) List)))
 
+    (fn E_RSexp ((v RSexp) (r Environment) -> Sexp)
+      (if (element_of v DotNull)
+        (lift DOTNULL Sexp)
+        (lift ('E*' (lower v 'RValue*') r) Sexp)))
 
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
       (if (seq_is_empty rfs)
