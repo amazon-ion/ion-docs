@@ -15,8 +15,8 @@
   {
     "name": "ion-java",
     "category": "core",
-    "latest_release_version": "1.10.2",
-    "latest_release_date": "2023-07-20",
+    "latest_release_version": "1.10.3",
+    "latest_release_date": "2023-09-12",
     "documentation": "https://www.javadoc.io/doc/com.amazon.ion/ion-java/"
   },
   {
