@@ -441,6 +441,7 @@ Lifts a subdomain value into a union domain.
 Returns the list of component domains.
     '''
     (let [(domains ((domain_data d)))]
+      // TODO Why are we validating this in an accessor?
       (unless (and (is_list domains)
                    (every is_domain domains))
         (raise_result_error "product_domain_subdomains" "list of domains" domains))

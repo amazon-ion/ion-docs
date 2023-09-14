@@ -10,6 +10,7 @@ Terminology:
 * Rename domain `Boolean` to `Bool` to align with Ion spec.
 * Rename "raw value" etc to "encoding value"?
   * Safe values -> literals?
+* Figure out the proper name for `I`.  N? Z?
 
 Features:
 * [SEXP] Model sexps, we need them for everything in 1.1.
@@ -220,7 +221,7 @@ Spec Problems
         (tuple SharedSymtab n v (declared_symbols s))))
 
 
-    (dom Catalog = (+ 'SharedSymtab*'))  // TODO * would be better
+    (dom Catalog = (+ 'SharedSymtab*'))
 
     (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab*')
       (letrec [(seek (lambda (ssts n v bs)

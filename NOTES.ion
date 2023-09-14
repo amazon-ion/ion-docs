@@ -27,11 +27,18 @@ TODOs
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
 * Domain constants `(val <name> <expr>)`
 * Product domains should allow one field; more natural than singleton unions.
+  * I'm not sure; it's simpler to simply lift/than to wrap in sequence then lift
+    which is how tuple construction works (and how its rendered).
+  * Still, I see no reason to disallow it.
 * [LET] Functional let form. (See L.I.S.P. p172)
+  * I'm not sure we need to bother, Fusion `let` is close if not identical.
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
 * Delay and memoize component domains (enable recursive types)
-* Sequence domains like Val+
+  * Allows the author to arrange domains arbitrarily, controlling the order in
+    the document.
+* Limited sequence domains like Val? and Val+
+  * Improves readability of the math.  Hard to do in the model.
 
 
 Requires Fusion features:

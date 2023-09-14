@@ -10,11 +10,14 @@ We "tunnel" special tokens as follows:
   * Both input and output documents use symbols of the form `'#$ddd'` to represent
     SIDS.
   * Similarly, `'#$ion_d_d'` represents an IVM within the input.
+    * At present only known IVMS are recognized. [ALL-IVM]
 
 
 
 TODO
 ----
+* [ALL-IVM] Generalize injection of #$ion_d_d to recognize all.
+* Reject use of any unrecognized `#$` symbol.
 
 '''
 
