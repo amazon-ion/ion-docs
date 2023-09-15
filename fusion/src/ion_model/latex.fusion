@@ -53,6 +53,21 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method Symbol_matches      (pp_binary "" " \\cong " ""))
       (form_method SymTok_matches      (pp_binary "" " \\cong " ""))
 
+      // This doesn't read well, since the RHS is a quoted string
+      // (form_method Value_is_symbol_matching  (pp_binary "" " \\cong " ""))
+
+
+      (sym_image "{\\cal C}_{\\mbox{\\small import}}"             compile_import)
+      (sym_image "{\\cal C}_{\\mbox{\\small import}}^{\\ast}"     compile_imports)
+      (sym_image "{\\cal C}_{\\mbox{\\small symbol}}^{\\ast}"     compile_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\small\\tt symbols}}"        declared_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\small\\tt imports}}"        imported_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\small LST}}"                SymToks_for_LST)
+
+      (sym_image "{\\cal N}_{\\mbox{\\small\\tt max\\_id}}"       normalize_max_id)
+      (sym_image "{\\cal N}_{\\mbox{\\small\\tt name}}"           normalize_name)
+      (sym_image "{\\cal N}_{\\mbox{\\small\\tt version}}"        normalize_version)
+
       (sym_image "{\\cal E}"                                      'E')
       (sym_image "{\\cal E}^{\\ast}"                              'E*')
       (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RContent}}"        'E_RContent')
@@ -88,6 +103,10 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it v\\/}^{\\ast}"               vs vals)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{1}"           vs1)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{2}"           vs2)
+
+      // TODO [CONST] Framework should be able to "inline" these definitions.
+      (sym_image "\\langle\\rangle" EMPTY_SYMTOKS)
+      (sym_image "\\langle\\rangle" EMPTY_UNICODE)
     ))
 
 )

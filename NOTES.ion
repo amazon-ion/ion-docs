@@ -25,7 +25,8 @@ TODOs
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
   * This makes indirect lowering unambiguous.
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
-* Domain constants `(val <name> <expr>)`
+* [CONST] Domain constants `(val <name> <expr>)`
+  * Either print definition as part of the model, or inline them where used.
 * Product domains should allow one field; more natural than singleton unions.
   * I'm not sure; it's simpler to simply lift/than to wrap in sequence then lift
     which is how tuple construction works (and how its rendered).

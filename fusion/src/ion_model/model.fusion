@@ -335,16 +335,17 @@ Spec Problems
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
     (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
-      (let [(vals (Struct_get1 s "imports"))]
+      (let [(vals (Struct_get1 s "imports")),
+            (ts (SymToks_for_IVM (Environment_IVM r)))]
         (if (seq_is_empty vals)
-          (SymToks_for_IVM (Environment_IVM r))
+          ts
           (if (eject (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table"))
             (Environment_symbols r)
             (let [(c (Value_content (seq_head vals)))]
               (if (and (element_of c List) (not (element_of c DotNull)))
-                (seq_append (SymToks_for_IVM (Environment_IVM r))
+                (seq_append ts
                             (compile_imports (List_elts (lower c List)) r))
-                (SymToks_for_IVM (Environment_IVM r))))))))
+                ts))))))
 
     (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
@@ -369,7 +370,7 @@ Spec Problems
     
     (fn SymToks_for_LST ((s Struct) (r Environment) -> 'SymTok*')
       (if (element_of s DotNull)
-        (SymToks_for_LST EMPTY_STRUCT r)
+        (SymToks_for_LST (lift (seq 'Field*') Struct) r)
         (seq_append (imported_symbols s r)
                     (declared_symbols s))))
 
@@ -516,5 +517,4 @@ Spec Problems
   (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
   (define EMPTY_UNICODE    (inject_into Unicode ""))
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
-  (define EMPTY_STRUCT     (lift (seq 'Field*') Struct))
 )
