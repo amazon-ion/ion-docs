@@ -244,6 +244,9 @@ include::{modeltex}[tag=Value_content]
 This notation further overloads the stem:[\downarrow] operator, but everything
 here is strongly-typed so things remain unambiguous.
 
+TIP: When we define a function, we include its signature to the right, to be
+explicit about the types of the arguments and result.
+
 
 === Simple Values
 
