@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-15T20:26:03.117-00:00
+%%% This file was generated at 2023-09-15T21:18:13.152-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -204,7 +204,7 @@
 \newline
 \newline
 % tag::SymTok_matches[]
-\mbox{\it SymTok\_matches\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\mbox{\it s\/} \cong \mbox{\it u\/} = $\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf Unicode}\newline
@@ -216,11 +216,11 @@
 \newline
 \newline
 % tag::Symbol_matches[]
-\mbox{\it Symbol\_matches\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\mbox{\it s\/} \cong \mbox{\it u\/} = $\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf SymTok}\newline
-\:\mbox{\bf{then}}\:\mbox{\it SymTok\_matches\/}(\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf SymTok}}}, \mbox{\it u\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf SymTok}}} \cong \mbox{\it u\/}\newline
 \:\mbox{\bf{else}}\:\mbox{\bf false}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -232,7 +232,7 @@
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\!\downarrow_{\mbox{content}}\in \mbox{\bf Symbol}\newline
-\:\mbox{\bf{then}}\:\mbox{\it Symbol\_matches\/}(\mbox{\it v\/}\!\downarrow_{\mbox{content}}\mid_{\mbox{\tiny \mbox{\bf Symbol}}}, \mbox{\it u\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it v\/}\!\downarrow_{\mbox{content}}\mid_{\mbox{\tiny \mbox{\bf Symbol}}} \cong \mbox{\it u\/}\newline
 \:\mbox{\bf{else}}\:\mbox{\bf false}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -240,7 +240,7 @@
 \newline
 \newline
 % tag::Struct_get[]
-\mbox{\it Struct\_get\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+\mbox{\it s\/} \odot^{\ast} \mbox{\it u\/} = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{letrec}}\:\mbox{\it seek\/} = \lambda \mbox{\it f\/}^{\ast} \mbox{\it u\/}. \setandincrindent
@@ -250,7 +250,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it f\/} = \mbox{\it f\/}^{\ast}\!\downarrow_{0}\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/}^{\ast} = \mbox{\it seek\/}(\mbox{\it f\/}^{\ast}\dagger1, \mbox{\it u\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it SymTok\_matches\/}(\mbox{\it f\/}\!\downarrow_{\mbox{name}}, \mbox{\it u\/})\newline
+\:\mbox{\bf{if}}\:\mbox{\it f\/}\!\downarrow_{\mbox{name}} \cong \mbox{\it u\/}\newline
 \:\mbox{\bf{then}}\:\langle \mbox{\it f\/}\!\downarrow_{\mbox{value}}\rangle \S\mbox{\it v\/}^{\ast}\newline
 \:\mbox{\bf{else}}\:\mbox{\it v\/}^{\ast}\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -264,10 +264,10 @@
 \newline
 \newline
 % tag::Struct_get1[]
-\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+\mbox{\it s\/} \odot \mbox{\it u\/} = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get\/}(\mbox{\it s\/}, \mbox{\it u\/})\newline
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot^{\ast} \mbox{\it u\/}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast} > 1\newline
 \:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt repeated field}''})\newline
@@ -284,7 +284,7 @@
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}\!\downarrow_{\mbox{annots}}=0\newline
 \:\mbox{\bf{then}}\:\mbox{\bf false}\newline
-\:\mbox{\bf{else}}\:\mbox{\it SymTok\_matches\/}(\mbox{\it v\/}\!\downarrow_{\mbox{annots}}\!\downarrow_{0}, \mbox{\it u\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it v\/}\!\downarrow_{\mbox{annots}}\!\downarrow_{0} \cong \mbox{\it u\/}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::Value_has_first_annot[]
@@ -334,8 +334,8 @@
 \mbox{\it compile\_SST\/}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedSymtab}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''})\!\downarrow_{0}\!\downarrow_{\mbox{content}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''})\!\downarrow_{0}\!\downarrow_{\mbox{content}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\!\downarrow_{0}\!\downarrow_{\mbox{content}}\mid_{\mbox{\tiny \mbox{\bf String}}}\mid_{\mbox{\tiny \mbox{\bf Unicode}}}\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''}\!\downarrow_{0}\!\downarrow_{\mbox{content}}\mid_{\mbox{\tiny \mbox{\bf Int}}}\mid_{\mbox{\tiny \mbox{\bf I}}}\newline
 \:\mbox{\bf{in}}\:\mbox{\it{in}\small \mbox{\bf SharedSymtab}}(\langle \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it declared\_symbols\/}(\mbox{\it s\/})\rangle ) \decrindent
  \decrindent
 % end::compile_SST[]
@@ -513,9 +513,9 @@
 \mbox{\it compile\_import\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it normalize\_name\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt name}''}))\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it normalize\_version\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt version}''}))\newline
-\:\mbox{\bf{and}}\:\mbox{\it m\/} = \mbox{\it normalize\_max\_id\/}(\mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt max\_id}''}))\newline
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it normalize\_name\/}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''})\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it normalize\_version\/}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
+\:\mbox{\bf{and}}\:\mbox{\it m\/} = \mbox{\it normalize\_max\_id\/}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt max\_id}''})\newline
 \:\mbox{\bf{and}}\:\mbox{\it c\/} = \rho\!\downarrow_{\mbox{catalog}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
@@ -585,7 +585,7 @@
 \mbox{\it imported\_symbols\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt imports}''})\newline
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{IVM}})\newline
@@ -636,7 +636,7 @@
 \mbox{\it declared\_symbols\/}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it Struct\_get1\/}(\mbox{\it s\/}, \mbox{\rm ``{\tt symbols}''})\newline
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\mbox{\it EMPTY\_SYMTOKS\/}\newline

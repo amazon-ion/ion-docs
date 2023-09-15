@@ -352,10 +352,10 @@ for now we'll settle for this defective approach.
 === Matching Symbols
 
 Before we turn to the syntax model, let's define some functions that will be
-necessary to get from there to here during expansion.  In particular, we need
-to be able to match symbol tokens and symbol values by name, and to extract
-field values from structs.
+necessary to get from there to here during expansion.
 
+First, we need to be able to compare symbol values and tokens against Unicode
+text.  We'll use the relation stem:[\cong] to notate this matching operation.
 Matching symbol tokens is straightforward: if the given *SymTok* is *Unicode*
 then we lower into that domain and compare with the argument.
 Otherwise, the token must be *Sym0*, so we return *false*.
@@ -366,7 +366,7 @@ include::{modeltex}[tag=SymTok_matches]
 ++++
 
 To match a symbol value, we check whether the *Symbol* is a *SymTok* (as
-opposed to *DotNull*) before calling _SymTok_matches_.
+opposed to *DotNull*) before calling *SymTok*-flavored comparison.
 
 [{denotation}]
 ++++
@@ -381,14 +381,16 @@ include::{modeltex}[tag=Value_is_symbol_matching]
 ++++
 
 And we can match the first annotation on a value, necessary to detect local
-symbol tables at top-level:
+symbol table directives at top-level:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=Value_has_first_annot]
 ++++
 
-To get data out of a struct by field name, we need a lookup function:
+To get data out of a struct by field name, we need a lookup function.
+We'll use stem:[\odot] to represent this, here with an asterisk to indicate
+that multiple values may result:
 
 [{denotation}]
 ++++
@@ -403,7 +405,7 @@ If the current field's name matches _u_ we prepend (stem:[\S]) its value
 onto the recursive results.
 
 That function returns the values of all fields with the given name, but it turns
-out that the Ion processor never accepts more than one.
+out that our forthcoming use cases for expansion never accept more than one.
 Here's a sibling function that signals an error when the lookup is ambiguous:
 
 [{denotation}]
@@ -871,7 +873,7 @@ Starting with the easy part, we compile the `symbols` field into
 include::{modeltex}[tag=declared_symbols]
 ++++
 
-First, recall that _Struct_get1_ returns a sequence of zero or one values,
+First, recall that stem:[\odot] returns a sequence of zero or one values,
 raising an error if the field is repeated in the struct.
 When there's no `symbols` declared, we simply return an empty sequence.
 We do the same thing when the field-value's content is not a *List*.
