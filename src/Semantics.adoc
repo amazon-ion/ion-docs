@@ -785,7 +785,7 @@ gobbledygook appears inside an LST directive, all
 implementations will behave the same way.
 
 
-=== System Symbol Tables
+=== Ion Version Markers
 
 Following an IVM, the current symbol table is set to the system symbols for the
 given major and minor version of Ion.
@@ -809,9 +809,9 @@ include::{modeltex}[tag=Environment_after_IVM]
 ++++
 
 
-=== Installing Local Symbol Tables
+=== Local Symbol Tables
 
-To start handling local symbol table directives, we must first recognize them by
+To start handling LST directives, we must first detect them by
 checking the annotation and content type:
 
 [{denotation}]
@@ -819,22 +819,10 @@ checking the annotation and content type:
 include::{modeltex}[tag=is_LST]
 ++++
 
-We can then turn the annotated struct into a sequence of symbol tokens that will
-soon become the current symbol table:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=SymToks_for_LST]
-++++
-
-Here we encounter the first of many null checks. In particular, top-level
-`$ion_symbol_table::null.symbol` is equivalent to `$ion_symbol_table::{}`.
-When the directive is not null, we concatenate the imported symbols and the
-locally-declared symbols.
-The former sequence includes any symbols implicitly imported from the current
-Ion version.
-
-The resulting environment after such a directive is as follows:
+The resulting environment after such a directive is as follows, where
+stem:[{\cal C}_{\mbox{\small LST}}] denotes the compilation of an LST
+directive into a sequence of symbol tokens that will become the current symbol
+table:
 
 [{denotation}]
 ++++
@@ -843,6 +831,7 @@ include::{modeltex}[tag=Environment_after_LST]
 
 Here we see that the directive has the effect of retaining the current catalog
 and Ion version, replacing only the current symbols.
+// TODO Move this, it isn't illustrated by this code:
 More importantly, we see that an LST directive is fully expanded using the
 environment in effect when it begins.
 The locally-declared symbols have no effect on the encoding of any part of the
@@ -852,18 +841,31 @@ Their scope only starts with the next top-level value.
 TIP: At this point it may be worth reviewing the definition of
 stem:[\overline{\cal E}] in xref:eg_TE[xrefstyle=short].
 
+At a high level, the compilation of an LST works as follows:
 
-=== Compiling Local Symbol Tables
+[{denotation}]
+++++
+include::{modeltex}[tag=SymToks_for_LST]
+++++
 
-The functions above sidestep the more heavy-duty work of turning a symbol-table
+Here we encounter the first of many null checks. In particular, top-level
+`$ion_symbol_table::null.struct` is equivalent to `$ion_symbol_table::{}`.
+Otherwise, we concatenate the imported symbols and the locally-declared symbols.
+The former sequence includes any symbols implicitly imported from the current
+Ion version.
+
+// TODO It might be interesting to show a proof that
+//   C_LST({}, ρ) == SymToks_for_IVM(ρ↓IVM)
+
+This function sidesteps the more heavy-duty work of turning a symbol-table
 directive into **SymTok**{asterisk} by delegating to helper functions
-__imported_symbols__ and __declared_symbols__.
-For lack of a better word, we'll refer to this process as "`compilation`" of the
-directive.  What follows is effectively a recursive-descent process over the
+stem:[{\cal C}_{\mbox{\small\tt symbols}}] and
+stem:[{\cal C}_{\mbox{\small\tt imports}}].
+What follows is effectively a recursive-descent process over the
 directive's fully-expanded *Struct*.
 
 
-==== Declared Symbols
+==== Compiling Local Symbols
 
 Starting with the easy part, we compile the `symbols` field into
 **SymTok**{asterisk}.
@@ -875,8 +877,8 @@ include::{modeltex}[tag=declared_symbols]
 
 First, recall that stem:[\odot] returns a sequence of zero or one values,
 raising an error if the field is repeated in the struct.
-When there's no `symbols` declared, we simply return an empty sequence.
-We do the same thing when the field-value's content is not a *List*.
+When there's no `symbols` declared, or not an actual *List*, we return an empty
+sequence.
 Given a list, we compile its elements as follows:
 
 [{denotation}]
@@ -889,7 +891,7 @@ For content that is a *String* and not null, we extract the Unicode and rewrap
 it.  All other values produce `$0`.
 
 
-==== Imported Symbols
+==== Compiling Imported Symbols
 
 We follow similar patterns for the `imports` field.
 Remember that these results are expected to contain the appropriate system
@@ -906,7 +908,8 @@ current symbol table.  When the content is a non-null *List*, we compile its
 elements and append them to the current system symbols; otherwise the field
 has an unexpected value, and we act is if it were absent.
 
-Compiling the `imports` elements is similar to _compile_symbols_ but each
+Compiling the `imports` elements is similar to
+stem:[{\cal C}_{\mbox{\small symbol}}^{\ast}] but each
 element produces a list of tokens, not just one:
 
 [{denotation}]
@@ -918,6 +921,7 @@ As expected, we recurse through the elements of stem:[v^{\ast}], compiling
 non-null **Struct**s and ignoring the rest.  To compile one such struct, we
 will need to normalize its meaningful fields, checking presence, type, and
 nullness.
+We'll use stem:[\cal N] as the name of normalization helper functions.
 For `name` we return the text of non-null **String**s, normalizing everything
 else to the empty string:
 
