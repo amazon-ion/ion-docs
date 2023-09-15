@@ -1,0 +1,18 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/model1"
+)
+
+
+(check_true (domain_is Z_0 Z))
+(check === 0 (eject Z_0))
+
+(check_true (domain_is Exact_0 Exact))
+(check === 0 (eject (lower_to Z Exact_0)))
+
+
+"SUCCESS (constant.test)"

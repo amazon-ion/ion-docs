@@ -46,9 +46,26 @@ Print domain models in a Unicode-rich plain-text format.
   (define (pp_model m e)
     (display "Domains\n=======")
     (pp_print_terms (model_domains m) e "\n" "\n" "\n")
+    (unless (is_empty (model_consts m))
+      (display "\nConstants\n=========")
+      (pp_print_terms (model_consts m) e "\n" "\n" "\n"))
     (unless (is_empty (model_fns m))
       (display "\nFunctions\n=========")
       (pp_print_terms (model_fns m) e "\n" "\n" "\n")))
+
+  (define (pp_domain_def d e)
+    (display (domain_name d) " = ")
+    (pp_domain_rhs d e))
+
+  (define (pp_const_def v e)
+    (pp_print (const_name v) e)
+    (display " = ")
+    (pp_print (const_code v) e))
+
+  (define (pp_fn_def f e)
+    (pp_print       (fn_name f) e)
+    (pp_print_terms (fn_args f) e "(" ", " ") = ")
+    (pp_print       (fn_code f) e))
 
 
   // Special Forms and Functions
@@ -110,11 +127,6 @@ Print domain models in a Unicode-rich plain-text format.
 A model printer that renders in Unicode plain-text.
     '''
     (make_printer                  // Formatting rules in decreasing precedence
-      // General functions
-      (type_method is_fn           (|f e| (pp_print       (fn_name f) e)
-                                          (pp_print_terms (fn_args f) e "(" ", " ") = ")
-                                          (pp_print       (fn_code f) e)))
-
       // Special forms
       (form_method eject           (pp_unary "" ""))
       (form_method element_of      (pp_binary "" " ∈ " ""))
@@ -150,10 +162,12 @@ A model printer that renders in Unicode plain-text.
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  (|stx e| (pp_print_terms stx e "(" " " ")")))
 
-      (type_method is_domain       (|d e| (display (domain_name d) " = ")
-                                          (pp_domain_rhs d e)))
 
       (type_method is_model        pp_model)
+      (type_method is_domain       pp_domain_def)
+      (type_method is_const        pp_const_def)
+      (type_method is_fn           pp_fn_def)
+
       (type_method is_symbol       (|v e| (display v)))   // Override default `write` call.
     ))
 )

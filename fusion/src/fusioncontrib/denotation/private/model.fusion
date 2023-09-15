@@ -6,6 +6,7 @@
     "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusion/private/record"
+    "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/optional"
@@ -21,6 +22,7 @@
     fn
     import
     is_model
+    model_consts
     model_domains
     model_fns
   )
@@ -31,6 +33,7 @@
   (record model (elements))
 
   (define (model_domains model) (choose is_domain (model_elements model)))
+  (define (model_consts  model) (choose is_const  (model_elements model)))
   (define (model_fns     model) (choose is_fn     (model_elements model)))
 
   (define (parse_model model_stx body)
@@ -57,8 +60,9 @@ in the same order the author used.
              (name (syntax_get d 1)),
              (handler (cond
                         ((free_identifier_equal (QS import) type) handle_import)
-                        ((free_identifier_equal (QS dom) type) handle_dom)
-                        ((free_identifier_equal (QS fn ) type) handle_fn)
+                        ((free_identifier_equal (QS dom)    type) handle_dom)
+                        ((free_identifier_equal (QS const)  type) handle_const)
+                        ((free_identifier_equal (QS fn )    type) handle_fn)
                         (true (wrong_syntax type "Unexpected model type"))))]
         (let_values [((forms names) (handler d name))]
           (assert (is_sexp names))
@@ -71,7 +75,7 @@ in the same order the author used.
     (values (QS (begin)) (reverse (tail (syntax_unwrap import_stx)))))
 
   (define (handle_dom dom_stx name)
-    // TODO Ensure `name` doesn't end with "*" to prevent clash with sequences.
+    // TODO Ensure `name` doesn't end with "*" or "?" to prevent clash.
     (let [(result (|d| (datum_to_syntax d CTX dom_stx)))]
       (unless (> (syntax_size dom_stx) 3)
         (wrong_syntax dom_stx "Too few subforms"))
@@ -112,6 +116,26 @@ in the same order the author used.
                       (string_append "Sequence of " (syntax_unwrap name))
                       name)))
           (sexp name)))))
+
+
+  (define (handle_const stx name)
+    '''
+This introduces two definitions:
+ * The original name is bound to the result of the declared expression.
+ * A synthesized, name is bound to a record:const instance, holding the
+   expression code.
+The latter name is returned; so that the record:const is known to the model and
+available for printing.
+    '''
+    (lets [(result (|d| (datum_to_syntax d CTX stx))),
+           (tail (tail (syntax_unwrap stx)))]
+      (let [(decl_name (datum_to_syntax (symbol_append "const:" (syntax_unwrap name)) name))]
+        (values
+          (sexp
+            (quote begin)
+            (result (pair (QS define_const_value) tail))
+            (result (pair (QS define_const_decl) (pair decl_name tail))))
+          (sexp decl_name)))))
 
 
   (define (handle_fn fn_stx name)

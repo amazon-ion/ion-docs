@@ -32,6 +32,9 @@
 
     (dom Stamper = (-> T Any Stamped)) // Two arguments (ie, anonymous product)
 
+    (const Z_0     (inject_into Z 0))
+    (const Exact_0 (lift_to Exact Z_0))
+
     (fn Stamped_time ((s Stamped) -> T) (ith s 0))
 
     (fn id ((a Any) -> Any)

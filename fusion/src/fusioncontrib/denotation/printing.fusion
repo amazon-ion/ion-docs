@@ -21,6 +21,7 @@ References:
     "/fusion/experimental/syntax"
     "/fusion/private/record"
     "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
@@ -31,6 +32,8 @@ References:
   )
 
   (provide
+    const_code
+    const_name
     domain_method
     domain_name
     fn_args
@@ -43,6 +46,7 @@ References:
     func_domain_argdomains
     func_domain_output
     is_base_domain
+    is_const
     is_domain
     is_fn
     is_func_domain
@@ -51,6 +55,7 @@ References:
     is_singleton_domain
     is_union_domain
     make_printer
+    model_consts
     model_domains
     model_fns
     pp_basedom

@@ -1,0 +1,103 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module constant "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    const_binding
+    const_code
+    const_name
+    define_const_decl
+    define_const_value
+    is_const
+  )
+
+
+  (define CTX (quote_syntax lexical_context))
+
+
+  (define_values ('record:const' make_const is_const const_get)
+    [
+      "private record type",
+      '''
+    (make_const id expr)
+
+Constructs a named constant definitions.  The `id` must be a syntax identifier
+bound to the constant value. The `expr` is a syntax object for the expression
+that produced the constant.
+      ''',
+      '''
+    (is_const v)
+
+Predicate for named constant definitions.
+      ''',
+      "private const accessor"
+    ]
+    (make_record_type (quote const) null 2 null))
+    // The fields in this type are:
+    //   0: the constant's bound identifier
+    //   1: a syntax-object for the constant expression
+
+
+  (define (const_binding v)
+    (unless (is_const v)
+      (raise_argument_error "const_binding" "domain constant" 0 v))
+    (const_get v 0))
+
+  (define (const_name v)
+    (unless (is_const v)
+      (raise_argument_error "const_name" "domain constant" 0 v))
+    (syntax_unwrap (const_get v 0)))
+
+  (define (const_code v)
+    (unless (is_const v)
+      (raise_argument_error "const_code" "domain constant" 0 v))
+    (const_get v 1))
+
+
+  (define_syntax define_const_decl
+    '''
+    (define_const_decl decl_name value_name <expr>)
+
+Defines a constant declaration, holding the value's bound name, and its code.
+    '''
+    (lambda (stx)
+      (unless (= 4 (syntax_size stx))
+        (wrong_syntax stx "Syntax error"))
+      (let [(decl_name  (syntax_get stx 1)),
+            (value_name (syntax_get stx 2)),
+            (expr       (syntax_get stx 3))]
+        (datum_to_syntax
+          (QQ (define (UQ decl_name)
+                (make_const (QS (UQ value_name)) (QS (UQ expr)))))
+          CTX
+          stx))))
+
+
+  (define_syntax define_const_value
+    '''
+    (define_const_value value_name <expr>)
+
+Defines a constant domain-value.
+    '''
+    (lambda (stx)
+      (unless (= 3 (syntax_size stx))
+        (wrong_syntax stx "Syntax error"))
+      (let [(value_name (syntax_get stx 1)),
+            (expr       (syntax_get stx 2))]
+        (datum_to_syntax
+          (QQ (define (UQ value_name)
+                (let [(v (UQ expr))]
+                  (if (is_domain_value v)
+                    v
+                    (raise_result_error "const" "domain value" v)))))
+          CTX
+          stx))))
+)

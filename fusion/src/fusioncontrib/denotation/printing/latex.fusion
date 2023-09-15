@@ -163,6 +163,17 @@ or syntax string or symbol.
     (display "\n"))
 
 
+  // Constants
+
+  (define (pp_const_def v e)
+    (pp_print (const_name v) e)
+    (display DEFINE_EQ)
+    (pp_print (const_code v) e)
+    (display "\n"))
+
+
+  // Functions
+
   (define (pp_fn_def_lhs v e)
     // We want to render the LHS as if it were an invocation, so fake one up
     // and send it back for rendering, using any form-methods installed.
@@ -435,6 +446,7 @@ A model printer that renders in Unicode plain-text.
       // Semantic Model Elements
       (type_method is_model        pp_model)
       (type_method is_domain       pp_domain_def)
+      (type_method is_const        pp_const_def)
       (type_method is_fn           pp_fn_def)
     ))
 )
