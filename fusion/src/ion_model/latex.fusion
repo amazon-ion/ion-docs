@@ -17,7 +17,7 @@
   (define (pp_accessor name)
     "Like `pp_ith` but the selector is literal text, not a sub-expression."
     // \! is negative thin-space
-    (pp_unary "" (string_append "\\!\\downarrow_{\\mbox{" name "}}")))
+    (pp_unary "" (string_append "\\!\\downarrow_{\\mbox{\\scriptsize " name "}}")))
 
 
   (define ion_print_latex
@@ -57,26 +57,27 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       // (form_method Value_is_symbol_matching  (pp_binary "" " \\cong " ""))
 
 
-      (sym_image "{\\cal C}_{\\mbox{\\small import}}"             compile_import)
-      (sym_image "{\\cal C}_{\\mbox{\\small import}}^{\\ast}"     compile_imports)
-      (sym_image "{\\cal C}_{\\mbox{\\small symbol}}^{\\ast}"     compile_symbols)
-      (sym_image "{\\cal C}_{\\mbox{\\small\\tt symbols}}"        declared_symbols)
-      (sym_image "{\\cal C}_{\\mbox{\\small\\tt imports}}"        imported_symbols)
-      (sym_image "{\\cal C}_{\\mbox{\\small LST}}"                SymToks_for_LST)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize symbol}}^{\\ast}"     compile_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize\\tt symbols}}"        declared_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize\\tt imports}}"        imported_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST}}"                SymToks_for_LST)
 
-      (sym_image "{\\cal N}_{\\mbox{\\small\\tt max\\_id}}"       normalize_max_id)
-      (sym_image "{\\cal N}_{\\mbox{\\small\\tt name}}"           normalize_name)
-      (sym_image "{\\cal N}_{\\mbox{\\small\\tt version}}"        normalize_version)
+      (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt max\\_id}}"       normalize_max_id)
+      (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt name}}"           normalize_name)
+      (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt version}}"        normalize_version)
 
       (sym_image "{\\cal E}"                                      'E')
       (sym_image "{\\cal E}^{\\ast}"                              'E*')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RContent}}"        'E_RContent')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RSymTok}}"         'E_RSymTok')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RSymTok}}^{\\ast}" 'E_RSymTok*')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RSymbol}}"         'E_RSymbol')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RList}}"           'E_RList')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RField}}^{\\ast}"  'E_RField*')
-      (sym_image "{\\cal E}_{\\mbox{\\tiny\\bf RStruct}}"         'E_RStruct')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RContent}}"        'E_RContent')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RSymTok}}"         'E_RSymTok')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RSymTok}}^{\\ast}" 'E_RSymTok*')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RSymbol}}"         'E_RSymbol')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RList}}"           'E_RList')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RSexp}}"           'E_RSexp')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RField}}^{\\ast}"  'E_RField*')
+      (sym_image "{\\cal E}_{\\mbox{\\scriptsize\\bf RStruct}}"         'E_RStruct')
 
       (sym_image "\\overline{\\cal E}"           TE)
       (sym_image "\\overline{{\\cal E}^{\\ast}}" 'TE*')

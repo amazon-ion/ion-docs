@@ -6,13 +6,17 @@ A denotational semantic model of Ion.
 
 TODO
 ----
-Terminology:
-* Rename "raw value" etc to "encoding value"?
-  * Safe values -> literals?
+Terminology/Readability:
+* Replace at-most-one uses of D* with D? and bespoke accessor syntax.
+* Rename "raw value" etc to "encoding value"?  "expression"?
+  * I currently like `PTree` or maybe just `Tree` with some decorating glyph.
 * Figure out the proper name for `I`.  N? Z?
+* Greekify invocations of:
+  * symbol_padding
+  * adjust_length
 
 Features:
-* [SEXP] Model sexps, we need them for everything in 1.1.
+* Implement Decimal, Float, Timestamp, Blob/Clob
 
 Defects:
 * SID too large must raise an error. Need new way to test the LST maxid.

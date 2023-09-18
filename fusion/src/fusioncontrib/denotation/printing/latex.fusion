@@ -282,7 +282,7 @@ TODO
 
   (define (pp_lower_to v e)  // v ~= (lower_to DOM_NAME EXPR)
     (pp_print (. v 2) e)
-    (display "\\mid_{\\mbox{\\tiny ")
+    (display "\\mid_{\\mbox{\\scriptsize ")
     (pp_domain_name (. v 1) e)
     (display "}}"))
 

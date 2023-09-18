@@ -172,7 +172,7 @@ mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
 (check_latex
   '''\\mbox{\\it i2\\$v?\\/}(\\mbox{\\it i\\$?\\/}) = $\\`$ \\mbox{\\bf I} \\rightarrow \\mbox{\\bf \\$V?}\\newline\n'''
   '''\\:\\: \\setandincrindent\n'''
-  '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\tiny \\mbox{\\bf \\$V?}}}) \\decrindent\n'''
+  '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\scriptsize \\mbox{\\bf \\$V?}}}) \\decrindent\n'''
   'i2$v?')
 
 (check_latex
