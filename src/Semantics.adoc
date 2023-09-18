@@ -127,7 +127,7 @@ disjoint sum of domains **D** and **E**: every element of **Sum** is an element
 of either **D** or **E**.
 Elements of sum domains are effectively "`tagged`", so we know which component
 domain they come from, and we can project or "`lower`" a value
-stem:[v \in \mbox{\bf Sum}] back there via stem:[v\mid_{\mbox{\tiny\bf D}}],
+stem:[v \in \mbox{\bf Sum}] back there via stem:[v\mid_{\mbox{\scriptsize\bf D}}],
 assuming stem:[v \in \mbox{\bf D}].
 Conversely, we can inject or "`lift`" a component value into **Sum** using the
 function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
@@ -588,9 +588,10 @@ include::{modeltex}[tag=E_RSymTok]
 Expansion of a raw symbol token requires the current environment.
 If the symbol token already contains Unicode text, we simply wrap it with a
 **SymTok**. Otherwise, the token is an integer SID, so we extract it via
-stem:[\mbox{\it s\/}\mid_{\mbox{\tiny \mbox{\bf I}}}] and then look it up in the
-current symbol table.  That requires a range check, returning `$0` if the SID
-exceeds the size of the current symbol table.
+stem:[\mbox{\it s\/}\mid_{\mbox{\scriptsize \mbox{\bf I}}}] and then look it up
+in the current symbol table.
+That requires a range check, returning `$0` if the SID exceeds the size of the
+current symbol table.
 
 CAUTION: This algorithm is currently defective: Ion specifies that an
 out-of-bounds SID must evoke an error and stop parsing. Proper modeling of such
@@ -820,7 +821,7 @@ include::{modeltex}[tag=is_LST]
 ++++
 
 The resulting environment after such a directive is as follows, where
-stem:[{\cal C}_{\mbox{\small LST}}] denotes the compilation of an LST
+stem:[{\cal C}_{\mbox{\scriptsize LST}}] denotes the compilation of an LST
 directive into a sequence of symbol tokens that will become the current symbol
 table:
 
@@ -859,8 +860,8 @@ Ion version.
 
 This function sidesteps the more heavy-duty work of turning a symbol-table
 directive into **SymTok**{asterisk} by delegating to helper functions
-stem:[{\cal C}_{\mbox{\small\tt symbols}}] and
-stem:[{\cal C}_{\mbox{\small\tt imports}}].
+stem:[{\cal C}_{\mbox{\scriptsize\tt symbols}}] and
+stem:[{\cal C}_{\mbox{\scriptsize\tt imports}}].
 What follows is effectively a recursive-descent process over the
 directive's fully-expanded *Struct*.
 
@@ -909,7 +910,7 @@ elements and append them to the current system symbols; otherwise the field
 has an unexpected value, and we act is if it were absent.
 
 Compiling the `imports` elements is similar to
-stem:[{\cal C}_{\mbox{\small symbol}}^{\ast}] but each
+stem:[{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}] but each
 element produces a list of tokens, not just one:
 
 [{denotation}]
