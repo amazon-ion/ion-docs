@@ -127,23 +127,23 @@ within `domain`'s subdomain.
 
 
   (define (seq_ith seq i)
-    (unless (is_seq seq)
-      (raise_argument_error "ith" "seq value" 0 seq i))
+    (unless (and (is_seq seq) (not (seq_is_empty seq)))
+      (raise_argument_error "ith" "non-empty seq value" 0 seq i))
     // TODO typecheck/rangecheck i
     (element (domain_value_rep seq) i))
 
 
   (define (seq_head seq)
-    (unless (is_seq seq)
-      (raise_argument_error "seq_head" "seq value" 0 seq))
+    (unless (and (is_seq seq) (not (seq_is_empty seq)))
+      (raise_argument_error "seq_head" "non-empty seq value" 0 seq))
     (let [(sexp (domain_value_rep seq))]
       (if (is_empty sexp)
         (raise_argument_error "seq_head" "non-empty seq" 0 seq)
         (head sexp))))
 
   (define (seq_tail seq)
-    (unless (is_seq seq)
-      (raise_argument_error "seq_tail" "seq value" 0 seq))
+    (unless (and (is_seq seq) (not (seq_is_empty seq)))
+      (raise_argument_error "seq_tail" "non-empty seq value" 0 seq))
     (make_value (domain_value_domain seq) (tail (domain_value_rep seq))))
 
 
