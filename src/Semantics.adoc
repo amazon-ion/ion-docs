@@ -152,50 +152,36 @@ Unicode code points, effectively **I**{asterisk}.
 === A Roadmap
 
 At a high level, the goal of our model is to define how an Ion processor turns
-"`raw values`" into "`application values`".  Raw values are fresh off the parser,
-without any interpretation of directives or translation of SIDs into text.
-Some Ion products and documents call these "`system values`", and here we model
-them via the domain **RValue**, which we'll define later.
-We likewise model fully-expanded application values via the domain **Value**.
-
-Syntactically, IVMs are keywords/opcodes reserved only at top-level.
-We model them as a tuple holding major and minor version numbers:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=IVM]
-++++
-
-To constrain where IVMs can appear in the data model, we define a separate
-domain for top-level raw values:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=TRValue]
-++++
-
-This domain specifies that the (raw) top-level contains raw values and IVMs.
-We model an Ion document or datastream as a sequence of these, namely
-**TRValue**{asterisk}.
-
-We can now clarify that our goal is to implement the following function:
+the syntax of an Ion document into data meaningful to some application.
+To maintain this focus, we abstract over the details of how Ion parses the
+wire-level octets, and instead treat as input the resulting "`parse tree`" or
+abstract syntax tree.  Using the domain *Document* to denote these inputs, and
+the domain *Value* to model a resulting application datum, we can formalize our
+goal in the form of a function:
 
 // TODO Generate these function signatures.
 [{denotation}]
 ++++
-\mbox{\it expand} : \mbox{\bf TRValue*} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
+\mbox{\it expand} : \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
 ++++
 
-That is, given a sequence of raw top-level values and a catalog (a collection
+That is, given a document and a catalog (a collection
 of shared symbol tables), we produce a sequence of application values.
 
+
+We now set upon the task of implementing that function by way of a formal
+mathematical model.
 Here's how we'll reach that goal:
 
-* xref:datamodel[xrefstyle=short] defines a number of domains that collectively
-specify the Ion data model in both its raw (*RValue*) and application (*Value*)
-forms.
-Along the way, we'll ease into denotational functions by implementing some
+* xref:datamodel[xrefstyle=short] defines the domain *Value* and a number of
+subdomains that collectively
+specify the Ion data model--that is, the set of values that an Ion document can
+encode.
+We then ease into denotational functions by implementing some
 useful operators over this data.
+
+* xref:syntaxmodel[xrefstyle=short] defines *Document* and related domains
+representing the structure of Ion syntax, before expansions are performed.
 
 * xref:expansion[xrefstyle=short] visits each corner of the data model,
 incrementally defining layers of functions that build up to _expand_.
@@ -205,6 +191,32 @@ then the far more complicated process of compiling local symbol tables.
 
 * xref:issues[xrefstyle=short] documents the known defects with the model in its
 current draft.
+
+
+.Under the Covers
+****
+While this document presents its model using fairly conventional denotational
+semantics notation, this is no mere whiteboard math: the equations here are in
+fact pretty-printed views of executable code.  Expressed using Ion S-expressions
+(of course) in a small domain-specific language, the code is strongly typed
+and dynamically validated, with a proper test suite and code coverage tooling.
+In a meaningful sense, this document presents a real implementation of Ion
+expansion.
+
+Here's an example:
+----
+(fn expand ((d Document) (c Catalog) -> 'Value*')
+  (let [(r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
+        (k0 (mk_fn TContinuation (r vs) vs))]
+    ('TE*' (lower_to 'TRValue*' d) r0 k0)))
+----
+
+The code is rendered into stem:[\mbox{\LaTeX}] fragments by a custom library
+based on Christian Queinnec's
+https://lip6.fr/Christian.Queinnec/WWW/l2t.html[l2t]
+(formerly known as LiSP2TeX), then ``include``d into an AsciiDoc article
+containing the narrative text.
+****
 
 
 [#datamodel]
@@ -429,7 +441,7 @@ out of the Ion parser before doing anything involving symbols and symbol tables.
 
 NOTE: Historically, Ion documents and implementations have referred to this with
 various combinations of the words "`system`" or "`raw`" with "`view`" or "`layer`".
-The (poorly-specified) intended connotation was that this is the data visible to
+The intended (but poorly-specified) connotation was that this is the data visible to
 the "`Ion system`", requiring additional processing to generate the "`application`"
 or "`user`" view of the document.
 
