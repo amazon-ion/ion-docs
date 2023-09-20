@@ -116,7 +116,7 @@ Domains come in several types:
                       (element_of (unwrap v) domain)))))))
 
 
-  (define (ith v i)
+  (define_strict (ith v i)
     "Extract the `i`th element from `v`, which must be a tuple or seq value."
     (if (is_tuple v)
       (tuple_ith v i)

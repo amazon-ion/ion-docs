@@ -4,6 +4,7 @@
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/private/tuple"
   "/fusioncontrib/denotation/testing"
   "/model1")
 
@@ -33,8 +34,13 @@
   (check_same int_any_val v))
 
 
-(check ident t_val       (ith stamped_int_val 0))
-(check ident int_any_val (ith stamped_int_val 1))
+// tuple_ith
+
+(check ident t_val       (tuple_ith stamped_int_val 0))
+(check ident int_any_val (tuple_ith stamped_int_val 1))
+
+(check_bottom "1720" (tuple_ith (wrong 1720) 0))                // strict on 1st arg
+(check_bottom "1721" (tuple_ith stamped_int_val (wrong 1721)))  // strict on 2nd arg
 
 
 "SUCCESS (tuple.test)"

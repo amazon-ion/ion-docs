@@ -5,6 +5,7 @@
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/util"
   )
@@ -113,7 +114,7 @@ within `domain`'s subdomain.
          (is_seq_domain (domain_value_domain v))))
 
 
-  (define (seq_is_empty seq)
+  (define_strict (seq_is_empty seq)
     (unless (is_seq seq)
       (raise_argument_error "seq_is_empty" "seq value" 0 seq))
     (is_empty (domain_value_rep seq)))
@@ -125,7 +126,7 @@ within `domain`'s subdomain.
     (size (domain_value_rep seq)))
 
 
-  (define (seq_ith seq i)
+  (define_strict (seq_ith seq i)
     (unless (and (is_seq seq) (not (seq_is_empty seq)))
       (raise_argument_error "ith" "non-empty seq value" 0 seq i))
     // TODO typecheck/rangecheck i

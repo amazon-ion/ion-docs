@@ -4,7 +4,7 @@
 
   (require
     "/fusion/exception"
-//    "/fusion/experimental/syntax"
+    "/fusion/experimental/syntax"
     "/fusion/private/record"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/util"
@@ -13,6 +13,7 @@
 
   (provide
     bottom_message
+    define_strict
     is_bottom
     wrong
   )
@@ -38,4 +39,32 @@
   (define wrong
     (lambda message
       (make_value Bottom (apply display_to_string message))))
+
+
+  (define CTX (quote_syntax lexical_context))
+
+  (define_syntax define_strict
+    '''
+    (define_strict (f a ...) b ...)
+
+Like `define` with implicit lambda, but if any argument is bottom, the first
+such value is returned (ignoring the body expressions `b`).
+    '''
+    (lambda (stx)
+      (lets [(sig   (syntax_get stx 1)),
+             (args  (tail (syntax_unwrap sig))),
+             (body  (tail (tail (syntax_unwrap stx)))),
+             (tests (map (|a| (QQ ((is_bottom (UQ a)) (UQ a)))) args)),
+             (else  (pair (quote true) body))]
+        /*
+        (define (f a ...)
+          (cond
+            ((is_bottom a) a) ...
+            (true b ...)))
+        */
+        (datum_to_syntax
+          (QQ (define (UQ sig)
+                (UQ (pair (QS cond) (append tests (sexp else))))))
+          CTX
+          stx))))
 )

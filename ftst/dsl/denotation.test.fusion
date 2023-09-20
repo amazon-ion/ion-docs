@@ -164,6 +164,12 @@
 //==========
 // Misc cases
 
+// `ith` is strict.
+(check_bottom "1419" (ith (wrong 1419) 0))
+(check_bottom "1724" (ith stamped_int_val (wrong 1724)))  // tuple
+(check_bottom "1728" (ith Zs_1_2_3        (wrong 1728)))  // sequence
+
+
 (expect_argument_error (domain_is  t_val int_any_val))     // 2nd arg not a domain
 (expect_argument_error (element_of t_val int_any_val))     // 2nd arg not a domain
 

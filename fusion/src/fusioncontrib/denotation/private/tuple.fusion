@@ -5,6 +5,7 @@
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/util"
   )
@@ -81,7 +82,7 @@ Return the components of tuple `v` as multiple values.
     (apply values (domain_value_rep tuple)))
 
 
-  (define (tuple_ith v i)
+  (define_strict (tuple_ith v i)
     '''
 Access component i of tuple v.
     '''

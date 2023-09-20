@@ -16,7 +16,6 @@
 
 (define empty_Zs (seq 'Z*'))
 (check_pred is_seq       empty_Zs)
-(check_pred seq_is_empty empty_Zs)
 
 (check_true (domain_is  empty_Zs 'Z*'))
 (check_true (element_of empty_Zs 'Z*'))
@@ -27,7 +26,6 @@
 (define Z012 (seq 'Z*' z0 z1 z2))
 
 (check_pred is_seq Z012)
-(check_false (seq_is_empty Z012))
 (check_same z0 (ith Z012 0))
 (check_same z2 (ith Z012 2))
 
@@ -36,13 +34,29 @@
 (expect_argument_error (seq 'Z*' int_any_val))   // 2nd arg is "above" the sequence type
 
 
-(expect_argument_error (seq_is_empty stamped_int_val))  // arg isn't a sequence
+// seq_is_empty
 
-(expect_argument_error (ith int_any_val 0))      // 1st arg isn't a sequence
-(expect_argument_error (ith empty_Zs 0))         // 2nd arg out of range
+(check_true  (seq_is_empty empty_Zs))
+(check_false (seq_is_empty Z012))
+
+(check_bottom "1758" (seq_is_empty (wrong 1758)))      // strict
+
+(expect_argument_error (seq_is_empty z0))              // arg isn't a sequence
+
+
+// seq_ith
+
+(check_bottom "1733" (seq_ith (wrong 1733) 0))         // strict on 1st arg
+(check_bottom "1734" (seq_ith empty_Zs (wrong 1734)))  // strict on 2nd arg
+
+(expect_argument_error (seq_ith int_any_val 0))        // 1st arg isn't a sequence
+(expect_argument_error (seq_ith empty_Zs 0))           // 2nd arg out of range
+
+
+// seq_tail
+// TODO strictness
 
 (expect_argument_error (seq_tail Z))             // arg isn't a sequence
-
 
 
 // seq_prepend
