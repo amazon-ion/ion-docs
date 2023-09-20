@@ -1,0 +1,145 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module union "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    define_union_domain
+    is_union_domain
+    is_union_domain_value
+    lift
+    lift_to
+    lower
+    lower_to
+    subdomain
+    union_domain_subdomains
+    unwrap
+  )
+
+
+
+  (define UnionDomain
+    (make_domain_meta "UnionDomain" null))
+
+  (define (make_union_domain name description domain_producer)
+    // TODO Memoize domain production
+    (make_domain UnionDomain name union_domain_checker description domain_producer))
+
+  (define (is_union_domain d)
+    (is_domain_of_type UnionDomain d))
+
+  (define (union_domain_subdomains d)
+    "Returns list of domains"
+    (let [(domains ((domain_data d)))]
+      (unless (and (is_list domains)
+                   (every is_domain domains))
+        (raise_result_error "union_domain_subdomains" "list of domains" domains))
+      domains))
+
+  (define (union_domain_checker d v)
+    (any (|sub| (domain_is v sub))
+      (union_domain_subdomains d)))
+
+  (define_syntax define_union_domain
+    '''
+    (define_union_domain name description domain ...)
+    '''
+    (lambda (stx)
+      (unless (> (syntax_size stx) 3)
+        (wrong_syntax stx "Bad syntax for define_union_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2)),  // TODO typecheck
+            (domains (tail (tail (tail (syntax_unwrap stx)))))]
+        (let [(dupe (check_duplicate_identifier domains))]
+          (when dupe
+            (wrong_syntax dupe
+              "Duplicate domain identifier in specification of domain " name_stx)))
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_union_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                // Delay evaluation of the domains, so they can recurse
+                (thunk (UQ (pair (quote list) domains))))))
+          (quote_syntax context)
+          stx))))
+
+  (define (lift_to d v)
+    '''
+Lifts a subdomain value into a union domain.
+    '''
+    (unless (is_union_domain d)
+      (raise_argument_error "lift_to" "union domain" 0 d v))
+    (unless (is_domain_value v)
+      (raise_argument_error "lift_to" "a domain value" 1 d v))
+    (unless (union_domain_checker d v)
+      (raise_argument_error (string_append "lift_to " (domain_name d))
+        (display_to_string "value in one of "
+          (map domain_name (union_domain_subdomains d)))
+        1 d v))
+    (make_value d v))
+
+
+  (define (is_union_domain_value v)
+    (and (is_domain_value v)
+         (is_union_domain (domain_value_domain v))))
+
+
+  (define (unwrap v)
+    "Extracts the subdomain value from a union value"
+    (unless (is_union_domain_value v)
+      (raise_argument_error "unwrap" "union-domain value" 0 v))
+    (domain_value_rep v))
+
+
+  (define (subdomain v)
+    "Extracts the subdomain type from a union value"
+    (unless (is_union_domain_value v)
+      (raise_argument_error "subdomain" "union-domain value" 0 v))
+    (domain_value_domain (domain_value_rep v)))
+
+
+  (define (lower_to d v)
+    (unless (is_domain d)
+      (raise_argument_error "lower_to" "domain" 0 d v))
+    (unless (is_union_domain_value v)
+      (raise_argument_error "lower_to" "union-domain value" 1 d v))
+    (let [(rep (domain_value_rep v))]
+      (unless (domain_is rep d)
+        (raise_argument_error "lower_to"
+          (string_append "element of " (domain_name d))
+          1 d v))
+      rep))
+
+
+  (define lift
+    '''
+    (lift v domain ...+)
+    '''
+    (lambda args
+      (unless (is_pair (tail args))
+        (apply raise_arity_error "lift" 2 args))                // TODO 2 is not correct
+      (let loop [(i 1), (val (head args)), (doms (tail args))]
+        (if (is_pair doms)
+          (if (is_union_domain (head doms))
+            (loop (+ i 1) (lift_to (head doms) val) (tail doms))
+            (apply raise_argument_error "lift" "union domain" i args))
+          val))))
+
+  (define lower
+    (lambda args
+      (unless (is_pair (tail args))
+        (apply raise_arity_error "lower" 2 args))                // TODO 2 is not correct
+      (let loop [(i 1), (val (head args)), (doms (tail args))]
+        // TODO typecheck val
+        (if (is_pair doms)
+          (loop (+ i 1) (lower_to (head doms) val) (tail doms))
+          val))))
+)

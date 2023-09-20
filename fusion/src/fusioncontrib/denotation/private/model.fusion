@@ -9,6 +9,8 @@
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/sequence"
+    "/fusioncontrib/denotation/private/tuple"
+    "/fusioncontrib/denotation/private/union"
     "/fusioncontrib/denotation/private/util"
   )
 

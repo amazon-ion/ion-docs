@@ -1,0 +1,40 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/testing"
+  "/model1")
+
+
+
+(check_true (domain_is  stamped_int_val Stamped))
+(check_true (element_of stamped_int_val Stamped))
+
+(expect_argument_error (tuple z_val z_rep))        // 1st arg isn't a domain
+(expect_argument_error (tuple Z     z_rep))        // 1st arg isn't a product domain
+
+(expect_argument_error (tuple Stamped int_any_val))        // Arity mismatch
+(expect_argument_error (tuple Stamped t_val))
+(expect_argument_error (tuple Stamped stamped_int_val))
+(expect_argument_error (tuple Stamped int_any_val int_any_val))  // int_any_val ∉ T
+(expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
+(expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
+(expect_argument_error (tuple Point2d z_val int_num_val))        // 3rd arg is above target domain
+
+
+// tuple_values
+
+(expect_argument_error (tuple_values (seq 'Z*')))   // arg isn't a tuple
+
+(let_values [((t v) (tuple_values stamped_int_val))]
+  (check_same t_val t)
+  (check_same int_any_val v))
+
+
+(check ident t_val       (ith stamped_int_val 0))
+(check ident int_any_val (ith stamped_int_val 1))
+
+
+"SUCCESS (tuple.test)"

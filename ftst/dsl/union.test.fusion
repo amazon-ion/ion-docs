@@ -1,0 +1,83 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/testing"
+  "/model1")
+
+
+// domain_is
+(check_true  (domain_is int_exact_val Exact))
+(check_true  (domain_is dec_exact_val Exact))
+(check_true  (domain_is int_any_val   Any))
+(check_false (domain_is int_any_val   Num))
+
+
+// element_of
+(check_true (element_of int_exact_val Exact))
+(check_true (element_of dec_exact_val Exact))
+(check_true (element_of int_any_val   Any))
+
+(check_true  (element_of int_any_val   Num))   // Succeeds when lowering would succeed
+(check_true  (element_of int_any_val   Z))
+(check_false (element_of z_val         Num))   // ... but not lifting
+(check_false (element_of t_val         Any))
+
+
+// lift_to
+(expect_argument_error (lift_to t_val z_val))  // 1st arg is not a domain
+(expect_argument_error (lift_to Z z_rep))      // 1st arg is not a union domain
+(expect_argument_error (lift_to Exact z_rep))  // 2nd arg isn't a domain value
+(expect_argument_error (lift_to Exact s_val))  // 2nd arg isn't a subdomain value
+
+(expect_argument_error (lift_to Num int_num_val)) // 2nd arg is same as the target domain
+(expect_argument_error (lift_to Num int_any_val)) // 2nd arg is "above" the target domain
+
+
+// subdomain
+(check_same Z  (subdomain int_exact_val))
+
+(expect_argument_error (subdomain z_val))
+
+
+// unwrap
+(check_same z_val (unwrap int_exact_val))
+
+(expect_argument_error (unwrap z_val))
+
+
+// lower_to
+(expect_argument_error (lower_to t_val t_val))   // 1st arg is not a domain
+(expect_argument_error (lower_to Any 12))        // 2nd arg isn't a domain value at all
+(expect_argument_error (lower_to Any t_val))     // 2nd arg isn't a union-domain value
+(expect_argument_error (lower_to S   int_num_val)) // 2nd arg is a union value, but wrong subdomain
+(expect_argument_error (lower_to Num int_num_val)) // 2nd arg is already in target domain
+(expect_argument_error (lower_to Z   int_any_val)) // 2nd are is two unions above target domain
+
+
+// lift
+(let [(v (lift z_val Num))]
+  (check_true (domain_is v Num))
+  (check_same z_rep (eject (lower v Z))))
+(let [(v (lift z_val Num Any))]
+  (check_true (domain_is v Any))
+  (check_same z_rep (eject (lower v Num Z))))
+
+(expect_argument_error (lift z_val Z))     // 2nd arg is not a union domain
+(expect_argument_error (lift z_val Num Z)) // 3rd arg is not a union domain
+
+(expect_arity_error (lift))
+(expect_arity_error (lift int_num_val))
+
+
+// lower
+(expect_argument_error (lower int_num_val Num))    // 2nd arg is not a subdomain
+(expect_argument_error (lower int_any_val Num B))  // 3rd arg is not a subdomain
+
+(expect_arity_error (lower))
+(expect_arity_error (lower int_num_val))
+
+
+"SUCCESS (union.test)"

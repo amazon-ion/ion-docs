@@ -11,6 +11,8 @@ Utilities for testing denotational models.
     "/fusion/experimental/check"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/sequence"
+    "/fusioncontrib/denotation/private/tuple"
+    "/fusioncontrib/denotation/private/union"
   )
 
   (provide

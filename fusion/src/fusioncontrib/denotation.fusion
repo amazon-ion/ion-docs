@@ -38,6 +38,8 @@ Domains come in several types:
     "/fusioncontrib/denotation/private/model"
     "/fusioncontrib/denotation/private/predefs"
     "/fusioncontrib/denotation/private/sequence"
+    "/fusioncontrib/denotation/private/tuple"
+    "/fusioncontrib/denotation/private/union"
   )
 
   (provide
@@ -96,6 +98,19 @@ Domains come in several types:
 
 
   // Functions that are polymorphic over multiple domain types
+
+  (define (element_of v domain)  // i.e., ∈
+    "Determine whether `v` is in `domain` or can be lowered to it."
+    (unless (is_domain domain)
+      (raise_argument_error "element_of" "domain" 1 v domain))
+    (let [(domain_eltof (domain_meta_eltof_fn (domain_type domain)))]
+      (if domain_eltof
+        (domain_eltof domain v)
+        (and (is_domain_value v)
+             (or (ident domain (domain_value_domain v))
+                 (and (is_union_domain_value v)
+                      (element_of (unwrap v) domain)))))))
+
 
   (define (ith v i)
     "Extract the `i`th element from `v`, which must be a tuple or seq value."

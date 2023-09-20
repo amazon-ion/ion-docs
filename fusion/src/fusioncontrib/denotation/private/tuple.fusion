@@ -1,0 +1,130 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module tuple "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    define_product_domain
+    is_product_domain
+    is_tuple
+    make_product_domain
+    product_domain_element
+    product_domain_subdomains
+    tuple
+    tuple_ith
+    tuple_values
+  )
+
+
+
+  (define ProductDomain
+    (make_domain_meta "ProductDomain" null))
+
+  (define (make_product_domain name description domain_producer)  // Ugh
+    // TODO Memoize domain production
+    (make_domain ProductDomain name product_domain_checker description domain_producer))
+
+  (define (is_product_domain d)
+    (is_domain_of_type ProductDomain d))
+
+  (define (product_domain_subdomains d)
+    '''
+Returns the list of component domains.
+    '''
+    (let [(domains ((domain_data d)))]
+      // TODO Why are we validating this in an accessor?
+      (unless (and (is_list domains)
+                   (every is_domain domains))
+        (raise_result_error "product_domain_subdomains" "list of domains" domains))
+      domains))
+
+  (define tuple
+    '''
+    (tuple domain elt0 elt1 ...+)
+
+Constructs a product-domain value.
+    '''
+    (lambda rest
+      (let [(domain (head rest)),
+            (rep    (apply list (tail rest)))]
+        (unless (is_product_domain domain)
+          (apply raise_argument_error "tuple" "product domain" 0 rest))
+        (let loop [(i    1),
+                   (vs   (tail rest)),
+                   (subs (apply sexp (product_domain_subdomains domain)))]
+          (when (is_pair vs)
+            (if (domain_is (head vs) (head subs))
+              (loop (+ 1 i) (tail vs) (tail subs))
+              (apply raise_argument_error
+                  (string_append "tuple " (domain_name domain))
+                  (string_append "value in domain " (domain_name (head subs)))
+                  i rest))))
+        (make_value domain rep))))
+
+  (define (is_tuple v)
+    (and (is_domain_value v)
+         (is_product_domain (domain_value_domain v))))
+
+
+  (define (tuple_values tuple)
+    '''
+Return the components of tuple `v` as multiple values.
+    '''
+    (unless (is_tuple tuple)
+      (raise_argument_error "tuple_values" "tuple value" 0 tuple))
+    (apply values (domain_value_rep tuple)))
+
+
+  (define (tuple_ith v i)
+    '''
+Access component i of tuple v.
+    '''
+    // TODO type-check v
+    (list_element (domain_value_rep v) i))
+
+
+  (define (product_domain_element d v i)
+    '''
+Access component i of domain value v in domain d.
+    '''
+    // TODO type-check v
+    (list_element (domain_value_rep v) i))
+
+
+  (define (product_domain_checker d values)
+    (let [(subdomains (product_domain_subdomains d))]
+      (and (is_list values)
+           (same_size values subdomains)
+           (for_fold [(all_are_good true)]
+                     [(v values), (s subdomains)]
+             (and all_are_good (domain_is v s))))))
+
+  (define_syntax define_product_domain
+    '''
+    (define_product_domain name description domain0 domain1 ...+)
+    '''
+    (lambda (stx)
+      (when (< (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for define_product_domain"))
+      (let [(name_stx (syntax_get stx 1)),
+            (desc_stx (syntax_get stx 2)),  // TODO typecheck
+            (domains (tail (tail (tail (syntax_unwrap stx)))))]
+        (when (< (size domains) 2)
+          (wrong_syntax stx "define_product_domain requires at least two elements"))
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_product_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                // Delay evaluation of the domains, so they can recurse
+                (thunk (UQ (pair (quote list) domains))))))
+          (quote_syntax context)
+          stx))))
+)

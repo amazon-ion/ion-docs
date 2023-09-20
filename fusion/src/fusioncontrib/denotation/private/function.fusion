@@ -27,22 +27,96 @@ Remember that _everything is functional here_, even things like IF.
     "/fusion/experimental/syntax"
     "/fusion/private/record"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/tuple"
     "/fusioncontrib/denotation/private/util"
   )
 
   (provide
     define_fn
+    define_func_domain
     fn_args
     fn_binding
     fn_code
     fn_name
+    func_domain_argdomains
+    func_domain_output
     is_fn
+    is_func_domain
+    make_func_domain
     mk_fn
   )
 
 
   (define CTX (quote_syntax lexical_context))
 
+  (define FuncDomain
+    (make_domain_meta "FuncDomain" null))
+
+
+  (define (make_func_domain name description input output)
+    '''
+`input` can be a named domain, a list of named domains for multi-arg,
+or null for TOP (accept any one value).
+    '''
+    (unless (or (is_domain input)
+                (is_list_of_domains input)
+                (is_null input))                                        // [TOP]
+      (raise_argument_error "make_func_domain" "input domain or domains" 2
+        name description input output))
+    (when (and (is_product_domain input) (is_null (domain_name input)))
+      // FIXME This doesn't handle single-entry list
+      (raise_argument_error "make_func_domain"
+        "singular product-domain arg must be named" 0
+        name description input output))
+    (unless (is_domain output)                                          // [TOP]
+      (raise_argument_error "make_func_domain" "output domain" 3
+        name description input output))
+    (let [(input (if (is_list_of_domains input)
+                   (if (=== 1 (size input))
+                     (. input 0)
+                     (make_product_domain null.string null.string (|| input)))
+                   input))]
+      (make_domain FuncDomain name is_procedure description [input, output])))
+
+  (define (is_func_domain v) (is_domain_of_type FuncDomain v))
+
+  (define (func_domain_input  d) (list_element (domain_data d) 0))
+  (define (func_domain_output d) (list_element (domain_data d) 1))
+
+  (define (func_domain_argdomains d)
+    "Return list of domains for the arguments to `d`."
+    (let [(in_dom (func_domain_input d))]
+      (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
+        (product_domain_subdomains in_dom)
+        [in_dom])))
+
+
+  (define_syntax define_func_domain
+    '''
+    (define_func_domain name description inDomain ...+ outDomain)
+    '''
+    (lambda (stx)
+      (when (< (syntax_size stx) 5)
+        (wrong_syntax stx "Bad syntax for define_func_domain"))
+      (lets [(name_stx (syntax_get stx 1)),
+             (desc_stx (syntax_get stx 2)),  // TODO typecheck
+             (domains (tail (tail (tail (syntax_unwrap stx))))),
+             (domains_rev (reverse domains)),
+             (out_domain (head domains_rev)),
+             (in_domains (reverse (tail domains_rev)))]
+        (datum_to_syntax
+          (QQ (define (UQ name_stx)
+                (make_func_domain
+                  (quote (UQ name_stx))
+                  (UQ desc_stx)
+                  // TODO Delay evaluation of the domains, so they can recurse
+                  (UQ (pair (quote list) in_domains))
+                  (UQ out_domain))))
+          CTX stx))))
+
+
+  //============================================================================
+  // Function Values
 
   (define_values ('record:fn' fn_ctor is_fn fn_get)
     [

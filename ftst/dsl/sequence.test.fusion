@@ -1,0 +1,93 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/sequence"
+  "/fusioncontrib/denotation/testing"
+  "/model1")
+
+
+
+(check_pred is_seq_domain 'Z*')
+(check = "Z*" (domain_name 'Z*'))
+(check_same Z (seq_domain_subdomain 'Z*'))
+
+
+(define empty_Zs (seq 'Z*'))
+(check_pred is_seq       empty_Zs)
+(check_pred seq_is_empty empty_Zs)
+
+(check_true (domain_is  empty_Zs 'Z*'))
+(check_true (element_of empty_Zs 'Z*'))
+
+(define z0 (inject_into Z 0))
+(define z1 (inject_into Z 1))
+(define z2 (inject_into Z 2))
+(define Z012 (seq 'Z*' z0 z1 z2))
+
+(check_pred is_seq Z012)
+(check_false (seq_is_empty Z012))
+(check_same z0 (ith Z012 0))
+(check_same z2 (ith Z012 2))
+
+(expect_argument_error (seq Z))       // 1st arg isn't a seq domain
+(expect_argument_error (seq 'Z*' 0))  // 2nd arg isn't a domain value
+(expect_argument_error (seq 'Z*' int_any_val))   // 2nd arg is "above" the sequence type
+
+
+(expect_argument_error (seq_is_empty stamped_int_val))  // arg isn't a sequence
+
+(expect_argument_error (ith int_any_val 0))      // 1st arg isn't a sequence
+(expect_argument_error (ith empty_Zs 0))         // 2nd arg out of range
+
+(expect_argument_error (seq_tail Z))             // arg isn't a sequence
+
+
+
+// seq_prepend
+
+(let [(s1 (seq_prepend z_val empty_Zs))]
+  (check === 1 (seq_length s1))
+  (check_same z_val (seq_head s1)))
+
+(expect_argument_error (seq_prepend z_val z_val))       // 2nd arg isn't a sequence
+(expect_argument_error (seq_prepend empty_Zs empty_Zs)) // 1st arg is wrong type
+(expect_argument_error (seq_prepend int_any_val empty_Zs)) // 1st arg is above target domain
+
+
+// seq_append
+
+(let [(v (seq_append empty_Zs empty_Zs))]
+  (check_is_seq_of Z v)
+  (check_pred seq_is_empty v))
+
+(expect_argument_error (seq_append (inject_into Z 0) empty_Zs)) // 1st arg isn't a sequence
+(expect_argument_error (seq_append empty_Zs (inject_into Z 0))) // 2nd arg isn't a sequence
+(expect_argument_error (seq_append empty_Zs (seq 'Any*')))      // Args have different element type
+
+
+// seq_truncate
+
+(let [(s0 (seq_truncate Z012 0))]
+  (check_same 0 (seq_length s0)))
+(let [(s1 (seq_truncate Z012 1))]
+  (check_same 1 (seq_length s1))
+  (check_same z0 (ith s1 0)))
+(let [(s2 (seq_truncate Z012 2))]
+  (check_same 2 (seq_length s2))
+  (check_same z0 (ith s2 0))
+  (check_same z1 (ith s2 1)))
+(let [(s3 (seq_truncate Z012 3))]
+  (check_same 3 (seq_length s3))
+  (check_same z0 (ith s3 0))
+  (check_same z1 (ith s3 1))
+  (check_same z2 (ith s3 2)))
+
+(expect_argument_error (seq_truncate z_val 0))  // 1st arg isn't a sequence
+(expect_argument_error (seq_truncate Z012 "0")) // 2nd arg isn't an int
+(expect_argument_error (seq_truncate Z012 -1))  // 2nd arg is too small
+(expect_argument_error (seq_truncate Z012 4))   // 2nd arg is too large
+
+
+"SUCCESS (sequence.test)"

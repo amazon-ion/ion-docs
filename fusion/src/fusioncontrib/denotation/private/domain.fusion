@@ -13,6 +13,7 @@
     // Domain meta-types
     make_domain_meta
     make_domain
+    domain_meta_eltof_fn
 
     // Domains
     is_domain
@@ -21,12 +22,8 @@
     domain_name
     domain_data
     domain_type
-    element_of
 
     define_base_domain
-    define_union_domain
-    define_product_domain
-    define_func_domain
 
     // Domain Values
     'record:domain_value'
@@ -48,35 +45,6 @@
     base_domain_accepts
     inject_into
     eject
-
-    // Union domain value operators
-    is_union_domain
-    union_domain_subdomains
-    is_union_domain_value
-    lift
-    lift_to
-    subdomain
-    unwrap
-    lower
-    lower_to
-
-    // Product domain operators
-    make_product_domain
-    is_product_domain
-    product_domain_subdomains
-
-    // Product domain value operators
-    is_tuple
-    tuple
-    tuple_ith
-    tuple_values
-    product_domain_element
-
-    // Function domains
-    make_func_domain
-    is_func_domain
-    func_domain_argdomains
-    func_domain_output
 
     // Helpers
     is_list_of_domains
@@ -108,12 +76,7 @@ Creates a new domain "class".
     May be null, to use the default mechanism.
     '''
     // TODO Use [GUARD] to populate default values.
-    (domain_meta name
-      (or eltof_fn (|d v|
-                     (and (is_domain_value v)
-                          (or (ident d (domain_value_domain v))
-                              (and (is_union_domain_value v)
-                                   (element_of (unwrap v) d))))))))
+    (domain_meta name eltof_fn))
 
 
   // The "classes" from which domain values can be created.
@@ -186,11 +149,6 @@ Determines whether `v` is a direct element of the `domain`.
       (raise_argument_error "domain_is" "domain" 1 v domain))
     (and (is_domain_value v)
          (ident domain (domain_value_domain v))))
-
-  (define (element_of v domain)  // i.e., ∈
-    (unless (is_domain domain)
-      (raise_argument_error "element_of" "domain" 1 v domain))
-    ((domain_meta_eltof_fn (domain_type domain)) domain v))
 
 
   //-------------------
@@ -299,305 +257,4 @@ Lifts a Fusion value into a base domain.
                 (UQ pred_stx))))
           (quote_syntax context)
           stx))))
-
-
-  //-------------------
-  // Union Domains
-
-  (define UnionDomain
-    (make_domain_meta "UnionDomain" null))
-
-  (define (make_union_domain name description domain_producer)
-    // TODO Memoize domain production
-    (make_domain UnionDomain name union_domain_checker description domain_producer))
-
-  (define (is_union_domain d)
-    (is_domain_of_type UnionDomain d))
-
-  (define (union_domain_subdomains d)
-    "Returns list of domains"
-    (let [(domains ((domain_data d)))]
-      (unless (and (is_list domains)
-                   (every is_domain domains))
-        (raise_result_error "union_domain_subdomains" "list of domains" domains))
-      domains))
-
-  (define (union_domain_checker d v)
-    (any (|sub| (domain_is v sub))
-      (union_domain_subdomains d)))
-
-  (define_syntax define_union_domain
-    '''
-    (define_union_domain name description domain ...)
-    '''
-    (lambda (stx)
-      (unless (> (syntax_size stx) 3)
-        (wrong_syntax stx "Bad syntax for define_union_domain"))
-      (let [(name_stx (syntax_get stx 1)),
-            (desc_stx (syntax_get stx 2)),  // TODO typecheck
-            (domains (tail (tail (tail (syntax_unwrap stx)))))]
-        (let [(dupe (check_duplicate_identifier domains))]
-          (when dupe
-            (wrong_syntax dupe
-              "Duplicate domain identifier in specification of domain " name_stx)))
-        (datum_to_syntax
-          (QQ
-            (define (UQ name_stx)
-              (make_union_domain
-                (quote (UQ name_stx))
-                (UQ desc_stx)
-                // Delay evaluation of the domains, so they can recurse
-                (thunk (UQ (pair (quote list) domains))))))
-          (quote_syntax context)
-          stx))))
-
-  (define (lift_to d v)
-    '''
-Lifts a subdomain value into a union domain.
-    '''
-    (unless (is_union_domain d)
-      (raise_argument_error "lift_to" "union domain" 0 d v))
-    (unless (is_domain_value v)
-      (raise_argument_error "lift_to" "a domain value" 1 d v))
-    (unless (domain_accepts d v)
-      (raise_argument_error (string_append "lift_to " (domain_name d))
-        (display_to_string "value in one of "
-          (map domain_name (union_domain_subdomains d)))
-        1 d v))
-    (make_value d v))
-
-
-  (define (is_union_domain_value v)
-    (and (is_domain_value v)
-         (is_union_domain (domain_value_domain v))))
-
-
-  (define (unwrap v)
-    "Extracts the subdomain value from a union value"
-    (unless (is_union_domain_value v)
-      (raise_argument_error "unwrap" "union-domain value" 0 v))
-    (domain_value_rep v))
-
-
-  (define (subdomain v)
-    "Extracts the subdomain type from a union value"
-    (unless (is_union_domain_value v)
-      (raise_argument_error "subdomain" "union-domain value" 0 v))
-    (domain_value_domain (domain_value_rep v)))
-
-
-  (define (lower_to d v)
-    (unless (is_domain d)
-      (raise_argument_error "lower_to" "domain" 0 d v))
-    (unless (is_union_domain_value v)
-      (raise_argument_error "lower_to" "union-domain value" 1 d v))
-    (let [(rep (domain_value_rep v))]
-      (unless (domain_is rep d)
-        (raise_argument_error "lower_to"
-          (string_append "element of " (domain_name d))
-          1 d v))
-      rep))
-
-
-  (define lift
-    '''
-    (lift v domain ...+)
-    '''
-    (lambda args
-      (unless (is_pair (tail args))
-        (apply raise_arity_error "lift" 2 args))                // TODO 2 is not correct
-      (let loop [(i 1), (val (head args)), (doms (tail args))]
-        (if (is_pair doms)
-          (if (is_union_domain (head doms))
-            (loop (+ i 1) (lift_to (head doms) val) (tail doms))
-            (apply raise_argument_error "lift" "union domain" i args))
-          val))))
-
-  (define lower
-    (lambda args
-      (unless (is_pair (tail args))
-        (apply raise_arity_error "lower" 2 args))                // TODO 2 is not correct
-      (let loop [(i 1), (val (head args)), (doms (tail args))]
-        // TODO typecheck val
-        (if (is_pair doms)
-          (loop (+ i 1) (lower_to (head doms) val) (tail doms))
-          val))))
-
-  //-------------------
-  // Product Domains
-
-  (define ProductDomain
-    (make_domain_meta "ProductDomain" null))
-
-  (define (make_product_domain name description domain_producer)  // Ugh
-    // TODO Memoize domain production
-    (make_domain ProductDomain name product_domain_checker description domain_producer))
-
-  (define (is_product_domain d)
-    (is_domain_of_type ProductDomain d))
-
-  (define (product_domain_subdomains d)
-    '''
-Returns the list of component domains.
-    '''
-    (let [(domains ((domain_data d)))]
-      // TODO Why are we validating this in an accessor?
-      (unless (and (is_list domains)
-                   (every is_domain domains))
-        (raise_result_error "product_domain_subdomains" "list of domains" domains))
-      domains))
-
-  (define tuple
-    '''
-    (tuple domain elt0 elt1 ...+)
-
-Constructs a product-domain value.
-    '''
-    (lambda rest
-      (let [(domain (head rest)),
-            (rep    (apply list (tail rest)))]
-        (unless (is_product_domain domain)
-          (apply raise_argument_error "tuple" "product domain" 0 rest))
-        (let loop [(i    1),
-                   (vs   (tail rest)),
-                   (subs (apply sexp (product_domain_subdomains domain)))]
-          (when (is_pair vs)
-            (if (domain_is (head vs) (head subs))
-              (loop (+ 1 i) (tail vs) (tail subs))
-              (apply raise_argument_error
-                  (string_append "tuple " (domain_name domain))
-                  (string_append "value in domain " (domain_name (head subs)))
-                  i rest))))
-        (make_value domain rep))))
-
-  (define (is_tuple v)
-    (and (is_domain_value v)
-         (is_product_domain (domain_value_domain v))))
-
-
-  (define (tuple_values tuple)
-    '''
-Return the components of tuple `v` as multiple values.
-    '''
-    (unless (is_tuple tuple)
-      (raise_argument_error "tuple_values" "tuple value" 0 tuple))
-    (apply values (domain_value_rep tuple)))
-
-
-  (define (tuple_ith v i)
-    '''
-Access component i of tuple v.
-    '''
-    // TODO type-check v
-    (list_element (domain_value_rep v) i))
-
-
-  (define (product_domain_element d v i)
-    '''
-Access component i of domain value v in domain d.
-    '''
-    // TODO type-check v
-    (list_element (domain_value_rep v) i))
-
-
-  (define (product_domain_checker d values)
-    (let [(subdomains (product_domain_subdomains d))]
-      (and (is_list values)
-           (same_size values subdomains)
-           (for_fold [(all_are_good true)]
-                     [(v values), (s subdomains)]
-             (and all_are_good (domain_is v s))))))
-
-  (define_syntax define_product_domain
-    '''
-    (define_product_domain name description domain0 domain1 ...+)
-    '''
-    (lambda (stx)
-      (when (< (syntax_size stx) 4)
-        (wrong_syntax stx "Bad syntax for define_product_domain"))
-      (let [(name_stx (syntax_get stx 1)),
-            (desc_stx (syntax_get stx 2)),  // TODO typecheck
-            (domains (tail (tail (tail (syntax_unwrap stx)))))]
-        (when (< (size domains) 2)
-          (wrong_syntax stx "define_product_domain requires at least two elements"))
-        (datum_to_syntax
-          (QQ
-            (define (UQ name_stx)
-              (make_product_domain
-                (quote (UQ name_stx))
-                (UQ desc_stx)
-                // Delay evaluation of the domains, so they can recurse
-                (thunk (UQ (pair (quote list) domains))))))
-          (quote_syntax context)
-          stx))))
-
-
-  //-------------------
-  // Function Domains
-
-  (define FuncDomain
-    (make_domain_meta "FuncDomain" null))
-
-
-  (define (make_func_domain name description input output)
-    '''
-`input` can be a named domain, a list of named domains for multi-arg,
-or null for TOP (accept any one value).
-    '''
-    (unless (or (is_domain input)
-                (is_list_of_domains input)
-                (is_null input))                                        // [TOP]
-      (raise_argument_error "make_func_domain" "input domain or domains" 2
-        name description input output))
-    (when (and (is_product_domain input) (is_null (domain_name input)))
-      // FIXME This doesn't handle single-entry list
-      (raise_argument_error "make_func_domain"
-        "singular product-domain arg must be named" 0
-        name description input output))
-    (unless (is_domain output)                                          // [TOP]
-      (raise_argument_error "make_func_domain" "output domain" 3
-        name description input output))
-    (let [(input (if (is_list_of_domains input)
-                   (if (=== 1 (size input))
-                     (. input 0)
-                     (make_product_domain null.string null.string (|| input)))
-                   input))]
-      (make_domain FuncDomain name is_procedure description [input, output])))
-
-  (define (is_func_domain v) (is_domain_of_type FuncDomain v))
-
-  (define (func_domain_input  d) (list_element (domain_data d) 0))
-  (define (func_domain_output d) (list_element (domain_data d) 1))
-
-  (define (func_domain_argdomains d)
-    "Return list of domains for the arguments to `d`."
-    (let [(in_dom (func_domain_input d))]
-      (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
-        (product_domain_subdomains in_dom)
-        [in_dom])))
-
-
-  (define_syntax define_func_domain
-    '''
-    (define_func_domain name description inDomain ...+ outDomain)
-    '''
-    (lambda (stx)
-      (when (< (syntax_size stx) 5)
-        (wrong_syntax stx "Bad syntax for define_func_domain"))
-      (lets [(name_stx (syntax_get stx 1)),
-             (desc_stx (syntax_get stx 2)),  // TODO typecheck
-             (domains (tail (tail (tail (syntax_unwrap stx))))),
-             (domains_rev (reverse domains)),
-             (out_domain (head domains_rev)),
-             (in_domains (reverse (tail domains_rev)))]
-        (datum_to_syntax
-          (QQ (define (UQ name_stx)
-                (make_func_domain
-                  (quote (UQ name_stx))
-                  (UQ desc_stx)
-                  // TODO Delay evaluation of the domains, so they can recurse
-                  (UQ (pair (quote list) in_domains))
-                  (UQ out_domain))))
-          CTX stx))))
-
 )
