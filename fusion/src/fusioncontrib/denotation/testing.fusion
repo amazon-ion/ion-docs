@@ -9,6 +9,7 @@ Utilities for testing denotational models.
   (require
     "/fusion/exception"
     "/fusion/experimental/check"
+    "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/tuple"
@@ -16,6 +17,7 @@ Utilities for testing denotational models.
   )
 
   (provide
+    check_bottom
     check_is_seq_of
     check_lower
     is_base_domain_value
@@ -64,4 +66,10 @@ A check error is raised if any step fails type-checking.
             (check_same dom (subdomain val))
             (loop (lower_to dom val) (tail doms)))))))
 
+
+  (define_check (check_bottom message v)
+    "Check that `v` is a bottom value with the given `message`."
+    // TODO Accept a Bottom as expected value, comparing messages.
+    (check_pred is_bottom v)
+    (check === message (bottom_message v)))
 )

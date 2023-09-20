@@ -1,0 +1,41 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module bottom "/fusion"
+
+  (require
+    "/fusion/exception"
+//    "/fusion/experimental/syntax"
+    "/fusion/private/record"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+
+  (provide
+    bottom_message
+    is_bottom
+    wrong
+  )
+
+
+  (define BottomDomain
+    (make_domain_meta "BottomDomain" null))
+
+  (define Bottom
+    (make_domain BottomDomain "Bottom"
+      (|d v| (is_string v))
+      "The error domain"
+      null))
+
+  (define (is_bottom v)
+    (domain_is v Bottom))
+
+  (define (bottom_message v)
+    (unless (is_bottom v)
+      (raise_argument_error "bottom_message" "bottom value" 0 v))
+    (domain_value_rep v))
+
+  (define wrong
+    (lambda message
+      (make_value Bottom (apply display_to_string message))))
+)

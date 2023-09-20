@@ -26,6 +26,7 @@ Remember that _everything is functional here_, even things like IF.
     "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusion/private/record"
+    "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/tuple"
     "/fusioncontrib/denotation/private/util"
@@ -149,27 +150,44 @@ Predicate for domain functions.
   (define (fn_code fn) (fn_get fn 2))
 
 
-  (define (typecheck_value d v fail_proc)
-    (if (domain_is v d)
+  (define (typecheck_value d v fail_thunk)
+    '''
+Determines whether `v` is an acceptable argument for domain `d`, returning
+the effective value after any necessary injection.
+
+Invokes `fail_thunk` when `v` is not acceptable to domain `d`.
+    '''
+    (if (or (is_bottom v) (domain_is v d))
       v
       (if (and (is_base_domain d) (base_domain_accepts d v))
         // Auto-inject
         (inject_into d v)
-        (fail_proc))))
+        (fail_thunk))))
 
   (define (typecheck_actuals where domains args)
+    '''
+Typechecks each element of the sexp `args` against correspending elements of the
+sexp `domains`.
+If any argument fails typechecking, an exception is raised; this is considered
+a defect in the model.
+If any argument is a `Bottom` value, the first such value is returned.
+Otherwise, returns a sexp of the effective argument values after any necessary
+injection.
+    '''
     (let [(count (size domains))]
       (unless (=== count (size args))
         (apply raise_arity_error where count args))
-      (let loop [(i 0), (ds domains), (as args)]
-        (if (=== count i)
-          (quote ())
-          (let [(d (head ds)), (a (head as))]
-            (pair (typecheck_value d a
-                    (|| (apply raise_argument_error where
-                          (symbol_to_string (domain_name d))
-                          i args)))
-              (loop (+ 1 i) (tail ds) (tail as))))))))
+      (let [(valid_args
+              (let loop [(i 0), (ds domains), (as args)]
+                (if (=== count i)
+                  (quote ())
+                  (let [(d (head ds)), (a (head as))]
+                    (pair (typecheck_value d a
+                            (|| (apply raise_argument_error where
+                                  (symbol_to_string (domain_name d))
+                                  i args)))
+                      (loop (+ 1 i) (tail ds) (tail as)))))))]
+        (or (find is_bottom valid_args) valid_args))))
 
   (define (make_fn name domain impl arg_stxs code_stx)
     '''
@@ -191,11 +209,15 @@ Type-checking of function application:
     (lets [(argdomains (apply sexp (func_domain_argdomains domain))),
            (out_dom (func_domain_output domain)),
            (applier (lambda rest
-                      (lets [(args (typecheck_actuals (desyntax name) argdomains rest)),
-                             (r (apply impl args))]
-                        (typecheck_value out_dom r
-                          (|| (raise_result_error (string_append "result of " (desyntax name))
-                                (symbol_to_string (domain_name out_dom)) r))))))]
+                      (let [(args (typecheck_actuals (desyntax name) argdomains rest))]
+                        // Strictness check
+                        (if (is_bottom args)
+                          args                         // Don't invoke the function w/ bottom.
+                          (let [(r (apply impl args))]
+                            // Bottom result will be returned as-is.
+                            (typecheck_value out_dom r
+                              (|| (raise_result_error (string_append "result of " (desyntax name))
+                                    (symbol_to_string (domain_name out_dom)) r))))))))]
       (fn_ctor domain name applier arg_stxs code_stx)))
 
 

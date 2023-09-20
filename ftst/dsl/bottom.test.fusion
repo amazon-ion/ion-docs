@@ -1,0 +1,40 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+//  "/fusion/experimental/syntax"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/model1"
+)
+
+
+// Basic bottom value features
+
+(let [(b (wrong "msg"))]
+  (check_true (is_bottom b))
+  (check === "msg" (bottom_message b)))
+
+// `wrong` displays its arguments to produce the message.
+(let [(b (wrong "msg" 1 (quote 'f oo') true))]
+  (check_true (is_bottom b))
+  (check === "msg1f ootrue" (bottom_message b)))
+
+
+(expect_argument_error (bottom_message 1))         // arg is not a domain value
+(expect_argument_error (bottom_message Any_true))  // arg is not a Bottom
+
+
+// User functions are strict
+(check_bottom "1847" (id           (wrong "1847")))
+(check_bottom "1848" (select_ints  (wrong "1848")))
+(check_bottom "1849" (Stamped_time (wrong "1849")))
+
+(check_bottom "1850" (stamp (wrong 1850) (wrong 1851)))  // First bottom wins!
+(check_bottom "1852" (stamp (wrong 1852) Any_true))
+(check_bottom "1853" (stamp t_val (wrong 1853)))
+
+// Type-check failures "win" over bottom arguments.
+// This may turn out to be a problem, but I don't want to hide errors in the model.
+(expect_argument_error (stamp z_val (wrong 1907)))
+(expect_argument_error (stamp (wrong 1908) z_val))

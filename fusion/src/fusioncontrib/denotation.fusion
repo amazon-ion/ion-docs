@@ -33,6 +33,7 @@ Domains come in several types:
   '''
   (require
     "/fusion/exception"
+    "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
@@ -94,6 +95,9 @@ Domains come in several types:
 
     // Pre-defined domains and functions
     B
+    bottom_message
+    is_bottom
+    wrong
   )
 
 
