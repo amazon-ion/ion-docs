@@ -76,6 +76,9 @@
   (check_is_seq_of Z v)
   (check_pred seq_is_empty v))
 
+(check_bottom "79" (seq_append (wrong 79) empty_Zs))            // 1st arg strict
+(check_bottom "80" (seq_append empty_Zs   (wrong 80)))          // 2nd arg strict
+
 (expect_argument_error (seq_append (inject_into Z 0) empty_Zs)) // 1st arg isn't a sequence
 (expect_argument_error (seq_append empty_Zs (inject_into Z 0))) // 2nd arg isn't a sequence
 (expect_argument_error (seq_append empty_Zs (seq 'Any*')))      // Args have different element type

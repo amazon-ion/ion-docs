@@ -153,7 +153,7 @@ Predicate for domain functions.
   (define (typecheck_value d v fail_thunk)
     '''
 Determines whether `v` is an acceptable argument for domain `d`, returning
-the effective value after any necessary injection.
+the effective value after any necessary injection.  Bottom values pass through.
 
 Invokes `fail_thunk` when `v` is not acceptable to domain `d`.
     '''

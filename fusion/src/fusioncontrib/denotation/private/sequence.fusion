@@ -159,7 +159,7 @@ within `domain`'s subdomain.
       (pair v (domain_value_rep seq))))
 
 
-  (define (seq_append seq0 seq1)
+  (define_strict (seq_append seq0 seq1)
     (unless (is_seq seq0)
       (raise_argument_error "seq_append" "seq value" 0 seq0 seq1))
     (unless (is_seq seq1)

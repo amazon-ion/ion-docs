@@ -13,6 +13,12 @@
 (check_true (domain_is  stamped_int_val Stamped))
 (check_true (element_of stamped_int_val Stamped))
 
+
+// tuple
+
+(check_bottom "19" (tuple Stamped (wrong 19) int_any_val))  // 1st arg strict
+(check_bottom "20" (tuple Stamped t_val      (wrong 20)))   // 2nd arg strict
+
 (expect_argument_error (tuple z_val z_rep))        // 1st arg isn't a domain
 (expect_argument_error (tuple Z     z_rep))        // 1st arg isn't a product domain
 

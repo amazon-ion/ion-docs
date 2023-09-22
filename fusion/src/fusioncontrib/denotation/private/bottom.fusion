@@ -28,7 +28,11 @@
       "The error domain"
       null))
 
+
   (define (is_bottom v)
+    '''
+Determines whether `v` is a bottom value, which denotes an error condition.
+    '''
     (domain_is v Bottom))
 
   (define (bottom_message v)
@@ -37,8 +41,30 @@
     (domain_value_rep v))
 
   (define wrong
+    '''
+    (wrong message ...+)
+
+Returns a bottom value with the given message content.
+The result's message is constructed as per `display_to_string`.
+    '''
     (lambda message
       (make_value Bottom (apply display_to_string message))))
+
+
+  //============================================================================
+  // Strict Functions
+  //
+  // These return ⊥ when any argument is ⊥.
+  //
+  // This follow's Queinnec; see LiSP §5.2.1 p154
+  //
+  // Interestingly, Stoy uses a different formulation, with distinct concepts of
+  // `⊥`, denoting "the absence of information" (p81), and `?`, denoting errors
+  // (p144).  Stoy then has three tiers of strictness to propagate ⊥, ⊤, and ?.
+  // Queinnec unifies ⊥ and ? and uses "strict" for Stoy's "completely strict".
+  //
+  // Another difference is that Stoy defines `wrong` as an unspecified error
+  // continuation (p256) while Queinnec defines it as a bottom-constructor.
 
 
   (define CTX (quote_syntax lexical_context))
@@ -47,8 +73,9 @@
     '''
     (define_strict (f a ...) b ...)
 
-Like `define` with implicit lambda, but if any argument is bottom, the first
-such value is returned (ignoring the body expressions `b`).
+Like `(define (f a ...) b ...)`, but before `b` is evaluated the arguments are
+checked to ensure none are bottom.  If any argument `is_bottom`, the first
+such value is returned and the body is ignored.
     '''
     (lambda (stx)
       (lets [(sig   (syntax_get stx 1)),

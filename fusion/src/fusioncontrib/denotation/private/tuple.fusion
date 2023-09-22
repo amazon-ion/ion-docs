@@ -60,13 +60,15 @@ Constructs a product-domain value.
                    (vs   (tail rest)),
                    (subs (apply sexp (product_domain_subdomains domain)))]
           (when (is_pair vs)
-            (if (domain_is (head vs) (head subs))
+            (if (or (is_bottom (head vs))
+                    (domain_is (head vs) (head subs)))
               (loop (+ 1 i) (tail vs) (tail subs))
               (apply raise_argument_error
                   (string_append "tuple " (domain_name domain))
                   (string_append "value in domain " (domain_name (head subs)))
                   i rest))))
-        (make_value domain rep))))
+        (or (find is_bottom rep)       // strictness check
+            (make_value domain rep)))))
 
   (define (is_tuple v)
     (and (is_domain_value v)

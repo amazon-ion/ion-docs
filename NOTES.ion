@@ -11,7 +11,6 @@ TODOs
   * S = strings of Unicode code points?
   * C = Unicode code point?
 * [BOTTOM] Add ⊥ domain for error reporting.
-  * Automatic strictness in fn interceptor.
   * Lowering should return ⊥ if not in the target domain. (See LiSP p162)
 * [BOOL] Proper functional handling of booleans and if.
   * Needs [BOTTOM] to not raise exceptions when the "wrong" branch is evaluated,
