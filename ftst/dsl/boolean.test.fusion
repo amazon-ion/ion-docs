@@ -1,0 +1,29 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+)
+
+
+// IF is fully strict and functional
+
+(check_bottom "10" (IF (wrong 10) true false))
+(check_bottom "11" (IF false (wrong 11) false))
+(check_bottom "12" (IF true true (wrong 12)))
+
+
+// IF1 is only strict on the condition.
+
+(check_bottom "14" (IF1 (wrong 14) true false))
+(check_bottom "15" (IF1 true (wrong 15) false))
+(check_bottom "16" (IF1 false true (wrong 16)))
+
+// IF1 is non-functional: doesn't evaluate the other branch.
+
+(check_eqv 18 (IF1 true 18 (raise 18)))
+(check_eqv 19 (IF1 false (raise 19) 19))
+
+
+"SUCCESS (boolean.test)"

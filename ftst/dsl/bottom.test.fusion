@@ -38,3 +38,6 @@
 // This may turn out to be a problem, but I don't want to hide errors in the model.
 (expect_argument_error (stamp z_val (wrong 1907)))
 (expect_argument_error (stamp (wrong 1908) z_val))
+
+
+"SUCCESS (bottom.test)"

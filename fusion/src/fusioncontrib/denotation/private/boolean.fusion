@@ -1,0 +1,62 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module boolean "/fusion"
+
+  '''
+Predefined denotational model of Boolean values and related logical functions.
+  '''
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/bottom"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+//    AND
+    B
+//    FALSE
+    IF
+    IF1
+//    NOT
+//    OR
+//    TRUE
+  )
+
+
+  (define_base_domain B "Booleans" is_bool)
+
+
+  (define (boolify v)
+    (cond
+      ((is_bool v)     v)
+      ((domain_is v B) (eject v))
+      (true (raise (display_to_string "not bool or B: " v)))))
+
+  (define_strict (IF c d e)
+    "Functional, strict version of `if`."
+    (if (boolify c) d e))
+
+
+  (define CTX (quote_syntax lexical_context))
+
+  (define_syntax IF1
+    '''
+    (IF1 c expr1 expr2)
+
+Variant of `if` that's strict WRT the condition `c`, but not functional:
+at most one of the branches will be evaluated.
+    '''
+    (lambda (stx)
+      (let [(condition (syntax_get stx 1)),
+            (then      (syntax_get stx 2)),
+            (else      (syntax_get stx 3))]
+        (datum_to_syntax
+          (QQ (let [(test (UQ condition))]
+                (if (is_bottom test) test
+                  (if (boolify test) (UQ then) (UQ else)))))
+          CTX
+          stx))))
+)
