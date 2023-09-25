@@ -6,7 +6,7 @@
 Version_string = "0.1"
 Date_string = Time.now.strftime("%Y-%m-%d")
 
-books = %w{IonSpec}
+books = %w{IonSpec Demo}
 
 image_files = Rake::FileList.new("src/images/*.png", "src/images/*.svg") do |fl|
   fl.exclude("~*")
@@ -137,3 +137,6 @@ desc "Build the book in all formats"
 task :build => "spec:build"
 
 task :watch => "spec:watch"
+
+desc "Build the demo document for checking rendering."
+task :demo  => "build/Demo.pdf"
