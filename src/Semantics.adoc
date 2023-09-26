@@ -81,34 +81,36 @@ operations on them).
 It is similarly straightforward to model data types such as _sequences_ and
 _tuples_ using lambda calculus.
 
-With these primitives we define types of values over lambda calculus as a
-_domain_.  For our purposes, a _domain_ can be thought of as a set of tagged
+With these primitives we define types of lambda-calculus values as _domains_.
+For our purposes, a _domain_ can be thought of as a set of tagged
 values, where each value knows what type it is.  This allows the math to be
 strongly-typed, at the expense of some bookkeeping to convert values across
 domains.
 
-
-// == Reading the Math
-
-// Our denotational model is expressed in terms of lambda calculus, and the
-// functions below use pretty-printed forms of numerous lambda calculus patterns.
-// This section introduces the primary domains and notations used by the model.
+Pure lambda calculus is challenging to read, so we use quite a few conventions
+in our notation to "`pretty print`" various functions.
+We also use conventions around the names of functions and variables to help
+distinguish their roles and clarify their types.
+For instance, we write domain names in *BoldCamelCase* and function arguments in
+italic or even Greek letters.
 
 Our first fundamental domain stem:[\mbox{\bf B}] denotes Boolean values.
 It has two elements, the constants *true* and *false*.
-We test Boolean values with a function _if_(_b_, _d_, _e_), where
+We test Boolean values with a function
+stem:[\mbox{\it if}(b, e_1, e_2)], where
 stem:[b \in \mbox{\bf B}], which we pretty-print as
 stem:[
-\mbox{{\bf if} {\it b}\:{\bf then}\:{\it d}\:{\bf else}\:{\it e} {\bf endif}}
+\mbox{{\bf if} $b$\:{\bf then}\:$e_1$\:{\bf else}\:$e_2$ {\bf endif}}
 ].  We assume the presence of related Boolean operators _and_ (stem:[\wedge]),
 _or_ (stem:[\vee]) and _not_ (stem:[\lnot]).
 
 Our second fundamental domain, *I*, denotes integer values, which comes along
 with the obvious arithmetic operators.
 
-We write **D**{asterisk} to mean the domain of sequences of **D** and
-pretty-print such values between angle brackets stem:[\langle...\rangle].
-For example,
+Given some domain *D*, we write **D**{asterisk} to mean the domain of sequences
+of *D*.
+We pretty-print such values between angle brackets stem:[\langle...\rangle],
+for example,
 stem:[\langle\mbox{\bf true}, \mbox{\bf false}\rangle \in \mbox{\bf B}^{\ast}].
 To make variable names somewhat self-describing, we use asterisks there too,
 as in stem:[d^\ast \in \mbox{\bf D}^\ast].
@@ -119,34 +121,54 @@ stem:[d^{\ast} = \langle e_0, e_1, ..., e_n\rangle] we write
 stem:[d^{\ast}\!\downarrow_{i} = e_i].
 To discard the first _i_ elements of a sequence, we write
 stem:[d^{\ast}\!\dagger i = \langle e_i, ..., e_n\rangle].
-Finally, we write stem:[\#d^{\ast}] to mean the number of items in
+Finally, we write stem:[\#d^{\ast}] to mean the number of items in the sequence
 stem:[d^{\ast}].
 
-We write stem:[\mbox{\bf Sum} = \mbox{\bf D} + \mbox{\bf E}] to mean the
-disjoint sum of domains **D** and **E**: every element of **Sum** is an element
-of either **D** or **E**.
+For domains *D* and *E*, we write stem:[\mbox{\bf D} + \mbox{\bf E}] to mean the
+disjoint sum of domains *D* and *E*, so when
+stem:[\mbox{\bf Sum} = \mbox{\bf D} + \mbox{\bf E}] then every element of *Sum*
+is an element of _either_ *D* _or_ *E*.
 Elements of sum domains are effectively "`tagged`", so we know which component
-domain they come from, and we can project or "`lower`" a value
-stem:[v \in \mbox{\bf Sum}] back there via stem:[v\mid_{\mbox{\scriptsize\bf D}}],
-assuming stem:[v \in \mbox{\bf D}].
-Conversely, we can inject or "`lift`" a component value into **Sum** using the
+domain they come from, and we can project or "`lower`" (that is, downcast) a value
+stem:[v \in \mbox{\bf Sum}] back into its component domain via
+stem:[v\mid_{\mbox{\scriptsize\bf D}}], assuming stem:[v \in \mbox{\bf D}].
+Conversely, we can inject or "`lift`" (that is, upcast or wrap) a value into
+*Sum* using the
 function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
 assuming stem:[v \in \mbox{\bf D} \vee v \in \mbox{\bf E}].
 
 We write stem:[\mbox{\bf Prod} = \mbox{\bf D} \times \mbox{\bf E}] to mean the
-Cartesian product of **D** and **E**. These are tuples containing first some
+Cartesian product of **D** and **E**. These are tuples, effectively constrained
+sequences containing first some
 stem:[d \in \mbox{\bf D}] and then some stem:[e \in \mbox{\bf E}].
+We construct them by tagging a sequence:
+stem:[\mbox{\it{in}\small\bf Prod}(\langle d, e \rangle)].
 To extract elements from a tuple we can overload the stem:[\downarrow]
 operator, so that when stem:[p \in \mbox{\bf Prod}] we have
 stem:[p \downarrow_{1} \in \mbox{\bf D}] and
 stem:[p \downarrow_{2} \in \mbox{\bf E}].
-To improve readability, our model generally introduces additional overloads
-addressing tuple fields by name.
+To improve readability, we'll usually introduce additional overloads
+addressing tuple fields by name, rather than by index.
 
 Perhaps stretching credibility, we assume another primitive domain, *Unicode*,
 denoting Unicode strings.
 While we have not explicitly modeled it as such, this is just a sequence of
 Unicode code points, effectively **I**{asterisk}.
+
+We'll also define domains describing the input and output types of functions.
+For example,
+stem:[\mbox{\bf A} \times \mbox{\bf B} \rightarrow \mbox{\bf C}]
+is the domain of two-argument functions that accept an element of *A* and
+an element of *B* and return an element of *C*.
+
+// TODO: function-definition syntax
+
+In some cases our functions make use of local variables.  The special syntax
+stem:[\mbox{\bf let}\: v = e_1 \: \mbox{\bf in}\: e_2]
+means that _v_ is bound to the value of stem:[e_1] within the scope of
+expression stem:[e_2].  The *letrec* form is similar, except the variable is
+bound within _both_ stem:[e_1] and stem:[e_2], enabling recursive definitions.
+
 
 
 === A Roadmap
@@ -187,7 +209,7 @@ representing the structure of Ion syntax, before expansions are performed.
 incrementally defining layers of functions that build up to _expand_.
 
 * xref:symtabs[xrefstyle=short] specifies the handling of encoding directives,
-then the far more complicated process of compiling local symbol tables.
+the compilation of local symbol tables, and the responsibilities of a *Catalog*.
 
 * xref:issues[xrefstyle=short] documents the known defects with the model in its
 current draft.
@@ -237,10 +259,10 @@ include::{modeltex}[tag=Content]
 
 An Ion value is a potentially-empty sequence of symbol tokens annotating some
 content, which is partitioned into several typed domains.
-
-NOTE: This denotation currently doesn't cover Ion's decimal, float, timestamp,
-blob, and clob types, since they are "`atomic`" from the perspective of the
-expansion process and thus have little effect on the remainder of the model.
+You'll note the absence of Ion's decimal, float, timestamp,
+blob, and clob types; these cannot contain symbols and thus "`pass through`" the
+expansion process unchanged.  Since they have little effect on the model other
+than to add a bunch of type-cases, we currently omit them for brevity.
 
 We'll take the opportunity to introduce a syntactic habit that we'll use for
 tuple domains like *Value*: simple functions that provide access to the tuple's
@@ -310,8 +332,12 @@ include::{modeltex}[tag=Symbol]
 *Sym0* is a singleton domain containing only an opaque constant named `SYM0`.
 As we'll see, this is our denotation for the syntactic token `$0`, symbol zero.
 
-*SymTok* denotes an expanded symbol token, either a Unicode string or `$0`.
-Symbol tokens are used to define annotations, field names, and symbol values.
+:fn-symeq: footnote:[This fails to properly account for absent shared symbols; +
+see xref:iss-symeq[xrefstyle=short].]
+
+*SymTok* denotes an expanded symbol token, either a Unicode string or
+`$0`{fn-symeq}.
+Symbol tokens are used for annotations, field names, and symbol values.
 
 *Symbol* denotes the latter, being either a symbol token or `null.symbol`.
 
@@ -329,7 +355,7 @@ include::{modeltex}[tag=Sexp]
 
 // TODO note the recursion/reflexivity introduced by using Value?
 
-We'll eventually need to extract the sequence of values inside a list, so let's
+We'll eventually need to extract the elements inside a list, so let's
 create a little accessor function to make the math more clear:
 
 [{denotation}]
@@ -337,8 +363,12 @@ create a little accessor function to make the math more clear:
 include::{modeltex}[tag=List_elts]
 ++++
 
+:fn-structorder: footnote:[This model is subtly incorrect, since its fields +
+are ordered within a struct.  See xref:iss-structorder[xrefstyle=short].]
+
 The domain model for structs is not much more complicated: a struct is either
-null or a set of fields, and a field is a tuple with a symbol token and a value.
+null or a set{fn-structorder} of fields, and a field is a tuple with a symbol
+token and a value.
 
 [{denotation}]
 ++++
@@ -356,10 +386,6 @@ include::{modeltex}[tag=Field_name]
 include::{modeltex}[tag=Field_value]
 ++++
 
-IMPORTANT: This model is subtly incorrect, since its fields are ordered within a
-struct.  Modeling unordered collections in lambda calculus is quite tricky, so
-for now we'll settle for this defective approach.
-
 
 === Matching Symbols
 
@@ -367,7 +393,7 @@ Before we turn to the syntax model, let's define some functions that will be
 necessary to get from there to here during expansion.
 
 First, we need to be able to compare symbol values and tokens against Unicode
-text.  We'll use the relation stem:[\cong] to notate this matching operation.
+text.  We'll use infix stem:[\cong] (read "`matches`") to notate this operation.
 Matching symbol tokens is straightforward: if the given *SymTok* is *Unicode*
 then we lower into that domain and compare with the argument.
 Otherwise, the token must be *Sym0*, so we return *false*.
@@ -401,8 +427,8 @@ include::{modeltex}[tag=Value_has_first_annot]
 ++++
 
 To get data out of a struct by field name, we need a lookup function.
-We'll use stem:[\odot] to represent this, here with an asterisk to indicate
-that multiple values may result:
+We'll use infix stem:[\odot] (read "`lookup`") to represent this, here with an
+asterisk to indicate that multiple values may result:
 
 [{denotation}]
 ++++
@@ -589,8 +615,9 @@ include::{modeltex}[tag=Environment_symbols]
 === Symbol Token Expansion
 
 We've now set enough context that we can implement the core of the expansion
-process: replacing SIDs with text.  We introduce stem:[{\cal E}] as the base
-name of our various expansion functions, adding the input type as a subscript.
+process: replacing SIDs with text.  We introduce stem:[{\cal E}] ("`expand`") as
+the base name of our various expansion functions, adding the input type as a
+subscript.
 
 [{denotation}]
 ++++
@@ -1058,14 +1085,16 @@ This denotational model is currently defective with respect to the published Ion
 specification in the following ways.
 
 
+[id=iss-structorder]
 === Improper ordering of struct fields
 
-Structs are unordered, but this model currently denotes them as sequences.
+Ion structs are unordered, but this model currently denotes them as sequences.
 This means that the same field-values in different order will _not_ be
 equivalent per lambda calculus.  Denoting this properly is possible (by
 constructing the set of all permutations) but requires a fair amount of code.
 
 
+[id=iss-symeq]
 === Improper equivalence of unknown shared symbols
 
 The model maps all unknown shared symbols to `$0` and therefore they are all
