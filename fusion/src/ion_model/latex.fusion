@@ -14,33 +14,27 @@
   )
 
 
-  (define (pp_accessor name)
-    "Like `pp_ith` but the selector is literal text, not a sub-expression."
-    // \! is negative thin-space
-    (pp_unary "" (string_append "\\!\\downarrow_{\\mbox{\\scriptsize " name "}}")))
-
-
   (define ion_print_latex
     '''
 A model printer that renders in LaTeX format, for inclusion in a larger book.
     '''
     (make_printer latexprint
-      // TODO these functions, and the print methods, should be generated.
-      (form_method Environment_catalog (pp_accessor "catalog"))
-      (form_method Environment_IVM     (pp_accessor "IVM"))
-      (form_method Environment_symbols (pp_accessor "symbols"))
-      (form_method List_elts           (pp_accessor "elts"))
-      (form_method RField_name         (pp_accessor "name"))
-      (form_method RField_value        (pp_accessor "value"))
-      (form_method RValue_annots       (pp_accessor "annots"))
-      (form_method RValue_content      (pp_accessor "content"))
-      (form_method Field_name          (pp_accessor "name"))
-      (form_method Field_value         (pp_accessor "value"))
-      (form_method SST_name            (pp_accessor "name"))
-      (form_method SST_symbols         (pp_accessor "symbols"))
-      (form_method SST_version         (pp_accessor "version"))
-      (form_method Value_annots        (pp_accessor "annots"))
-      (form_method Value_content       (pp_accessor "content"))
+      // TODO these functions, and the print configuration, should be generated.
+      (accessor Environment_catalog  "catalog")
+      (accessor Environment_IVM      "IVM")
+      (accessor Environment_symbols  "symbols")
+      (accessor List_elts            "elts")
+      (accessor RField_name          "name")
+      (accessor RField_value         "value")
+      (accessor RValue_annots        "annots")
+      (accessor RValue_content       "content")
+      (accessor Field_name           "name")
+      (accessor Field_value          "value")
+      (accessor SST_name             "name")
+      (accessor SST_symbols          "symbols")
+      (accessor SST_version          "version")
+      (accessor Value_annots         "annots")
+      (accessor Value_content        "content")
 
       // The outer parens make the function definition less confusing; without
       // them it prints as "i1 = i2 = ..." but now its (i1 = i2) = ...".

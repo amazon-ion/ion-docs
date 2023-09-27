@@ -36,6 +36,7 @@ References:
     fn_args
     fn_binding
     fn_code
+    fn_method
     fn_name
     form_method
     func_domain_argdomains
@@ -136,12 +137,21 @@ Configuration clause declaring a printing method for values in the domain `dom`.
     (type_method (|v| (domain_is v dom)) method))
 
 
+  (define (fn_method fn method)
+    '''
+Configuration clause declaring a printing method for a specific function
+definition.
+    '''
+    (assert (is_fn fn))
+    (type_method (|v| (ident v fn)) method))
+
+
   (define_syntax form_method
     '''
     (form_method id method)
 
-Configuration clause declaring a printing method for the procedure or syntax
-form with the binding `id`.
+Configuration clause declaring a printing method for uses of the procedure or
+syntax form with the binding `id`.
     '''
     (lambda (stx)
       (let [(id (syntax_get stx 1)), (method (syntax_get stx 2))]

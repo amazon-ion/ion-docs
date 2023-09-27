@@ -55,10 +55,12 @@ TODO
   )
 
   (provide
+    accessor
     latexprint
     pp_domain_def
     pp_ith
     pp_fn_def
+    pp_fn_def1
   )
 
 
@@ -158,12 +160,14 @@ TODO
     (display "\n"))
 
 
-  (define (pp_fn_def v e)
+  (define (pp_fn_def_lhs v e)
     // We want to render the LHS as if it were an invocation, so fake one up
     // and send it back for rendering, using any form-methods installed.
-    (pp_print (datum_to_syntax (pair (fn_binding v) (fn_args v)) (QS ignored)) e)
+    (pp_print (datum_to_syntax (pair (fn_binding v) (fn_args v)) (QS ignored)) e))
+
+  (define (pp_fn_def v e)
+    (pp_fn_def_lhs v e)
     (display " = ")
-    // TODO Find another way to render the signature that allows one-liners.
     (display "$\\`$ ")   // Tabbing command to right-align the rest of the line
     (pp_domain_rhs (domain_of v) e)
     (display NL SPACE SPACE)
@@ -171,6 +175,30 @@ TODO
       (pp_print (fn_code v) e1)
       (pp_decr_indentation e1)))
 
+  (define (pp_fn_def1 v e)
+    "Like `pp_fn_def` but renders the function body is assumed to fit on one line."
+    (pp_fn_def_lhs v e)
+    (display " = ")
+    (pp_print (fn_code v) e)
+    (display "$\\`$ ")   // Tabbing command to right-align the rest of the line
+    (pp_domain_rhs (domain_of v) e)
+    (display "\n"))
+
+
+  (define (pp_accessor name)
+    "Like `pp_ith` but the selector is literal text, not a sub-expression."
+    // \! is negative thin-space
+    (pp_unary "" (string_append "\\!\\downarrow_{\\mbox{\\scriptsize " name "}}")))
+
+  (define_syntax accessor
+    (lambda (stx)
+      (let [(fn (syntax_get stx 1)), (field_name (syntax_get stx 2))]
+        // TODO typecheck
+        (datum_to_syntax
+          (QQ [(form_method (UQ fn) (pp_accessor (UQ field_name))),
+               (fn_method   (UQ fn) pp_fn_def1)])
+          (QS context)
+          stx))))
 
 
   //============================================================================
