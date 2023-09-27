@@ -97,12 +97,14 @@ References:
 Contruct a customized pretty-printer.
 
 You'll generally need to add methods for is_fn, is_domain_value, etc.
+
+Sequences in the arguments are flattened recursively.
     '''
     (lambda clauses
       (lets [(base (when (is_model_printer (head clauses)) (head clauses))),
              (env  (if base
-                     (append (tail clauses) (model_printer_env base))
-                     (append clauses
+                     (append (flatten_to_sexp (tail clauses)) (model_printer_env base))
+                     (append (flatten_to_sexp clauses)
                        (sexp
                          (type_method is_base_domain_value pp_basedom)
                          (type_method is_string            pp_write)

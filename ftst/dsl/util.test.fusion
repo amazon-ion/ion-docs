@@ -1,0 +1,18 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation/private/util"
+)
+
+
+// flatten_to_sexp
+
+(check === (sexp)       (flatten_to_sexp))
+(check === (sexp 1)     (flatten_to_sexp 1))
+(check === (sexp 1 2)   (flatten_to_sexp 1 2))
+(check === (sexp 1 2)   (flatten_to_sexp [1, 2]))
+(check === (sexp 1 2)   (flatten_to_sexp 1 [2]))
+(check === (sexp 1 2)   (flatten_to_sexp (sexp 1) [2]))
+(check === (sexp 1 2 3) (flatten_to_sexp (sexp 1) [2, (sexp [3])]))
+(check === (sexp 1 2 3) (flatten_to_sexp 1 [] [2, [[]], (sexp 3 [] (sexp))]))

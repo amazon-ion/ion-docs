@@ -60,6 +60,22 @@
 // TODO More tests of printer subclassing
 
 
+// Clauses can be grouped in sequences, and are flattened automatically
+
+(define sub_printer1
+  (make_printer // No base printer
+    [(sym_image "HI" hi), (sexp (sym_image "HI" hello) (sym_image "HI" hola))]
+    (type_method is_symbol (pp_symbol (|s| (string_append "<" s ">"))))
+    (type_method is_sexp   (|v e| (pp_print_terms v e "(:" " " ":)")))))
+(check_printing sub_printer1 "(:HI HI HI:)" (quote (hi hola hello)))
+
+(define sub_printer2
+  (make_printer sub_printer1
+    [(sym_image "HEY" hi), (sexp (sym_image "HEY" hello))]))
+(check_printing sub_printer2 "(:HEY HI HEY:)" (quote (hi hola hello)))
+
+
+
 //==============================================================================
 // Unicode printing
 
@@ -185,3 +201,5 @@ mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
 // To enable insertion of AsciiDoc tags, we want definitions to end with newlines
 (check_true (string_ends_with (with_output_to_string (latexprint B)) "\n"))
 (check_true (string_ends_with (with_output_to_string (latexprint f)) "\n"))
+
+// TODO same for one-liner function
