@@ -36,11 +36,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor Value_annots         "annots")
       (accessor Value_content        "content")
 
-      // The outer parens make the function definition less confusing; without
-      // them it prints as "i1 = i2 = ..." but now its (i1 = i2) = ...".
-      // The downside is irregular (though not confusing) rendering where the
-      // function is invoked.
-      (form_method IVM_eq              (pp_binary "(" " = " ")"))
+      (form_method IVM_eq              (pp_binary "" " = " ""))
+      (fn_method   IVM_eq              pp_fn_def1)
 
       (form_method Struct_get          (pp_binary "" " \\odot^{\\ast} " ""))
       (form_method Struct_get1         (pp_binary "" " \\odot " ""))
