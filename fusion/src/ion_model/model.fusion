@@ -29,11 +29,11 @@ Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 
 Defects:
-* SID too large must raise an error. Need new way to test the LST maxid.
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
   * Probably SymTok needs to track symbol source: SharedSymtab x N::index
+* SIDs should be non-negative.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
   associated IDs (the same string could appear twice as children of the symbols
   field). Implementations MUST select the lowest known ID, and all other
@@ -119,8 +119,8 @@ Spec Problems
     (dom RStruct   = (+ 'RField*' DotNull))
 
 
-    // The "raw" data model
-    (dom RContent   = (+ RSymbol RList RSexp RStruct NullNull Bool Int String /*Decimal Float Timestamp Blob Clob*/))
+    (dom RContent   = (+ RSymbol RList RSexp RStruct NullNull Bool Int String
+                         /*Decimal Float Timestamp Blob Clob*/))
     (dom RValue     = (* 'RSymTok*' RContent))
     (dom TRValue    = (+ RValue IVM))
 
@@ -144,7 +144,8 @@ Spec Problems
     (dom Struct   = (+ 'Field*' DotNull))
 
     // The Ion data model, proper
-    (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String /*Decimal Float Timestamp Blob Clob*/))
+    (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String
+                        /*Decimal Float Timestamp Blob Clob*/))
     (dom Value     = (* 'SymTok*' Content))
 
 
@@ -438,7 +439,7 @@ Spec Problems
               (ts (Environment_symbols r))]
           (if (< i (seq_length ts))
             (ith ts i)
-            (lift_to SymTok SYM0)))))
+            (wrong "Invalid symbol address " i)))))
 
     (fn 'E_RSymTok*' ((ss 'RSymTok*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty ss)

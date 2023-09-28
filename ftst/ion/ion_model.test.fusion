@@ -96,27 +96,39 @@ TODO
 (check_expansion
   (quote_top [first, $ion_symbol_table::{}, $ion_symbol_table::null.struct, second])
   (quote_top [first, $ion_symbol_table::{}, $ion_symbol_table::null.struct, second]))
-(check_expansion
-  (quote_top a::'#$0' a)
-  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10'::'#$11' '#$10'))
 
+
+// Basic symbol expansion
+(check_expansion
+  (quote_top a::a a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10'::'#$10' '#$10'))
+
+
+// Out-of-bounds SID
+//  At present, the model doesn't support partial expansion of the front of stream.
+(check_expansion
+  (quote "#$?Invalid symbol address 10")
+  (quote_top '#$10'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10'))
+(check_expansion_and_bounds 11
+  (quote_top a b)
+  (quote_top $ion_symbol_table::{symbols:["a", "b"]} '#$10' '#$11'))
 
 // Empty, null, or malformed `symbols` field is ignored
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:[]} '#$10'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:null.list} '#$10'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:null} '#$10'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:42} '#$10'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:("b")} '#$10'))
+(check_expansion_and_bounds 9
+  (quote_top a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:[]}))
+(check_expansion_and_bounds 9
+  (quote_top a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:null.list}))
+(check_expansion_and_bounds 9
+  (quote_top a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:42}))
+(check_expansion_and_bounds 9
+  (quote_top a)
+  (quote_top $ion_symbol_table::{symbols:["a"]} '#$10' $ion_symbol_table::{symbols:("b")}))
 
 
 // Non-string and null `symbols` entries act like $0
@@ -205,15 +217,15 @@ TODO
 
 // Exact-match imports
 
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs"}]} '#$10' '#$11'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:1}]} '#$10' '#$11'))
-(check_expansion
-  (quote_top a b '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:2}]} '#$10' '#$11' '#$12'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs"}]} '#$10'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:1}]} '#$10'))
+(check_expansion_and_bounds 11
+  (quote_top a b)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:2}]} '#$10' '#$11'))
 
 // max_id inserts padding when exact-match
 (check_expansion
@@ -222,9 +234,9 @@ TODO
 
 // Multiple imports
 
-(check_expansion
-  (quote_top m a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"mnop", max_id:3}, {name:"abcs"}]} '#$10' '#$13' '#$14'))
+(check_expansion_and_bounds 13
+  (quote_top m a)
+  (quote_top $ion_symbol_table::{imports:[{name:"mnop", max_id:3}, {name:"abcs"}]} '#$10' '#$13'))
 
 
 // TODO Use both versions of abcs; how to handle the second copy of "a"?
@@ -263,21 +275,21 @@ TODO
 
 
 // Normalise bad version values to 1
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null}]} '#$10' '#$11'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null.int}]} '#$10' '#$11'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null.bool}]} '#$10' '#$11'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:0}]} '#$10' '#$11'))
-(check_expansion
-  (quote_top a '#$0')
-  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:"2"}]} '#$10' '#$11'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null}]} '#$10'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null.int}]} '#$10'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:null.bool}]} '#$10'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:0}]} '#$10'))
+(check_expansion_and_bounds 10
+  (quote_top a)
+  (quote_top $ion_symbol_table::{imports:[{name:"abcs", version:"2"}]} '#$10'))
 
 
 // Bad max_id values ignored given exact match
@@ -332,11 +344,11 @@ TODO
 (check_true (eject (IVM_eq IVM_1_0 (tuple IVM (inject_into I 1) (inject_into I 0)))))
 
 // Inline IVM resets the LST
-(check_expansion
-  (quote_top $ion a '#$0')
+(check_expansion_and_bounds 9
+  (quote_top $ion a)
   (quote_top
     '#$ion_1_0' $ion_symbol_table::{symbols:["a"]} '#$1' '#$10'
-    '#$ion_1_0' '#$10'))
+    '#$ion_1_0'))
 
 
 "SUCCESS (ion_model.test)"

@@ -12,6 +12,7 @@ Utilities for testing the Ion denotational model.
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/testing"
+    "/fusioncontrib/denotation/private/util"
     "/ion_model/model"
   )
 
@@ -281,6 +282,13 @@ Utilities for testing the Ion denotational model.
 
   (define_check (check_expansion expected input)
     (check_Values expected (expand_doc input)))
+
+  (define_check (check_expansion_and_bounds max_sid expected input)
+    (check_expansion expected input)
+    // TODO ensure the given max_sid is valid
+    (check_expansion
+      (display_to_string "#$?Invalid symbol address " (+ 1 max_sid))
+      (append input (sexp (symbol_append "#$" (int_to_string (+ 1 max_sid)))))))
 
   (define (expand1 input)
     (ith (expand_doc input) 0))
