@@ -125,8 +125,9 @@ Finally, we write stem:[\#d^{\ast}] to mean the number of items in the sequence
 stem:[d^{\ast}].
 
 For domains *D* and *E*, we write stem:[\mbox{\bf D} + \mbox{\bf E}] to mean the
-disjoint sum of domains *D* and *E*, so when
-stem:[\mbox{\bf Sum} = \mbox{\bf D} + \mbox{\bf E}] then every element of *Sum*
+disjoint sum of domains *D* and *E*.
+We write stem:[\mbox{\bf Sum} \equiv \mbox{\bf D} + \mbox{\bf E}] to define *Sum*
+to be that disjunction, and then every element of *Sum*
 is an element of _either_ *D* _or_ *E*.
 Elements of sum domains are effectively "`tagged`", so we know which component
 domain they come from, and we can project or "`lower`" (that is, downcast) a value
@@ -137,9 +138,9 @@ Conversely, we can inject or "`lift`" (that is, upcast or wrap) a value into
 function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
 assuming stem:[v \in \mbox{\bf D} \vee v \in \mbox{\bf E}].
 
-We write stem:[\mbox{\bf Prod} = \mbox{\bf D} \times \mbox{\bf E}] to mean the
-Cartesian product of **D** and **E**. These are tuples, effectively constrained
-sequences containing first some
+We write stem:[\mbox{\bf Prod} \equiv \mbox{\bf D} \times \mbox{\bf E}] to
+define *Prod* to be the Cartesian product of *D* and *E*.
+These are tuples, effectively constrained  sequences containing first some
 stem:[d \in \mbox{\bf D}] and then some stem:[e \in \mbox{\bf E}].
 We construct them by tagging a sequence:
 stem:[\mbox{\it{in}\small\bf Prod}(\langle d, e \rangle)].

@@ -1,192 +1,190 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-27T22:25:07.479-00:00
+%%% This file was generated at 2023-09-28T18:49:39.767-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
-\mbox{\bf B} = \mbox{(Booleans)}
+\mbox{\bf B} ~\equiv~ \mbox{(Booleans)}
 % end::B[]
 \newline
 % tag::I[]
-\mbox{\bf I} = \mbox{(Integers)}
+\mbox{\bf I} ~\equiv~ \mbox{(Integers)}
 % end::I[]
 \newline
 % tag::Unicode[]
-\mbox{\bf Unicode} = \mbox{(Sequences of Unicode code points)}
+\mbox{\bf Unicode} ~\equiv~ \mbox{(Sequences of Unicode code points)}
 % end::Unicode[]
 \newline
 % tag::IVM[]
-\mbox{\bf IVM} = \mbox{\bf I} \times \mbox{\bf I}
+\mbox{\bf IVM} ~\equiv~ \mbox{\bf I} \times \mbox{\bf I}
 % end::IVM[]
 \newline
 % tag::Sym0[]
-\mbox{\bf Sym0} = \mbox{(The undefined symbol)}
+\mbox{\bf Sym0} ~\equiv~ \mbox{(The undefined symbol)}
 % end::Sym0[]
 \newline
 % tag::DotNull[]
-\mbox{\bf DotNull} = \mbox{(Sentinel for typed nulls)}
+\mbox{\bf DotNull} ~\equiv~ \mbox{(Sentinel for typed nulls)}
 % end::DotNull[]
 \newline
 % tag::NullNull[]
-\mbox{\bf NullNull} = \mbox{\bf DotNull}
+\mbox{\bf NullNull} ~\equiv~ \mbox{\bf DotNull}
 % end::NullNull[]
 \newline
 % tag::Bool[]
-\mbox{\bf Bool} = \mbox{\bf B} + \mbox{\bf DotNull}
+\mbox{\bf Bool} ~\equiv~ \mbox{\bf B} + \mbox{\bf DotNull}
 % end::Bool[]
 \newline
 % tag::Int[]
-\mbox{\bf Int} = \mbox{\bf I} + \mbox{\bf DotNull}
+\mbox{\bf Int} ~\equiv~ \mbox{\bf I} + \mbox{\bf DotNull}
 % end::Int[]
 \newline
 % tag::String[]
-\mbox{\bf String} = \mbox{\bf Unicode} + \mbox{\bf DotNull}
+\mbox{\bf String} ~\equiv~ \mbox{\bf Unicode} + \mbox{\bf DotNull}
 % end::String[]
 \newline
 % tag::RSymTok[]
-\mbox{\bf RSymTok} = \mbox{\bf Unicode} + \mbox{\bf I}
+\mbox{\bf RSymTok} ~\equiv~ \mbox{\bf Unicode} + \mbox{\bf I}
 % end::RSymTok[]
 \newline
 % tag::RSymbol[]
-\mbox{\bf RSymbol} = \mbox{\bf RSymTok} + \mbox{\bf DotNull}
+\mbox{\bf RSymbol} ~\equiv~ \mbox{\bf RSymTok} + \mbox{\bf DotNull}
 % end::RSymbol[]
 \newline
 % tag::RList[]
-\mbox{\bf RList} = \mbox{\bf RValue*} + \mbox{\bf DotNull}
+\mbox{\bf RList} ~\equiv~ \mbox{\bf RValue*} + \mbox{\bf DotNull}
 % end::RList[]
 \newline
 % tag::RSexp[]
-\mbox{\bf RSexp} = \mbox{\bf RValue*} + \mbox{\bf DotNull}
+\mbox{\bf RSexp} ~\equiv~ \mbox{\bf RValue*} + \mbox{\bf DotNull}
 % end::RSexp[]
 \newline
 % tag::RField[]
-\mbox{\bf RField} = \mbox{\bf RSymTok} \times \mbox{\bf RValue}
+\mbox{\bf RField} ~\equiv~ \mbox{\bf RSymTok} \times \mbox{\bf RValue}
 % end::RField[]
 \newline
 % tag::RStruct[]
-\mbox{\bf RStruct} = \mbox{\bf RField*} + \mbox{\bf DotNull}
+\mbox{\bf RStruct} ~\equiv~ \mbox{\bf RField*} + \mbox{\bf DotNull}
 % end::RStruct[]
 \newline
 % tag::RContent[]
-\mbox{\bf RContent} = \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RSexp} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
+\mbox{\bf RContent} ~\equiv~ \mbox{\bf RSymbol} + \mbox{\bf RList} + \mbox{\bf RSexp} + \mbox{\bf RStruct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
 % end::RContent[]
 \newline
 % tag::RValue[]
-\mbox{\bf RValue} = \mbox{\bf RSymTok*} \times \mbox{\bf RContent}
+\mbox{\bf RValue} ~\equiv~ \mbox{\bf RSymTok*} \times \mbox{\bf RContent}
 % end::RValue[]
 \newline
 % tag::TRValue[]
-\mbox{\bf TRValue} = \mbox{\bf RValue} + \mbox{\bf IVM}
+\mbox{\bf TRValue} ~\equiv~ \mbox{\bf RValue} + \mbox{\bf IVM}
 % end::TRValue[]
 \newline
 % tag::SymTok[]
-\mbox{\bf SymTok} = \mbox{\bf Unicode} + \mbox{\bf Sym0}
+\mbox{\bf SymTok} ~\equiv~ \mbox{\bf Unicode} + \mbox{\bf Sym0}
 % end::SymTok[]
 \newline
 % tag::Symbol[]
-\mbox{\bf Symbol} = \mbox{\bf SymTok} + \mbox{\bf DotNull}
+\mbox{\bf Symbol} ~\equiv~ \mbox{\bf SymTok} + \mbox{\bf DotNull}
 % end::Symbol[]
 \newline
 % tag::List[]
-\mbox{\bf List} = \mbox{\bf Value*} + \mbox{\bf DotNull}
+\mbox{\bf List} ~\equiv~ \mbox{\bf Value*} + \mbox{\bf DotNull}
 % end::List[]
 \newline
 % tag::Sexp[]
-\mbox{\bf Sexp} = \mbox{\bf Value*} + \mbox{\bf DotNull}
+\mbox{\bf Sexp} ~\equiv~ \mbox{\bf Value*} + \mbox{\bf DotNull}
 % end::Sexp[]
 \newline
 % tag::Field[]
-\mbox{\bf Field} = \mbox{\bf SymTok} \times \mbox{\bf Value}
+\mbox{\bf Field} ~\equiv~ \mbox{\bf SymTok} \times \mbox{\bf Value}
 % end::Field[]
 \newline
 % tag::Struct[]
-\mbox{\bf Struct} = \mbox{\bf Field*} + \mbox{\bf DotNull}
+\mbox{\bf Struct} ~\equiv~ \mbox{\bf Field*} + \mbox{\bf DotNull}
 % end::Struct[]
 \newline
 % tag::Content[]
-\mbox{\bf Content} = \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
+\mbox{\bf Content} ~\equiv~ \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
 % end::Content[]
 \newline
 % tag::Value[]
-\mbox{\bf Value} = \mbox{\bf SymTok*} \times \mbox{\bf Content}
+\mbox{\bf Value} ~\equiv~ \mbox{\bf SymTok*} \times \mbox{\bf Content}
 % end::Value[]
 \newline
 % tag::SharedSymtab[]
-\mbox{\bf SharedSymtab} = \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf SymTok*}
+\mbox{\bf SharedSymtab} ~\equiv~ \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf SymTok*}
 % end::SharedSymtab[]
 \newline
 % tag::Catalog[]
-\mbox{\bf Catalog} = \mbox{\bf SharedSymtab*}
+\mbox{\bf Catalog} ~\equiv~ \mbox{\bf SharedSymtab*}
 % end::Catalog[]
 \newline
 % tag::Environment[]
-\mbox{\bf Environment} = \mbox{\bf Catalog} \times \mbox{\bf IVM} \times \mbox{\bf SymTok*}
+\mbox{\bf Environment} ~\equiv~ \mbox{\bf Catalog} \times \mbox{\bf IVM} \times \mbox{\bf SymTok*}
 % end::Environment[]
 \newline
 % tag::TContinuation[]
-\mbox{\bf TContinuation} = \mbox{\bf Environment} \times \mbox{\bf Value*} \rightarrow \mbox{\bf Value*}
+\mbox{\bf TContinuation} ~\equiv~ \mbox{\bf Environment} \times \mbox{\bf Value*} \rightarrow \mbox{\bf Value*}
 % end::TContinuation[]
 \newline
 % tag::Document[]
-\mbox{\bf Document} = \mbox{\bf TRValue*}
+\mbox{\bf Document} ~\equiv~ \mbox{\bf TRValue*}
 % end::Document[]
 \newline
 % end::domains[]
 % tag::functions[]
 \newline
 % tag::IVM_eq[]
-(\mbox{\it i\/}_{1} = \mbox{\it i\/}_{2}) = $\`$ \mbox{\bf IVM} \times \mbox{\bf IVM} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
-\mbox{\it i\/}_{1}\!\downarrow_{0} = \mbox{\it i\/}_{2}\!\downarrow_{0}\ \wedge\ \mbox{\it i\/}_{1}\!\downarrow_{1} = \mbox{\it i\/}_{2}\!\downarrow_{1} \decrindent
+\mbox{\it i\/}_{1} = \mbox{\it i\/}_{2} ~\equiv~ \mbox{\it i\/}_{1}\!\downarrow_{0} = \mbox{\it i\/}_{2}\!\downarrow_{0}\ \wedge\ \mbox{\it i\/}_{1}\!\downarrow_{1} = \mbox{\it i\/}_{2}\!\downarrow_{1}$\`$ \mbox{\bf IVM} \times \mbox{\bf IVM} \rightarrow \mbox{\bf B}
 % end::IVM_eq[]
 \newline
 \newline
 % tag::RValue_annots[]
-\mbox{\it rv\/}\!\downarrow_{\mbox{\scriptsize annots}} = \mbox{\it rv\/}\!\downarrow_{0}$\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RSymTok*}
+\mbox{\it rv\/}\!\downarrow_{\mbox{\scriptsize annots}} ~\equiv~ \mbox{\it rv\/}\!\downarrow_{0}$\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RSymTok*}
 % end::RValue_annots[]
 \newline
 \newline
 % tag::RValue_content[]
-\mbox{\it rv\/}\!\downarrow_{\mbox{\scriptsize content}} = \mbox{\it rv\/}\!\downarrow_{1}$\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RContent}
+\mbox{\it rv\/}\!\downarrow_{\mbox{\scriptsize content}} ~\equiv~ \mbox{\it rv\/}\!\downarrow_{1}$\`$ \mbox{\bf RValue} \rightarrow \mbox{\bf RContent}
 % end::RValue_content[]
 \newline
 \newline
 % tag::RField_name[]
-\mbox{\it rf\/}\!\downarrow_{\mbox{\scriptsize name}} = \mbox{\it rf\/}\!\downarrow_{0}$\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RSymTok}
+\mbox{\it rf\/}\!\downarrow_{\mbox{\scriptsize name}} ~\equiv~ \mbox{\it rf\/}\!\downarrow_{0}$\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RSymTok}
 % end::RField_name[]
 \newline
 \newline
 % tag::RField_value[]
-\mbox{\it rf\/}\!\downarrow_{\mbox{\scriptsize value}} = \mbox{\it rf\/}\!\downarrow_{1}$\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RValue}
+\mbox{\it rf\/}\!\downarrow_{\mbox{\scriptsize value}} ~\equiv~ \mbox{\it rf\/}\!\downarrow_{1}$\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RValue}
 % end::RField_value[]
 \newline
 \newline
 % tag::List_elts[]
-\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize elts}} = \mbox{\it v\/}\mid_{\mbox{\scriptsize \mbox{\bf Value*}}}$\`$ \mbox{\bf List} \rightarrow \mbox{\bf Value*}
+\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize elts}} ~\equiv~ \mbox{\it v\/}\mid_{\mbox{\scriptsize \mbox{\bf Value*}}}$\`$ \mbox{\bf List} \rightarrow \mbox{\bf Value*}
 % end::List_elts[]
 \newline
 \newline
 % tag::Value_annots[]
-\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}} = \mbox{\it v\/}\!\downarrow_{0}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf SymTok*}
+\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}} ~\equiv~ \mbox{\it v\/}\!\downarrow_{0}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf SymTok*}
 % end::Value_annots[]
 \newline
 \newline
 % tag::Value_content[]
-\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}} = \mbox{\it v\/}\!\downarrow_{1}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf Content}
+\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}} ~\equiv~ \mbox{\it v\/}\!\downarrow_{1}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf Content}
 % end::Value_content[]
 \newline
 \newline
 % tag::Field_name[]
-\mbox{\it f\/}\!\downarrow_{\mbox{\scriptsize name}} = \mbox{\it f\/}\!\downarrow_{0}$\`$ \mbox{\bf Field} \rightarrow \mbox{\bf SymTok}
+\mbox{\it f\/}\!\downarrow_{\mbox{\scriptsize name}} ~\equiv~ \mbox{\it f\/}\!\downarrow_{0}$\`$ \mbox{\bf Field} \rightarrow \mbox{\bf SymTok}
 % end::Field_name[]
 \newline
 \newline
 % tag::Field_value[]
-\mbox{\it f\/}\!\downarrow_{\mbox{\scriptsize value}} = \mbox{\it f\/}\!\downarrow_{1}$\`$ \mbox{\bf Field} \rightarrow \mbox{\bf Value}
+\mbox{\it f\/}\!\downarrow_{\mbox{\scriptsize value}} ~\equiv~ \mbox{\it f\/}\!\downarrow_{1}$\`$ \mbox{\bf Field} \rightarrow \mbox{\bf Value}
 % end::Field_value[]
 \newline
 \newline
 % tag::SymTok_matches[]
-\mbox{\it s\/} \cong \mbox{\it u\/} = $\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\mbox{\it s\/} \cong \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf Unicode}\newline
@@ -198,7 +196,7 @@
 \newline
 \newline
 % tag::Symbol_matches[]
-\mbox{\it s\/} \cong \mbox{\it u\/} = $\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\mbox{\it s\/} \cong \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf SymTok}\newline
@@ -210,7 +208,7 @@
 \newline
 \newline
 % tag::Value_is_symbol_matching[]
-\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}, \mbox{\it u\/}) ~\equiv~ $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Symbol}\newline
@@ -222,7 +220,7 @@
 \newline
 \newline
 % tag::Struct_get[]
-\mbox{\it s\/} \odot^{\ast} \mbox{\it u\/} = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+\mbox{\it s\/} \odot^{\ast} \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{letrec}}\:\mbox{\it seek\/} = \lambda \mbox{\it f\/}^{\ast} \mbox{\it u\/}. \setandincrindent
@@ -246,7 +244,7 @@
 \newline
 \newline
 % tag::Struct_get1[]
-\mbox{\it s\/} \odot \mbox{\it u\/} = $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+\mbox{\it s\/} \odot \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot^{\ast} \mbox{\it u\/}\newline
@@ -261,7 +259,7 @@
 \newline
 \newline
 % tag::Value_has_first_annot[]
-\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\it u\/}) = $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
+\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\it u\/}) ~\equiv~ $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}=0\newline
@@ -273,10 +271,10 @@
 \newline
 \newline
 % tag::SymToks_for_IVM[]
-\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/}) = $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf SymTok*}\newline
+\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/}) ~\equiv~ $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:(\mbox{\it i\/} = \mbox{\it IVM\_1\_0\/})\newline
+\:\mbox{\bf{if}}\:\mbox{\it i\/} = \mbox{\it IVM\_1\_0\/}\newline
 \:\mbox{\bf{then}}\:\langle \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it SYM0\/}), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small \mbox{\bf SymTok}}(\mbox{\it{in}\small \mbox{\bf Unicode}}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \newline
 \:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt Unsupported Ion version}''})\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -285,29 +283,29 @@
 \newline
 \newline
 % tag::SST_name[]
-\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize name}} = \mbox{\it s\/}\!\downarrow_{0}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Unicode}
+\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize name}} ~\equiv~ \mbox{\it s\/}\!\downarrow_{0}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Unicode}
 % end::SST_name[]
 \newline
 \newline
 % tag::SST_version[]
-\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it s\/}\!\downarrow_{1}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf I}
+\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}} ~\equiv~ \mbox{\it s\/}\!\downarrow_{1}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf I}
 % end::SST_version[]
 \newline
 \newline
 % tag::SST_symbols[]
-\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}} = \mbox{\it s\/}\!\downarrow_{2}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf SymTok*}
+\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}} ~\equiv~ \mbox{\it s\/}\!\downarrow_{2}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf SymTok*}
 % end::SST_symbols[]
 \newline
 \newline
 % tag::is_SST[]
-\mbox{\it is\_SST\/}(\mbox{\it v\/}) = $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
+\mbox{\it is\_SST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
 \mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''})\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct} \decrindent
 % end::is_SST[]
 \newline
 \newline
 % tag::compile_SST[]
-\mbox{\it compile\_SST\/}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedSymtab}\newline
+\mbox{\it compile\_SST\/}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedSymtab}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize \mbox{\bf String}}}\mid_{\mbox{\scriptsize \mbox{\bf Unicode}}}\newline
@@ -318,7 +316,7 @@
 \newline
 \newline
 % tag::Catalog_lookup[]
-\mbox{\it Catalog\_lookup\/}(\mbox{\it c\/}, \mbox{\it name\/}, \mbox{\it version\/}) = $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedSymtab*}\newline
+\mbox{\it Catalog\_lookup\/}(\mbox{\it c\/}, \mbox{\it name\/}, \mbox{\it version\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedSymtab*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{letrec}}\:\mbox{\it seek\/} = \lambda \mbox{\it s\/}^{\ast} \mbox{\it n\/} \mbox{\it v\/} \mbox{\it b\/}^{\ast}. \setandincrindent
@@ -351,36 +349,36 @@
 \newline
 \newline
 % tag::Catalog_extend[]
-\mbox{\it Catalog\_extend\/}(\mbox{\it c\/}, \mbox{\it s\/}) = $\`$ \mbox{\bf Catalog} \times \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Catalog}\newline
+\mbox{\it Catalog\_extend\/}(\mbox{\it c\/}, \mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Catalog}\newline
 \:\: \setandincrindent
 \mbox{\it{in}\small \mbox{\bf Catalog}}(\langle \mbox{\it s\/}\rangle \S\mbox{\it c\/}\mid_{\mbox{\scriptsize \mbox{\bf SharedSymtab*}}}) \decrindent
 % end::Catalog_extend[]
 \newline
 \newline
 % tag::Environment_catalog[]
-\rho\!\downarrow_{\mbox{\scriptsize catalog}} = \rho\!\downarrow_{0}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf Catalog}
+\rho\!\downarrow_{\mbox{\scriptsize catalog}} ~\equiv~ \rho\!\downarrow_{0}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf Catalog}
 % end::Environment_catalog[]
 \newline
 \newline
 % tag::Environment_IVM[]
-\rho\!\downarrow_{\mbox{\scriptsize IVM}} = \rho\!\downarrow_{1}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf IVM}
+\rho\!\downarrow_{\mbox{\scriptsize IVM}} ~\equiv~ \rho\!\downarrow_{1}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf IVM}
 % end::Environment_IVM[]
 \newline
 \newline
 % tag::Environment_symbols[]
-\rho\!\downarrow_{\mbox{\scriptsize symbols}} = \rho\!\downarrow_{2}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}
+\rho\!\downarrow_{\mbox{\scriptsize symbols}} ~\equiv~ \rho\!\downarrow_{2}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}
 % end::Environment_symbols[]
 \newline
 \newline
 % tag::is_LST[]
-\mbox{\it is\_LST\/}(\mbox{\it v\/}) = $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
+\mbox{\it is\_LST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
 \mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\rm ``{\tt \$ion\_symbol\_table}''})\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct} \decrindent
 % end::is_LST[]
 \newline
 \newline
 % tag::symbol_padding[]
-\mbox{\it symbol\_padding\/}(\mbox{\it n\/}) = $\`$ \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
+\mbox{\it symbol\_padding\/}(\mbox{\it n\/}) ~\equiv~ $\`$ \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = 0\newline
@@ -392,7 +390,7 @@
 \newline
 \newline
 % tag::adjust_length[]
-\mbox{\it adjust\_length\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}) = $\`$ \mbox{\bf SymTok*} \times \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
+\mbox{\it adjust\_length\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}) ~\equiv~ $\`$ \mbox{\bf SymTok*} \times \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} < \#\mbox{\it s\/}^{\ast}\newline
@@ -404,7 +402,7 @@
 \newline
 \newline
 % tag::normalize_name[]
-{\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf Unicode}\newline
+{\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf Unicode}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -424,7 +422,7 @@
 \newline
 \newline
 % tag::normalize_version[]
-{\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I}\newline
+{\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -452,7 +450,7 @@
 \newline
 \newline
 % tag::normalize_max_id[]
-{\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I*}\newline
+{\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf I*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -480,7 +478,7 @@
 \newline
 \newline
 % tag::compile_import[]
-{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = {\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''})\newline
@@ -529,7 +527,7 @@
 \newline
 \newline
 % tag::compile_imports[]
-{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho) = $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -552,7 +550,7 @@
 \newline
 \newline
 % tag::imported_symbols[]
-{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}\newline
@@ -581,7 +579,7 @@
 \newline
 \newline
 % tag::compile_symbols[]
-{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}) = $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
@@ -604,7 +602,7 @@
 \newline
 \newline
 % tag::declared_symbols[]
-{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/}) = $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}\newline
@@ -627,7 +625,7 @@
 \newline
 \newline
 % tag::SymToks_for_LST[]
-{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
@@ -639,28 +637,28 @@
 \newline
 \newline
 % tag::Environment_after_IVM[]
-\mbox{\it Environment\_after\_IVM\/}(\mbox{\it ivm\/}, \rho) = $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
+\mbox{\it Environment\_after\_IVM\/}(\mbox{\it ivm\/}, \rho) ~\equiv~ $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \:\: \setandincrindent
 \mbox{\it{in}\small \mbox{\bf Environment}}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it ivm\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it ivm\/})\rangle ) \decrindent
 % end::Environment_after_IVM[]
 \newline
 \newline
 % tag::Environment_after_LST[]
-\mbox{\it Environment\_after\_LST\/}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
+\mbox{\it Environment\_after\_LST\/}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \:\: \setandincrindent
 \mbox{\it{in}\small \mbox{\bf Environment}}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize IVM}}, {\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho)\rangle ) \decrindent
 % end::Environment_after_LST[]
 \newline
 \newline
 % tag::E[]
-{\cal E}(\mbox{\it rv\/}, \rho) = $\`$ \mbox{\bf RValue} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Value}\newline
+{\cal E}(\mbox{\it rv\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RValue} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Value}\newline
 \:\: \setandincrindent
 \mbox{\it{in}\small \mbox{\bf Value}}(\langle {\cal E}_{\mbox{\scriptsize\bf RSymTok}}^{\ast}(\mbox{\it rv\/}\!\downarrow_{\mbox{\scriptsize annots}}, \rho), {\cal E}_{\mbox{\scriptsize\bf RContent}}(\mbox{\it rv\/}\!\downarrow_{\mbox{\scriptsize content}}, \rho)\rangle ) \decrindent
 % end::E[]
 \newline
 \newline
 % tag::E*[]
-{\cal E}^{\ast}(\mbox{\it rv\/}^{\ast}, \rho) = $\`$ \mbox{\bf RValue*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Value*}\newline
+{\cal E}^{\ast}(\mbox{\it rv\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf RValue*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it rv\/}^{\ast}=0\newline
@@ -672,7 +670,7 @@
 \newline
 \newline
 % tag::E_RContent[]
-{\cal E}_{\mbox{\scriptsize\bf RContent}}(\mbox{\it rv\/}, \rho) = $\`$ \mbox{\bf RContent} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Content}\newline
+{\cal E}_{\mbox{\scriptsize\bf RContent}}(\mbox{\it rv\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RContent} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Content}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf RSymbol}\newline
@@ -719,7 +717,7 @@
 \newline
 \newline
 % tag::E_RSymTok[]
-{\cal E}_{\mbox{\scriptsize\bf RSymTok}}(\mbox{\it s\/}, \rho) = $\`$ \mbox{\bf RSymTok} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok}\newline
+{\cal E}_{\mbox{\scriptsize\bf RSymTok}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RSymTok} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf Unicode}\newline
@@ -740,7 +738,7 @@
 \newline
 \newline
 % tag::E_RSymTok*[]
-{\cal E}_{\mbox{\scriptsize\bf RSymTok}}^{\ast}(\mbox{\it s\/}^{\ast}, \rho) = $\`$ \mbox{\bf RSymTok*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal E}_{\mbox{\scriptsize\bf RSymTok}}^{\ast}(\mbox{\it s\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf RSymTok*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
@@ -752,7 +750,7 @@
 \newline
 \newline
 % tag::E_RSymbol[]
-{\cal E}_{\mbox{\scriptsize\bf RSymbol}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RSymbol} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Symbol}\newline
+{\cal E}_{\mbox{\scriptsize\bf RSymbol}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RSymbol} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Symbol}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
@@ -764,7 +762,7 @@
 \newline
 \newline
 % tag::E_RList[]
-{\cal E}_{\mbox{\scriptsize\bf RList}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RList} \times \mbox{\bf Environment} \rightarrow \mbox{\bf List}\newline
+{\cal E}_{\mbox{\scriptsize\bf RList}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RList} \times \mbox{\bf Environment} \rightarrow \mbox{\bf List}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
@@ -776,7 +774,7 @@
 \newline
 \newline
 % tag::E_RSexp[]
-{\cal E}_{\mbox{\scriptsize\bf RSexp}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RSexp} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Sexp}\newline
+{\cal E}_{\mbox{\scriptsize\bf RSexp}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RSexp} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Sexp}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
@@ -788,7 +786,7 @@
 \newline
 \newline
 % tag::E_RField*[]
-{\cal E}_{\mbox{\scriptsize\bf RField}}^{\ast}(\mbox{\it rf\/}^{\ast}, \rho) = $\`$ \mbox{\bf RField*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Field*}\newline
+{\cal E}_{\mbox{\scriptsize\bf RField}}^{\ast}(\mbox{\it rf\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf RField*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Field*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it rf\/}^{\ast}=0\newline
@@ -804,7 +802,7 @@
 \newline
 \newline
 % tag::E_RStruct[]
-{\cal E}_{\mbox{\scriptsize\bf RStruct}}(\mbox{\it v\/}, \rho) = $\`$ \mbox{\bf RStruct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Struct}\newline
+{\cal E}_{\mbox{\scriptsize\bf RStruct}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf RStruct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Struct}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
@@ -816,7 +814,7 @@
 \newline
 \newline
 % tag::TE[]
-\overline{\cal E}(\overline{\mbox{\it rv\/}}, \rho, \kappa) = $\`$ \mbox{\bf TRValue} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
+\overline{\cal E}(\overline{\mbox{\it rv\/}}, \rho, \kappa) ~\equiv~ $\`$ \mbox{\bf TRValue} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\overline{\mbox{\it rv\/}}\in \mbox{\bf IVM}\newline
@@ -836,7 +834,7 @@
 \newline
 \newline
 % tag::TE*[]
-\overline{{\cal E}^{\ast}}(\overline{\mbox{\it rv\/}^{\ast}}, \rho, \kappa) = $\`$ \mbox{\bf TRValue*} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
+\overline{{\cal E}^{\ast}}(\overline{\mbox{\it rv\/}^{\ast}}, \rho, \kappa) ~\equiv~ $\`$ \mbox{\bf TRValue*} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\overline{\mbox{\it rv\/}^{\ast}}=0\newline
@@ -848,7 +846,7 @@
 \newline
 \newline
 % tag::expand[]
-\mbox{\it expand\/}(\mbox{\it d\/}, \mbox{\it c\/}) = $\`$ \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}\newline
+\mbox{\it expand\/}(\mbox{\it d\/}, \mbox{\it c\/}) ~\equiv~ $\`$ \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\rho_{0} = \mbox{\it{in}\small \mbox{\bf Environment}}(\langle \mbox{\it c\/}, \mbox{\it IVM\_1\_0\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it IVM\_1\_0\/})\rangle )\newline
