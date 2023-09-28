@@ -356,14 +356,6 @@ include::{modeltex}[tag=Sexp]
 
 // TODO note the recursion/reflexivity introduced by using Value?
 
-We'll eventually need to extract the elements inside a list, so let's
-create a little accessor function to make the math more clear:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=List_elts]
-++++
-
 :fn-structorder: footnote:[This model is subtly incorrect, since its fields +
 are ordered within a struct.  See xref:iss-structorder[xrefstyle=short].]
 

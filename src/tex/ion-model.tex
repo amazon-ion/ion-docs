@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-09-28T18:49:39.767-00:00
+%%% This file was generated at 2023-09-28T18:51:58.608-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -156,11 +156,6 @@
 % tag::RField_value[]
 \mbox{\it rf\/}\!\downarrow_{\mbox{\scriptsize value}} ~\equiv~ \mbox{\it rf\/}\!\downarrow_{1}$\`$ \mbox{\bf RField} \rightarrow \mbox{\bf RValue}
 % end::RField_value[]
-\newline
-\newline
-% tag::List_elts[]
-\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize elts}} ~\equiv~ \mbox{\it v\/}\mid_{\mbox{\scriptsize \mbox{\bf Value*}}}$\`$ \mbox{\bf List} \rightarrow \mbox{\bf Value*}
-% end::List_elts[]
 \newline
 \newline
 % tag::Value_annots[]
@@ -565,7 +560,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize \mbox{\bf List}}}\!\downarrow_{\mbox{\scriptsize elts}}, \rho)\newline
+\:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize \mbox{\bf List}}}\mid_{\mbox{\scriptsize \mbox{\bf Value*}}}, \rho)\newline
 \:\mbox{\bf{else}}\:\mbox{\it t\/}^{\ast}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -613,7 +608,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize \mbox{\bf List}}}\!\downarrow_{\mbox{\scriptsize elts}})\newline
+\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize \mbox{\bf List}}}\mid_{\mbox{\scriptsize \mbox{\bf Value*}}})\newline
 \:\mbox{\bf{else}}\:\langle\rangle\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
