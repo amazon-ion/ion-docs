@@ -27,13 +27,20 @@
 
 
 // lift_to
-(expect_argument_error (lift_to t_val z_val))  // 1st arg is not a domain
-(expect_argument_error (lift_to Z z_rep))      // 1st arg is not a union domain
-(expect_argument_error (lift_to Exact z_rep))  // 2nd arg isn't a domain value
-(expect_argument_error (lift_to Exact s_val))  // 2nd arg isn't a subdomain value
 
-(expect_argument_error (lift_to Num int_num_val)) // 2nd arg is same as the target domain
-(expect_argument_error (lift_to Num int_any_val)) // 2nd arg is "above" the target domain
+(check_bottom "31" (lift_to Exact (wrong 31)))    // 2nd arg strict
+
+(expect_argument_error (lift_to t_val z_val))     // 1st arg is not a domain
+(expect_argument_error (lift_to (wrong 1) z_val))
+(expect_argument_error (lift_to Z z_rep))         // 1st arg is not a union domain
+(expect_argument_error (lift_to Exact z_rep))     // 2nd arg isn't a domain value
+(check_bottom "Cannot lift a S to Exact"
+  (lift_to Exact s_val))                          // 2nd arg isn't a subdomain value
+
+(check_bottom "Cannot lift a Num to Num"
+  (lift_to Num int_num_val))                      // 2nd arg is same as the target domain
+(check_bottom "Cannot lift a Any to Num"
+  (lift_to Num int_any_val))                      // 2nd arg is "above" the target domain
 
 
 // subdomain
@@ -49,12 +56,19 @@
 
 
 // lower_to
+
+(check_bottom "57" (lower_to S (wrong 57)))      // 2nd arg strict
+
 (expect_argument_error (lower_to t_val t_val))   // 1st arg is not a domain
 (expect_argument_error (lower_to Any 12))        // 2nd arg isn't a domain value at all
 (expect_argument_error (lower_to Any t_val))     // 2nd arg isn't a union-domain value
-(expect_argument_error (lower_to S   int_num_val)) // 2nd arg is a union value, but wrong subdomain
-(expect_argument_error (lower_to Num int_num_val)) // 2nd arg is already in target domain
-(expect_argument_error (lower_to Z   int_any_val)) // 2nd are is two unions above target domain
+
+(check_bottom "Cannot lower a wrapped Z to S"
+  (lower_to S   int_num_val))                    // 2nd arg is a union value, but wrong subdomain
+(check_bottom "Cannot lower a wrapped Z to Num"
+  (lower_to Num int_num_val))                    // 2nd arg is already in target domain
+(check_bottom "Cannot lower a wrapped Num to Z"
+  (lower_to Z   int_any_val))                    // 2nd arg is two unions above target domain
 
 
 // lift
@@ -65,6 +79,13 @@
   (check_true (domain_is v Any))
   (check_same z_rep (eject (lower v Num Z))))
 
+(check_bottom "Cannot lift a Any to Num"
+  (lift int_any_val Num))                      // 2nd arg is wrong
+(check_bottom "Cannot lift a Num to Exact"
+  (lift z_val Num Exact))                      // 3rd arg is wrong
+(check_bottom "Cannot lift a Any to Num"
+  (lift z_val Num Any Num))                    // 4th arg is wrong
+
 (expect_argument_error (lift z_val Z))     // 2nd arg is not a union domain
 (expect_argument_error (lift z_val Num Z)) // 3rd arg is not a union domain
 
@@ -73,8 +94,11 @@
 
 
 // lower
-(expect_argument_error (lower int_num_val Num))    // 2nd arg is not a subdomain
-(expect_argument_error (lower int_any_val Num B))  // 3rd arg is not a subdomain
+
+(check_bottom "Cannot lower a wrapped Z to Num"
+  (lower int_num_val Num))                        // 2nd arg is not a subdomain
+(check_bottom "Cannot lower a wrapped Z to B"
+  (lower int_any_val Num B))                      // 3rd arg is not a subdomain
 
 (expect_arity_error (lower))
 (expect_arity_error (lower int_num_val))

@@ -10,11 +10,7 @@ TODOs
   * N = natural numbers?
   * S = strings of Unicode code points?
   * C = Unicode code point?
-* [BOTTOM] Add ⊥ domain for error reporting.
-  * Lowering should return ⊥ if not in the target domain. (See LiSP p162)
 * [BOOL] Proper functional handling of booleans and if.
-  * Needs [BOTTOM] to not raise exceptions when the "wrong" branch is evaluated,
-    eg taking head of empty sequence, improper downcast, etc.
   * Maybe needs [TOP] since true/false are B -> T (or perhaps B -> 𝛼)
 * For union types `U = A+B`, autogenerate:
   * lifting function `inU()`
@@ -39,6 +35,7 @@ TODOs
     the document.
 * Limited sequence domains like Val? and Val+
   * Improves readability of the math.  Hard to do in the model.
+* `lift` and `lower` should statically detect impossible steps after the first.
 
 
 Requires Fusion features:

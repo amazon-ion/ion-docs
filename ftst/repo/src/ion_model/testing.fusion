@@ -265,8 +265,16 @@ Utilities for testing the Ion denotational model.
     "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
     (expand (apply parse input) testing_catalog))
 
-  (define_binary_check (check_expansion expected input)
-    // Inner check ensures the failure message shows the ejected data.
-    (check === expected (eject_Values (expand_doc input)))
-    true)
+
+  (define_check (check_Value expected value)
+    (check_eqv expected (eject_Value value)))
+
+  (define_check (check_Values expected values)
+    (check_eqv expected (eject_Values values)))
+
+  (define_check (check_expansion expected input)
+    (check_Values expected (expand_doc input)))
+
+  (define (expand1 input)
+    (ith (expand_doc input) 0))
 )

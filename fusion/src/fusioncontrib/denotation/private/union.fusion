@@ -5,6 +5,7 @@
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/util"
   )
@@ -73,18 +74,25 @@
 
   (define (lift_to d v)
     '''
-Lifts a subdomain value into a union domain.
+Lifts a subdomain value `v` into a union domain `d`.
+
+This function is strict on `v`, but not on the domain.
     '''
     (unless (is_union_domain d)
       (raise_argument_error "lift_to" "union domain" 0 d v))
-    (unless (is_domain_value v)
-      (raise_argument_error "lift_to" "a domain value" 1 d v))
-    (unless (union_domain_checker d v)
-      (raise_argument_error (string_append "lift_to " (domain_name d))
-        (display_to_string "value in one of "
-          (map domain_name (union_domain_subdomains d)))
-        1 d v))
-    (make_value d v))
+    (if (is_bottom v)
+      v
+      (begin
+        (unless (is_domain_value v)
+          (raise_argument_error "lift_to" "a domain value" 1 d v))
+        (if (union_domain_checker d v)
+          (make_value d v)
+          // Return ⊥ if value is not in the target domain.
+          // LiSP doesn't seem to specify this, but it does for lowering.
+          // OTOH, one might argue that this should be a static error, since
+          // the input type should be statically known by the model.
+          (wrong "Cannot lift a " (domain_name (domain_of v))
+            " to " (domain_name d))))))
 
 
   (define (is_union_domain_value v)
@@ -109,14 +117,17 @@ Lifts a subdomain value into a union domain.
   (define (lower_to d v)
     (unless (is_domain d)
       (raise_argument_error "lower_to" "domain" 0 d v))
-    (unless (is_union_domain_value v)
-      (raise_argument_error "lower_to" "union-domain value" 1 d v))
-    (let [(rep (domain_value_rep v))]
-      (unless (domain_is rep d)
-        (raise_argument_error "lower_to"
-          (string_append "element of " (domain_name d))
-          1 d v))
-      rep))
+    (if (is_bottom v)
+      v
+      (begin
+        (unless (is_union_domain_value v)
+          (raise_argument_error "lower_to" "union-domain value" 1 d v))
+        (let [(rep (domain_value_rep v))]
+          (if (domain_is rep d)
+            rep
+            // Return ⊥ if value is not in the target domain. See LiSP p162
+            (wrong "Cannot lower a wrapped " (domain_name (domain_of rep))
+              " to " (domain_name d)))))))
 
 
   (define lift

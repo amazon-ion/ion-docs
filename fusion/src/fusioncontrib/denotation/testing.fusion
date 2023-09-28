@@ -18,6 +18,7 @@ Utilities for testing denotational models.
 
   (provide
     check_bottom
+    check_eqv
     check_is_seq_of
     check_lower
     is_base_domain_value
@@ -42,6 +43,11 @@ Utilities for testing denotational models.
       (raise_argument_error "seq_to_list" "seq value" 0 seq))
     (apply list (domain_value_rep seq)))
 
+
+  (define_binary_check (check_eqv expected actual)
+    // This appears useless vs (check === expected actual)
+    // but it ensures the failure message clearly labels the expected/actual data.
+    (=== expected actual))
 
   (define_check (check_is_seq_of type value)
     (check_pred is_seq value)
@@ -71,5 +77,5 @@ A check error is raised if any step fails type-checking.
     "Check that `v` is a bottom value with the given `message`."
     // TODO Accept a Bottom as expected value, comparing messages.
     (check_pred is_bottom v)
-    (check === message (bottom_message v)))
+    (check_eqv message (bottom_message v)))
 )
