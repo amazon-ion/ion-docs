@@ -142,7 +142,6 @@ Spec Problems
     (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String /*Decimal Float Timestamp Blob Clob*/))
     (dom Value     = (* 'SymTok*' Content))
 
-    (fn List_elts  ((v List) -> 'Value*') (lower v 'Value*'))
 
     (fn Value_annots  ((v Value) -> 'SymTok*') (ith v 0))
     (fn Value_content ((v Value) -> 'Content')   (ith v 1))
@@ -348,7 +347,7 @@ Spec Problems
             (let [(c (Value_content (seq_head vals)))]
               (if (and (element_of c List) (not (element_of c DotNull)))
                 (seq_append ts
-                            (compile_imports (List_elts (lower c List)) r))
+                            (compile_imports (lower c List 'Value*') r))
                 ts))))))
 
     (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
@@ -366,7 +365,7 @@ Spec Problems
           EMPTY_SYMTOKS
           (let [(c (Value_content (seq_head vals)))]
             (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_symbols (List_elts (lower c List)))
+              (compile_symbols (lower c List 'Value*'))
               EMPTY_SYMTOKS)))))
 
 

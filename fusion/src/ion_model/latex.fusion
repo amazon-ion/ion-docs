@@ -23,7 +23,6 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor Environment_catalog  "catalog")
       (accessor Environment_IVM      "IVM")
       (accessor Environment_symbols  "symbols")
-      (accessor List_elts            "elts")
       (accessor RField_name          "name")
       (accessor RField_value         "value")
       (accessor RValue_annots        "annots")
