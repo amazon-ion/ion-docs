@@ -1,7 +1,7 @@
 [[sec:macroexample]]
 == Macros by Example
 
-:mrk: subs="+normal"
+include::styles.adoc[]
 
 
 Before getting into the technical details of Ion’s macro and module system, it will help to be more
@@ -25,7 +25,7 @@ the examples below omit this context to keep things simple.
 The most basic macro is a constant:
 
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* pi []
   3.141592653589793)
@@ -38,7 +38,7 @@ This macro accepts no arguments and always returns a constant value.
 
 To use `pi` in an Ion document, we write an _encoding expression_ or _E-expression_:
 
-[{mrk}]
+[{nrm}]
 ----
 *$ion_1_1*
 (:pi)
@@ -54,7 +54,7 @@ NOTE: We also call these “smile expressions” when we’re feeling particular
 
 That document is equivalent to the following, in the sense that they denote the same data:
 
-[{mrk}]
+[{nrm}]
 ----
 *$ion_1_1*
 3.141592653589793
@@ -82,7 +82,7 @@ second, we use the relation notation, `⇒`, to mean “expands to”.  So we ca
 
 Most macros are not constant, they accept inputs that determine their results.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* price
   [a, c]                          // signature
@@ -113,7 +113,7 @@ as-is in the expansion.  We call these almost-literal forms _quasi-literals_.
 The template language also treats lists quasi-literally, and every element inside the list is an
 expression.  Here’s a silly macro to illustrate:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* reverse [a, b] [b, a])
 ----
@@ -153,7 +153,7 @@ results from the inner invocation.
 Template expressions that are S-expressions are _operator invocations_, where the operators are
 either macros or _special forms_.  We start with the former:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* website_url
   [path]
@@ -169,7 +169,7 @@ built-in function) `make_string`, which concatenates its arguments to produce a 
 
 In the template language, macro invocations can appear almost anywhere:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* detail_page_url
   [asin]
@@ -186,7 +186,7 @@ Careful readers will note that templates can use `[…]` and `{…}` notation to
 structs, but `(…)` doesn't construct S-expressions.  This gap is filled by the built-in macro
 `make_sexp` which accepts any number of arguments and puts them in a sexp:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* double_sexp [val] (make_sexp val val))
 ----
@@ -231,7 +231,7 @@ depends on how the symbol resolves.  In the case of macro invocations, we’ve s
 following elements are (so far!) arbitrary template expressions, but for special forms that’s not
 always the case. The `*literal*` form makes this clear:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* USD_price [dollars] (price dollars (*literal* USD)))
 ----
@@ -267,7 +267,7 @@ In our examples so far, the macro signatures have been simple lists of parameter
 parameter accepts a value of any type.  But this is often undesirable, since the resulting output
 could violate the intended schema or the macro-expansion could fail in hard-to-diagnose ways:
 
-[{mrk}]
+[{nrm}]
 ----
 (:detail_page_url [true]) ⇒ _**error**: make_string expects a string_
 ----
@@ -280,7 +280,7 @@ deep enough to make diagnosis difficult.
 
 To detect problems close to their source, macro signatures can declare type constraints on their parameters:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* detail_page_url
   [(asin *string*)]
@@ -292,7 +292,7 @@ declared by a symbol denoting its name, now we have an S-expression containing a
 Here the parameter's name is `asin`, its type is `string`.
 The intended input domain is now clear and the Ion parser can emit an error sooner:
 
-[{mrk}]
+[{nrm}]
 ----
 (:detail_page_url [true]) ⇒ _**error**: detail_page_url expects a string_
 ----
@@ -322,7 +322,7 @@ single string:
 
 To make this work, the definition of make_string is effectively:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* make_string [(parts *text \...*)] …)
 ----
@@ -357,12 +357,12 @@ produce a single value, various macros and special forms can produce zero or mor
 
 We have everything we need to illustrate this, via another system macro, `values`:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* values [(vals *any\...*)] vals)
 ----
 
-[{mrk}]
+[{nrm}]
 ----
 (:values 1)           ⇒ 1
 (:values 1 true null) ⇒ 1 true null
@@ -394,13 +394,13 @@ This also applies wherever a <<tagless,tagged type>> can appear inside an E-expr
 Note that each argument-expression always maps to one parameter, even when that expression
 returns too-few or too-many values.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* reverse [(a *any*), (b *any*)]
   [b, a])
 ----
 
-[{mrk}]
+[{nrm}]
 ----
 (:reverse (:values 5 USD))   ⇒ _**error**: 'reverse' expects 2 arguments, given 1_
 (:reverse 5 (:values) USD)   ⇒ _**error**: 'reverse' expects 2 arguments, given 3_
@@ -433,7 +433,7 @@ independently, leading to the field being repeated or even absent:
 An E-expression can even be used in place of a key-value pair, in which case it must return
 structs, which are merged into the surrounding container:
 
-[{mrk}]
+[{nrm}]
 ----
 { a:1, (:values), z:3 }             ⇒ { a:1, z:3 }
 { a:1, (:values {}), z:3 }          ⇒ { a:1, z:3 }
@@ -450,7 +450,7 @@ The preceding examples demonstrate splicing of E-expressions into encoded data, 
 stream-splicing occurs within the template language, making it trivial to convert a stream to a
 list:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* int_list
   [(vals **int\...**)]
@@ -470,7 +470,7 @@ list:
 Streams and lists are different, there’s no flattening involved, and declared
 types are verified:
 
-[{mrk}]
+[{nrm}]
 ----
 (:int_list 1 [2] 3) ⇒ _**error**: [2] is not an int_
 ----
@@ -484,7 +484,7 @@ Another way to produce a stream is via a mapping form.  The `*for*` special form
 template once for each value provided by a stream or streams.  Each time, a local variable is
 created and bound to the next value on the stream.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* prices
   [(currency *symbol*), (amounts *number\...*)]
@@ -505,7 +505,7 @@ reference, so each individual value from the `amounts` is bound to the name `amt
 More than one stream can be iterated in parallel, and iteration terminates when any stream
 becomes empty.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* zip [(front *any{asterisk}*), (back *any{asterisk}*)]  // <1>
   (*for* [(f front),
@@ -543,7 +543,7 @@ Correspondingly, the built-in macro `void` accepts no values and produces an emp
 When used as a macro argument, a `void` invocation (like any other expression) counts as one
 argument:
 
-[{mrk}]
+[{nrm}]
 ----
 (:pi (:void)) ⇒ _**error**: 'pi' expects 0 arguments, given 1_
 ----
@@ -595,7 +595,7 @@ A parameter with the modifier `*?*` has _zero-or-one cardinality_, which is much
 exactly-one cardinality, except the parameter is voidable.  That is, it accepts an empty-stream
 argument as a way to denote an absent parameter.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* temperature
   [(degrees *decimal*), (scale *symbol?*)]
@@ -613,7 +613,7 @@ Note that the result’s `scale` field has disappeared because no value was prov
 more useful to fill in a default value, and to do that we introduce a special form that can
 detect void:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* temperature
   [(degrees *decimal*), (scale *symbol?*)]
@@ -646,7 +646,7 @@ A parameter with the modifier `***` has _zero-or-more cardinality_.  This modifi
 same as `*\...*` from the perspective of its template, but it can be used in any position, not
 just last place.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* prices
   [(amount *number{asterisk}*), (currency *symbol*)]
@@ -658,7 +658,7 @@ The calling convention for `***` is different from `*\...*` since the “all the
 convention can’t be used to draw the boundaries of the stream.  Instead, we need a single
 expression that produces the desired values:
 
-[{mrk}]
+[{nrm}]
 ----
 (:prices (:) JPY)               ⇒ _void_
 (:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
@@ -671,7 +671,7 @@ expression that produces the desired values:
 A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `***` except
 the resulting stream must produce at least one value.  To continue using our `prices` example:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* prices
   [(amount *number+*), (currency *symbol*)]
@@ -679,7 +679,7 @@ the resulting stream must produce at least one value.  To continue using our `pr
     (price amt currency)))
 ----
 
-[{mrk}]
+[{nrm}]
 ----
 (:prices (:) JPY) ⇒ _**error**: at least one value expected for + parameter_
 (:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
@@ -689,7 +689,7 @@ the resulting stream must produce at least one value.  To continue using our `pr
 A macro's final parameter can use a variant of rest parameters with one-or-more cardinality,
 denoted by the `*\...+*` modifier:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* thanks [(names *text\...+*)]
   (make_string "Thank you to my Patreon supporters:\n"
@@ -697,7 +697,7 @@ denoted by the `*\...+*` modifier:
       (make_string "  * " n "\n"))))
 ----
 
-[{mrk}]
+[{nrm}]
 ----
 (:thanks) ⇒ _**error**: at least one value expected for \...+ parameter_
 
@@ -719,7 +719,7 @@ use of `values` or some other template to produce the stream of values.  To stre
 a macro can opt-in to special syntax that uses a list as delimiting syntax to group the
 applicable sub-expressions.  This is denoted by wrapping the parameter's type in `[]`:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* prices
   [(amount [*number*]),      // <1>
@@ -756,7 +756,7 @@ parameter’s declared type.
 To avoid ambiguity, the delimiter is required even for singleton values.  Consider this
 macro:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* ouch [(stuff [*list*])] …)
 ----
@@ -780,7 +780,7 @@ TIP: Rest parameters are effectively another grouping mode, so they cannot be co
 Delimiting sequences and `values` expressions may appear similar because they both denote streams
 of values, but they are not interchangeable:
 
-[{mrk}]
+[{nrm}]
 ----
 (:prices (:values 10 9.99 12.) GBP) ⇒ _**error**: delimiting list or sexp expected_
 (:prices (:) GBP)                   ⇒ _**error**: delimiting list or sexp expected_
@@ -804,7 +804,7 @@ group, as long as no following parameter is being given an argument or group.  W
 this as applied to `*\...*` rest-parameters, but it also applies to `*?*` and `*{asterisk}*`
 parameters, with or without groups:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* optionals
   [(a [*any*]), (b *any?*), (c *any!*), (d [*any*]), (e *any?*), (f *any\...*)]
@@ -868,7 +868,7 @@ The following primitive types are available:
 
 To define a tagless parameter, just declare one of the primitive types:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* point
   [(x *var_int*), (y *var_int*)]
@@ -884,7 +884,7 @@ encoding. TODO talk about binary length improvement.
 This density comes at the cost of flexibility.  Primitive types cannot be annotated or null, and
 arguments cannot be expressed using macros, like we’ve done before:
 
-[{mrk}]
+[{nrm}]
 ----
 (:point null.int 17)   ⇒ _**error**: primitive var_int does not accept nulls_
 (:point a::3 17)       ⇒ _**error**: primitive var_int does not accept annotations_
@@ -902,7 +902,7 @@ expressed by grouped or rest parameters, not by ungrouped forms.  For example,
 A subset of the tagless types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* byte_array
   [(bytes *uint8\...*)]
@@ -913,7 +913,7 @@ Invocations of this macro are encoded as a sequence of untagged octets, because 
 macro definition constrains the argument shape such that nothing else is acceptable.  A text
 invocation is written using normal ints:
 
-[{mrk}]
+[{nrm}]
 ----
 (:byte_array 0 1 2 3 4 5 6 7 8) ⇒ [0, 1, 2, 3, 4, 5, 6, 7, 8]
 (:byte_array 9 -10 11)          ⇒ _**error**: -10 is not a valid uint8_
@@ -949,7 +949,7 @@ This eliminates all the ``x``s and ``y``s, but leaves repeated macro invocations
 wrap this in another macro, but we find the type constraints insufficient, since the tightest we
 can go is `*struct*`, and things aren’t really any better:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* scatterplot [(points *struct\...*)]
   [points])
@@ -968,7 +968,7 @@ like:
 We can achieve exactly that with a macro-shaped parameter, in which we use the `point` macro as a
 pseudo-type:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* scatterplot [(points point**\...**)]  // <1>
   [points])
@@ -997,7 +997,7 @@ tagless types.  Note that grouped macro types require callers to use two layers 
 containers: and outer list for the group, and an inner S-expression for
 each macro instance:
 
-[{mrk}]
+[{nrm}]
 ----
 (*macro* scatterplot
   [(points [point] *+*), (x_label *string*), (y_label *string*)]
@@ -1016,7 +1016,7 @@ each macro instance:
 As with non-macro arguments, you cannot replace a grouping list with a macro invocation.
 Further, you can't use a macro invocation as an _element_ of the delimiting-list:
 
-[{mrk}]
+[{nrm}]
 ----
 (:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
   ⇒ _**error**: delimiting list or sexp expected, found :make_points_

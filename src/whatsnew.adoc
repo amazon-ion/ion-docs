@@ -43,7 +43,7 @@ arguments `1` and `2`. See the <<sec:whatsnew-eexp, Macros, Templates, and Encod
 This syntax is allowed anywhere an Ion value is allowed:
 
 .Figure {counter:figure-number}. E-expression Examples
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 // At the top level
 (:foo 1 2)
@@ -62,7 +62,7 @@ E-expressions are also grammatically allowed in the field name position of a str
 the expression should expand to a struct value that is merged into the enclosing struct:
 
 .Figure {counter:figure-number}. E-Expression in field position of struct.
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 {
     a:1,
@@ -203,7 +203,7 @@ At the top level, the stream becomes individual top-level values.  Consider for 
 following examples, `values` and `void` are the names of the macros being invoked and each line is equivalent.
 
 .Figure {counter:figure-number}. Top-level E-expressions
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 a (:values 1 2 3) b (:void) c
 a 1 2 3 b c
@@ -212,14 +212,14 @@ a 1 2 3 b c
 Within a list or S-expression, the stream becomes additional child elements in the collection.
 
 .Figure {counter:figure-number}. E-expressions in lists
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 [a, (:values 1 2 3), b, (:void), c]
 [a, 1, 2, 3, b, c]
 ----
 
 .Figure {counter:figure-number}. E-expressions in S-expressions
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 (a (:values 1 2 3) b (:void) c)
 (a 1 2 3 b c)
@@ -232,7 +232,7 @@ field all together).  In the following examples, let us define `(:make_struct c 
 `{c: 5}`.
 
 .Figure {counter:figure-number}. E-expressions in structs
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 {a: (:values 1 2 3), b: 4, (:make_struct c 5), d: 6, e: (:void)}
 {a: 1, a: 2, a: 3, b: 4, c: 5, d: 6}
@@ -267,7 +267,7 @@ Ion 1.1 introduces a new system value (an _encoding directive_) for the encoding
 details.)
 
 .Figure {counter:figure-number}. Ion encoding directive example
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 $ion_encoding::{
   modules:         [ /* module declarations - including imports */ ],
@@ -299,7 +299,7 @@ For illustrative purposes let's consider the module named `foo` that has a macro
 the begining of the local macro table.
 
 .Figure {counter:figure-number}. E-expressions name resolution in text
-[source,plain,%unbreakable]
+[%unbreakable]
 ----
 // allowed if there are no other macros named 'bar' 
 (:bar)
@@ -367,14 +367,12 @@ System macro identifiers are namespaced separately and therefore do not have ent
 IMPORTANT: These assignments are provisional.  Specifically assignments for the macro definition language have not
 been established.
 
-<<<
 
-[appendix]
 === E-Expression Calling Conventions in Binary
 
 IMPORTANT: *_WIP_*: This section is incomplete and needs rework.
 
-An E-expression specifies the macro ID, followed by the macro's arguments.  The macro's _parameter list_ determins which
+An E-expression specifies the macro ID, followed by the macro's arguments.  The macro's _parameter list_ determines which
 how these arguments are laid out.  When all parameters for a macro have _exactly one_ argument, each argument is encoded
 using their normal Ion binary encodings.
 

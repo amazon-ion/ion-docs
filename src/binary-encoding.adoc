@@ -19,7 +19,7 @@ in the next most significant position.
 All bits that are more significant than the terminal `1` represent the magnitude of the `FlexUInt`.
 
 .Figure {counter:figure}: `_FlexUInt_` encoding of `_14_`
-[%unbreakable,source]
+[%unbreakable]
 ----
               ┌──── Lowest bit is 1 (end), indicating
               │     this is the only byte.
@@ -29,7 +29,7 @@ unsigned int 14
 ----
 
 .Figure {counter:figure}: `_FlexUInt_` encoding of `_729_`
-[%unbreakable,source]
+[%unbreakable]
 ----
              ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
@@ -42,7 +42,7 @@ integer          integer
 ----
 
 .Figure {counter:figure}: `_FlexUInt_` encoding of `_21,043_`
-[%unbreakable,source]
+[%unbreakable]
 ----
             ┌───── There are 2 zeros in the least significant bits, so this
             │      integer is three bytes wide.
@@ -69,7 +69,7 @@ TIP: An implementation could choose to read a `FlexInt` by instead reading a `Fl
 as two's complement.
 
 .Figure {counter:figure}: `_FlexInt_` encoding of `_14_`
-[%unbreakable,source]
+[%unbreakable]
 ----
               ┌──── Lowest bit is 1 (end), indicating
               │     this is the only byte.
@@ -79,7 +79,7 @@ as two's complement.
 ----
 
 .Figure {counter:figure}: `_FlexInt_` encoding of `_-14_`
-[%unbreakable,source]
+[%unbreakable]
 ----
               ┌──── Lowest bit is 1 (end), indicating
               │     this is the only byte.
@@ -89,7 +89,7 @@ as two's complement.
 ----
 
 .Figure {counter:figure}: `_FlexInt_` encoding of `_729_`
-[%unbreakable,source]
+[%unbreakable]
 ----
              ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
@@ -102,7 +102,7 @@ comp. integer    comp. integer
 ----
 
 .Figure {counter:figure}: `_FlexInt_` encoding of `_-729_`
-[%unbreakable,source]
+[%unbreakable]
 ----
              ┌──── There's 1 zero in the least significant bits, so this
              │     integer is two bytes wide.
@@ -120,7 +120,7 @@ comp. integer    comp. integer
 A fixed-width, little-endian, unsigned integer whose length is inferred from the context in which it appears.
 
 .Figure {counter:figure}: `_FixedUInt_` encoding of `_3,954,261_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 
 0 1 0 1 0 1 0 1  0 1 0 1 0 1 1 0  0 0 1 1 1 1 0 0
@@ -137,7 +137,7 @@ A fixed-width, little-endian, signed integer whose length is known from the cont
 are interpreted as two's complement.
 
 .Figure {counter:figure}: `_FixedInt_` encoding of `_-3,954,261_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 
 1 0 1 0 1 0 1 1  1 0 1 0 1 0 0 1  1 1 0 0 0 0 1 1
@@ -169,7 +169,7 @@ pairs are spliced into the parent struct (TODO: Link)
 ** In a <<delimited_structs, delimited struct>>, terminating the sequence of `(field name, value)` pairs with `0xF0`.
 
 .Figure {counter:figure}: `_FlexSym_` encoding of symbol ID `_$10_`
-[%unbreakable,source]
+[%unbreakable]
 ----
               ┌─── The leading FlexInt ends in a `1`,
               │    no more FlexInt bytes follow.
@@ -181,7 +181,7 @@ pairs are spliced into the parent struct (TODO: Link)
 ----
 
 .Figure {counter:figure}: `_FlexSym_` encoding of symbol text `_'hello'_`
-[%unbreakable,source]
+[%unbreakable]
 ----
               ┌─── The leading FlexInt ends in a `1`,
               │    no more FlexInt bytes follow.
@@ -193,7 +193,7 @@ pairs are spliced into the parent struct (TODO: Link)
 ----
 
 .Figure {counter:figure}: `_FlexSym_` encoding of `''` (empty text) using an opcode
-[%unbreakable,source]
+[%unbreakable]
 ----
               ┌─── The leading FlexInt ends in a `1`,
               │    no more FlexInt bytes follow.
@@ -369,7 +369,7 @@ If the value of the opcode is less than `64` (`0x40`), it represents an E-expres
 corresponding __address__—an offset within the local macro table.
 
 .Figure {counter:figure}: Invocation of macro address `_7_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 0 0 0 0 0 1 1 1
 └──────┬──────┘
@@ -377,7 +377,7 @@ corresponding __address__—an offset within the local macro table.
 ----
 
 .Figure {counter:figure}: invocation of macro address `_31_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 0 0 0 1 1 1 1 1
 └──────┬──────┘
@@ -427,7 +427,7 @@ needed to encode invocations of macro addresses in various ranges.
 |===
 
 .Figure {counter:figure}: Invocation of macro address `_131_`
-[%unbreakable,source]
+[%unbreakable]
 ----
                                ┌─── The address FlexUInt ends in a `1`,
                                │    no more FlexUInt bytes follow.
@@ -445,7 +445,7 @@ Biased value  : 131
 ----
 
 .Figure {counter:figure}: Invocation of macro address `_1,211_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 
                                ┌─── The address FlexUInt ends in a `1`,
@@ -464,7 +464,7 @@ Biased value  : 1,211
 ----
 
 .Figure {counter:figure}: Invocation of macro address `_71,376_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 
                               ┌─── The address FlexUInt ends in `10`; the zero in the least significant
@@ -495,19 +495,19 @@ NOTE: From this point on in the document, example encodings are given in hexadec
 `0xEB 0x00` represents `null.bool`.
 
 .Figure {counter:figure}: Encoding of boolean `_true_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 5E
 ----
 
 .Figure {counter:figure}: Encoding of boolean `_false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 5F
 ----
 
 .Figure {counter:figure}: Encoding of `_null.bool_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: boolean
@@ -532,7 +532,7 @@ followed by a
 `0xEB 0x01` represents `null.int`.
 
 .Figure {counter:figure}: Encoding of integer `_0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in 50-58 range indicates integer
 │┌─── Low nibble 0 indicates
@@ -541,7 +541,7 @@ followed by a
 ----
 
 .Figure {counter:figure}: Encoding of integer `_17_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in 50-58 range indicates integer
 │┌─── Low nibble 1 indicates
@@ -551,7 +551,7 @@ followed by a
 ----
 
 .Figure {counter:figure}: Encoding of integer `_-944_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in 50-58 range indicates integer
 │┌─── Low nibble 2 indicates
@@ -562,7 +562,7 @@ FixedInt -944
 ----
 
 .Figure {counter:figure}: Encoding of integer `_-944_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode F5 indicates a variable-length integer, FlexUInt length follows
 │   ┌─── FlexUInt 2; a 2-byte FixedInt follows
@@ -573,7 +573,7 @@ F5 05 50 FC
 ----
 
 .Figure {counter:figure}: Encoding of `_null.int_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: integer
@@ -600,7 +600,7 @@ in fewer than 64 bits, Ion implementations may choose to do so.
 `0xEB 0x02` represents `null.float`.
 
 .Figure {counter:figure}: Encoding of float `_0e0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble A indicates
@@ -609,7 +609,7 @@ in fewer than 64 bits, Ion implementations may choose to do so.
 ----
 
 .Figure {counter:figure}: Encoding of float `_3.14e0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble B indicates a 2-byte float
@@ -620,7 +620,7 @@ half-precision 3.14
 ----
 
 .Figure {counter:figure}: Encoding of float `_3.1415927e0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble C indicates a 4-byte,
@@ -631,7 +631,7 @@ single-precision 3.1415927
 ----
 
 .Figure {counter:figure}: Encoding of float `_3.141592653589793e0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 5A-5D indicates a float
 │┌─── Low nibble D indicates an 8-byte,
@@ -642,7 +642,7 @@ double-precision 3.141592653589793
 ----
 
 .Figure {counter:figure}: Encoding of `_null.float_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: float
@@ -668,7 +668,7 @@ The opcode is followed by a `FlexInt` representing the exponent.
 `0xEB 0x03` represents `null.decimal`.
 
 .Figure {counter:figure}: Encoding of decimal `_0d0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
 │┌─── Low nibble 0 indicates a zero-byte
@@ -677,7 +677,7 @@ The opcode is followed by a `FlexInt` representing the exponent.
 ----
 
 .Figure {counter:figure}: Encoding of decimal `_7d0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
 │┌─── Low nibble 1 indicates a 1-byte decimal
@@ -687,7 +687,7 @@ The opcode is followed by a `FlexInt` representing the exponent.
 ----
 
 .Figure {counter:figure}: Encoding of decimal _`1.27`_
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
 │┌─── Low nibble 3 indicates a 3-byte decimal
@@ -698,7 +698,7 @@ The opcode is followed by a `FlexInt` representing the exponent.
 ----
 
 .Figure {counter:figure}: Variable-length encoding of decimal `_1.27_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode F6 indicates a variable-length decimal
 │
@@ -709,7 +709,7 @@ F6 07 FD 01 FE
 ----
 
 .Figure {counter:figure}: Encoding of `_-0d3_`, which has a coefficient of negative zero
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 6F indicates a variable-length decimal with a coefficient of -0
 │
@@ -718,7 +718,7 @@ F6 07 FD 01 FE
 ----
 
 .Figure {counter:figure}: Encoding of `_null.decimal_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: decimal
@@ -742,7 +742,7 @@ Long-form timestamps:: A less compact representation capable of representing any
 `0xEB x04` represents `null.timestamp`.
 
 .Figure {counter:figure}: Encoding of `_null.timestamp_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: timestamp
@@ -901,7 +901,7 @@ consume only enough bits to represent the fractional precision supported by the 
 We will denote the timestamp encoding as follows with each byte ordered vertically from top to bottom.  The
 respective bits are denoted using the letter codes defined in the table above.
 
-[%unbreakable,source]
+[%unbreakable]
 ----
           7       0 <--- bit position
           |       |
@@ -926,7 +926,7 @@ precision.) This arrangement allows processors to read the Little-Endian bytes i
 appropriate bit ranges to access the subfields.
 
 .Figure {counter:figure}: Encoding of a timestamp with year precision
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x70   |
@@ -936,7 +936,7 @@ byte 0   |  0x70   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with month precision
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x71   |
@@ -948,7 +948,7 @@ byte 0   |  0x71   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with day precision
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x72   |
@@ -960,7 +960,7 @@ byte 0   |  0x72   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with hour-and-minutes precision at UTC or unknown offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x73   |
@@ -976,7 +976,7 @@ byte 0   |  0x73   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with seconds precision at UTC or unknown offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x74   |
@@ -994,7 +994,7 @@ byte 0   |  0x74   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with milliseconds precision at UTC or unknown offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x75   |
@@ -1014,7 +1014,7 @@ byte 0   |  0x75   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with microseconds precision at UTC or unknown offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x76   |
@@ -1036,7 +1036,7 @@ byte 0   |  0x76   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with nanoseconds precision at UTC or unknown offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x77   |
@@ -1060,7 +1060,7 @@ byte 0   |  0x77   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with hour-and-minutes precision at known offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x78   |
@@ -1078,7 +1078,7 @@ byte 0   |  0x78   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with seconds precision at known offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x79   |
@@ -1096,7 +1096,7 @@ byte 0   |  0x79   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with milliseconds precision at known offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x7A   |
@@ -1118,7 +1118,7 @@ byte 0   |  0x7A   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with microseconds precision at known offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x7B   |
@@ -1142,7 +1142,7 @@ byte 0   |  0x7B   |
 ----
 
 .Figure {counter:figure}: Encoding of a timestamp with nanoseconds precision at known offset
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |  0x7C   |
@@ -1238,7 +1238,7 @@ that indicates month (`0`) or day (`1`) precision. If the timestamp's length is 
 treated as the least-significant bit of the hour (`H`) bits.
 
 .Figure {counter:figure}: Encoding of the _body_ of a long-form timestamp
-[%unbreakable,source]
+[%unbreakable]
 ----
          +=========+
 byte 0   |YYYY:YYYY|
@@ -1279,7 +1279,7 @@ after the opcode.
 `0xEB x05` represents `null.string`.
 
 .Figure {counter:figure}: Encoding of the empty string, `_""_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 80-8F indicates a string
 │┌─── Low nibble 0 indicates that no UTF-8 bytes follow
@@ -1287,7 +1287,7 @@ after the opcode.
 ----
 
 .Figure {counter:figure}: Encoding of a 14-byte string
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 80-8F indicates a string
 │┌─── Low nibble E indicates that 14 UTF-8 bytes follow
@@ -1298,7 +1298,7 @@ after the opcode.
 ----
 
 .Figure {counter:figure}: Encoding of a 24-byte string
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode F8 indicates a variable-length string
 │  ┌─── Length: FlexUInt 24
@@ -1309,7 +1309,7 @@ F8 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
 ----
 
 .Figure {counter:figure}: Encoding of `_null.string_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: string
@@ -1326,7 +1326,7 @@ opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol 
 `0xEB x06` represents `null.symbol`.
 
 .Figure {counter:figure}: Encoding of a symbol with empty text (`_''_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 90-9F indicates a symbol with inline text
 │┌─── Low nibble 0 indicates that no UTF-8 bytes follow
@@ -1334,7 +1334,7 @@ opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol 
 ----
 
 .Figure {counter:figure}: Encoding of a symbol with 14 bytes of inline text
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode in range 90-9F indicates a symbol with inline text
 │┌─── Low nibble E indicates that 14 UTF-8 bytes follow
@@ -1345,7 +1345,7 @@ opcode indicates how many UTF-8 bytes follow. Opcode `0x90` represents a symbol 
 ----
 
 .Figure {counter:figure}: Encoding of a symbol with 24 bytes of inline text
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode F9 indicates a variable-length symbol with inline text
 │  ┌─── Length: FlexUInt 24
@@ -1356,7 +1356,7 @@ F9 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
 ----
 
 .Figure {counter:figure}: Encoding of `_null.symbol_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: symbol
@@ -1406,7 +1406,7 @@ Opcode `FE` indicates a blob of binary data. A `FlexUInt` follows that represent
 `0xEB x07` represents `null.blob`.
 
 .Figure {counter:figure}: Encoding of a blob with 24 bytes of data
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode FE indicates a blob, FlexUInt length follows
 │   ┌─── Length: FlexUInt 24
@@ -1417,7 +1417,7 @@ FE 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
 ----
 
 .Figure {counter:figure}: Encoding of `_null.blob_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: blob
@@ -1435,7 +1435,7 @@ the clob's byte-length.
 `0xEB x08` represents `null.clob`.
 
 .Figure {counter:figure}: Encoding of a clob with 24 bytes of data
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode FF indicates a clob, FlexUInt length follows
 │   ┌─── Length: FlexUInt 24
@@ -1446,7 +1446,7 @@ FF 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
 ----
 
 .Figure {counter:figure}: Encoding of `_null.clob_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: clob
@@ -1479,7 +1479,7 @@ to write a variable-length list. The `0xFA` opcode is followed by a
 `0xEB 0x09` represents `null.list`.
 
 .Figure {counter:figure}: Length-prefixed encoding of an empty list (`_[]_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── An Opcode in the range 0xA0-0xAF indicates a list.
 │┌─── A low nibble of 0 indicates that the child values of this list took zero bytes to encode.
@@ -1487,7 +1487,7 @@ A0
 ----
 
 .Figure {counter:figure}: Length-prefixed encoding of `_[1, 2, 3]_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── An Opcode in the range 0xA0-0xAF indicates a list.
 │┌─── A low nibble of 0 indicates that the child values of this list took zero bytes to encode.
@@ -1497,7 +1497,7 @@ A6 51 01 51 02 51 03
 ----
 
 .Figure {counter:figure}: Length-prefixed encoding of `_["variable length list"]_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xFA indicates a variable-length list. A FlexUInt length follows.
 │  ┌───── Length: FlexUInt 22
@@ -1510,7 +1510,7 @@ FA 2d F8 29 76 61 72 69 61 62 6c 65 20 6c 65 6e 67 74 68 20 6c 69 73 74
 ----
 
 .Figure {counter:figure}: Encoding of `_null.list_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: list
@@ -1524,7 +1524,7 @@ Opcode `0xF1` begins a delimited list, while opcode `0xF0` closes the most recen
 that has not yet been closed.
 
 .Figure {counter:figure}: Delimited encoding of an empty list (`_[]_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xF1 indicates a delimited list
 │  ┌─── Opcode 0xF0 indicates the end of the most recently opened container
@@ -1532,7 +1532,7 @@ F1 F0
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_[1, 2, 3]_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xF1 indicates a delimited list
 │                    ┌─── Opcode 0xF0 indicates the end of
@@ -1543,7 +1543,7 @@ F1 51 01 51 02 51 03 F0
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_[1, [2], 3]_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xF1 indicates a delimited list
 │        ┌─── Opcode 0xF1 begins a nested delimited list
@@ -1579,7 +1579,7 @@ S-expressions use the same encodings as <<lists, lists>>, but with different opc
 `0xEB 0x0A` represents `null.sexp`.
 
 .Figure {counter:figure}: Length-prefixed encoding of an empty S-expression (`_()_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── An Opcode in the range 0xB0-0xBF indicates an S-expression.
 │┌─── A low nibble of 0 indicates that the child values of this S-expression took zero bytes to encode.
@@ -1587,7 +1587,7 @@ B0
 ----
 
 .Figure {counter:figure}: Length-prefixed encoding of `_(1 2 3)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── An Opcode in the range 0xB0-0xBF indicates an S-expression.
 │┌─── A low nibble of 6 indicates that the child values of this S-expression took six bytes to encode.
@@ -1597,7 +1597,7 @@ B6 51 01 51 02 51 03
 ----
 
 .Figure {counter:figure}: Length-prefixed encoding of `_("variable length sexp")_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xFB indicates a variable-length list. A FlexUInt length follows.
 │  ┌───── Length: FlexUInt 22
@@ -1610,7 +1610,7 @@ FB 2D F8 29 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 73 65 78 70
 ----
 
 .Figure {counter:figure}: Delimited encoding of an empty S-expression (`_()_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xF2 indicates a delimited S-expression
 │  ┌─── Opcode 0xF0 indicates the end of the most recently opened container
@@ -1618,7 +1618,7 @@ F2 F0
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_(1 2 3)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xF2 indicates a delimited S-expression
 │                    ┌─── Opcode 0xF0 indicates the end of
@@ -1629,7 +1629,7 @@ F2 51 01 51 02 51 03 F0
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_(1 (2) 3)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xF2 indicates a delimited S-expression
 │        ┌─── Opcode 0xF2 begins a nested delimited S-expression
@@ -1644,7 +1644,7 @@ F2 51 01 F2 51 02 F0 51 03 F0
 ----
 
 .Figure {counter:figure}: Encoding of `_null.sexp_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: sexp
@@ -1664,7 +1664,7 @@ Structs have 3 available encodings:
 `0xEB 0x0B` represents `null.struct`.
 
 .Figure {counter:figure}: Encoding of `_null.struct_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: struct
@@ -1687,7 +1687,7 @@ Each field in the struct is encoded as a <<flexuint, `FlexUInt`>> representing t
 text in the symbol table, followed by an opcode-prefixed value.
 
 .Figure {counter:figure}: Length-prefixed encoding of an empty struct (`_{}_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── An opcode in the range 0xC0-0xCF indicates a struct with symbol address field names
 │┌─── A lower nibble of 0 indicates that the struct's fields took zero bytes to encode
@@ -1695,7 +1695,7 @@ C0
 ----
 
 .Figure {counter:figure}: Length-prefixed encoding of `_{$10: 1, $11: 2}_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── An opcode in the range 0xC0-0xCF indicates a struct with symbol address field names
 │  ┌─── Field name: FlexUInt 10 ($10)
@@ -1707,7 +1707,7 @@ C6 15 51 01 17 51 02
 ----
 
 .Figure {counter:figure}: Length-prefixed encoding of `_{$10: "variable length struct"}_`
-[%unbreakable,source]
+[%unbreakable]
 ----
  ┌───────────── Opcode `FC` indicates a variable length struct with symbol address field names
  │  ┌────────── Length: FlexUInt 25
@@ -1743,7 +1743,7 @@ to write a variable-length struct with <<flexsym, `FlexSym`>> field names. The `
 Each field in the struct is encoded as a  <<flexsym, `FlexSym`>> field name, followed by an opcode-prefixed value.
 
 .Figure {counter:figure}: Length-prefixed encoding of `_{"foo": 1, $11: 2}_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌─── Opcode with high nibble `D` indicates a struct with FlexSym field names
 │┌── Length: 9
@@ -1772,7 +1772,7 @@ symbol address field names>> and <<structs_with_flexsym_field_names, structs wit
 delimited structs always use `FlexSym`-encoded field names.
 
 .Figure {counter:figure}: Delimited encoding of the empty struct (`_{}_`)
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `FlexSym` field names.
 │  ┌─── FlexSym escape code 0x00: an opcode follows
@@ -1782,7 +1782,7 @@ F3 00 F0
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_{"foo": 1, $11: 2}_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `FlexSym` field names.
 │
@@ -1849,14 +1849,14 @@ All other byte values are reserved for future use.
 NOTE: Future versions of Ion may decide to generalize this into a "constants" table.
 
 .Figure {counter:figure}: Encoding of `_null_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xEA` represents a null (null.null)
 EA
 ----
 
 .Figure {counter:figure}: Encoding of `_null.string_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xEB` indicates a typed null; a byte indicating the type follows
 │  ┌──── Byte 0x05 indicates the type `string`
@@ -1891,7 +1891,7 @@ Opcodes `0xE4` through `0xE6` indicate one or more annotations encoded as symbol
 the annotations sequence, which can be made up of any number of `FlexUInt` symbol addresses.
 
 .Figure {counter:figure}: Encoding of `_$10::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE4` indicates a single annotation encoded as a symbol address follows
 │  ┌──── Annotation with symbol address: FlexUInt 10
@@ -1900,7 +1900,7 @@ E4 15 5F
 ----
 
 .Figure {counter:figure}: Encoding of `_$10::$11::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE5` indicates that two annotations encoded as symbol addresses follow
 │  ┌──── Annotation with symbol address: FlexUInt 10 ($10)
@@ -1910,7 +1910,7 @@ E5 15 17 5F
 ----
 
 .Figure {counter:figure}: Encoding of `_$10::$11::$12::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE6` indicates a variable-length sequence of symbol address annotations;
 │     a FlexUInt follows representing the length of the sequence.
@@ -1939,7 +1939,7 @@ symbol addresses>>, it can be slightly less compact when all the annotations are
 addresses.
 
 .Figure {counter:figure}: Encoding of `_$10::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE7` indicates a single annotation encoded as a FlexSym follows
 │  ┌──── Annotation with symbol address: FlexSym 10 ($10)
@@ -1947,9 +1947,8 @@ E7 15 5F
       └── The annotated value: `false`
 ----
 
-[source]
 .Figure {counter:figure}: Encoding of `_foo::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE7` indicates a single annotation encoded as a FlexSym follows
 │  ┌──── Annotation: FlexSym -3; 3 bytes of UTF-8 text follow
@@ -1964,7 +1963,7 @@ Note that `FlexSym` annotation sequences can switch between symbol address and i
 on a per-annotation basis.
 
 .Figure {counter:figure}: Encoding of `_$10::foo::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE8` indicates two annotations encoded as FlexSyms follow
 │  ┌──── Annotation: FlexSym 10 ($10)
@@ -1977,7 +1976,7 @@ E8 15 FD 66 6F 6F 5F
 ----
 
 .Figure {counter:figure}: Encoding of `_$10::foo::$11::false_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xE9` indicates a variable-length sequence of FlexSym-encoded annotations
 │  ┌──── Length: FlexUInt 6
@@ -2005,7 +2004,7 @@ annotation sequences or struct field names. If a `NOP` appears in place of a str
 field name is ignored; the `NOP` is immediately followed by the next field name, if any.
 
 .Figure {counter:figure}: Encoding of a 1-byte `_NOP_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xEC` represents a 1-byte NOP pad
 │
@@ -2013,7 +2012,7 @@ EC
 ----
 
 .Figure {counter:figure}: Encoding of a 4-byte `_NOP_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode `0xED` represents a variable-length NOP pad; a FlexUInt length follows
 │  ┌──── Length: FlexUInt 2; two more bytes of NOP follow
@@ -2100,7 +2099,7 @@ Macro `foo` (defined below) is used in this section's subsequent examples to dem
 arguments.
 
 .Figure {counter:figure}: Definition of example macro `_foo_` at address 0
-[%unbreakable,source]
+[%unbreakable]
 ----
 (macro
     foo           // Macro name
@@ -2110,7 +2109,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of E-expression `_(:foo 3.14e)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
@@ -2124,7 +2123,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of E-expression `_(:foo 9)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
@@ -2136,7 +2135,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of E-expression `_(:foo $10::9)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
@@ -2150,7 +2149,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of E-expression `_(:foo null.int)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
@@ -2162,7 +2161,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of E-expression `_(:foo null)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
@@ -2173,7 +2172,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of E-expression `_(:foo (:bar))_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 // A second macro definition at address 1
 (macro
@@ -2193,7 +2192,7 @@ arguments.
 ----
 
 .Figure {counter:figure}: Encoding of illegal E-expression `_(:foo "hello")_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0, `foo`. `foo` takes a tagged int as a parameter (`x`), so an opcode follows.
@@ -2305,7 +2304,7 @@ See the link:macros-by-example.adoc#eg:macro_shapes[Macro Shapes] section of _Ma
 E-expression arguments corresponding to each parameter are encoded one after the other moving from left to right.
 
 .Figure {counter:figure}: Definition of macro `_foo_` at address `_0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 (macro foo             // Macro name
   [                    // Parameters
@@ -2318,7 +2317,7 @@ E-expression arguments corresponding to each parameter are encoded one after the
 ----
 
 .Figure {counter:figure}: Encoding of E-expression for macro with multiple parameters: `_(:0 "hello" baz 512)_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0, `foo`. `foo`'s first parameter is a string, so an opcode follows.
@@ -2484,7 +2483,7 @@ Grouped parameters can be encoded using either a <<length_prefixed_expression_gr
 The example encodings in the following sections refer to this macro definition:
 
 .Figure {counter:figure}: Definition of macro `_foo_` at address `_0_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 (macro
     foo          // Macro name
@@ -2500,7 +2499,7 @@ If a grouped parameter's <<argument_encoding_bitmap, AEB bits>> are `0b10`, then
 to that parameter will be prefixed by a `FlexUInt` indicating the number of bytes used to encode them.
 
 .Figure {counter:figure}: Length-prefixed encoding of `_(:foo [1, 2, 3])_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
@@ -2528,7 +2527,7 @@ Tagged type encodings begin with an <<opcodes, opcode>>; a delimited sequence of
 the closing delimiter opcode, `0xF0`.
 
 .Figure {counter:figure}: Delimited encoding of `_(:foo [1, 2, 3])_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
@@ -2552,7 +2551,7 @@ representing a count (not a byte-length) of the expressions that follow. If a pr
 the end of the sequence of pages.
 
 .Figure {counter:figure}: Definition of macro `_compact_foo_` at address `_1_`
-[%unbreakable,source]
+[%unbreakable]
 ----
 (macro
     compact_foo          // Macro name
@@ -2562,7 +2561,7 @@ the end of the sequence of pages.
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_(:compact_foo [1, 2, 3])_` using a single page
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
@@ -2579,7 +2578,7 @@ the end of the sequence of pages.
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_(:compact_foo [1, 2, 3])_` using two pages
-[%unbreakable,source]
+[%unbreakable]
 ----
 ┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
 │     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
