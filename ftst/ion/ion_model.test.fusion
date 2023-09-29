@@ -297,6 +297,23 @@ TODO
   (quote_top a m)
   (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:"2"}, {name:"mnop"}]} '#$10' '#$11'))
 
+(check_expansion
+  (quote "#$?Repeated field: imports")
+  (quote_top $ion_symbol_table::{imports:[], imports:null}))
+(check_expansion
+  (quote "#$?Repeated field: symbols")
+  (quote_top $ion_symbol_table::{symbols:[], symbols:null}))
+
+(check_expansion
+  (quote "#$?Repeated field: name")
+  (quote_top $ion_symbol_table::{imports:[{name:"empty", name:"empty"}]}))
+(check_expansion
+  (quote "#$?Repeated field: version")
+  (quote_top $ion_symbol_table::{imports:[{name:"empty", version:1, version:1}]}))
+
+(check_expansion
+  (quote "#$?Repeated field: max_id")
+  (quote_top $ion_symbol_table::{imports:[{name:"empty", max_id:1, max_id:1}]}))
 
 
 // Symbol Table Extension
@@ -308,7 +325,6 @@ TODO
     $ion_symbol_table::{symbols:["b"], imports:$ion_symbol_table}  '#$1' '#$10' '#$11'))
 
 
-// TODO test rejection of repeated symbols and/or imports field.
 
 
 // IVMs

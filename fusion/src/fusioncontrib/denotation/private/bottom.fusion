@@ -47,8 +47,11 @@ Determines whether `v` is a bottom value, which denotes an error condition.
 Returns a bottom value with the given message content.
 The result's message is constructed as per `display_to_string`.
     '''
-    (lambda message
-      (make_value Bottom (apply display_to_string message))))
+    (lambda msgs
+      (make_value Bottom
+        (apply display_to_string
+               (map (|m| (if (is_base_domain_value m) (eject m) m))
+                    msgs)))))
 
 
   //============================================================================

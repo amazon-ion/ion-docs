@@ -126,6 +126,10 @@ Utilities for testing the Ion denotational model.
   //============================================================================
   // Ejecting output domain values to produce Fusion data
 
+  (define (eject_Bottom v)
+    (string_append "#$?" (bottom_message v)))
+
+
   // Safe types
 
   (define (eject_NullNull v)
@@ -194,20 +198,23 @@ Utilities for testing the Ion denotational model.
                      ((element_of v Sexp    ) eject_Sexp    )
                      ((element_of v Struct  ) eject_Struct  )
                      ((element_of v NullNull) eject_NullNull)
-                     ((element_of v Bool ) eject_Bool )
+                     ((element_of v Bool    ) eject_Bool    )
                      ((element_of v Int     ) eject_Int     )
                      ((element_of v String  ) eject_String  )
                      (true (raise (subdomain v)))))]
       (ejector (unwrap v))))
 
   (define (eject_Value value)
-    (let_values [((annots content) (tuple_values value))]
-      // `annotate` replaces any existing annotations on the content.
-      (apply annotate (eject_Content content) (eject_SymToks annots))))
+    (if (is_bottom value)
+      (eject_Bottom value)
+      (let_values [((annots content) (tuple_values value))]
+        // `annotate` replaces any existing annotations on the content.
+        (apply annotate (eject_Content content) (eject_SymToks annots)))))
 
   (define (eject_Values values)
-    (assert (domain_is values 'Value*'))
-    (map eject_Value (seq_to_sexp values)))
+    (if (is_bottom values)
+      (eject_Bottom values)
+      (map eject_Value (seq_to_sexp values))))
 
 
   //============================================================================

@@ -1,0 +1,25 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+(check_bottom "Repeated field: name"
+  (compile_SST
+    (lower_to Struct
+      (Value_content
+        (expand1 (quote_top $ion_shared_symbol_table::{name:"a", name:"b"}))))))
+
+(check_bottom "Repeated field: version"
+  (compile_SST
+    (lower_to Struct
+      (Value_content
+        (expand1 (quote_top $ion_shared_symbol_table::{name:"a", version:1, version:1}))))))
+
+
+"SUCCESS (sst.test)"

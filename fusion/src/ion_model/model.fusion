@@ -181,7 +181,7 @@ Spec Problems
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
       (let [(vs (Struct_get s u))]
         (if (> (seq_length vs) 1)
-          (raise "repeated field")
+          (wrong "Repeated field: " u)
           vs)))
 
     (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
@@ -222,8 +222,7 @@ Spec Problems
     (fn compile_SST ((s Struct) -> SharedSymtab)
       (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
                  String Unicode)),
-            (v (lower (Value_content (seq_head (Struct_get1 s "version")))
-                 Int I))]
+            (v (normalize_version (Struct_get1 s "version")))]
         (tuple SharedSymtab n v (declared_symbols (Struct_get1 s "symbols")))))
 
 
