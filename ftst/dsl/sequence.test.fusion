@@ -29,9 +29,13 @@
 (check_same z0 (ith Z012 0))
 (check_same z2 (ith Z012 2))
 
-(expect_argument_error (seq Z))       // 1st arg isn't a seq domain
-(expect_argument_error (seq 'Z*' 0))  // 2nd arg isn't a domain value
-(expect_argument_error (seq 'Z*' int_any_val))   // 2nd arg is "above" the sequence type
+(check_bottom "57" (seq 'Z*' (wrong 57)))       // strict on values (not domain)
+(check_bottom "57" (seq 'Z*' z0 (wrong 57)))
+(check_bottom "57" (seq 'Z*' z0 z1 (wrong 57)))
+
+(expect_argument_error (seq Z))                           // 1st arg isn't a seq domain
+(check_bottom "Value #1 not in Z" (seq 'Z*' 0))           // 2nd arg isn't a domain value
+(check_bottom "Value #1 not in Z" (seq 'Z*' int_any_val)) // 2nd arg is "above" the sequence type
 
 
 // seq_is_empty
@@ -44,6 +48,14 @@
 (expect_argument_error (seq_is_empty z0))              // arg isn't a sequence
 
 
+// seq_length
+
+(check_bottom "49" (seq_length (wrong 49)))            // strict
+
+(expect_argument_error (seq_length Any_true))          // arg isn't a sequence
+(expect_argument_error (seq_length (sexp)))            // arg isn't a domain value
+
+
 // seq_ith
 
 (check_bottom "1733" (seq_ith (wrong 1733) 0))         // strict on 1st arg
@@ -53,10 +65,21 @@
 (expect_argument_error (seq_ith empty_Zs 0))           // 2nd arg out of range
 
 
+// seq_head
+
+(check_bottom "43" (seq_head (wrong 43)))        // strict
+
+(expect_argument_error (seq_head Any_true))      // arg isn't a sequence
+(expect_argument_error (seq_head (sexp)))        // arg isn't a domain value
+(expect_argument_error (seq_head (seq 'Z*')))    // arg is empty
+
+
 // seq_tail
-// TODO strictness
+
+(check_bottom "43" (seq_tail (wrong 43)))        // strict
 
 (expect_argument_error (seq_tail Z))             // arg isn't a sequence
+(expect_argument_error (seq_tail (seq 'Z*')))    // arg is empty
 
 
 // seq_prepend
@@ -65,8 +88,11 @@
   (check === 1 (seq_length s1))
   (check_same z_val (seq_head s1)))
 
-(expect_argument_error (seq_prepend z_val z_val))       // 2nd arg isn't a sequence
-(expect_argument_error (seq_prepend empty_Zs empty_Zs)) // 1st arg is wrong type
+(check_bottom "53" (seq_prepend (wrong 53) empty_Zs))      // 1st arg strict
+(check_bottom "53" (seq_prepend z_val (wrong 53)))         // 2nd arg strict
+
+(expect_argument_error (seq_prepend z_val z_val))          // 2nd arg isn't a sequence
+(expect_argument_error (seq_prepend empty_Zs empty_Zs))    // 1st arg is wrong type
 (expect_argument_error (seq_prepend int_any_val empty_Zs)) // 1st arg is above target domain
 
 
@@ -100,6 +126,9 @@
   (check_same z0 (ith s3 0))
   (check_same z1 (ith s3 1))
   (check_same z2 (ith s3 2)))
+
+(check_bottom "55" (seq_truncate (wrong 55) 1))    // 1st arg strict
+(check_bottom "55" (seq_truncate Z012 (wrong 55))) // 2nd arg strict
 
 (expect_argument_error (seq_truncate z_val 0))  // 1st arg isn't a sequence
 (expect_argument_error (seq_truncate Z012 "0")) // 2nd arg isn't an int

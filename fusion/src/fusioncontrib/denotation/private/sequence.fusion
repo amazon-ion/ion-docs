@@ -99,15 +99,17 @@ within `domain`'s subdomain.
             (values (tail rest))]
         (unless (is_seq_domain domain)
           (apply raise_argument_error "seq" "seq domain" 0 rest))
-        (let [(subdomain (seq_domain_subdomain domain))]
-          (let loop [(i 1), (vs values)]
-            (when (is_pair vs)
-              (if (domain_is (head vs) subdomain)
-                (loop (+ 1 i) (tail vs))
-                (apply raise_argument_error "seq"
-                  (string_append "value in domain " (domain_name subdomain))
-                  i rest)))))
-        (make_value domain values))))
+        (lets [(subdomain (seq_domain_subdomain domain)),
+               (btm (let loop [(i 1), (vs values)]
+                      (when (is_pair vs)
+                        (let [(v (head vs))]
+                          (if (is_bottom v)
+                            v
+                            (if (domain_is (head vs) subdomain)
+                              (loop (+ 1 i) (tail vs))
+                              (wrong "Value #" i
+                                " not in " (domain_name subdomain))))))))]
+          (or btm (make_value domain values))))))
 
   (define (is_seq v)
     (and (is_domain_value v)
@@ -120,7 +122,7 @@ within `domain`'s subdomain.
     (is_empty (domain_value_rep seq)))
 
 
-  (define (seq_length seq)
+  (define_strict (seq_length seq)
     (unless (is_seq seq)
       (raise_argument_error "seq_length" "seq value" 0 seq))
     (size (domain_value_rep seq)))
@@ -133,21 +135,18 @@ within `domain`'s subdomain.
     (element (domain_value_rep seq) i))
 
 
-  (define (seq_head seq)
+  (define_strict (seq_head seq)
     (unless (and (is_seq seq) (not (seq_is_empty seq)))
       (raise_argument_error "seq_head" "non-empty seq value" 0 seq))
-    (let [(sexp (domain_value_rep seq))]
-      (if (is_empty sexp)
-        (raise_argument_error "seq_head" "non-empty seq" 0 seq)
-        (head sexp))))
+    (head (domain_value_rep seq)))
 
-  (define (seq_tail seq)
+  (define_strict (seq_tail seq)
     (unless (and (is_seq seq) (not (seq_is_empty seq)))
       (raise_argument_error "seq_tail" "non-empty seq value" 0 seq))
     (make_value (domain_value_domain seq) (tail (domain_value_rep seq))))
 
 
-  (define (seq_prepend v seq)
+  (define_strict (seq_prepend v seq)
     (unless (is_seq seq)
       (raise_argument_error "seq_append" "seq value" 1 v seq))
     (let [(subdomain (seq_domain_subdomain (domain_value_domain seq)))]
@@ -171,7 +170,7 @@ within `domain`'s subdomain.
       (append (domain_value_rep seq0) (domain_value_rep seq1))))
 
 
-  (define (seq_truncate seq len)
+  (define_strict (seq_truncate seq len)
     (unless (is_seq seq)
       (raise_argument_error "seq_truncate" "seq value" 0 seq len))
     (unless (and (is_int len) (<= 0 len))
