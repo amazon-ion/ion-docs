@@ -1,6 +1,6 @@
 # Inspired by https://github.com/simdjson/simdjson/blob/master/Dockerfile
 
-FROM ubuntu:22.04
+FROM ubuntu:23.10
 
 ARG USER_ID
 ARG GROUP_ID
