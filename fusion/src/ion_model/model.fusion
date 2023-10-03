@@ -372,14 +372,15 @@ Spec Problems
     //=======================
     // Denotations
 
-    (fn E ((rv RValue) (r Environment) -> Value)
-      (tuple Value ('E_RSymTok*' (RValue_annots rv) r)
-                   (E_RContent (RValue_content rv) r)))
+    (fn E ((rv RValue) (r Environment) -> 'Value*')
+      (seq 'Value*'
+        (tuple Value ('E_RSymTok*' (RValue_annots  rv) r)
+                     (E_RContent   (RValue_content rv) r))))
 
     (fn 'E*' ((rvs 'RValue*') (r Environment) -> 'Value*')
       (if (seq_is_empty rvs)
         (seq 'Value*')
-        (seq_prepend (E (seq_head rvs) r) ('E*' (seq_tail rvs) r))))
+        (seq_append (E (seq_head rvs) r) ('E*' (seq_tail rvs) r))))
 
 
     (fn E_RContent ((rv RContent) (r Environment) -> Content)
@@ -433,15 +434,23 @@ Spec Problems
         (lift DOTNULL Sexp)
         (lift ('E*' (lower v 'RValue*') r) Sexp)))
 
+
+    (fn E_RField ((rf 'RField') (r Environment) -> 'Field*')
+      (let [(t (E_RSymTok (RField_name rf) r)),
+            (vs (E (RField_value rf) r))]
+        (letrec [(mk_fields (lambda (vs)
+                              (if (seq_is_empty vs)
+                                  (seq 'Field*')
+                                  (seq_prepend (tuple Field t (seq_head vs))
+                                               (mk_fields (seq_tail vs))))))]
+          (mk_fields vs))))
+
     (fn 'E_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
       (if (seq_is_empty rfs)
         (seq 'Field*')
-        (let [(t (E_RSymTok (RField_name (seq_head rfs)) r)),
-              (v (E (RField_value (seq_head rfs)) r))]
-          (seq_prepend (tuple Field t v)
-            ('E_RField*' (seq_tail rfs) r)))))
+        (seq_append (E_RField (seq_head rfs) r) ('E_RField*' (seq_tail rfs) r))))
 
-    (fn E_RStruct ((v RStruct) (r Environment)-> Struct)
+    (fn E_RStruct ((v RStruct) (r Environment) -> Struct)
       (if (element_of v DotNull)
         (lift DOTNULL Struct)
         (lift ('E_RField*' (lower v 'RField*') r) Struct)))
@@ -452,18 +461,30 @@ Spec Problems
     (dom TContinuation = (-> Environment 'Value*' 'Value*')
       "Continuation when expanding top-level values")
 
+
+    // Handle directives
+    // TODO "E" doesn't seem right here; this is post-expansion.
+    (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
+      (if (and (element_of (Value_content v) Struct)
+               (and (not (seq_is_empty (Value_annots v)))
+                    (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table")))
+        (k (Environment_after_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
+        (k r (seq 'Value*' v))))
+
+    (fn 'TE_Value*' ((vs 'Value*') (r Environment) (k TContinuation) -> 'Value*')
+      (if (seq_is_empty vs)
+        (k r vs)
+        (TE_Value (seq_head vs) r
+          (mk_fn TContinuation (r1 vs1)
+            ('TE_Value*' (seq_tail vs) r1
+              (mk_fn TContinuation (r2 vs2)
+                (k r2 (seq_append vs1 vs2))))))))
+
     (fn TE ((trv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of trv IVM)
         (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
-        (let [(v (E (lower trv RValue) r))]
-          (if (and (element_of (Value_content v) Struct)
-                   (and (not (seq_is_empty (Value_annots v)))
-                        (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table")))
-            (k (Environment_after_LST
-                 (lower (Value_content v) Struct) r)
-               (seq 'Value*'))
-            // Expand normally
-            (k r (seq 'Value*' v))))))
+        (let [(vs (E (lower trv RValue) r))]
+          ('TE_Value*' vs r k))))
 
     (fn 'TE*' ((trvs 'TRValue*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty trvs)
