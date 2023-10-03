@@ -358,6 +358,8 @@ A model printer that renders in Unicode plain-text.
                                           (display "\\in ")
                                           (pp_domain_name (. v 2) e)))
       (form_method if              pp_if)
+      (form_method IF              pp_if)
+      (form_method IF1             pp_if)
       (form_method inject_into     pp_lift_to)
       (form_method ith             pp_ith)
       (form_method lambda          (|v e| (pp_print_terms (. v 1) e "\\lambda " " " ".")
