@@ -283,6 +283,7 @@ TIP: When we define a function, we include its signature to the right, to be
 explicit about the types of the arguments and result.
 
 
+[id=simple]
 === Simple Values
 
 We'll continue defining our data model with the easy cases: data types that
@@ -513,6 +514,7 @@ include::{modeltex}[tag=RField_value]
 ++++
 
 
+[id=stx-top]
 === Top Level
 
 The syntax and data models also diverge at the top level of documents, which can
@@ -556,7 +558,7 @@ we will now explore.
 
 Circling back a bit, remember that our goal is to define how Ion expands the raw
 document data produced by its parser to eliminate encoding features such as
-symbol IDs and produce the document's application-facing data.
+symbol IDs, thereby producing the document's application-facing data.
 We'll encapsulate that process in this function:
 
 // TODO Generate these function signatures.
@@ -582,13 +584,14 @@ include::{modeltex}[tag=Environment]
 
 The encoding environment is a tuple with three components.
 
-  * The __catalog__ is a collection of shared symbol tables provided to the
+  * The *catalog* is a collection of shared symbol tables provided to the
 expansion process.  The manner by which SSTs are collected into a catalog is
-outside the scope of the Ion specification.
-  * We model the current Ion version as an Ion Version Marker.  This is used to
+outside the scope of the Ion specification, but we define the relevant semantics
+in xref:catalog[xrefstyle=short].
+  * We model the *current Ion version* as an Ion Version Marker.  This is used to
 select a system symbol table, and gives us a way to alter the expansion
 process based on Ion version.
-  * We model the current symbol table as a sequence of symbol tokens defining
+  * We model the *current symbol table* as a sequence of symbol tokens defining
 all current SIDs, starting from zero.
 
 Following our practice for tuples, we'll define environment accessor functions.
@@ -657,8 +660,8 @@ include::{modeltex}[tag=E*]
 ++++
 
 To expand **RContent** we must perform a type-switch.
-The atomic domains **NullNull**, **Bool**, **Int**, and **String** pass
-through easily by being re-wrapped as **Content**.
+The <<simple,simple domains>> **NullNull**, **Bool**, **Int**, and **String**
+pass through easily by being re-wrapped as **Content**.
 Anything else can contain symbol tokens to be expanded, and in each case we
 downcast the content, call a type-specific function, then rewrap the result.
 
@@ -708,25 +711,49 @@ and can turn to the top level.
 [id=eg_TE]
 === Top-Level Expansion
 
-Expansion of top-level sequences requires us to use a new technique in our model,
-since it involves changes to the environment.  For example, the expansion of an
+TIP: Readers will likely find this section to be the most challenging of the
+whole model. Don't hesitate to go through it in multiple passes.
+
+Expansion of <<stx-top,top-level syntax>> requires us to use a new technique
+in our model, since it involves changes to the environment.
+For example, the expansion of an
 IVM or LST must produce a new environment, but no application values.
 
-The conventional way to represent order of evaluation and mutation of state in
-denotational semantics is via _continuation-passing style_.
-This style accounts for the fact that lambda calculus is purely functional and
-has no concept of either evaluation order or mutation.
-We've managed to avoid continuations so far because Ion only needs these
-features at top level.
+Being purely functional, lambda calculus has no inherent concept of
+"`imperative`" concerns such as order of evaluation and mutation of state.
+The conventional way to model these in denotational semantics is via
+_continuation-passing style_.  CPS is a design pattern that effectively emulates
+those features in a purely functional manner by passing around _continuations_—functions
+that model "`what happens next`" (that is, order of operations), and supplying
+them with the computational state that results from each step of work.
 
-Diving right in, let's see how to expand a single top-level value.
-We'll use overlines like stem:[\overline{\cal E}] and stem:[\overline{rv}]
-to signal top-level functions and variables.
+We've managed to avoid continuations so far because Ion only needs these
+features at top level, but we can no longer delay the inevitable.
+Diving right in, let's examine the type of our continuation functions:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=TContinuation]
-\newline\newline
+++++
+
+This functional domain defines the shape of our top-level continuations.
+In general, the arguments to a continuation are the products of a single
+"`step`" of the overall computation, with regard to both typical procedural
+results and the program's mutable state.
+The job of a continuation is to combine those single-step results with
+everything that happens _before and after_ that step, returning the result of
+_the overall computation_.
+Here, the *Environment* denotes the mutable state, the given **Value**s
+are the single step results, and the resulting **Value**s denote the expansion
+of the entire stream.
+
+What does a single step look like?
+Let's see how to expand a single top-level syntax tree, using overlines like
+stem:[\overline{\cal E}] and stem:[\overline{rv}]
+to indicate top-level functions and variables.
+
+[{denotation}]
+++++
 include::{modeltex}[tag=TE]
 ++++
 
@@ -735,28 +762,32 @@ There's three branches here, covering IVMs, symbol-table directives, and
 
 * When we encounter an IVM, we must reset the environment using a helper
 function that we'll implement later.
-We pass that to the continuation along with an empty value sequence, since the
-IVM is not part of the application data.
-The current environment stem:[\rho] not passed to the continuation and is
+We pass that to the continuation stem:[\kappa] along with an empty value
+sequence, since the IVM produces no application data.
+Here we've emulated mutation of the environment:
+the current environment stem:[\rho] not passed to the continuation and is
 therefore inaccessible to any remaining data on the stream.
 
-* Top-level raw values that are not IVMs are expanded using stem:[\cal E] and the
+* All other top-level syntax is expanded using stem:[\cal E] and the
 current environment stem:[\rho].
 The resulting *Value* _v_ is then checked to see if it's an LST directive, in
 which case we use its content, downcast to *Struct*, to construct the new
-environment.
+environment. Similar to the IVM case, _v_ is not passed along as application
+data.
 
-* In the final case, our result _v_ is just a user value, so we pass it to the
-continuation along with the unaltered environment.
+* In the final *else*, the expanded _v_ is application data, so we pass it to
+the continuation along with the unaltered environment.
 
 In accordance with continuation-passing style, stem:[\overline{\cal E}] never
-returns results "`directly`", it always invokes the continuation stem:[\kappa]
-with the now-current environment and any application values it produces.
-The continuation is responsible for assembling those results with anything
-that happens afterward, and the **Value**s returned from the continuation denote
+returns results "`directly`": it always invokes the continuation stem:[\kappa]
+with the next-current environment and any application values this step produces.
+The continuation is responsible for assembling those results with everything
+that happened previously, and anything that happens afterward, so the **Value**s
+returned from the continuation
+(and thus by stem:[\overline{\cal E}]) denote
 the expansion of _the entire stream_.
 
-This may become more clear by considering the definition of top-level streams:
+This may become more clear by considering the expansion of top-level streams:
 
 [{denotation}]
 ++++
@@ -765,26 +796,33 @@ include::{modeltex}[tag=TE*]
 
 Here we have our most complex denotation yet, so let's break it down.
 
-* The **if** and **then** clauses simply detect and handle the empty-sequence base
-case.
+* The *if* and *then* clauses detect and handle the empty-sequence base case:
+when given no top-level syntax, the environment is unchanged and no data
+is produced.
 * When the sequence is non-empty, we expand (with stem:[\overline{\cal E}])
 its head (stem:[\overline{\mbox{\it rv\/}^{\ast}}\!\downarrow_{0}]) using the
 current environment stem:[\rho] and a locally-defined continuation, which will
 be invoked with the _next_ environment stem:[\rho_1] and any expanded
 application values stem:[\mbox{\it v\/}^{\ast}_{1}].
-* That continuation is responsible for handling the rest of the stream, so it
-expands (with self-recursion on stem:[\overline{{\cal E}^{\ast}}]) that tail
-(stem:[\overline{\mbox{\it rv\/}^{\ast}}\dagger1]) using whatever environment we
-got from the head (stem:[\rho_1]).
-* Those results are passed to a second local continuation.
-We now have stem:[\rho_2] holding the environment in effect at the end of the
-sequence, and stem:[\mbox{\it v\/}^{\ast}_{2}] holding the expansion of the
-tail of our overall sequence.
-To produce the overall results, we call our original continuation stem:[\kappa]
-with that final environment and the concatenation of the head and tail
-expansions (stem:[\mbox{\it v\/}^{\ast}_{1}\S\mbox{\it v\/}^{\ast}_{2}]).
+* That continuation is responsible for handling the tail of the stream
+(stem:[\overline{\mbox{\it rv\/}^{\ast}}\dagger1]), which it expands via
+self-recursion on stem:[\overline{{\cal E}^{\ast}}], using whatever
+environment resulted from expanding the head (stem:[\rho_1]).
+* Those results are passed to a second local continuation, which receives the
+environment in effect at the end of the tail (stem:[\rho_2]), and the tail's
+expanded application data   (stem:[\mbox{\it v\/}^{\ast}_{2}]).
+To produce the overall results, it calls the original continuation stem:[\kappa]
+with that final environment and the results of this step: the concatenation of
+the head and tail expansions
+(stem:[\mbox{\it v\/}^{\ast}_{1}\S\mbox{\it v\/}^{\ast}_{2}]).
 
-The last thing we need is a way to launch expansion, via the user-facing
+This demonstrates how local continuations are used to break a computation down
+into steps, receiving incremental state and results, invoking the next step
+of computation, then returning the final, overall results via a continuation
+provided by the caller.
+
+This raises the question of where that initial continuation comes from.
+We need a way to bootstrap expansion, and that happens via the user-facing
 __expand__ function that we originally set out to achieve:
 
 [{denotation}]
@@ -794,10 +832,12 @@ include::{modeltex}[tag=expand]
 
 This simply invokes stem:[\overline{{\cal E}^{\ast}}] with an initial
 environment and continuation.
-The initial environment is constructed from the user's catalog in Ion 1.0 mode,
-with the appropriate symbol table provided a helper method.
-The initial continuation, destined to receive the final expansion results,
-discards the final environment and passes the user their data.
+The initial environment is constructed from the given catalog, in Ion 1.0 mode,
+with the appropriate symbol table provided by a helper method.
+The initial continuation, destined to receive the final expansion results, is
+trivial: nothing needs to happen before or after the call to
+stem:[\overline{{\cal E}^{\ast}}], so it discards the final environment and
+passes the aggregated application data.
 
 We've now concluded the denotation functions specifying the expansion of
 symbol IDs and the handling of encoding directives in Ion 1.0 documents.
@@ -1012,6 +1052,7 @@ include::{modeltex}[tag=adjust_length]
 ++++
 
 
+[id=catalog]
 === Shared Symbol Tables and Catalogs
 
 We are down to our final denotations: the meaning of catalogs and the shared
