@@ -188,13 +188,13 @@ mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
 (check_latex
   '''\\mbox{\\it i2\\$v?\\/}(\\mbox{\\it i\\$?\\/}) ~\\equiv~ $\\`$ \\mbox{\\bf I} \\rightarrow \\mbox{\\bf \\$V?}\\newline\n'''
   '''\\:\\: \\setandincrindent\n'''
-  '''\\mbox{\\it{in}\\small \\mbox{\\bf \\$V?}}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\scriptsize \\mbox{\\bf \\$V?}}}) \\decrindent\n'''
+  '''\\mbox{\\it{in}\\small $\\mbox{\\bf \\$V?}$}(\\mbox{\\it i\\$?\\/}\\mid_{\\mbox{\\scriptsize $\\mbox{\\bf \\$V?}$}}) \\decrindent\n'''
   'i2$v?')
 
 (check_latex
   '''\\mbox{\\it mk\\_Tuple\\/}(\\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}) ~\\equiv~ $\\`$ \\mbox{\\bf U} \\times \\mbox{\\bf B} \\times \\mbox{\\bf Single} \\rightarrow \\mbox{\\bf Tuple}\\newline\n'''
   '''\\:\\: \\setandincrindent\n'''
-  '''\\mbox{\\it{in}\\small \\mbox{\\bf Tuple}}(\\langle \\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}\\rangle ) \\decrindent\n'''
+  '''\\mbox{\\it{in}\\small $\\mbox{\\bf Tuple}$}(\\langle \\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}\\rangle ) \\decrindent\n'''
   mk_Tuple)
 
 

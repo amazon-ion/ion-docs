@@ -92,15 +92,17 @@ TODO
   (define BETWEEN_BINDINGS  (wrap_with_space "\\mbox{\\bf{and}}"))
 
 
-// Convert a symbol into a TeX string.
-
-  (define (texescape str)
-    (string_replace (string_replace str "_" "\\_") "$" "\\$"))
+  (define (texescape text)
+    '''
+Returns TeX-escaped string representing the text, which can be string or symbol,
+or syntax string or symbol.
+    '''
+    (let [(str (text_to_string (desyntax text)))]
+      (string_replace (string_replace str "_" "\\_") "$" "\\$")))
 
   (define (texify_symbol v)
-    (let [(str (symbol_to_string v))]
-      // The trailing '\/' is post-italic space.
-      (string_append "\\mbox{\\it " (texescape str) "\\/}")))
+    // The trailing '\/' is post-italic space.
+    (string_append "\\mbox{\\it " (texescape v) "\\/}"))
 
 
   (define (pp_newline e)
@@ -124,10 +126,11 @@ TODO
       (pp_print_terms (model_fns m) e NL "\\newline\n\\newline\n" "")))
 
 
+  (define pp_domain_name_symbol
+    (pp_symbol (|sym| (string_append "\\mbox{\\bf " (texescape sym) "}"))))
+
   (define (pp_domain_name v e)
-    (display "\\mbox{\\bf ")
-    (display (texescape (text_to_string (desyntax v))))
-    (display "}"))
+    (pp_domain_name_symbol (desyntax v) e))
 
   (define (pp_domain_name_else_rhs d e)
     (let [(name (domain_name d))]
@@ -290,9 +293,9 @@ TODO
       e))
 
   (define (pp_lift_to v e) // v ~= (lift_to DOM EXPR)
-    (display "\\mbox{\\it{in}\\small ")
+    (display "\\mbox{\\it{in}\\small $")
     (pp_domain_name (. v 1) e)
-    (display "}(")
+    (display "$}(")
     (pp_print (. v 2) e)
     (display ")"))
 
@@ -310,9 +313,9 @@ TODO
 
   (define (pp_lower_to v e)  // v ~= (lower_to DOM_NAME EXPR)
     (pp_print (. v 2) e)
-    (display "\\mid_{\\mbox{\\scriptsize ")
+    (display "\\mid_{\\mbox{\\scriptsize $")
     (pp_domain_name (. v 1) e)
-    (display "}}"))
+    (display "$}}"))
 
 
   (define (pp_seq v e)

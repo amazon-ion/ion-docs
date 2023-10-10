@@ -228,7 +228,7 @@ To customize the rendering of specific symbols, configure the printer with
 `sym_image` clauses.  Such images are printed directly, bypassing the escaper.
     '''
     (|v e|
-      (assert (is_symbol v))
+      (assert (is_symbol v) "Not a symbol: " v)
       (letrec [(find_image (|e| (if (is_pair e)
                                   (let [(frame (head e))]
                                     (if (and (is_symimage frame)
