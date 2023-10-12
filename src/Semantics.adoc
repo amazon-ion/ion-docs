@@ -854,7 +854,7 @@ in this denotational model. The specified algorithms include a fair
 amount of type-checking and default values to ensure that even nonsensical
 directives have a well-defined and stable interpretation across implementations.
 Put another way, the spec must leave nothing unspecified, so that whatever
-gobbledygook appears inside an LST directive, all
+nonsense appears inside an LST directive, all
 implementations will behave the same way.
 
 
@@ -872,9 +872,8 @@ include::{modeltex}[tag=SymToks_for_IVM]
 
 (Apologies for the failure of our pretty printer, but you get the idea.)
 
-Then we define the environment that becomes current after the IVM is
-encountered.  It retains the current environment's catalog,
-but replaces the IVM and resets the symbol table to that of the new Ion version.
+The environment that follows an IVM retains the current environment's catalog,
+but replaces the IVM and resets the symbol table to that of the new Ion version:
 
 [{denotation}]
 ++++
@@ -924,8 +923,8 @@ include::{modeltex}[tag=SymToks_for_LST]
 Here we encounter the first of many null checks. In particular, top-level
 `$ion_symbol_table::null.struct` is equivalent to `$ion_symbol_table::{}`.
 Otherwise, we concatenate the imported symbols and the locally-declared symbols.
-The former sequence includes any symbols implicitly imported from the current
-Ion version.
+The former sequence includes any system symbols implicitly imported from the
+current Ion version.
 
 // TODO It might be interesting to show a proof that
 //   C_LST({}, ρ) == SymToks_for_IVM(ρ↓IVM)
@@ -1018,27 +1017,29 @@ less than zero:
 include::{modeltex}[tag=normalize_max_id]
 ++++
 
-Having extracted the field values from the struct, we can produce a sequence of
-**SymTok**s retrieved from the catalog.
+Having extracted the field values from one import struct, we can produce a
+sequence of **SymTok**s retrieved from the catalog.
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=compile_import]
 ++++
 
-First, we ignore malformed/absent names, as well as the name `$ion`; you cannot
-explicitly import a system symbol table.
-_Catalog_lookup_ (coming soon!) searches the catalog for the best match to the
-name and version; it returns a sequence of at-most-one *SharedSymtab*.
+First, we ignore entries with malformed/absent names (which have been normalized
+to empty), as well as the name `$ion`; you cannot explicitly import a system
+symbol table.
+Otherwise, _best_match_ (defined below) searches the catalog for the best match
+to the name and version; it returns a sequence of at-most-one *SharedSymtab*
+(stem:[s^{\ast}]).
 
 If no SST was found, we check the declared _max_id_; if it was (normalized to)
 absent, we raise an error, otherwise we return `max_id` copies of `$0`.
 
-If a SST was found in the catalog, we compare its version to the one requested.
-When they are equal, we have an exact-match and if `max_id` is well-formed we
-adjust the number of symtoks appropriately.
-When they are not equal, `max_id` _must_ be well-formed, and we adjust the
-length.
+When we found an SST _s_, we compare its version to the one requested.
+When they are equal, we have an exact-match; if `max_id` is well-formed we
+must adjust the number of entries before returning it.
+When the versions are not equal, `max_id` _must_ be well-formed, and we adjust
+the length.
 
 The functions to adjust the sequence length are straightforward.
 _symbol_padding_ produces a sequence of _n_ copies of `$0`, and _adjust_length_
@@ -1050,6 +1051,9 @@ include::{modeltex}[tag=symbol_padding]
 \newline\newline
 include::{modeltex}[tag=adjust_length]
 ++++
+
+Here, _seq_truncate_ returns the first _n_ entries from a sequence; in other
+words, it returns what stem:[\dagger] would discard.
 
 
 [id=catalog]
@@ -1066,7 +1070,7 @@ include::{modeltex}[tag=Catalog]
 ++++
 
 A shared symbol table consists of a name, a version, and a sequence of
-**SymTok**s, each of which is either *Unicode* text or *Sym0* (that is, `$0`).
+**SymTok**s.
 Accessor functions help clarify:
 
 [{denotation}]
@@ -1093,23 +1097,30 @@ A catalog is just a sequence of shared symtabs.
 What's tricky is implementing the "`best match`" semantics required by the Ion
 specification: if there's no exact match to the requested version, we must
 return the largest version available.
+First, we need to unwrap the Catalog:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=Catalog_lookup]
+include::{modeltex}[tag=best_match_Catalog]
 ++++
 
-_Catalog_lookup_ recursively walks the catalog to find the best match.
-The signature of _seek_ is a bit subtle.
-The first argument stem:[s^{\ast}] is the set of symtabs still-to-be-scanned,
-followed by the requested name _n_ and version _v_.
-The fourth argument stem:[b^{\ast}] is an at-most-one sequence holding the best
-match (largest version) found so far with the requested name.
-The result is an at-most-one sequence holding the best match.
+Having done that, we recursively walk the catalog, returning an at-most-one
+sequence holding either an exact match for the name/version, or the highest
+version, or nothing.
 
-If the current _sst_ has the requested name and version, we skip recursion and
-return it directly. Otherwise, we check whether its version is larger than the
-_best_ so far, in which case we replace _best_ for the recursive call.
+[{denotation}]
+++++
+include::{modeltex}[tag=best_match_SST]
+++++
+
+There's a lot of cases to account for here.
+If the current entry (stem:[s_0]) has the requested name and version,
+or the results from recursion on the tail (stem:[s^{\ast}_1]) include no matches,
+we return the current entry.
+Otherwise, if the best-match in the tail (stem:[s^{\ast}_1\downarrow_0]) is an
+exact match, or has a larger version than the current entry, we return that.
+Otherwise, the current entry is the best we've got.
+
 
 
 [#issues]
