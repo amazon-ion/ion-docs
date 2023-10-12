@@ -10,10 +10,19 @@ Terminology/Readability:
 * Replace at-most-one uses of D* with D? and bespoke accessor syntax.
 * Rename "raw value" etc to "encoding value"?  "expression"?
   * I currently like `PTree` or maybe just `Tree` with some decorating glyph.
+  * Almann didn't jive w/ "parse tree" but liked "abstract syntax tree"
+    That does make sense, since Ion has multiple parses representing the AST.
 * Figure out the proper name for `I`.  N? Z?
 * Greekify invocations of:
+  * Environment_after_IVM/LST to C_IVM and C_LST ?
   * symbol_padding
   * adjust_length
+* Less type-switching via E[[]] denotations
+  * Easier with distinct typed nulls
+    * [LITERALS] Requires literals to render them as typewriter `null.foo`.
+* Add not_element_of for better rendering.
+* Add not_equal for better rendering in best_match_SST
+* Add seq_is_not_empty for better prose in compile_import
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
@@ -35,7 +44,6 @@ Defects:
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
-* Add not_element_of for better rendering.
 * Remove use of non-functional features in modeled functions
   * if
   * raise
@@ -225,23 +233,28 @@ Spec Problems
 
     (dom Catalog = (+ 'SharedSymtab*'))
 
-    (fn Catalog_lookup ((c Catalog) (name Unicode) (version I) -> 'SharedSymtab*')
-      (letrec [(seek (lambda (ssts n v bs)
-                       (if (seq_is_empty ssts)
-                         bs
-                         (let [(sst (seq_head ssts))]
-                           (if (=== (eject n) (eject (SST_name sst)))
-                             (if (=== (eject v) (eject (SST_version sst)))
-                               // Exact match
-                               (seq 'SharedSymtab*' sst)
-                               (if (or (seq_is_empty bs)
-                                       (< (eject (SST_version (ith bs 0)))
-                                          (eject (SST_version sst))))
-                                 // Found a new best match
-                                 (seek (seq_tail ssts) n v (seq 'SharedSymtab*' sst))
-                                 (seek (seq_tail ssts) n v bs)))
-                             (seek (seq_tail ssts) n v bs))))))]
-        (seek (lower c 'SharedSymtab*') name version (seq 'SharedSymtab*'))))
+    (fn best_match_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedSymtab*')
+      (best_match_SST (lower c 'SharedSymtab*') n v))
+
+    (fn best_match_SST ((ssts 'SharedSymtab*') (n Unicode) (v I) -> 'SharedSymtab*')
+      (if (seq_is_empty ssts)
+        (seq 'SharedSymtab*')
+        // WARNING These variable names appear in the narrative, keep it in sync!
+        (let [(sst0 (seq_head ssts)),
+              (ssts1 (best_match_SST (seq_tail ssts) n v))]
+          // TODO The prose would flow better if this case were reversed via not_equal
+          (if (=== (eject (SST_name sst0)) (eject n))
+            (if (or (=== (eject (SST_version sst0)) (eject v))
+                    (seq_is_empty ssts1))
+              // Exact match, or only match.
+              (seq 'SharedSymtab*' sst0)
+              // Inexact match, and the tail had a match.
+              (if (or (=== (eject (SST_version (ith ssts1 0))) (eject v))
+                      (> (eject (SST_version (ith ssts1 0))) (eject (SST_version sst0))))
+                // The tail had an exact match, or larger version.
+                ssts1
+                (seq 'SharedSymtab*' sst0)))
+            ssts1))))
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
@@ -307,25 +320,27 @@ Spec Problems
         (if (or (=== (eject n) "")
                 (=== (eject n) "$ion"))
           EMPTY_SYMTOKS
-          (let [(found (Catalog_lookup c n v))]
-            (if (seq_is_empty found)
+          (let [(ssts (best_match_Catalog c n v))]
+            (if (seq_is_empty ssts)
               // The Catalog has nothing with this name.
               (if (seq_is_empty m)
                 // If max_id is invalid or absent, must have exact match.
-                (raise (display_to_string "No exact-match for " (eject n) " @" (eject v)))
+                (raise (display_to_string "No exact-match for " (eject n) "@" (eject v)))
                 (symbol_padding (ith m 0)))
               // We found something in the catalog
-              (let [(best (ith found 0))]
-                (if (=== (eject v) (eject (SST_version best)))
+              (let [(sst (ith ssts 0))]
+                (if (=== (eject (SST_version sst)) (eject v))
                   // We have an exact match!
+                  // TODO inverting this test would lead to clearer narrative.
+                  //  Check seq_not_empty first, then version match.
                   (if (seq_is_empty m)
                     // No max_id, use as-is
-                    (SST_symbols best)
-                    (adjust_length (SST_symbols best) (ith m 0)))
+                    (SST_symbols sst)
+                    (adjust_length (SST_symbols sst) (ith m 0)))
                   // Inexact match
                   (if (seq_is_empty m)
-                    (raise (display_to_string "No exact-match for " (eject n) " @" (eject v)))
-                    (adjust_length (SST_symbols best) (ith m 0))))))))))
+                    (raise (display_to_string "No exact-match for " (eject n) "@" (eject v)))
+                    (adjust_length (SST_symbols sst) (ith m 0))))))))))
 
 
     (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
