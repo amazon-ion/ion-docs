@@ -65,8 +65,9 @@ in the same order the author used.
             (pair   forms define_forms)
             (append names element_names))))))
 
+  // TODO the `name` arg is incomplete list of names, we shouldn't pass it.
   (define (handle_import import_stx name)
-    (values (QS (begin)) (sexp name)))
+    (values (QS (begin)) (reverse (tail (syntax_unwrap import_stx)))))
 
   (define (handle_dom dom_stx name)
     // TODO Ensure `name` doesn't end with "*" to prevent clash with sequences.

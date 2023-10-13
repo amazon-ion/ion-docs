@@ -389,13 +389,14 @@ A model printer that renders in Unicode plain-text.
       (form_method OR              (pp_nary "" "\\ \\vee\\ "   ""))
       (form_method NOT             (pp_unary "\\lnot " ""))
 
-      (form_method +               (pp_binary "" " + " ""))
-      (form_method -               (pp_binary "" " - " ""))
-      (form_method <               (pp_binary "" " < " ""))
-      (form_method <=              (pp_binary "" " \\le " ""))
+      (form_method PLUS            (pp_binary "" " + " ""))
+      (form_method MINUS           (pp_binary "" " - " ""))
+      (form_method LT              (pp_binary "" " < " ""))
+      (form_method LTE             (pp_binary "" " \\le " ""))
+      (form_method EQ              (pp_binary "" " = " ""))
       (form_method ===             (pp_binary "" " = " ""))
-      (form_method >=              (pp_binary "" " \\ge " ""))
-      (form_method >               (pp_binary "" " > " ""))
+      (form_method GTE             (pp_binary "" " \\ge " ""))
+      (form_method GT              (pp_binary "" " > " ""))
 
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  pp_fn_call)

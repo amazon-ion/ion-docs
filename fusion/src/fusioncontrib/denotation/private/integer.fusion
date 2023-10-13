@@ -1,0 +1,39 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module integer "/fusion"
+
+  '''
+Predefined denotational model of Intereg values and related functions.
+  '''
+
+  (require
+    "/fusioncontrib/denotation/private/boolean"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/function"
+    "/fusioncontrib/denotation/private/sequence"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    I 'I*'
+    EQ
+    GT
+    GTE
+    LT
+    LTE
+    MINUS
+    PLUS
+  )
+
+
+  (define_base_domain I   "Integers"       is_int)
+  (define_seq_domain 'I*' "Sequence of I"  I)
+
+  (define_fn EQ    ((a I) (b I) -> B)  (same (eject a) (eject b)))
+  (define_fn GT    ((a I) (b I) -> B)  (>    (eject a) (eject b)))
+  (define_fn GTE   ((a I) (b I) -> B)  (>=   (eject a) (eject b)))
+  (define_fn LT    ((a I) (b I) -> B)  (<    (eject a) (eject b)))
+  (define_fn LTE   ((a I) (b I) -> B)  (<=   (eject a) (eject b)))
+  (define_fn MINUS ((a I) (b I) -> I)  (-    (eject a) (eject b)))
+  (define_fn PLUS  ((a I) (b I) -> I)  (+    (eject a) (eject b)))
+)

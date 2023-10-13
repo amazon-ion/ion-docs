@@ -313,6 +313,8 @@ TODO
 
 // IVMs
 
+(check_true (eject (IVM_eq IVM_1_0 (tuple IVM (inject_into I 1) (inject_into I 0)))))
+
 // Inline IVM resets the LST
 (check_expansion
   (quote_top $ion a '#$0')

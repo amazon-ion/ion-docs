@@ -78,26 +78,29 @@ Spec Problems
     "/fusion/private/record"
     "/fusioncontrib/denotation"
     (rename_in "/fusioncontrib/denotation"
-      (AND and)
-      (IF1 if)
-      (NOT not)
-      (OR  or))
+      (AND    and)
+      (GT     >)
+      (IF1    if)
+      (LT     <)
+      (MINUS  -)
+      (NOT    not)
+      (OR     or)
+      (PLUS   +))
   )
 
   (provide (all_defined_out))
 
 
   (define_model Ion
-    (import B)
+    (import B I)
 
-    (dom I       = (^ is_int)    "Integers")
     (dom Unicode = (^ is_string) "Sequences of Unicode code points")
 
     (dom IVM     = (* I I) "Ion version markers")
 
     (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
-      (and (=== (ith i1 0) (ith i2 0))
-           (=== (ith i1 1) (ith i2 1))))
+      (and (EQ (ith i1 0) (ith i2 0))
+           (EQ (ith i1 1) (ith i2 1))))
 
 
     (dom Sym0    = "The undefined symbol")
@@ -250,13 +253,13 @@ Spec Problems
               (ssts1 (best_match_SST (seq_tail ssts) n v))]
           // TODO The prose would flow better if this case were reversed via not_equal
           (if (=== (eject (SST_name sst0)) (eject n))
-            (if (or (=== (eject (SST_version sst0)) (eject v))
+            (if (or (EQ (SST_version sst0) v)
                     (seq_is_empty ssts1))
               // Exact match, or only match.
               (seq 'SharedSymtab*' sst0)
               // Inexact match, and the tail had a match.
-              (if (or (=== (eject (SST_version (ith ssts1 0))) (eject v))
-                      (> (eject (SST_version (ith ssts1 0))) (eject (SST_version sst0))))
+              (if (or (EQ (SST_version (ith ssts1 0)) v)
+                      (> (SST_version (ith ssts1 0)) (SST_version sst0)))
                 // The tail had an exact match, or larger version.
                 ssts1
                 (seq 'SharedSymtab*' sst0)))
@@ -282,15 +285,15 @@ Spec Problems
            (element_of (Value_content v) Struct)))
 
     (fn symbol_padding ((n I) -> 'SymTok*')
-      (if (=== (eject n) 0)
+      (if (EQ n 0)
         EMPTY_SYMTOKS
         (seq_prepend (lift SYM0 SymTok)
-          (symbol_padding (- (eject n) 1)))))
+          (symbol_padding (- n 1)))))
 
     (fn adjust_length ((ss 'SymTok*') (n I) -> 'SymTok*')
-      (if (< (eject n) (seq_length ss))
+      (if (< n (seq_length ss))
         (seq_truncate ss (eject n))
-        (seq_append ss (symbol_padding (- (eject n) (seq_length ss))))))
+        (seq_append ss (symbol_padding (- n (seq_length ss))))))
 
 
     (fn normalize_name ((vs 'Value*') -> Unicode)             // "" = absent or invalid
@@ -305,7 +308,7 @@ Spec Problems
         (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(i (lower c Int I))]
-              (if (< (eject i) 1) 1 i))
+              (if (< i 1) 1 i))
             1))))
 
     (fn normalize_max_id ((vs 'Value*') -> 'I*')              // <> = absent or invalid
@@ -314,7 +317,7 @@ Spec Problems
         (let [(c (Value_content (seq_head vs)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(n (lower c Int I))]
-              (if (< (eject n) 0) (seq 'I*') (seq 'I*' n)))
+              (if (< n 0) (seq 'I*') (seq 'I*' n)))
             (seq 'I*')))))
 
 
@@ -335,7 +338,7 @@ Spec Problems
                 (symbol_padding (ith m 0)))
               // We found something in the catalog
               (let [(sst (ith ssts 0))]
-                (if (=== (eject (SST_version sst)) (eject v))
+                (if (EQ (SST_version sst) v)
                   // We have an exact match!
                   // TODO inverting this test would lead to clearer narrative.
                   //  Check seq_not_empty first, then version match.
