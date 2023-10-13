@@ -41,6 +41,7 @@ Domains come in several types:
     "/fusioncontrib/denotation/private/integer"
     "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/tuple"
+    "/fusioncontrib/denotation/private/unicode"
     "/fusioncontrib/denotation/private/union"
   )
 
@@ -111,6 +112,8 @@ Domains come in several types:
     NOT
     OR
     PLUS
+    Unicode
+    U_EQ
     wrong
   )
 

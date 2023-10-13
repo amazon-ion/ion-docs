@@ -394,7 +394,7 @@ A model printer that renders in Unicode plain-text.
       (form_method LT              (pp_binary "" " < " ""))
       (form_method LTE             (pp_binary "" " \\le " ""))
       (form_method EQ              (pp_binary "" " = " ""))
-      (form_method ===             (pp_binary "" " = " ""))
+      (form_method U_EQ            (pp_binary "" " = " ""))
       (form_method GTE             (pp_binary "" " \\ge " ""))
       (form_method GT              (pp_binary "" " > " ""))
 

@@ -3,7 +3,7 @@
 (module integer "/fusion"
 
   '''
-Predefined denotational model of Intereg values and related functions.
+Predefined denotational model of Integer values and related functions.
   '''
 
   (require

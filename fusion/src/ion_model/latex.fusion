@@ -38,6 +38,10 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method IVM_eq              (pp_binary "" " = " ""))
       (fn_method   IVM_eq              pp_fn_def1)
 
+      (fn_method SymTok_matches           pp_fn_def1)
+      (fn_method Symbol_matches           pp_fn_def1)
+      (fn_method Value_is_symbol_matching pp_fn_def1)
+
       (form_method Struct_get                (pp_binary "" " \\odot^{\\ast} " ""))
       (form_method Struct_get1               (pp_binary "" " \\odot " ""))
       (form_method Symbol_matches            (pp_binary "" " \\cong " ""))

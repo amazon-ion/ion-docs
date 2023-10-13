@@ -1,0 +1,27 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module unicode "/fusion"
+
+  '''
+Predefined denotational model of Unicode sequences and related functions.
+  '''
+
+  (require
+    "/fusioncontrib/denotation/private/boolean"
+    "/fusioncontrib/denotation/private/integer"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/function"
+  )
+
+  (provide
+    Unicode
+    U_EQ
+  )
+
+
+  (define_base_domain Unicode "Sequences of Unicode code points" is_string)
+
+
+  (define_fn U_EQ ((a Unicode) (b Unicode) -> B)
+    (=== (eject a) (eject b)))
+)

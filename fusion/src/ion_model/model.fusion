@@ -92,9 +92,7 @@ Spec Problems
 
 
   (define_model Ion
-    (import B I)
-
-    (dom Unicode = (^ is_string) "Sequences of Unicode code points")
+    (import B I Unicode)
 
     (dom IVM     = (* I I) "Ion version markers")
 
@@ -167,10 +165,8 @@ Spec Problems
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
     (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
-      (if (element_of s Unicode)
-        // TODO Replace === with strict version; then `if` can be `and`
-        (=== (eject u) (eject (lower s Unicode)))
-        false))
+      (and (element_of s Unicode)
+           (U_EQ (lower s Unicode) u)))
 
     (fn Symbol_matches ((s Symbol) (u Unicode) -> B)
       (and (element_of s SymTok)
@@ -252,7 +248,7 @@ Spec Problems
         (let [(sst0 (seq_head ssts)),
               (ssts1 (best_match_SST (seq_tail ssts) n v))]
           // TODO The prose would flow better if this case were reversed via not_equal
-          (if (=== (eject (SST_name sst0)) (eject n))
+          (if (U_EQ (SST_name sst0) n)
             (if (or (EQ (SST_version sst0) v)
                     (seq_is_empty ssts1))
               // Exact match, or only match.
@@ -326,8 +322,8 @@ Spec Problems
             (v (normalize_version (Struct_get1 s "version"))),
             (m (normalize_max_id  (Struct_get1 s "max_id" ))),
             (c (Environment_catalog r))]
-        (if (or (=== (eject n) "")
-                (=== (eject n) "$ion"))
+        (if (or (U_EQ n "")
+                (U_EQ n "$ion"))
           EMPTY_SYMTOKS
           (let [(ssts (best_match_Catalog c n v))]
             (if (seq_is_empty ssts)
