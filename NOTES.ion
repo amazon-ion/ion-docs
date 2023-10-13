@@ -23,11 +23,9 @@ TODOs
 * [CONST] Domain constants `(val <name> <expr>)`
   * Either print definition as part of the model, or inline them where used.
 * Product domains should allow one field; more natural than singleton unions.
-  * I'm not sure; it's simpler to simply lift/than to wrap in sequence then lift
+  * I'm not sure; it's simpler to simply lift than to wrap in sequence then lift
     which is how tuple construction works (and how its rendered).
   * Still, I see no reason to disallow it.
-* [LET] Functional let form. (See L.I.S.P. p172)
-  * I'm not sure we need to bother, Fusion `let` is close if not identical.
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
 * Delay and memoize component domains (enable recursive types)
@@ -42,6 +40,22 @@ Requires Fusion features:
 * We need `with_output_to_string` in a non-private library.
 * Better `display` of domains and values.
 * [GUARD] Use record constructor guards to type-check values and supply defaults.
+
+
+DSL Dialect
+-----------
+* [PROVIDE] `define_model` should `provide` the things it defines.
+* Need [CONST] to get rid of `define` uses.
+* [LET] Functional, strict let and letrec forms. (See L.I.S.P. p172)
+
+
+Printer
+-------
+* It's not great that printer config needs to use "internal" names like `IF`.
+  This may be unavoidable due to the phase-shifting between the DSL and model
+  features and normal Fusion bindings for the print methods.
+  * Perhaps can be fixed by having all models inherit from a base, then having
+    the print-config clauses lookup fn/dom bindings separately.
 
 
 Denoters

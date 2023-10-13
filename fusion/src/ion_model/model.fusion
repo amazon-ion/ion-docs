@@ -75,17 +75,7 @@ Spec Problems
 
   (require
     "/fusion/exception"               // Not functional, should not be needed
-    "/fusion/private/record"
-    "/fusioncontrib/denotation"
-    (rename_in "/fusioncontrib/denotation"
-      (AND    and)
-      (GT     >)
-      (IF1    if)
-      (LT     <)
-      (MINUS  -)
-      (NOT    not)
-      (OR     or)
-      (PLUS   +))
+    "/fusioncontrib/denotation/dsl"
   )
 
   (provide (all_defined_out))

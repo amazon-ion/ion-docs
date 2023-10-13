@@ -96,48 +96,52 @@
   "filter(vs, p) = IF #vs = 0 THEN ⟨⟩ ELSE IF (p vs↓0) THEN ⟨vs↓0⟩§(filter vs†1 p) ELSE (filter vs†1 p) ENDIF ENDIF"
   filter)
 
+(module Tiny "/fusion/base"
+  (require "/fusioncontrib/denotation/dsl")
+  (provide (all_defined_out))
+  (define_model Tiny
+    (import B I)
 
-(define_model Tiny
-  (dom Nada = "nothing")
-  (dom Single = "single")
-  (import B)
-  (dom I = (^ is_int) "integers")
-  (dom U = (+ B I))
-  (dom V = (+ U Single))
-  (dom 'V?' = (+ V Nada))
+    (dom Nada = "nothing")
+    (dom Single = "single")
+    (dom U = (+ B I))
+    (dom V = (+ U Single))
+    (dom 'V?' = (+ V Nada))
 
-  (dom Tuple = (* U B Single))
-  (dom Func = (-> U Tuple B))
+    (dom Tuple = (* U B Single))
+    (dom Func = (-> U Tuple B))
 
-  (fn f Func (u t) (let [(x u), (s true)] s))
+    (fn f Func (u t) (let [(x u), (s true)] s))
 
-  (fn add  ((i0 I) (i1 I)   -> I)    (+ i0 i1))
-  (fn sub  ((i0 I) (i1 I)   -> I)    (- i0 i1))
-  (fn lt   ((i0 I) (i1 I)   -> I)    (< i0 i1))
-  (fn eq   ((i0 I) (i1 I)   -> I)    (=== i0 i1))
-  (fn gt   ((i0 I) (i1 I)   -> I)    (> i0 i1))
-  (fn len  ((us 'U*')       -> I)    (seq_length us))
-  (fn cons ((u U) (us 'U*') -> 'U*') (seq_prepend u us))
-  (fn incr ((i I)           -> I)    (+ i (inject_into I 1)))
-  (fn b2u  ((b B)           -> U)    (lift_to U b))
-  (fn i2u  ((i I)           -> U)    (lift i U))
-  (fn i2v  ((i I)           -> V)    (lift i U V))
-  (fn u2b  ((u U)           -> B)    (lower_to B u))
-  (fn u2i  ((u U)           -> I)    (lower u I))
-  (fn v2i  ((v V)           -> I)    (lower v U I))
+    (fn add  ((i0 I) (i1 I)   -> I)    (+ i0 i1))
+    (fn sub  ((i0 I) (i1 I)   -> I)    (- i0 i1))
+    (fn lt   ((i0 I) (i1 I)   -> I)    (< i0 i1))
+    (fn eq   ((i0 I) (i1 I)   -> I)    (=== i0 i1))
+    (fn gt   ((i0 I) (i1 I)   -> I)    (> i0 i1))
+    (fn len  ((us 'U*')       -> I)    (seq_length us))
+    (fn cons ((u U) (us 'U*') -> 'U*') (seq_prepend u us))
+    (fn incr ((i I)           -> I)    (+ i (inject_into I 1)))
+    (fn b2u  ((b B)           -> U)    (lift_to U b))
+    (fn i2u  ((i I)           -> U)    (lift i U))
+    (fn i2v  ((i I)           -> V)    (lift i U V))
+    (fn u2b  ((u U)           -> B)    (lower_to B u))
+    (fn u2i  ((u U)           -> I)    (lower u I))
+    (fn v2i  ((v V)           -> I)    (lower v U I))
 
-  (fn 'v2v?' ((v V)        -> 'V?')  (lift v 'V?'))
+    (fn 'v2v?' ((v V)        -> 'V?')  (lift v 'V?'))
 
-  (fn mk_Tuple ((u U) (b B) (s Single) -> Tuple)  (tuple Tuple u b s))
+    (fn mk_Tuple ((u U) (b B) (s Single) -> Tuple)  (tuple Tuple u b s))
+  )
 )
+(require Tiny)
 
 (check_unicode '''\
 Domains
 =======
+B = <Booleans>
+I = <Integers>
 Nada = <nothing>
 Single = <single>
-B = <Booleans>
-I = <integers>
 U = B + I
 V = U + Single
 V? = V + Nada

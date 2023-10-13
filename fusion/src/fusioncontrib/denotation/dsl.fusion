@@ -1,0 +1,74 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module densem "/fusion"
+  '''
+Work-in-progress dialect for defining modules entirely within the denotational
+semantics DSL.
+  '''
+
+  (require
+    "/fusioncontrib/denotation"
+  )
+
+
+  (provide             // domains
+    B 'B*'
+    I 'I*'
+    Unicode
+  )
+
+  (provide             // functions
+    bottom_message
+    define_fn
+    define_model
+    dom
+    domain_description
+    domain_is
+    domain_name
+    domain_of
+    eject                 // TODO remove
+    element_of
+    fn
+    import
+    inject_into           // TODO remove?
+    is_bottom
+    is_domain
+    is_fn
+    is_model
+    ith
+    lift
+    lift_to
+    lower
+    lower_to
+    mk_fn
+    product_domain_element
+    singleton
+    subdomain
+    tuple
+    seq
+    seq_append
+    seq_head
+    seq_is_empty
+    seq_length
+    seq_prepend
+    seq_tail
+    seq_truncate
+    wrong
+
+    // Pre-defined domains and functions
+    EQ
+    IF
+    U_EQ
+
+    (rename_out
+      (AND    and)
+      (GT     >)
+      (GTE    >=)
+      (IF1    if)
+      (LT     <)
+      (LTE    <=)
+      (MINUS  -)
+      (NOT    not)
+      (OR     or)
+      (PLUS   +)))
+)

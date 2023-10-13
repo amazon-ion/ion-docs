@@ -9,7 +9,7 @@ Print domain models in a Unicode-rich plain-text format.
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
-    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/dsl"
     "/fusioncontrib/denotation/printing"
     "/fusioncontrib/denotation/private/util"
   )
@@ -24,7 +24,8 @@ Print domain models in a Unicode-rich plain-text format.
 
   (define (pp_domain_name_else_rhs d e)
     (let [(name (domain_name d))]
-      (if name (display name) (pp_domain_rhs d e))))
+      // This is the DSL `if`, which we need for the printer config below.
+      (if (not (is_null name)) (display name) (pp_domain_rhs d e))))
 
   (define (pp_subdoms subdoms e mid)
     (pp_print_terms (map domain_name subdoms) e "" mid ""))

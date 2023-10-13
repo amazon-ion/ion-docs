@@ -2,7 +2,7 @@
 
 (module model1 "/fusion"
 
-  (require "/fusioncontrib/denotation")
+  (require "/fusioncontrib/denotation/dsl")
 
   (provide (all_defined_out))
 
