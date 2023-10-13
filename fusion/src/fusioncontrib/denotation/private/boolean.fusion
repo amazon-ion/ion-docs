@@ -11,22 +11,27 @@ Predefined denotational model of Boolean values and related logical functions.
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/util"
   )
 
   (provide
-//    AND
-    B
-//    FALSE
+    AND
+    B 'B*'
+    FALSE
     IF
     IF1
-//    NOT
-//    OR
-//    TRUE
+    NOT
+    OR
+    TRUE
   )
 
 
-  (define_base_domain B "Booleans" is_bool)
+  (define_base_domain  B   "Booleans"      is_bool)
+  (define_seq_domain  'B*' "Sequence of B" B)
+
+  (define TRUE  (inject_into B true))
+  (define FALSE (inject_into B false))
 
 
   (define (boolify v)
@@ -59,4 +64,21 @@ at most one of the branches will be evaluated.
                   (if (boolify test) (UQ then) (UQ else)))))
           CTX
           stx))))
+
+
+  (define_strict (NOT e)
+    (IF e FALSE TRUE))
+
+  (define (AND a b)
+    (if (is_bottom a) a
+      (if (boolify a)
+        (if (is_bottom b) b
+          (if (boolify b) TRUE FALSE))
+        FALSE)))
+
+  (define (OR a b)
+    (if (is_bottom a) a
+      (if (boolify a) TRUE
+        (if (is_bottom b) b
+          (if (boolify b) TRUE FALSE)))))
 )

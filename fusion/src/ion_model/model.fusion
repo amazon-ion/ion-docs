@@ -22,7 +22,8 @@ Terminology/Readability:
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
 * Add not_element_of for better rendering.
 * Add not_equal for better rendering in best_match_SST
-* Add seq_is_not_empty for better prose in compile_import
+* Add seq_is_not_empty for better prose in compile_import;
+  inlining Value_has_first_annot
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
@@ -76,7 +77,12 @@ Spec Problems
     "/fusion/exception"               // Not functional, should not be needed
     "/fusion/private/record"
     "/fusioncontrib/denotation"
-    )
+    (rename_in "/fusioncontrib/denotation"
+      (AND and)
+      (IF1 if)
+      (NOT not)
+      (OR  or))
+  )
 
   (provide (all_defined_out))
 
@@ -152,25 +158,24 @@ Spec Problems
 
 
     (fn Value_annots  ((v Value) -> 'SymTok*') (ith v 0))
-    (fn Value_content ((v Value) -> 'Content')   (ith v 1))
+    (fn Value_content ((v Value) -> 'Content') (ith v 1))
 
-    (fn Field_name  ((f Field) -> SymTok) (ith f 0))
+    (fn Field_name  ((f Field) -> SymTok)   (ith f 0))
     (fn Field_value ((f Field) -> Value)    (ith f 1))
 
     (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
       (if (element_of s Unicode)
+        // TODO Replace === with strict version; then `if` can be `and`
         (=== (eject u) (eject (lower s Unicode)))
         false))
 
     (fn Symbol_matches ((s Symbol) (u Unicode) -> B)
-      (if (element_of s SymTok)
-        (SymTok_matches (lower s SymTok) u)
-        false))
+      (and (element_of s SymTok)
+           (SymTok_matches (lower s SymTok) u)))
 
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
-      (if (element_of (Value_content v) Symbol)
-        (Symbol_matches (lower (Value_content v) Symbol) u)
-        false))
+      (and (element_of (Value_content v) Symbol)
+           (Symbol_matches (lower (Value_content v) Symbol) u)))
 
     (fn Struct_get ((s Struct) (u Unicode) -> 'Value*')
       (letrec [(seek (lambda (fs u)
@@ -178,7 +183,7 @@ Spec Problems
                          (seq 'Value*')
                          (let [(f (seq_head fs)),
                                (vs (seek (seq_tail fs) u))]
-                           (if (eject (SymTok_matches (Field_name f) u))
+                           (if (SymTok_matches (Field_name f) u)
                              (seq_prepend (Field_value f) vs)
                              vs)))))]
         (seek (lower s 'Field*') u)))
@@ -190,6 +195,7 @@ Spec Problems
           vs)))
 
     (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
+      // TODO Use `and` when the `not` can print nicely, and seq_head doesn't throw.
       (if (seq_is_empty (Value_annots v)) false
         (SymTok_matches (seq_head (Value_annots v)) u)))
 
@@ -198,7 +204,7 @@ Spec Problems
     // Environment Management
 
     (fn SymToks_for_IVM ((i IVM) -> 'SymTok*')
-      (if (eject (IVM_eq i IVM_1_0))
+      (if (IVM_eq i IVM_1_0)
         (seq 'SymTok*'
           (lift_to SymTok SYM0)
           (lift_to SymTok (inject_into Unicode "$ion"))
@@ -220,7 +226,7 @@ Spec Problems
     (fn SST_symbols ((s SharedSymtab) -> 'SymTok*') (ith s 2))
 
     (fn is_SST ((v Value) -> B)
-      (and (eject (Value_has_first_annot v "$ion_shared_symbol_table"))
+      (and (Value_has_first_annot v "$ion_shared_symbol_table")
            (element_of (Value_content v) Struct)))
 
     (fn compile_SST ((s Struct) -> SharedSymtab)
@@ -272,7 +278,7 @@ Spec Problems
     // $ion_symbol_table "compilation"
 
     (fn is_LST ((v Value) -> B)
-      (and (eject (Value_has_first_annot v "$ion_symbol_table"))
+      (and (Value_has_first_annot v "$ion_symbol_table")
            (element_of (Value_content v) Struct)))
 
     (fn symbol_padding ((n I) -> 'SymTok*')
@@ -357,7 +363,7 @@ Spec Problems
             (ts (SymToks_for_IVM (Environment_IVM r)))]
         (if (seq_is_empty vals)
           ts
-          (if (eject (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table"))
+          (if (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table")
             (Environment_symbols r)
             (let [(c (Value_content (seq_head vals)))]
               (if (and (element_of c List) (not (element_of c DotNull)))
@@ -493,7 +499,7 @@ Spec Problems
       (if (element_of trv IVM)
         (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
         (let [(v (E (lower trv RValue) r))]
-          (if (eject (is_LST v))
+          (if (is_LST v)
             (k (Environment_after_LST
                  (lower (Value_content v) Struct) r)
                (seq 'Value*'))

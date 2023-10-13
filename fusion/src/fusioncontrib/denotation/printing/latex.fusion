@@ -385,9 +385,9 @@ A model printer that renders in Unicode plain-text.
       // TODO seq_truncate
       (form_method tuple           pp_tuple)
 
-      (form_method and             (pp_nary "" "\\ \\wedge\\ " ""))
-      (form_method or              (pp_nary "" "\\ \\vee\\ "   ""))
-      (form_method not             (pp_unary "\\lnot " ""))
+      (form_method AND             (pp_nary "" "\\ \\wedge\\ " ""))
+      (form_method OR              (pp_nary "" "\\ \\vee\\ "   ""))
+      (form_method NOT             (pp_unary "\\lnot " ""))
 
       (form_method +               (pp_binary "" " + " ""))
       (form_method -               (pp_binary "" " - " ""))

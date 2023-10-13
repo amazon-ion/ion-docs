@@ -94,11 +94,14 @@ Domains come in several types:
     is_fn
 
     // Pre-defined domains and functions
-    B
+    AND
+    B 'B*'
     bottom_message
     IF
     IF1
     is_bottom
+    NOT
+    OR
     wrong
   )
 
