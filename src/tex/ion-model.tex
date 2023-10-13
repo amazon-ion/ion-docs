@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-10-12T02:57:38.054-00:00
+%%% This file was generated at 2023-10-13T19:31:07.276-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -179,38 +179,17 @@
 \newline
 \newline
 % tag::SymTok_matches[]
-\mbox{\it s\/} \cong \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf Unicode}\newline
-\:\mbox{\bf{then}}\:\mbox{\it u\/} = \mbox{\it s\/}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
-\:\mbox{\bf{else}}\:\mbox{\bf false}\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
+\mbox{\it s\/} \cong \mbox{\it u\/} ~\equiv~ \mbox{\it s\/}\in \mbox{\bf Unicode}\ \wedge\ \mbox{\it s\/}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}} = \mbox{\it u\/}$\`$ \mbox{\bf SymTok} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}
 % end::SymTok_matches[]
 \newline
 \newline
 % tag::Symbol_matches[]
-\mbox{\it s\/} \cong \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf SymTok}\newline
-\:\mbox{\bf{then}}\:\mbox{\it s\/}\mid_{\mbox{\scriptsize $\mbox{\bf SymTok}$}} \cong \mbox{\it u\/}\newline
-\:\mbox{\bf{else}}\:\mbox{\bf false}\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
+\mbox{\it s\/} \cong \mbox{\it u\/} ~\equiv~ \mbox{\it s\/}\in \mbox{\bf SymTok}\ \wedge\ \mbox{\it s\/}\mid_{\mbox{\scriptsize $\mbox{\bf SymTok}$}} \cong \mbox{\it u\/}$\`$ \mbox{\bf Symbol} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}
 % end::Symbol_matches[]
 \newline
 \newline
 % tag::Value_is_symbol_matching[]
-\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}, \mbox{\it u\/}) ~\equiv~ $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Symbol}\newline
-\:\mbox{\bf{then}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Symbol}$}} \cong \mbox{\it u\/}\newline
-\:\mbox{\bf{else}}\:\mbox{\bf false}\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
+\mbox{\it v\/} \cong \mbox{\it u\/} ~\equiv~ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Symbol}\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Symbol}$}} \cong \mbox{\it u\/}$\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}
 % end::Value_is_symbol_matching[]
 \newline
 \newline
@@ -559,7 +538,7 @@
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it Value\_is\_symbol\_matching\/}(\mbox{\it v\/}^{\ast}\!\downarrow_{0}, \mbox{\rm ``{\tt \$ion\_symbol\_table}''})\newline
+\:\mbox{\bf{if}}\:\mbox{\it v\/}^{\ast}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}\newline
 \:\mbox{\bf{then}}\:\rho\!\downarrow_{\mbox{\scriptsize symbols}}\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
