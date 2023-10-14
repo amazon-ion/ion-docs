@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-10-13T23:59:56.255-00:00
+%%% This file was generated at 2023-10-14T00:39:27.646-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -286,7 +286,7 @@
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
-\:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedSymtab}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/})\rangle ) \decrindent
+\:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedSymtab}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle ) \decrindent
  \decrindent
 % end::compile_SST[]
 \newline
@@ -465,12 +465,11 @@
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = {\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''})\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
 \:\mbox{\bf{and}}\:\mbox{\it m\/} = {\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt max\_id}''})\newline
-\:\mbox{\bf{and}}\:\mbox{\it c\/} = \rho\!\downarrow_{\mbox{\scriptsize catalog}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it s\/}^{\ast} = \mbox{\it best\_match}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/})\newline
+\:\mbox{\bf{let}}\:\mbox{\it s\/}^{\ast} = \mbox{\it best\_match}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\: \setandincrindent
@@ -531,11 +530,10 @@
 \newline
 \newline
 % tag::imported_symbols[]
-{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it v\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}\newline
-\:\mbox{\bf{and}}\:\mbox{\it t\/}^{\ast} = \mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\scriptsize IVM}})\newline
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\scriptsize IVM}})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\newline
@@ -583,11 +581,9 @@
 \newline
 \newline
 % tag::declared_symbols[]
-{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SymTok*}\newline
+{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
 \:\mbox{\bf{else}}\: \setandincrindent
@@ -601,7 +597,6 @@
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
- \decrindent
 % end::declared_symbols[]
 \newline
 \newline
@@ -611,7 +606,7 @@
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it{in}\small $\mbox{\bf Struct}$}(\langle \rangle ), \rho)\newline
-\:\mbox{\bf{else}}\:{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/})\newline
+\:\mbox{\bf{else}}\:{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::SymToks_for_LST[]

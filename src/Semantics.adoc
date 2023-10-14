@@ -934,7 +934,7 @@ current Ion version.
 // TODO It might be interesting to show a proof that
 //   C_LST({}, ρ) == SymToks_for_IVM(ρ↓IVM)
 
-This function sidesteps the more heavy-duty work of turning a symbol-table
+This function sidesteps the more heavy-duty work of turning the
 directive into **SymTok**{asterisk} by delegating to helper functions
 stem:[{\cal C}_{\mbox{\scriptsize\tt symbols}}] and
 stem:[{\cal C}_{\mbox{\scriptsize\tt imports}}].
@@ -946,17 +946,17 @@ directive's fully-expanded *Struct*.
 
 Starting with the easy part, we compile the `symbols` field into
 **SymTok**{asterisk}.
+The input here is a sequence because struct lookup stem:[\odot] returns a
+sequence of zero or one values, raising an error if the field is repeated.
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=declared_symbols]
 ++++
 
-First, recall that stem:[\odot] returns a sequence of zero or one values,
-raising an error if the field is repeated in the struct.
-When there's no `symbols` declared, or not an actual *List*, we return an empty
-sequence.
-Given a list, we compile its elements as follows:
+When there's no `symbols` declared, or the content not an actual *List*,
+we return an empty sequence.
+Otherwise, we compile the list's elements as follows:
 
 [{denotation}]
 ++++
