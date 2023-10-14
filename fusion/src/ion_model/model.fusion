@@ -166,16 +166,17 @@ Spec Problems
       (and (element_of (Value_content v) Symbol)
            (Symbol_matches (lower (Value_content v) Symbol) u)))
 
+    (fn Fields_get ((fs 'Field*') (u Unicode) -> 'Value*')
+      (if (seq_is_empty fs)
+        (seq 'Value*')
+        (let [(f (seq_head fs)),
+              (vs (Fields_get (seq_tail fs) u))]
+          (if (SymTok_matches (Field_name f) u)
+            (seq_prepend (Field_value f) vs)
+            vs))))
+
     (fn Struct_get ((s Struct) (u Unicode) -> 'Value*')
-      (letrec [(seek (lambda (fs u)
-                       (if (seq_is_empty fs)
-                         (seq 'Value*')
-                         (let [(f (seq_head fs)),
-                               (vs (seek (seq_tail fs) u))]
-                           (if (SymTok_matches (Field_name f) u)
-                             (seq_prepend (Field_value f) vs)
-                             vs)))))]
-        (seek (lower s 'Field*') u)))
+      (Fields_get (lower s 'Field*') u))
 
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
       (let [(vs (Struct_get s u))]
