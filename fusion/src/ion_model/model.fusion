@@ -224,7 +224,7 @@ Spec Problems
                  String Unicode)),
             (v (lower (Value_content (seq_head (Struct_get1 s "version")))
                  Int I))]
-        (tuple SharedSymtab n v (declared_symbols s))))
+        (tuple SharedSymtab n v (declared_symbols (Struct_get1 s "symbols")))))
 
 
     (dom Catalog = (+ 'SharedSymtab*'))
@@ -311,12 +311,11 @@ Spec Problems
     (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
       (let [(n (normalize_name    (Struct_get1 s "name"   ))),
             (v (normalize_version (Struct_get1 s "version"))),
-            (m (normalize_max_id  (Struct_get1 s "max_id" ))),
-            (c (Environment_catalog r))]
+            (m (normalize_max_id  (Struct_get1 s "max_id" )))]
         (if (or (U_EQ n "")
                 (U_EQ n "$ion"))
           EMPTY_SYMTOKS
-          (let [(ssts (best_match_Catalog c n v))]
+          (let [(ssts (best_match_Catalog (Environment_catalog r) n v))]
             (if (seq_is_empty ssts)
               // The Catalog has nothing with this name.
               (if (seq_is_empty m)
@@ -348,9 +347,8 @@ Spec Problems
                       EMPTY_SYMTOKS))]
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
-    (fn imported_symbols ((s Struct) (r Environment) -> 'SymTok*')
-      (let [(vals (Struct_get1 s "imports")),
-            (ts (SymToks_for_IVM (Environment_IVM r)))]
+    (fn imported_symbols ((vals 'Value*') (r Environment) -> 'SymTok*')
+      (let [(ts (SymToks_for_IVM (Environment_IVM r)))]
         (if (seq_is_empty vals)
           ts
           (if (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table")
@@ -370,14 +368,13 @@ Spec Problems
                      (lift_to SymTok SYM0)))]
             (seq_prepend t (compile_symbols (seq_tail vs)))))))
 
-    (fn declared_symbols ((s Struct) -> 'SymTok*')
-      (let [(vals (Struct_get1 s "symbols"))]
-        (if (seq_is_empty vals)
-          EMPTY_SYMTOKS
-          (let [(c (Value_content (seq_head vals)))]
-            (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_symbols (lower c List 'Value*'))
-              EMPTY_SYMTOKS)))))
+    (fn declared_symbols ((vs 'Value*') -> 'SymTok*')
+      (if (seq_is_empty vs)
+        EMPTY_SYMTOKS
+        (let [(c (Value_content (seq_head vs)))]
+          (if (and (element_of c List) (not (element_of c DotNull)))
+            (compile_symbols (lower c List 'Value*'))
+            EMPTY_SYMTOKS))))
 
 
     // Environment construction
@@ -385,8 +382,8 @@ Spec Problems
     (fn SymToks_for_LST ((s Struct) (r Environment) -> 'SymTok*')
       (if (element_of s DotNull)
         (SymToks_for_LST (lift (seq 'Field*') Struct) r)
-        (seq_append (imported_symbols s r)
-                    (declared_symbols s))))
+        (seq_append (imported_symbols (Struct_get1 s "imports") r)
+                    (declared_symbols (Struct_get1 s "symbols")))))
 
 
     (fn Environment_after_IVM ((ivm IVM) (r Environment) -> Environment)
