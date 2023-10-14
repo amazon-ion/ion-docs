@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-10-13T19:31:07.276-00:00
+%%% This file was generated at 2023-10-13T23:59:56.255-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -193,16 +193,15 @@
 % end::Value_is_symbol_matching[]
 \newline
 \newline
-% tag::Struct_get[]
-\mbox{\it s\/} \odot^{\ast} \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
+% tag::Fields_get[]
+\mbox{\it f\/}^{\ast} \odot^{\ast} \mbox{\it u\/} ~\equiv~ $\`$ \mbox{\bf Field*} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{letrec}}\:\mbox{\it seek\/} = \lambda \mbox{\it f\/}^{\ast} \mbox{\it u\/}. \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it f\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\langle \rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it f\/} = \mbox{\it f\/}^{\ast}\!\downarrow_{0}\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/}^{\ast} = \mbox{\it seek\/}(\mbox{\it f\/}^{\ast}\dagger1, \mbox{\it u\/})\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/}^{\ast} = \mbox{\it f\/}^{\ast}\dagger1 \odot^{\ast} \mbox{\it u\/}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it f\/}\!\downarrow_{\mbox{\scriptsize name}} \cong \mbox{\it u\/}\newline
 \:\mbox{\bf{then}}\:\langle \mbox{\it f\/}\!\downarrow_{\mbox{\scriptsize value}}\rangle \S\mbox{\it v\/}^{\ast}\newline
@@ -211,9 +210,12 @@
  \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{in}}\:\mbox{\it seek\/}(\mbox{\it s\/}\mid_{\mbox{\scriptsize $\mbox{\bf Field*}$}}, \mbox{\it u\/}) \decrindent
  \decrindent
+% end::Fields_get[]
+\newline
+\newline
+% tag::Struct_get[]
+\mbox{\it s\/} \odot^{\ast} \mbox{\it u\/} ~\equiv~ \mbox{\it s\/}\mid_{\mbox{\scriptsize $\mbox{\bf Field*}$}} \odot^{\ast} \mbox{\it u\/}$\`$ \mbox{\bf Struct} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf Value*}
 % end::Struct_get[]
 \newline
 \newline

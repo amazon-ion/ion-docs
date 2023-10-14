@@ -429,11 +429,16 @@ asterisk to indicate that multiple values may result:
 include::{modeltex}[tag=Struct_get]
 ++++
 
-This defines a local recursive function _seek_ which walks the struct's
-**Field**{asterisk} to accumulate a **Value**{asterisk}.
-To perform the recursion, we remove the first of the current fields via
-stem:[f^{\ast}\dagger 1], invoke _seek_, and call the results stem:[v^\ast].
-If the current field's name matches _u_ we prepend (stem:[\S]) its value
+All that does is unwrap the struct's field sequence, making it easier to recur:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Fields_get]
+++++
+
+We recur on the tail of the field sequence (stem:[f^{\ast}\dagger 1]) and call
+the results stem:[v^\ast].
+If the current field's name matches _u_, we prepend (stem:[\S]) its value
 onto the recursive results.
 
 That function returns the values of all fields with the given name, but it turns
