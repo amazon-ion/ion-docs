@@ -189,15 +189,15 @@ TODO
 // Non-exact-match imports
 
 // If no max_id, lack of exact-match must raise an error.
-(expect_any_raise
-  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"absent"}]})))
-(expect_any_raise
+(check_bottom "No exact-match for not-in-catalog@1"
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"not-in-catalog"}]})))
+(check_bottom "No exact-match for empty@2"
   (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"empty", version:2}]})))
 
 // If max_id not non-negative int, lack of exact-match must raise an error.
-(expect_any_raise
-  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"absent", max_id:null.int}]})))
-(expect_any_raise
+(check_bottom "No exact-match for not-in-catalog@1"
+  (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"not-in-catalog", max_id:null.int}]})))
+(check_bottom "No exact-match for empty@2"
   (expand_doc (quote_top $ion_symbol_table::{imports:[{name:"empty", version:2, max_id:-5}]})))
 
 

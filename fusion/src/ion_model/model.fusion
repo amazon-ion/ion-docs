@@ -320,7 +320,7 @@ Spec Problems
               // The Catalog has nothing with this name.
               (if (seq_is_empty m)
                 // If max_id is invalid or absent, must have exact match.
-                (raise (display_to_string "No exact-match for " (eject n) "@" (eject v)))
+                (wrong "No exact-match for " n "@" v)
                 (symbol_padding (ith m 0)))
               // We found something in the catalog
               (let [(sst (ith ssts 0))]
@@ -334,7 +334,7 @@ Spec Problems
                     (adjust_length (SST_symbols sst) (ith m 0)))
                   // Inexact match
                   (if (seq_is_empty m)
-                    (raise (display_to_string "No exact-match for " (eject n) "@" (eject v)))
+                    (wrong "No exact-match for " n "@" v)
                     (adjust_length (SST_symbols sst) (ith m 0))))))))))
 
 
