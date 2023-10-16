@@ -20,8 +20,6 @@ Terminology/Readability:
 * Less type-switching via E[[]] denotations
   * Easier with distinct typed nulls
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
-* Add not_element_of for better rendering.
-* Add not_equal for better rendering in best_match_SST
 * Add seq_is_not_empty for better prose in compile_import;
   inlining Value_has_first_annot
 
@@ -45,6 +43,7 @@ Defects:
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
+* (inject_into Unicode ...) should not be needed; string literals _are_ Unicode.
 * `lambda`s should instead use `mk_fn` with ad-hoc signature.
 
 
@@ -232,8 +231,8 @@ Spec Problems
         // WARNING These variable names appear in the narrative, keep it in sync!
         (let [(sst0 (seq_head ssts)),
               (ssts1 (best_match_SST (seq_tail ssts) n v))]
-          // TODO The prose would flow better if this case were reversed via not_equal
-          (if (U_EQ (SST_name sst0) n)
+          (if (not (U_EQ (SST_name sst0) n))
+            ssts1
             (if (or (EQ (SST_version sst0) v)
                     (seq_is_empty ssts1))
               // Exact match, or only match.
@@ -243,8 +242,7 @@ Spec Problems
                       (> (SST_version (ith ssts1 0)) (SST_version sst0)))
                 // The tail had an exact match, or larger version.
                 ssts1
-                (seq 'SharedSymtab*' sst0)))
-            ssts1))))
+                (seq 'SharedSymtab*' sst0)))))))
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
@@ -303,33 +301,19 @@ Spec Problems
 
 
     (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
-      (let [(n (normalize_name    (Struct_get1 s "name"   ))),
-            (v (normalize_version (Struct_get1 s "version"))),
-            (m (normalize_max_id  (Struct_get1 s "max_id" )))]
+      (let [(n  (normalize_name    (Struct_get1 s "name"   ))),
+            (v  (normalize_version (Struct_get1 s "version"))),
+            (ms (normalize_max_id  (Struct_get1 s "max_id" )))]
         (if (or (U_EQ n "")
                 (U_EQ n "$ion"))
           EMPTY_SYMTOKS
           (let [(ssts (best_match_Catalog (Environment_catalog r) n v))]
-            (if (seq_is_empty ssts)
-              // The Catalog has nothing with this name.
-              (if (seq_is_empty m)
-                // If max_id is invalid or absent, must have exact match.
-                (wrong "No exact-match for " n "@" v)
-                (symbol_padding (ith m 0)))
-              // We found something in the catalog
-              (let [(sst (ith ssts 0))]
-                (if (EQ (SST_version sst) v)
-                  // We have an exact match!
-                  // TODO inverting this test would lead to clearer narrative.
-                  //  Check seq_not_empty first, then version match.
-                  (if (seq_is_empty m)
-                    // No max_id, use as-is
-                    (SST_symbols sst)
-                    (adjust_length (SST_symbols sst) (ith m 0)))
-                  // Inexact match
-                  (if (seq_is_empty m)
-                    (wrong "No exact-match for " n "@" v)
-                    (adjust_length (SST_symbols sst) (ith m 0))))))))))
+            (if (not (seq_is_empty ms))  // We have max_id, adjust the length
+              (let [(ts (if (seq_is_empty ssts) (seq 'SymTok*') (SST_symbols (ith ssts 0))))]
+                (adjust_length ts (ith ms 0)))
+              (if (and (not (seq_is_empty ssts)) (EQ (SST_version (ith ssts 0)) v))
+                (SST_symbols (ith ssts 0))
+                (wrong "No exact-match for " n "@" v)))))))
 
 
     (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')

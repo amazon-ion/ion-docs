@@ -92,6 +92,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it i\\/}_{2}"                   i2)
       (sym_image "\\kappa"                                 k)
       (sym_image "\\kappa_{0}"                             k0)
+      (sym_image "\\mbox{\\it m\\/}^{\\ast}"               ms)
       (sym_image "\\rho"                                   r)
       (sym_image "\\rho_{0}"                               r0)
       (sym_image "\\rho_{1}"                               r1)
