@@ -41,6 +41,18 @@ Utilities for testing the Ion denotational model.
   //============================================================================
   // Creating model values for the input domains like RValue
 
+  // IVMs
+
+  (define (is_IVM c)
+    (and c (is_symbol c) (string_starts_with (symbol_to_string c) "#$ion_")))
+
+  (define (mk_IVM c)
+    (lets [(parts (string_split (symbol_to_string c) "_")),
+           (major (string_to_int (. parts 1))),
+           (minor (string_to_int (. parts 2)))]
+      (tuple IVM major minor)))
+
+
   // Safe types
 
   (define (mk_NullNull c)
@@ -119,8 +131,8 @@ Utilities for testing the Ion denotational model.
 
   (define (mk_TRValue c)
     (lift_to TRValue
-      (if (=== (quote '#$ion_1_0') c)
-        IVM_1_0
+      (if (is_IVM c)
+        (mk_IVM c)
         (mk_RValue c))))
 
 

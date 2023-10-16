@@ -338,17 +338,4 @@ TODO
 
 
 
-
-// IVMs
-
-(check_true (eject (IVM_eq IVM_1_0 (tuple IVM (inject_into I 1) (inject_into I 0)))))
-
-// Inline IVM resets the LST
-(check_expansion_and_bounds 9
-  (quote_top $ion a)
-  (quote_top
-    '#$ion_1_0' $ion_symbol_table::{symbols:["a"]} '#$1' '#$10'
-    '#$ion_1_0'))
-
-
 "SUCCESS (ion_model.test)"

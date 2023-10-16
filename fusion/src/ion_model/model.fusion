@@ -207,7 +207,7 @@ Spec Problems
           (lift_to SymTok (inject_into Unicode "symbols"))
           (lift_to SymTok (inject_into Unicode "max_id"))
           (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table")))
-        (raise "Unsupported Ion version")))
+        (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1))))
 
 
     (dom SharedSymtab    = (* Unicode I 'SymTok*'))     // name, version, symbols
