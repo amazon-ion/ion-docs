@@ -271,6 +271,12 @@ or syntax string or symbol.
       (pp_decr_indentation e)))
 
 
+  (define pp_equals
+    (pp_binary "" " = " ""))
+
+  (define pp_not_equals
+    (pp_binary "" " \\neq " ""))
+
 
   (define (pp_element_of v e)
     (pp_print (. v 1) e)
@@ -358,7 +364,10 @@ or syntax string or symbol.
            (arg_dat (syntax_unwrap arg_stx))]
       (if (form_matches (QS element_of) arg_stx)
         (pp_not_element_of arg_dat e)
-        ((pp_unary "\\lnot " "") v e))))
+        (if (or (form_matches (QS   EQ) arg_stx)
+                (form_matches (QS U_EQ) arg_stx))
+          (pp_not_equals arg_dat e)
+          ((pp_unary "\\lnot " "") v e)))))
 
 
   //============================================================================
@@ -410,8 +419,8 @@ A model printer that renders in Unicode plain-text.
       (form_method MINUS           (pp_binary "" " - " ""))
       (form_method LT              (pp_binary "" " < " ""))
       (form_method LTE             (pp_binary "" " \\le " ""))
-      (form_method EQ              (pp_binary "" " = " ""))
-      (form_method U_EQ            (pp_binary "" " = " ""))
+      (form_method EQ              pp_equals)
+      (form_method U_EQ            pp_equals)
       (form_method GTE             (pp_binary "" " \\ge " ""))
       (form_method GT              (pp_binary "" " > " ""))
 
