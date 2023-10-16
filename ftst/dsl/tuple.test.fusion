@@ -16,15 +16,18 @@
 
 // tuple
 
+(expect_arity_error (tuple))
+(expect_arity_error (tuple Stamped))
+(expect_arity_error (tuple Stamped int_any_val))
+(expect_arity_error (tuple Stamped t_val))
+(expect_arity_error (tuple Stamped stamped_int_val))
+
 (check_bottom "19" (tuple Stamped (wrong 19) int_any_val))  // 1st arg strict
 (check_bottom "20" (tuple Stamped t_val      (wrong 20)))   // 2nd arg strict
 
 (expect_argument_error (tuple z_val z_rep))        // 1st arg isn't a domain
 (expect_argument_error (tuple Z     z_rep))        // 1st arg isn't a product domain
 
-(expect_argument_error (tuple Stamped int_any_val))        // Arity mismatch
-(expect_argument_error (tuple Stamped t_val))
-(expect_argument_error (tuple Stamped stamped_int_val))
 (expect_argument_error (tuple Stamped int_any_val int_any_val))  // int_any_val ∉ T
 (expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
 (expect_argument_error (tuple Stamped t_val z_val))              // z ∉ Any
