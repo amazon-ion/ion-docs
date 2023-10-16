@@ -45,9 +45,6 @@ Defects:
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
-* Remove use of non-functional features in modeled functions
-  * if
-  * raise
 * `lambda`s should instead use `mk_fn` with ad-hoc signature.
 
 
@@ -73,10 +70,7 @@ Spec Problems
   '''
 
 
-  (require
-    "/fusion/exception"               // Not functional, should not be needed
-    "/fusioncontrib/denotation/dsl"
-  )
+  (require "/fusioncontrib/denotation/dsl")
 
   (provide (all_defined_out))
 
@@ -429,7 +423,7 @@ Spec Problems
                     (lift (lower rv Int) Content)
                     (if (element_of rv String)
                       (lift (lower rv String) Content)
-                      (raise "not implemented"))))))))))
+                      (wrong "should not happen"))))))))))
 
 
     (fn E_RSymTok ((s RSymTok) (r Environment) -> SymTok)
