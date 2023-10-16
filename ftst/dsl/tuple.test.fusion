@@ -22,6 +22,13 @@
 (expect_arity_error (tuple Stamped t_val))
 (expect_arity_error (tuple Stamped stamped_int_val))
 
+
+(let [(v (tuple Point2d 0 1))]   // Auto-injection
+  (check element_of v Point2d)
+  (check_same 0 (eject (ith v 0)))
+  (check_same 1 (eject (ith v 1))))
+
+
 (check_bottom "19" (tuple Stamped (wrong 19) int_any_val))  // 1st arg strict
 (check_bottom "20" (tuple Stamped t_val      (wrong 20)))   // 2nd arg strict
 

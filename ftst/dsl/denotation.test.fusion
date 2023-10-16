@@ -91,7 +91,7 @@
 
 (define_fn project_x Projection (point)
   (product_domain_element Point2d point 0))
-(let [(p (tuple Point2d (inject_into Z 17) (inject_into Z 39)))]
+(let [(p (tuple Point2d 17 39))]
   (check === 17 (eject (project_x p))))
 
 (define_fn stamped_time ((stamped Stamped) -> T)

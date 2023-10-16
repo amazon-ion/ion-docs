@@ -522,7 +522,7 @@ Spec Problems
         ('TE*' (lower_to 'TRValue*' d) r0 k0)))
   )
 
-  (define IVM_1_0          (tuple IVM (inject_into I 1) (inject_into I 0)))
+  (define IVM_1_0          (tuple IVM 1 0))
   (define SYM0             (singleton Sym0))
   (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))

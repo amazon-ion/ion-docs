@@ -7,6 +7,7 @@
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/typecheck"
     "/fusioncontrib/denotation/private/util"
   )
 
@@ -59,24 +60,15 @@ Constructs a product-domain value.
             (args   (tail rest))]
         (unless (is_product_domain domain)
           (apply raise_argument_error "tuple" "product domain" 0 rest))
-        (let [(where (string_append "tuple " (domain_name domain))),
-              (arity (size (product_domain_subdomains domain))),
-              (rep   (apply list (tail rest)))]
-          (unless (=== (size rep) arity)
+        (lets [(where (string_append "tuple " (domain_name domain))),
+               (subs  (apply sexp (product_domain_subdomains domain))),
+               (arity (size subs))]
+          (unless (=== (size args) arity)
             (apply raise_arity_error where (+ 1 arity) rest))
-          (let loop [(i    1),
-                     (vs   args),
-                     (subs (apply sexp (product_domain_subdomains domain)))]
-            (when (is_pair vs)
-              (if (or (is_bottom (head vs))
-                      (domain_is (head vs) (head subs)))
-                (loop (+ 1 i) (tail vs) (tail subs))
-                (apply raise_argument_error
-                    (string_append "tuple " (domain_name domain))
-                    (string_append "value in domain " (domain_name (head subs)))
-                    i rest))))
-          (or (find is_bottom rep)       // strictness check
-              (make_value domain rep))))))
+          (let [(args (typecheck_args where subs args 1))]
+            (if (is_bottom args)
+                args
+                (make_value domain (apply list args))))))))
 
   (define (is_tuple v)
     (and (is_domain_value v)
