@@ -38,6 +38,7 @@ References:
     fn_code
     fn_method
     fn_name
+    form_matches
     form_method
     func_domain_argdomains
     func_domain_output
@@ -146,6 +147,13 @@ definition.
     (type_method (|v| (ident v fn)) method))
 
 
+  (define (form_matches id v)
+    (unless (is_identifier id)
+      (raise_argument_error "mk_form_matcher" "identifier" 0 id v))
+    (and (is_syntax_pair v)
+         (is_identifier (head (syntax_unwrap v)))
+         (free_identifier_equal id (head (syntax_unwrap v)))))
+
   (define_syntax form_method
     '''
     (form_method id method)
@@ -159,9 +167,7 @@ syntax form with the binding `id`.
           (wrong_syntax id "Expected an identifier"))
         (datum_to_syntax
           (QQ (type_method
-                (|v| (and (is_syntax_pair v)
-                          (is_identifier (head (syntax_unwrap v)))
-                          (free_identifier_equal (QS (UQ id)) (head (syntax_unwrap v)))))
+                (|v| (form_matches (QS (UQ id)) v))
                 (|v e| ((UQ method) (syntax_unwrap v) e))))
           (QS context)
           stx))))

@@ -271,6 +271,18 @@ or syntax string or symbol.
       (pp_decr_indentation e)))
 
 
+
+  (define (pp_element_of v e)
+    (pp_print (. v 1) e)
+    (display "\\in ")
+    (pp_domain_name (. v 2) e))
+
+  (define (pp_not_element_of v e)
+    (pp_print (. v 1) e)
+    (display "\\notin ")
+    (pp_domain_name (. v 2) e))
+
+
   (define pp_ith
     (|v e|
       (let [(arg_exp (. v 2))]
@@ -341,6 +353,13 @@ or syntax string or symbol.
       e))
 
 
+  (define (pp_not v e)
+    (lets [(arg_stx (. v 1)),
+           (arg_dat (syntax_unwrap arg_stx))]
+      (if (form_matches (QS element_of) arg_stx)
+        (pp_not_element_of arg_dat e)
+        ((pp_unary "\\lnot " "") v e))))
+
 
   //============================================================================
 
@@ -357,9 +376,7 @@ A model printer that renders in Unicode plain-text.
 
       // Special forms
       (form_method eject           (pp_unary "" ""))
-      (form_method element_of      (|v e| (pp_print (. v 1) e)
-                                          (display "\\in ")
-                                          (pp_domain_name (. v 2) e)))
+      (form_method element_of      pp_element_of)
       (form_method if              pp_if)
       (form_method IF              pp_if)
       (form_method IF1             pp_if)
@@ -387,7 +404,7 @@ A model printer that renders in Unicode plain-text.
 
       (form_method AND             (pp_nary "" "\\ \\wedge\\ " ""))
       (form_method OR              (pp_nary "" "\\ \\vee\\ "   ""))
-      (form_method NOT             (pp_unary "\\lnot " ""))
+      (form_method NOT             pp_not)
 
       (form_method PLUS            (pp_binary "" " + " ""))
       (form_method MINUS           (pp_binary "" " - " ""))
