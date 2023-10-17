@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-10-17T00:27:33.194-00:00
+%%% This file was generated at 2023-10-17T01:18:56.376-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -308,8 +308,9 @@
 \:\mbox{\bf{let}}\:\mbox{\it s\/}_{0} = \mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
 \:\mbox{\bf{and}}\:\mbox{\it s\/}^{\ast}_{1} = \mbox{\it best\_match}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}_{0}\!\downarrow_{\mbox{\scriptsize name}} = \mbox{\it n\/}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}_{0}\!\downarrow_{\mbox{\scriptsize name}} \neq \mbox{\it n\/}\newline
+\:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}_{1}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}_{0}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \#\mbox{\it s\/}^{\ast}_{1}=0\newline
 \:\mbox{\bf{then}}\:\langle \mbox{\it s\/}_{0}\rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
@@ -320,7 +321,6 @@
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
-\:\mbox{\bf{else}}\:\mbox{\it s\/}^{\ast}_{1}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 \newline
@@ -391,7 +391,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
 \:\mbox{\bf{else}}\:\langle\rangle\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -411,7 +411,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
@@ -439,7 +439,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
@@ -464,38 +464,28 @@
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = {\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''})\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
-\:\mbox{\bf{and}}\:\mbox{\it m\/} = {\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt max\_id}''})\newline
+\:\mbox{\bf{and}}\:\mbox{\it m\/}^{\ast} = {\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt max\_id}''})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it s\/}^{\ast} = \mbox{\it best\_match}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it m\/}^{\ast}\neq 0\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
-\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\!\downarrow_{0})\newline
+\:\mbox{\bf{then}}\:\langle \rangle \newline
+\:\mbox{\bf{else}}\:\mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize symbols}}\newline
 \:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\mbox{\it adjust\_length\/}(\mbox{\it t\/}^{\ast}, \mbox{\it m\/}^{\ast}\!\downarrow_{0}) \decrindent
 \newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}}\newline
-\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}}, \mbox{\it m\/}\!\downarrow_{0})\newline
+\:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}\neq 0\ \wedge\ \mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\newline
+\:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize symbols}}\newline
+\:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
 \:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
-\:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}}, \mbox{\it m\/}\!\downarrow_{0})\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -516,7 +506,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Struct}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Struct}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Struct}$}}, \rho)\newline
 \:\mbox{\bf{else}}\:\langle\rangle\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -543,7 +533,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf List}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Value*}$}}, \rho)\newline
 \:\mbox{\bf{else}}\:\mbox{\it t\/}^{\ast}\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -567,7 +557,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}})\newline
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/})\newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -589,7 +579,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \lnot \mbox{\it c\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf List}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Value*}$}})\newline
 \:\mbox{\bf{else}}\:\langle\rangle\newline
 \:\mbox{\bf{endif}}\: \decrindent

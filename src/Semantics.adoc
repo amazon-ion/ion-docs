@@ -1037,14 +1037,14 @@ Otherwise, _best_match_ (defined below) searches the catalog for the best match
 to the name and version; it returns a sequence of at-most-one *SharedSymtab*
 (stem:[s^{\ast}]).
 
-If no SST was found, we check the declared _max_id_; if it was (normalized to)
-absent, we raise an error, otherwise we return `max_id` copies of `$0`.
+If stem:[m^{\ast}] is non-empty, a valid `max_id` was given, and we can use
+whatever we've found, even if we found nothing with the given name.
+Regardless, we adjust the number of symbols we return to align with the `max_id`
+by using a helper function _adjust_length_ defined below.
 
-When we found an SST _s_, we compare its version to the one requested.
-When they are equal, we have an exact-match; if `max_id` is well-formed we
-must adjust the number of entries before returning it.
-When the versions are not equal, `max_id` _must_ be well-formed, and we adjust
-the length.
+When there's no `max_id` we require an exact match: if stem:[s^{\ast}] has an
+entry, and it has the requested version _v_, we return its symbols.
+Otherwise, we signal an error.
 
 The functions to adjust the sequence length are straightforward.
 _symbol_padding_ produces a sequence of _n_ copies of `$0`, and _adjust_length_
@@ -1119,9 +1119,10 @@ include::{modeltex}[tag=best_match_SST]
 ++++
 
 There's a lot of cases to account for here.
-If the current entry (stem:[s_0]) has the requested name and version,
-or the results from recursion on the tail (stem:[s^{\ast}_1]) include no matches,
-we return the current entry.
+If the current entry (stem:[s_0]) has a different name, we return the recursive
+result.
+Otherwise, the name matches, so if the version matches or there's no match in the
+tail (stem:[s^{\ast}_1]), we return the current entry.
 Otherwise, if the best-match in the tail (stem:[s^{\ast}_1\downarrow_0]) is an
 exact match, or has a larger version than the current entry, we return that.
 Otherwise, the current entry is the best we've got.
