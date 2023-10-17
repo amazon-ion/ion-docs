@@ -129,10 +129,11 @@ within `domain`'s subdomain.
 
 
   (define_strict (seq_ith seq i)
-    (unless (and (is_seq seq) (not (seq_is_empty seq)))
-      (raise_argument_error "ith" "non-empty seq value" 0 seq i))
-    // TODO typecheck/rangecheck i
-    (element (domain_value_rep seq) i))
+    (unless (is_seq seq)
+      (raise_argument_error "ith" "seq value" 0 seq i))
+    (if (< i (seq_length seq))
+      (element (domain_value_rep seq) i)
+      (wrong "index too large: " i)))
 
 
   (define_strict (seq_head seq)

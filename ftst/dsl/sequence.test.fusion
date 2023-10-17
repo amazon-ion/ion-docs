@@ -62,7 +62,8 @@
 (check_bottom "1734" (seq_ith empty_Zs (wrong 1734)))  // strict on 2nd arg
 
 (expect_argument_error (seq_ith int_any_val 0))        // 1st arg isn't a sequence
-(expect_argument_error (seq_ith empty_Zs 0))           // 2nd arg out of range
+
+(check_bottom "index too large: 0" (seq_ith empty_Zs 0))           // 2nd arg out of range
 
 
 // seq_head
