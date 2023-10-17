@@ -178,11 +178,6 @@ Spec Problems
           (wrong "Repeated field: " u)
           vs)))
 
-    (fn Value_has_first_annot ((v Value) (u Unicode) -> B)
-      // TODO Use `and` when the `not` can print nicely, and seq_head doesn't throw.
-      (if (seq_is_empty (Value_annots v)) false
-        (SymTok_matches (seq_head (Value_annots v)) u)))
-
 
     //=======================
     // Environment Management
@@ -210,8 +205,9 @@ Spec Problems
     (fn SST_symbols ((s SharedSymtab) -> 'SymTok*') (ith s 2))
 
     (fn is_SST ((v Value) -> B)
-      (and (Value_has_first_annot v "$ion_shared_symbol_table")
-           (element_of (Value_content v) Struct)))
+      (and (element_of (Value_content v) Struct)
+           (and (not (seq_is_empty (Value_annots v)))
+              (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
 
     (fn compile_SST ((s Struct) -> SharedSymtab)
       (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
@@ -258,10 +254,6 @@ Spec Problems
 
 
     // $ion_symbol_table "compilation"
-
-    (fn is_LST ((v Value) -> B)
-      (and (Value_has_first_annot v "$ion_symbol_table")
-           (element_of (Value_content v) Struct)))
 
     (fn symbol_padding ((n I) -> 'SymTok*')
       (if (EQ n 0)
@@ -464,7 +456,9 @@ Spec Problems
       (if (element_of trv IVM)
         (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
         (let [(v (E (lower trv RValue) r))]
-          (if (is_LST v)
+          (if (and (element_of (Value_content v) Struct)
+                   (and (not (seq_is_empty (Value_annots v)))
+                        (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table")))
             (k (Environment_after_LST
                  (lower (Value_content v) Struct) r)
                (seq 'Value*'))
