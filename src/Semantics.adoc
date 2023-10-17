@@ -1195,6 +1195,91 @@ It's a bit unclear why this clause exists, but the model doesn't specify it.
 [appendix]
 == The Full Denotation
 
+=== Legend
+
+Here we catalog various glyphs, conventions, and low-level functions used
+throughout the denotation.
+
+// TODO (?) IF; LET; LETREC; AND/OR/NOT
+
+[cols="^.^1,3,5"]
+|===
+| Notation | Meaning | Description
+
+|stem:[\equiv]
+|Definition
+|Indicates that two equations or notations are defined to be equivalent
+
+|stem:[\mbox{\it{in}\small\bf Domain}(v)]
+|Union domain injection
+|Wraps or lifts a value _v_ into a union domain.
+
+|stem:[v\mid_{\mbox{\scriptsize\bf Domain}}]
+|Union domain projection
+|Unwraps or lowers a union domain value into a component domain.
+
+|stem:[\mbox{\it name}^{\ast}]
+|Sequence indicator
+|Superscript asterisk decorates a _name_ to indicate that holds, processes,
+or returns a sequence of things
+
+|stem:[\langle ... \rangle]
+|Sequence construction
+|Delimits the elements of a sequence
+
+|stem:[\#]
+|Sequence length
+|Returns the number of elements in a sequence.
+stem:[\#\langle v_1 ... v_n \rangle ~\equiv~ n]
+
+|stem:[\S]
+|Sequence concatenation
+|Joins two sequences.
+stem:[\langle v_0 ... v_m \rangle \S \langle v_{m+1} ... v_n \rangle ~\equiv~
+\langle v_0 ... v_n \rangle]
+
+|stem:[\downarrow]
+|Sequence/tuple element selection
+|Extracts one element of a sequence.
+stem:[\langle v_0 ... v_n \rangle\!\downarrow_i ~\equiv~ v_i]
+
+Also used to extract a field from a tuple by name.
+
+|stem:[\dagger]
+|Sequence "`tail`" function
+|Returns elements from the end of a sequence.
+stem:[\langle v_0 ... v_n \rangle \dagger i ~\equiv~ \langle v_i ... v_n \rangle]
+
+|stem:[\cong]
+|Symbol matching
+|Compares an symbolic element to a Unicode string
+
+|stem:[\odot]
+|Struct lookup
+|Retrieves value(s) from a struct by Unicode field name
+
+|stem:[\cal E]
+|Expansion function
+|Transforms syntax trees into Ion data model elements
+
+|stem:[\cal C]
+|Compilation function
+|Transforms expanded data of a directive into its denotation/meaning
+
+|stem:[\cal N]
+|Normalization function
+|Normalizes the value of a field
+
+|stem:[\kappa]
+|Greek letter kappa
+|Variable name used for continuations
+
+|stem:[\rho]
+|Greek letter rho
+|Variable name used for environments
+
+|===
+
 === Domains
 
 [{denotation}]
