@@ -367,7 +367,9 @@ or syntax string or symbol.
         (if (or (form_matches (QS   EQ) arg_stx)
                 (form_matches (QS U_EQ) arg_stx))
           (pp_not_equals arg_dat e)
-          ((pp_unary "\\lnot " "") v e)))))
+          (if (form_matches (QS seq_is_empty) arg_stx)
+            ((pp_unary "\\#" "\\neq 0") arg_dat e)
+            ((pp_unary "\\lnot " "") v e))))))
 
 
   //============================================================================
