@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-10-17T01:18:56.376-00:00
+%%% This file was generated at 2023-10-17T01:50:58.167-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -234,18 +234,6 @@
 % end::Struct_get1[]
 \newline
 \newline
-% tag::Value_has_first_annot[]
-\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\it u\/}) ~\equiv~ $\`$ \mbox{\bf Value} \times \mbox{\bf Unicode} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\bf false}\newline
-\:\mbox{\bf{else}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\it u\/}\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::Value_has_first_annot[]
-\newline
-\newline
 % tag::SymToks_for_IVM[]
 \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/}) ~\equiv~ $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
@@ -276,7 +264,7 @@
 % tag::is_SST[]
 \mbox{\it is\_SST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
 \:\: \setandincrindent
-\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''})\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct} \decrindent
+\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''} \decrindent
 % end::is_SST[]
 \newline
 \newline
@@ -349,13 +337,6 @@
 % tag::Environment_symbols[]
 \rho\!\downarrow_{\mbox{\scriptsize symbols}} ~\equiv~ \rho\!\downarrow_{2}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}
 % end::Environment_symbols[]
-\newline
-\newline
-% tag::is_LST[]
-\mbox{\it is\_LST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
-\mbox{\it Value\_has\_first\_annot\/}(\mbox{\it v\/}, \mbox{\rm ``{\tt \$ion\_symbol\_table}''})\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct} \decrindent
-% end::is_LST[]
 \newline
 \newline
 % tag::symbol_padding[]
@@ -788,7 +769,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it v\/} = {\cal E}(\overline{\mbox{\it rv\/}}\mid_{\mbox{\scriptsize $\mbox{\bf RValue}$}}, \rho)\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it is\_LST\/}(\mbox{\it v\/})\newline
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}\newline
 \:\mbox{\bf{then}}\:\kappa(\mbox{\it Environment\_after\_LST\/}(\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Struct}$}}, \rho), \langle \rangle )\newline
 \:\mbox{\bf{else}}\:\kappa(\rho, \langle \mbox{\it v\/}\rangle )\newline
 \:\mbox{\bf{endif}}\: \decrindent

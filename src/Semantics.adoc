@@ -412,14 +412,6 @@ We can now check whether a value is a symbol with specific text:
 include::{modeltex}[tag=Value_is_symbol_matching]
 ++++
 
-And we can match the first annotation on a value, necessary to detect local
-symbol table directives at top-level:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=Value_has_first_annot]
-++++
-
 To get data out of a struct by field name, we need a lookup function.
 We'll use infix stem:[\odot] (read "`lookup`") to represent this, here with an
 asterisk to indicate that multiple values may result:
@@ -775,7 +767,7 @@ therefore inaccessible to any remaining data on the stream.
 
 * All other top-level syntax is expanded using stem:[\cal E] and the
 current environment stem:[\rho].
-The resulting *Value* _v_ is then checked to see if it's an LST directive, in
+We check the resulting *Value* _v_ to see if it's an LST directive, in
 which case we use its content, downcast to *Struct*, to construct the new
 environment. Similar to the IVM case, _v_ is not passed along as application
 data.
@@ -888,15 +880,7 @@ include::{modeltex}[tag=Environment_after_IVM]
 
 === Local Symbol Tables
 
-To start handling LST directives, we must first detect them by
-checking the annotation and content type:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=is_LST]
-++++
-
-The resulting environment after such a directive is as follows, where
+The resulting environment after an LST directive is as follows, where
 stem:[{\cal C}_{\mbox{\scriptsize LST}}] denotes the compilation of an LST
 directive into a sequence of symbol tokens that will become the current symbol
 table:
