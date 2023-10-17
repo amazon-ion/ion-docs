@@ -68,19 +68,19 @@
 
 // seq_head
 
-(check_bottom "43" (seq_head (wrong 43)))        // strict
+(check_bottom "43"           (seq_head (wrong 43)))    // strict
+(check_bottom "seq is empty" (seq_head (seq 'Z*')))    // arg is empty
 
 (expect_argument_error (seq_head Any_true))      // arg isn't a sequence
 (expect_argument_error (seq_head (sexp)))        // arg isn't a domain value
-(expect_argument_error (seq_head (seq 'Z*')))    // arg is empty
 
 
 // seq_tail
 
-(check_bottom "43" (seq_tail (wrong 43)))        // strict
+(check_bottom "43"           (seq_tail (wrong 43)))    // strict
+(check_bottom "seq is empty" (seq_tail (seq 'Z*')))    // arg is empty
 
 (expect_argument_error (seq_tail Z))             // arg isn't a sequence
-(expect_argument_error (seq_tail (seq 'Z*')))    // arg is empty
 
 
 // seq_prepend
