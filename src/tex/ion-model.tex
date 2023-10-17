@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-10-14T00:39:27.646-00:00
+%%% This file was generated at 2023-10-17T00:27:33.194-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -226,7 +226,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = \mbox{\it s\/} \odot^{\ast} \mbox{\it u\/}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast} > 1\newline
-\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt repeated field}''})\newline
+\:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt Repeated field: }''}, \mbox{\it u\/})\newline
 \:\mbox{\bf{else}}\:\mbox{\it v\/}^{\ast}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -252,7 +252,7 @@
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it i\/} = \mbox{\it IVM\_1\_0\/}\newline
 \:\mbox{\bf{then}}\:\langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \newline
-\:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt Unsupported Ion version}''})\newline
+\:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt Unsupported Ion version: }''}, \mbox{\it i\/}\!\downarrow_{0}, \mbox{\rm ``{\tt .}''}, \mbox{\it i\/}\!\downarrow_{1})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::SymToks_for_IVM[]
@@ -285,7 +285,7 @@
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
 \:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedSymtab}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle ) \decrindent
  \decrindent
 % end::compile_SST[]
@@ -474,7 +474,7 @@
 \:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt No exact-match for }''}\;\;\mbox{\it n\/}\;\;\mbox{\rm ``{\tt @}''}\;\;\mbox{\it v\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
 \:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\!\downarrow_{0})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
@@ -490,7 +490,7 @@
 \newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it m\/}=0\newline
-\:\mbox{\bf{then}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt No exact-match for }''}\;\;\mbox{\it n\/}\;\;\mbox{\rm ``{\tt @}''}\;\;\mbox{\it v\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
 \:\mbox{\bf{else}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}}, \mbox{\it m\/}\!\downarrow_{0})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
@@ -672,7 +672,7 @@
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it rv\/}\in \mbox{\bf String}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Content}$}(\mbox{\it rv\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}})\newline
-\:\mbox{\bf{else}}\:\mbox{\it raise\/}(\mbox{\rm ``{\tt not implemented}''})\newline
+\:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt should not happen}''})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -704,7 +704,7 @@
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it i\/} < \#\mbox{\it t\/}^{\ast}\newline
 \:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\!\downarrow_{\mbox{\it i\/}}\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt Invalid symbol address }''}, \mbox{\it i\/})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 \newline
