@@ -53,16 +53,6 @@
 
   (define CTX (quote_syntax lexical_context))
 
-  (define (is_text v)
-    (or (is_symbol v) (is_string v)))
-
-  (define (text_to_symbol t)
-    (if (is_symbol t)
-      t
-      (if (is_string t)
-        (string_to_symbol t)
-        (raise_argument_error "text_to_symbol" "string or symbol" 0 t))))
-
 
   // Basically the class metaobject/vtable for domain objects.
   // Instances include BaseDomain, UnionDomain, ProductDomain, FuncDomain.

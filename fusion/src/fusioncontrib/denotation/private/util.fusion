@@ -4,6 +4,7 @@ Miscellaneous things that should really be provided by Fusion.
   '''
 
   (require
+    "/fusion/exception"
     "/fusion/experimental/syntax"
 
     (rename_in "/fusion/experimental/syntax"
@@ -17,8 +18,10 @@ Miscellaneous things that should really be provided by Fusion.
     flatten_to_sexp
     is_sexp_of_ids
     is_syntax_pair
+    is_text
     symbol_append
     text_to_string
+    text_to_symbol
     Q
     QS
     QQ
@@ -53,8 +56,18 @@ Miscellaneous things that should really be provided by Fusion.
     (lambda texts
       (string_to_symbol (apply string_append texts))))
 
+  (define (is_text v)
+    (or (is_string v) (is_symbol v)))
+
   (define (text_to_string v)
     (if (is_string v) v (symbol_to_string v)))
+
+  (define (text_to_symbol t)
+    (if (is_symbol t)
+      t
+      (if (is_string t)
+        (string_to_symbol t)
+        (raise_argument_error "text_to_symbol" "string or symbol" 0 t))))
 
   (define (desyntax v)
     "If `v` is a syntax object, unwrap it, otherwise return it as is."
