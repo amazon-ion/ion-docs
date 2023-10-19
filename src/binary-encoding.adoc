@@ -851,6 +851,8 @@ The following letters to are used to denote bits in each subfield in diagrams th
 order in all encoding variants, and consume the same number of bits, with the exception of the fractional bits, which
 consume only enough bits to represent the fractional precision supported by the opcode being used.
 
+The `Month` and `Day` subfields are one-based—`0` is not a valid month or day.
+
 [cols="^.^1a, ^.^1a, .^4a"]
 |===
 |Letter code | Number of bits | Subfield
@@ -881,7 +883,7 @@ consume only enough bits to represent the fractional precision supported by the 
 
 | `U`
 | 1
-| Unknown or UTC offset
+| Unknown (`0`) or UTC (`1`) offset
 
 | `s`
 |6
@@ -1167,6 +1169,31 @@ byte 0   |  0x7C   |
          +=========+
 ----
 
+.Examples of short-form timestamps
+[%unbreakable]
+[cols="1a,.^1a"]
+|===
+| Text | Binary
+
+| 2023T
+| `70 35`
+
+| 2023-10-15T
+| `72 35 7D`
+
+| 2023-10-15T11:22:33Z
+| `74 35 7D CB 1A 02`
+
+| 2023-10-15T11:22:33-00:00
+| `74 35 7D CB 12 02`
+
+| 2023-10-15T11:22:33+01:15
+| `79 35 7D CB 2A 84`
+
+| 2023-10-15T11:22:33.444555666+01:15
+| `7C 35 7D CB 2A 84 92 61 7F 1A`
+|===
+
 WARNING: Opcodes `0x7D`, `0x7E`, and `7F` are illegal; they are reserved for future use.
 
 [[long_form_timestamp]]
@@ -1233,9 +1260,9 @@ encoding of decimal numbers greater than `1.0`. Note that validation is still re
 * A scale value of `0` is illegal, as that would result in a fractional seconds greater than `1.0` (a whole second).
 * If `coefficient * 10^-scale > 1.0`, that `(coefficient, scale)` pair is illegal.
 
-If the timestamp's length is `3`, the most significant bit in the final byte (`h`) is a flag
-that indicates month (`0`) or day (`1`) precision. If the timestamp's length is greater than `3`, the (`h`) bit is
-treated as the least-significant bit of the hour (`H`) bits.
+If the timestamp's length is `3`, the precision is determined by inspecting the day (`DDDDD`) bits. Like the short-form,
+the `Month` and `Day` subfields are one-based (`0` is not a valid month or day). If the day subfield is zero, that
+indicates month precision. If the day subfield is any non-zero number, that indicates day precision.
 
 .Figure {counter:figure}: Encoding of the _body_ of a long-form timestamp
 [%unbreakable]
@@ -1245,7 +1272,7 @@ byte 0   |YYYY:YYYY|
          +=========+
      1   |MMYY:YYYY|
          +---------+
-     2   |hDDD:DDMM|
+     2   |HDDD:DDMM|
          +---------+
      3   |mmmm:HHHH|
          +---------+
@@ -1263,6 +1290,32 @@ byte 0   |YYYY:YYYY|
          +---------+
          ...
 ----
+
+.Examples of long-form timestamps
+[%unbreakable]
+[cols="1a,.^1a"]
+|===
+| Text | Binary
+
+| 1947T
+| `F7 05 9B 07`
+
+| 1947-12T
+| `F7 07 9B 07 03`
+
+| 1947-12-23T
+| `F7 07 9B 07 5F`
+
+| 1947-12-23T11:22:33-00:00
+| `F7 0F 9B 07 DF 65 FD 3F 02`
+
+| 1947-12-23T11:22:33+01:15
+| `F7 0F 9B 07 DF 65 AD 17 02`
+
+| 1947-12-23T11:22:33.444555666+01:15
+| `F7 1B 9B 07 DF 65 AD 17 02 50 32 EC 4F 03 09`
+|===
+
 
 [[text]]
 === Text
