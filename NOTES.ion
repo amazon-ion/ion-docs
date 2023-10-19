@@ -4,6 +4,10 @@
 
 TODOs
 -----
+* [TUPLE1] Tuples should allow one field; more natural than singleton unions.
+  * I'm not sure; it's simpler to simply lift than to wrap in sequence then lift
+    which is how tuple construction works (and how its rendered).
+  * Still, I see no reason to disallow it.
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
   * Z = integers
@@ -22,10 +26,6 @@ TODOs
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
 * [CONST] Domain constants `(val <name> <expr>)`
   * Either print definition as part of the model, or inline them where used.
-* Product domains should allow one field; more natural than singleton unions.
-  * I'm not sure; it's simpler to simply lift than to wrap in sequence then lift
-    which is how tuple construction works (and how its rendered).
-  * Still, I see no reason to disallow it.
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
 * Delay and memoize component domains (enable recursive types)

@@ -34,6 +34,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor SST_version          "version")
       (accessor Value_annots         "annots")
       (accessor Value_content        "content")
+      (accessor ParseStep_tree       "tree")
+      (accessor ParseStep_next       "next")
 
       (form_method IVM_eq              (pp_binary "" " = " ""))
       (fn_method   IVM_eq              pp_fn_def1)
@@ -85,6 +87,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\overline{{\\cal E}^{\\ast}}"                                'TE*')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf Value}}"         'TE_Value')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf Value}}^{\\ast}" 'TE_Value*')
+      (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf ParseStream}}"   'TE_ParseStream')
 
 //    (sym_image (string_append (texify_symbol (quote f)) "^{\\ast}") fs)
       (sym_image "\\mbox{\\it b\\/}^{\\ast}"               bs)

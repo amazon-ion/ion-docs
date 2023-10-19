@@ -231,7 +231,7 @@ Utilities for testing the Ion denotational model.
 
 
   //============================================================================
-  // Parsing Inputs
+  // Parsing and Expanding Inputs
 
   (define_syntax quote_top
     (lambda (stx)
@@ -240,10 +240,32 @@ Utilities for testing the Ion denotational model.
         (quote_syntax context)
         stx)))
 
-  (define parse
-    "Construct a `Document` denoting the input syntax."
-    (lambda input
-      (lift_to Document (apply seq 'TRValue*' (map mk_TRValue input)))))
+
+  (define (mk_stream tlvs)
+    (mk_fn ParseStream (parse_env)
+      (if (is_empty tlvs)
+        (seq 'ParseStep*')
+        (seq 'ParseStep*'
+          (tuple ParseStep (mk_TRValue (head tlvs))
+                           (mk_stream  (tail tlvs)))))))
+
+  (define parser
+    (mk_fn Parser (doc)
+      (mk_stream (eject doc))))
+
+  (define evaluator
+    (mk_Evaluator parser))
+
+
+  (define (expand input catalog)
+    (evaluator (inject_into Document input) catalog))
+
+  (define (expand_doc input)
+    "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
+    (expand input testing_catalog))
+
+  (define (expand1 input)
+    (ith (expand_doc input) 0))
 
 
   //============================================================================
@@ -273,18 +295,13 @@ Utilities for testing the Ion denotational model.
 
   (define testing_catalog
     (for_fold [(c EMPTY_CATALOG)]
-      [(sst (seq_to_sexp (expand (apply parse catalog_data) EMPTY_CATALOG)))]
+      [(sst (seq_to_sexp (expand catalog_data EMPTY_CATALOG)))]
       (Catalog_extend c
         (compile_SST (lower_to Struct (Value_content sst))))))
 
 
   //============================================================================
-  // Test drivers
-
-  (define (expand_doc input)
-    "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
-    (expand (apply parse input) testing_catalog))
-
+  // Test assertions
 
   (define_check (check_Value expected value)
     (check_eqv expected (eject_Value value)))
@@ -301,7 +318,4 @@ Utilities for testing the Ion denotational model.
     (check_expansion
       (display_to_string "#$?Invalid symbol address " (+ 1 max_sid))
       (append input (sexp (symbol_append "#$" (int_to_string (+ 1 max_sid)))))))
-
-  (define (expand1 input)
-    (ith (expand_doc input) 0))
 )
