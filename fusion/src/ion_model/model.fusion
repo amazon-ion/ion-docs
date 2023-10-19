@@ -456,14 +456,14 @@ Spec Problems
         (lift ('E_RField*' (lower v 'RField*') r) Struct)))
 
 
-    // Top-level expansion
+    //==========================================================================
+    // Top-level evaluation
 
     (dom TContinuation = (-> Environment 'Value*' 'Value*')
       "Continuation when expanding top-level values")
 
 
     // Scan for directives in expanded values and update Environment accordingly
-    // TODO "E" doesn't seem right here; this is post-expansion.
 
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
       (if (and (element_of (Value_content v) Struct)
@@ -482,7 +482,7 @@ Spec Problems
                 (k r2 (seq_append vs1 vs2))))))))
 
 
-    // Expand parsed top-level ASTs; handle directives
+    // Evaluate parsed top-level ASTs; handle directives
 
     (fn TE_TRValue ((trv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of trv IVM)

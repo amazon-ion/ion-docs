@@ -257,12 +257,12 @@ Utilities for testing the Ion denotational model.
     (mk_Evaluator parser))
 
 
-  (define (expand input catalog)
+  (define (evaluate input catalog)
     (evaluator (inject_into Document input) catalog))
 
   (define (expand_doc input)
     "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
-    (expand input testing_catalog))
+    (evaluate input testing_catalog))
 
   (define (expand1 input)
     (ith (expand_doc input) 0))
@@ -295,7 +295,7 @@ Utilities for testing the Ion denotational model.
 
   (define testing_catalog
     (for_fold [(c EMPTY_CATALOG)]
-      [(sst (seq_to_sexp (expand catalog_data EMPTY_CATALOG)))]
+      [(sst (seq_to_sexp (evaluate catalog_data EMPTY_CATALOG)))]
       (Catalog_extend c
         (compile_SST (lower_to Struct (Value_content sst))))))
 
