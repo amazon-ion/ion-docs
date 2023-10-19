@@ -7,7 +7,7 @@
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
-//    "/fusioncontrib/denotation/private/util"
+    "/fusioncontrib/denotation/private/util"
   )
 
   (provide
@@ -43,6 +43,8 @@ If any argument is a `Bottom` value, the first such value is returned.
 Otherwise, returns a sexp of the effective argument values after any necessary
 injection.
     '''
+    (unless (is_text where)
+      (raise_argument_error "typecheck_args" "text"  0 where domains args offset))
     (let [(count (size domains))]
       (unless (=== count (size args))
         (apply raise_arity_error where count args))
