@@ -369,29 +369,30 @@ Spec Problems
         (SymToks_for_LST s r)))
 
 
-    //=======================
-    // Denotations
+    //==========================================================================
+    // Expansion of abstract syntax trees into values
 
-    (fn E ((rv RValue) (r Environment) -> 'Value*')
+    (fn expand_RValue ((rv RValue) (r Environment) -> 'Value*')
       (seq 'Value*'
-        (tuple Value ('E_RSymTok*' (RValue_annots  rv) r)
-                     (E_RContent   (RValue_content rv) r))))
+        (tuple Value ('expand_RSymTok*' (RValue_annots  rv) r)
+                     ('expand_RContent' (RValue_content rv) r))))
 
-    (fn 'E*' ((rvs 'RValue*') (r Environment) -> 'Value*')
+    (fn 'expand_RValue*' ((rvs 'RValue*') (r Environment) -> 'Value*')
       (if (seq_is_empty rvs)
         (seq 'Value*')
-        (seq_append (E (seq_head rvs) r) ('E*' (seq_tail rvs) r))))
+        (seq_append ('expand_RValue'  (seq_head rvs) r)
+                    ('expand_RValue*' (seq_tail rvs) r))))
 
 
-    (fn E_RContent ((rv RContent) (r Environment) -> Content)
+    (fn expand_RContent ((rv RContent) (r Environment) -> Content)
       (if (element_of rv RSymbol)
-        (lift (E_RSymbol (lower rv RSymbol) r) Content)
+        (lift (expand_RSymbol (lower rv RSymbol) r) Content)
         (if (element_of rv RList)
-          (lift (E_RList (lower rv RList) r) Content)
+          (lift (expand_RList (lower rv RList) r) Content)
           (if (element_of rv RSexp)
-            (lift (E_RSexp (lower rv RSexp) r) Content)
+            (lift (expand_RSexp (lower rv RSexp) r) Content)
             (if (element_of rv RStruct)
-              (lift (E_RStruct (lower rv RStruct) r) Content)
+              (lift (expand_RStruct (lower rv RStruct) r) Content)
               (if (element_of rv NullNull)
                 (lift (lower rv NullNull) Content)
                 (if (element_of rv Bool)
@@ -403,7 +404,7 @@ Spec Problems
                       (wrong "should not happen"))))))))))
 
 
-    (fn E_RSymTok ((s RSymTok) (r Environment) -> SymTok)
+    (fn expand_RSymTok ((s RSymTok) (r Environment) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
         (let [(i  (eject (lower s I))),
@@ -412,32 +413,32 @@ Spec Problems
             (ith ts i)
             (wrong "Invalid symbol address " i)))))
 
-    (fn 'E_RSymTok*' ((ss 'RSymTok*') (r Environment) -> 'SymTok*')
+    (fn 'expand_RSymTok*' ((ss 'RSymTok*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty ss)
         EMPTY_SYMTOKS
-        (seq_prepend (E_RSymTok  (seq_head ss) r)
-                     ('E_RSymTok*' (seq_tail ss) r))))
+        (seq_prepend (expand_RSymTok  (seq_head ss) r)
+                     ('expand_RSymTok*' (seq_tail ss) r))))
 
-    (fn E_RSymbol ((v RSymbol) (r Environment) -> Symbol)
+    (fn expand_RSymbol ((v RSymbol) (r Environment) -> Symbol)
       (if (element_of v DotNull)
         (lift DOTNULL Symbol)
-        (lift (E_RSymTok (lower v RSymTok) r) Symbol)))
+        (lift (expand_RSymTok (lower v RSymTok) r) Symbol)))
 
 
-    (fn E_RList ((v RList) (r Environment) -> List)
+    (fn expand_RList ((v RList) (r Environment) -> List)
       (if (element_of v DotNull)
         (lift DOTNULL List)
-        (lift ('E*' (lower v 'RValue*') r) List)))
+        (lift ('expand_RValue*' (lower v 'RValue*') r) List)))
 
-    (fn E_RSexp ((v RSexp) (r Environment) -> Sexp)
+    (fn expand_RSexp ((v RSexp) (r Environment) -> Sexp)
       (if (element_of v DotNull)
         (lift DOTNULL Sexp)
-        (lift ('E*' (lower v 'RValue*') r) Sexp)))
+        (lift ('expand_RValue*' (lower v 'RValue*') r) Sexp)))
 
 
-    (fn E_RField ((rf 'RField') (r Environment) -> 'Field*')
-      (let [(t (E_RSymTok (RField_name rf) r)),
-            (vs (E (RField_value rf) r))]
+    (fn expand_RField ((rf 'RField') (r Environment) -> 'Field*')
+      (let [(t (expand_RSymTok (RField_name rf) r)),
+            (vs (expand_RValue (RField_value rf) r))]
         (letrec [(mk_fields (lambda (vs)
                               (if (seq_is_empty vs)
                                   (seq 'Field*')
@@ -445,15 +446,15 @@ Spec Problems
                                                (mk_fields (seq_tail vs))))))]
           (mk_fields vs))))
 
-    (fn 'E_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
+    (fn 'expand_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
       (if (seq_is_empty rfs)
         (seq 'Field*')
-        (seq_append (E_RField (seq_head rfs) r) ('E_RField*' (seq_tail rfs) r))))
+        (seq_append (expand_RField (seq_head rfs) r) ('expand_RField*' (seq_tail rfs) r))))
 
-    (fn E_RStruct ((v RStruct) (r Environment) -> Struct)
+    (fn expand_RStruct ((v RStruct) (r Environment) -> Struct)
       (if (element_of v DotNull)
         (lift DOTNULL Struct)
-        (lift ('E_RField*' (lower v 'RField*') r) Struct)))
+        (lift ('expand_RField*' (lower v 'RField*') r) Struct)))
 
 
     //==========================================================================
@@ -487,7 +488,7 @@ Spec Problems
     (fn TE_TRValue ((trv TRValue) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of trv IVM)
         (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
-        (let [(vs (E (lower trv RValue) r))]
+        (let [(vs (expand_RValue (lower trv RValue) r))]
           ('TE_Value*' vs r k))))
 
 
