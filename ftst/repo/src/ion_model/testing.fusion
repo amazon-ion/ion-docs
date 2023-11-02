@@ -39,7 +39,7 @@ Utilities for testing the Ion denotational model.
 
 
   //============================================================================
-  // Creating model values for the input domains like RValue
+  // Creating abstract syntax trees
 
   // IVMs
 
@@ -53,7 +53,7 @@ Utilities for testing the Ion denotational model.
       (tuple IVM major minor)))
 
 
-  // Safe types
+  // Simple types
 
   (define (mk_NullNull c)
     (lift DOTNULL NullNull))
@@ -76,8 +76,8 @@ Utilities for testing the Ion denotational model.
 
   // Symbols
 
-  (define (mk_RSymTok c)
-    (lift_to RSymTok
+  (define (mk_SSymTok c)
+    (lift_to SSymTok
       (if (is_int c)
         (inject_into I c)
         (let [(str (symbol_to_string c))]
@@ -85,59 +85,59 @@ Utilities for testing the Ion denotational model.
             (inject_into I (string_to_int (string_replace str "#$" "")))
             (inject_into Unicode str))))))
 
-  (define (mk_RSymbol c)
-    (lift_to RSymbol
+  (define (mk_SSymbol c)
+    (lift_to SSymbol
       (if (is_null c) DOTNULL
-        (mk_RSymTok c))))
+        (mk_SSymTok c))))
 
 
   // Containers
 
-  (define (mk_RList c)
-    (lift_to RList
+  (define (mk_SList c)
+    (lift_to SList
       (if (is_null c) DOTNULL
-        (apply seq 'Tree*' (map mk_Tree c)))))
+        (apply seq 'STree*' (map mk_STree c)))))
 
-  (define (mk_RSexp c)
-    (lift_to RSexp
+  (define (mk_SSexp c)
+    (lift_to SSexp
       (if (is_null c) DOTNULL
-        (apply seq 'Tree*' (map mk_Tree c)))))
+        (apply seq 'STree*' (map mk_STree c)))))
 
-  (define (mk_RStruct c)
-    (lift_to RStruct
+  (define (mk_SStruct c)
+    (lift_to SStruct
       (if (is_null c) DOTNULL
-        (apply seq 'RField*'
+        (apply seq 'SField*'
           (for_list [((k v) c)]
-            (tuple RField (mk_RSymTok k) (mk_Tree v)))))))
+            (tuple SField (mk_SSymTok k) (mk_STree v)))))))
 
 
   // Values
 
-  (define (mk_RValue c)
-    (tuple RValue
-      (apply seq 'RSymTok*' (map mk_RSymTok (annotations c)))
-      (lift_to RContent
+  (define (mk_SValue c)
+    (tuple SValue
+      (apply seq 'SSymTok*' (map mk_SSymTok (annotations c)))
+      (lift_to SContent
         (let [(c (annotate c))]  // Remove any annotations
           (cond
-            ((is_symbol    c) (mk_RSymbol  c))
-            ((is_list      c) (mk_RList    c))
-            ((is_sexp      c) (mk_RSexp    c))
-            ((is_struct    c) (mk_RStruct  c))
+            ((is_symbol    c) (mk_SSymbol  c))
+            ((is_list      c) (mk_SList    c))
+            ((is_sexp      c) (mk_SSexp    c))
+            ((is_struct    c) (mk_SStruct  c))
             ((is_null_null c) (mk_NullNull c))
             ((is_bool      c) (mk_Bool     c))
             ((is_int       c) (mk_Int      c))
             ((is_string    c) (mk_String   c))
-            (true (raise_argument_error "mk_RValue" "symbol/bool/int/string/list" 0 c)))))))
+            (true (raise_argument_error "mk_SValue" "symbol/bool/int/string/list" 0 c)))))))
 
-  (define (mk_Tree c)
-    (lift_to Tree
-      (mk_RValue c)))
+  (define (mk_STree c)
+    (lift_to STree
+      (mk_SValue c)))
 
   (define (mk_TSTree c)
     (lift_to TSTree
       (if (is_IVM c)
         (mk_IVM c)
-        (mk_Tree c))))
+        (mk_STree c))))
 
 
   //============================================================================

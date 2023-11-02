@@ -8,10 +8,6 @@ TODO
 ----
 Terminology/Readability:
 * Replace at-most-one uses of D* with D? and bespoke accessor syntax.
-* Rename "raw value" etc to "encoding value"?  "expression"?
-  * I currently like `PTree` or maybe just `Tree` with some decorating glyph.
-  * Almann didn't jive w/ "parse tree" but liked "abstract syntax tree"
-    That does make sense, since Ion has multiple parses representing the AST.
 * Figure out the proper name for `I`.  N? Z?
 * Greekify invocations of:
   * Environment_after_IVM/LST to C_IVM and C_LST ?
@@ -88,8 +84,8 @@ Spec Problems
 
 
     //=============================
-    // Safe values cannot contain SIDs.
-    // Their 'raw' and 'application' values are the same.
+    // Simple values require no expansion.
+    // Their 'syntax' and 'application' denotations are the same.
 
     (dom DotNull = "Sentinel for typed nulls")
 
@@ -100,29 +96,29 @@ Spec Problems
 
 
     //=============================
-    // Raw-layer Data Types, which can contain unresolved SIDs
+    // Abstract Syntax Trees, which can contain unresolved SIDs
 
-    (dom RSymTok   = (+ Unicode I))
-    (dom RSymbol   = (+ RSymTok DotNull))
+    (dom SSymTok   = (+ Unicode I))
+    (dom SSymbol   = (+ SSymTok DotNull))
 
-    (dom RList     = (+ 'Tree*' DotNull))
-    (dom RSexp     = (+ 'Tree*' DotNull))
+    (dom SList     = (+ 'STree*' DotNull))
+    (dom SSexp     = (+ 'STree*' DotNull))
 
-    (dom RField    = (* RSymTok Tree))
-    (dom RStruct   = (+ 'RField*' DotNull))
+    (dom SField    = (* SSymTok STree))
+    (dom SStruct   = (+ 'SField*' DotNull))
 
 
-    (dom RContent   = (+ RSymbol RList RSexp RStruct NullNull Bool Int String
+    (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
                          /*Decimal Float Timestamp Blob Clob*/))
-    (dom RValue     = (* 'RSymTok*' RContent))
-    (dom Tree       = (+ RValue /* Eexp will go here */))
-    (dom TSTree     = (+ Tree IVM))
+    (dom SValue     = (* 'SSymTok*' SContent))
+    (dom STree      = (+ SValue /* Eexp will go here */))
+    (dom TSTree     = (+ STree IVM))
 
-    (fn RValue_annots  ((rv RValue) -> 'RSymTok*') (ith rv 0))
-    (fn RValue_content ((rv RValue) -> 'RContent') (ith rv 1))
+    (fn SValue_annots  ((rv SValue) -> 'SSymTok*') (ith rv 0))
+    (fn SValue_content ((rv SValue) -> 'SContent') (ith rv 1))
 
-    (fn RField_name  ((rf RField) -> RSymTok) (ith rf 0))
-    (fn RField_tree  ((rf RField) -> Tree)    (ith rf 1))
+    (fn SField_name  ((rf SField) -> SSymTok) (ith rf 0))
+    (fn SField_tree  ((rf SField) -> STree)   (ith rf 1))
 
 
     //=============================
@@ -373,29 +369,29 @@ Spec Problems
     //==========================================================================
     // Expansion of abstract syntax trees into values
 
-    (fn expand_Tree ((t Tree) (r Environment) -> 'Value*')
-      (seq 'Value*' (expand_RValue (lower t RValue) r)))
+    (fn expand_STree ((t STree) (r Environment) -> 'Value*')
+      (seq 'Value*' (expand_SValue (lower t SValue) r)))
 
-    (fn expand_RValue ((rv RValue) (r Environment) -> Value)
-      (tuple Value ('expand_RSymTok*' (RValue_annots  rv) r)
-                   ('expand_RContent' (RValue_content rv) r)))
+    (fn expand_SValue ((rv SValue) (r Environment) -> Value)
+      (tuple Value ('expand_SSymTok*' (SValue_annots  rv) r)
+                   ('expand_SContent' (SValue_content rv) r)))
 
-    (fn 'expand_Tree*' ((rvs 'Tree*') (r Environment) -> 'Value*')
+    (fn 'expand_STree*' ((rvs 'STree*') (r Environment) -> 'Value*')
       (if (seq_is_empty rvs)
         (seq 'Value*')
-        (seq_append ('expand_Tree'  (seq_head rvs) r)
-                    ('expand_Tree*' (seq_tail rvs) r))))
+        (seq_append ('expand_STree'  (seq_head rvs) r)
+                    ('expand_STree*' (seq_tail rvs) r))))
 
 
-    (fn expand_RContent ((rv RContent) (r Environment) -> Content)
-      (if (element_of rv RSymbol)
-        (lift (expand_RSymbol (lower rv RSymbol) r) Content)
-        (if (element_of rv RList)
-          (lift (expand_RList (lower rv RList) r) Content)
-          (if (element_of rv RSexp)
-            (lift (expand_RSexp (lower rv RSexp) r) Content)
-            (if (element_of rv RStruct)
-              (lift (expand_RStruct (lower rv RStruct) r) Content)
+    (fn expand_SContent ((rv SContent) (r Environment) -> Content)
+      (if (element_of rv SSymbol)
+        (lift (expand_SSymbol (lower rv SSymbol) r) Content)
+        (if (element_of rv SList)
+          (lift (expand_SList (lower rv SList) r) Content)
+          (if (element_of rv SSexp)
+            (lift (expand_SSexp (lower rv SSexp) r) Content)
+            (if (element_of rv SStruct)
+              (lift (expand_SStruct (lower rv SStruct) r) Content)
               (if (element_of rv NullNull)
                 (lift (lower rv NullNull) Content)
                 (if (element_of rv Bool)
@@ -407,7 +403,7 @@ Spec Problems
                       (wrong "should not happen"))))))))))
 
 
-    (fn expand_RSymTok ((s RSymTok) (r Environment) -> SymTok)
+    (fn expand_SSymTok ((s SSymTok) (r Environment) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
         (let [(i  (eject (lower s I))),
@@ -416,32 +412,32 @@ Spec Problems
             (ith ts i)
             (wrong "Invalid symbol address " i)))))
 
-    (fn 'expand_RSymTok*' ((ss 'RSymTok*') (r Environment) -> 'SymTok*')
+    (fn 'expand_SSymTok*' ((ss 'SSymTok*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty ss)
         EMPTY_SYMTOKS
-        (seq_prepend (expand_RSymTok  (seq_head ss) r)
-                     ('expand_RSymTok*' (seq_tail ss) r))))
+        (seq_prepend (expand_SSymTok  (seq_head ss) r)
+                     ('expand_SSymTok*' (seq_tail ss) r))))
 
-    (fn expand_RSymbol ((v RSymbol) (r Environment) -> Symbol)
+    (fn expand_SSymbol ((v SSymbol) (r Environment) -> Symbol)
       (if (element_of v DotNull)
         (lift DOTNULL Symbol)
-        (lift (expand_RSymTok (lower v RSymTok) r) Symbol)))
+        (lift (expand_SSymTok (lower v SSymTok) r) Symbol)))
 
 
-    (fn expand_RList ((v RList) (r Environment) -> List)
+    (fn expand_SList ((v SList) (r Environment) -> List)
       (if (element_of v DotNull)
         (lift DOTNULL List)
-        (lift ('expand_Tree*' (lower v 'Tree*') r) List)))
+        (lift ('expand_STree*' (lower v 'STree*') r) List)))
 
-    (fn expand_RSexp ((v RSexp) (r Environment) -> Sexp)
+    (fn expand_SSexp ((v SSexp) (r Environment) -> Sexp)
       (if (element_of v DotNull)
         (lift DOTNULL Sexp)
-        (lift ('expand_Tree*' (lower v 'Tree*') r) Sexp)))
+        (lift ('expand_STree*' (lower v 'STree*') r) Sexp)))
 
 
-    (fn expand_RField ((rf 'RField') (r Environment) -> 'Field*')
-      (let [(t  (expand_RSymTok (RField_name rf) r)),
-            (vs (expand_Tree    (RField_tree rf) r))]
+    (fn expand_SField ((rf 'SField') (r Environment) -> 'Field*')
+      (let [(t  (expand_SSymTok (SField_name rf) r)),
+            (vs (expand_STree   (SField_tree rf) r))]
         (letrec [(mk_fields (lambda (vs)
                               (if (seq_is_empty vs)
                                   (seq 'Field*')
@@ -449,15 +445,15 @@ Spec Problems
                                                (mk_fields (seq_tail vs))))))]
           (mk_fields vs))))
 
-    (fn 'expand_RField*' ((rfs 'RField*') (r Environment) -> 'Field*')
+    (fn 'expand_SField*' ((rfs 'SField*') (r Environment) -> 'Field*')
       (if (seq_is_empty rfs)
         (seq 'Field*')
-        (seq_append (expand_RField (seq_head rfs) r) ('expand_RField*' (seq_tail rfs) r))))
+        (seq_append (expand_SField (seq_head rfs) r) ('expand_SField*' (seq_tail rfs) r))))
 
-    (fn expand_RStruct ((v RStruct) (r Environment) -> Struct)
+    (fn expand_SStruct ((v SStruct) (r Environment) -> Struct)
       (if (element_of v DotNull)
         (lift DOTNULL Struct)
-        (lift ('expand_RField*' (lower v 'RField*') r) Struct)))
+        (lift ('expand_SField*' (lower v 'SField*') r) Struct)))
 
 
     //==========================================================================
@@ -491,7 +487,7 @@ Spec Problems
     (fn TE_TSTree ((trv TSTree) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of trv IVM)
         (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
-        (let [(vs (expand_Tree (lower trv Tree) r))]
+        (let [(vs (expand_STree (lower trv STree) r))]
           ('TE_Value*' vs r k))))
 
 
