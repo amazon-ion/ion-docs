@@ -96,19 +96,19 @@ Utilities for testing the Ion denotational model.
   (define (mk_RList c)
     (lift_to RList
       (if (is_null c) DOTNULL
-        (apply seq 'RValue*' (map mk_RValue c)))))
+        (apply seq 'Tree*' (map mk_Tree c)))))
 
   (define (mk_RSexp c)
     (lift_to RSexp
       (if (is_null c) DOTNULL
-        (apply seq 'RValue*' (map mk_RValue c)))))
+        (apply seq 'Tree*' (map mk_Tree c)))))
 
   (define (mk_RStruct c)
     (lift_to RStruct
       (if (is_null c) DOTNULL
         (apply seq 'RField*'
           (for_list [((k v) c)]
-            (tuple RField (mk_RSymTok k) (mk_RValue v)))))))
+            (tuple RField (mk_RSymTok k) (mk_Tree v)))))))
 
 
   // Values
@@ -124,16 +124,20 @@ Utilities for testing the Ion denotational model.
             ((is_sexp      c) (mk_RSexp    c))
             ((is_struct    c) (mk_RStruct  c))
             ((is_null_null c) (mk_NullNull c))
-            ((is_bool      c) (mk_Bool  c))
+            ((is_bool      c) (mk_Bool     c))
             ((is_int       c) (mk_Int      c))
             ((is_string    c) (mk_String   c))
             (true (raise_argument_error "mk_RValue" "symbol/bool/int/string/list" 0 c)))))))
 
-  (define (mk_TRValue c)
-    (lift_to TRValue
+  (define (mk_Tree c)
+    (lift_to Tree
+      (mk_RValue c)))
+
+  (define (mk_TSTree c)
+    (lift_to TSTree
       (if (is_IVM c)
         (mk_IVM c)
-        (mk_RValue c))))
+        (mk_Tree c))))
 
 
   //============================================================================
@@ -246,8 +250,8 @@ Utilities for testing the Ion denotational model.
       (if (is_empty tlvs)
         (seq 'ParseStep*')
         (seq 'ParseStep*'
-          (tuple ParseStep (mk_TRValue (head tlvs))
-                           (mk_stream  (tail tlvs)))))))
+          (tuple ParseStep (mk_TSTree (head tlvs))
+                           (mk_stream (tail tlvs)))))))
 
   (define parser
     (mk_fn Parser (doc)

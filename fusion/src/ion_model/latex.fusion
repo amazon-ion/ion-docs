@@ -24,7 +24,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor Environment_IVM      "IVM")
       (accessor Environment_symbols  "symbols")
       (accessor RField_name          "name")
-      (accessor RField_value         "value")
+      (accessor RField_tree          "tree")
       (accessor RValue_annots        "annots")
       (accessor RValue_content       "content")
       (accessor Field_name           "name")
@@ -71,8 +71,9 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt name}}"           normalize_name)
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt version}}"        normalize_version)
 
-      (sym_image "{\\cal X}"                                            'expand_RValue')
-      (sym_image "{\\cal X}^{\\ast}"                                    'expand_RValue*')
+      (sym_image "{\\cal X}"                                            'expand_Tree')
+      (sym_image "{\\cal X}^{\\ast}"                                    'expand_Tree*')
+      (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf RValue}}"          'expand_RValue')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf RContent}}"        'expand_RContent')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf RSymTok}}"         'expand_RSymTok')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf RSymTok}}^{\\ast}" 'expand_RSymTok*')
@@ -85,6 +86,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
 
       (sym_image "\\overline{\\cal E}"                                          'TE')
       (sym_image "\\overline{{\\cal E}^{\\ast}}"                                'TE*')
+      (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf TSTree}}"        'TE_TSTree')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf Value}}"         'TE_Value')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf Value}}^{\\ast}" 'TE_Value*')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf ParseStream}}"   'TE_ParseStream')
