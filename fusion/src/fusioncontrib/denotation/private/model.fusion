@@ -8,6 +8,7 @@
     "/fusion/private/record"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
+    "/fusioncontrib/denotation/private/optional"
     "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/tuple"
     "/fusioncontrib/denotation/private/union"
@@ -100,10 +101,14 @@ in the same order the author used.
                       (true (wrong_syntax def
                               "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
                   (wrong_syntax def "Expected string or sexp for domain definition")))
-              (result (sexp (quote define_seq_domain)
-                        (datum_to_syntax (symbol_append (syntax_unwrap name) "*") name)
-                        (string_append "Sequence of " (syntax_unwrap name))
-                        name)))
+            (result (sexp (quote define_opt_domain)
+                      (datum_to_syntax (symbol_append (syntax_unwrap name) "?") name)
+                      (string_append "Optional " (syntax_unwrap name))
+                      name))
+            (result (sexp (quote define_seq_domain)
+                      (datum_to_syntax (symbol_append (syntax_unwrap name) "*") name)
+                      (string_append "Sequence of " (syntax_unwrap name))
+                      name)))
           (sexp name)))))
 
 

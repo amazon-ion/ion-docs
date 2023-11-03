@@ -1,0 +1,124 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module optional "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/bottom"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/typecheck"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+
+  (provide
+    define_opt_domain
+    is_opt
+    is_opt_domain
+    make_opt_domain
+    opt
+    opt_domain_subdomain
+    opt_is_present
+    opt_value
+  )
+
+
+  (define OptDomain
+    (make_domain_meta "OptDomain" null))
+
+
+  (define (make_opt_domain name description entry_domain)
+    '''
+`entry_domain` must be a named domain.
+    '''
+    (unless (is_domain entry_domain)
+      (raise_argument_error "make_opt_domain" "entry domain" 2
+        name description entry_domain))
+    (when (is_null (domain_name entry_domain))
+      (raise_argument_error "make_opt_domain" "entry domain must be named" 2
+        name description entry_domain))
+    (make_domain OptDomain name opt_domain_checker description entry_domain))
+
+
+  (define (opt_domain_subdomain d)
+    '''
+Returns the domain of the opt's element.
+    '''
+    (domain_data d))
+
+
+  (define (opt_domain_checker d value)
+    (let [(subdomain (opt_domain_subdomain d))]
+      (or (is_void value)
+          (domain_is value subdomain))))
+
+
+  (define (is_opt_domain d)
+    (is_domain_of_type OptDomain d))
+
+
+  (define_syntax define_opt_domain
+    '''
+    (define_opt_domain name description subdomain)
+    '''
+    (lambda (stx)
+      (unless (= (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for define_opt_domain"))
+      (let [(name_stx  (syntax_get stx 1)),
+            (desc_stx  (syntax_get stx 2)),  // TODO typecheck
+            (subdomain (syntax_get stx 3))]
+        (datum_to_syntax
+          (QQ
+            (define (UQ name_stx)
+              (make_opt_domain
+                (quote (UQ name_stx))
+                (UQ desc_stx)
+                (UQ subdomain))))
+          (quote_syntax context)
+          stx))))
+
+
+  //================
+  // Optional Values
+
+  (define opt
+    '''
+    (opt domain value)
+
+Constructs a optional of type `domain` from the value which must be
+within `domain`'s subdomain.
+    '''
+    (lambda rest
+      (let [(domain (head rest)),
+            (values (tail rest))]
+        (unless (is_opt_domain domain)
+          (apply raise_argument_error "opt" "opt domain" 0 rest))
+        (if (is_empty values)
+          (make_value domain (void))
+          (begin
+            (unless (is_empty (tail values))
+              (apply raise_arity_error "opt" 2 rest))
+            (lets [(subdomain (opt_domain_subdomain domain)),
+                   (values (typecheck_args "opt" (sexp subdomain) values 2))]
+              (if (is_bottom values) values
+                (apply make_value domain values))))))))
+
+  (define (is_opt v)
+    (and (is_domain_value v)
+         (is_opt_domain (domain_value_domain v))))
+
+
+  (define_strict (opt_is_present opt)
+    (unless (is_opt opt)
+      (raise_argument_error "opt_is_empty" "opt value" 0 opt))
+    (not (is_void (domain_value_rep opt))))
+
+
+  (define_strict (opt_value opt)
+    (unless (is_opt opt)
+      (raise_argument_error "opt_value" "opt value" 0 opt))
+    (if (opt_is_present opt)
+      (domain_value_rep opt)
+      (wrong "not present: " (domain_name (domain_value_domain opt)))))
+)

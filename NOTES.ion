@@ -31,8 +31,6 @@ TODOs
 * Delay and memoize component domains (enable recursive types)
   * Allows the author to arrange domains arbitrarily, controlling the order in
     the document.
-* Limited sequence domains like Val? and Val+
-  * Improves readability of the math.  Hard to do in the model.
 * `lift` and `lower` should statically detect impossible steps after the first.
 
 

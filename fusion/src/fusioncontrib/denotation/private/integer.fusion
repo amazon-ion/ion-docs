@@ -10,12 +10,13 @@ Predefined denotational model of Integer values and related functions.
     "/fusioncontrib/denotation/private/boolean"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
+    "/fusioncontrib/denotation/private/optional"
     "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/util"
   )
 
   (provide
-    I 'I*'
+    I 'I?' 'I*'
     EQ
     GT
     GTE
@@ -27,6 +28,7 @@ Predefined denotational model of Integer values and related functions.
 
 
   (define_base_domain I   "Integers"       is_int)
+  (define_opt_domain 'I?' "Optional I"     I)
   (define_seq_domain 'I*' "Sequence of I"  I)
 
   (define_fn EQ    ((a I) (b I) -> B)  (same (eject a) (eject b)))

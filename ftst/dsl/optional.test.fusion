@@ -1,0 +1,69 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/optional"
+  "/fusioncontrib/denotation/testing"
+  "/model1")
+
+
+(check_pred is_opt_domain 'B?')
+(check = "B?" (domain_name 'B?'))
+(check_same B (opt_domain_subdomain 'B?'))
+
+
+(check_pred is_opt_domain 'Z?')
+(check = "Z?" (domain_name 'Z?'))
+(check_same Z (opt_domain_subdomain 'Z?'))
+
+
+// opt constructor
+
+(define no_Z (opt 'Z?'))
+(check_true (domain_is  no_Z 'Z?'))
+(check_true (element_of no_Z 'Z?'))
+
+(define Z_12 (opt 'Z?' 12))
+(check_true (domain_is  Z_12 'Z?'))
+(check_true (element_of Z_12 'Z?'))
+
+(expect_arity_error (opt 'Z?' 1 2))
+
+(expect_argument_error (opt 'Z' 12))            // 1st arg isn't an opt domain
+(expect_argument_error (opt 'Z?' true))         // 2nd arg isn't an acceptable value
+(expect_argument_error (opt 'Z?' int_any_val))  // 2nd arg isn't an acceptable value
+(expect_argument_error (opt 'Z?' no_Z))         // 2nd arg isn't an acceptable value
+(expect_argument_error (opt 'Z?' Z_12))         // 2nd arg isn't an acceptable value
+
+
+// is_opt
+
+(check_pred is_opt no_Z)
+(check_pred is_opt Z_12)
+
+(check_false (is_opt (seq 'Z*')))   // empty sequence isn't an optional
+(check_false (is_opt (void)))
+(check_false (is_opt 12))
+(check_false (is_opt 'Z?'))
+
+
+// opt_is_present
+
+(check_true  (opt_is_present Z_12))
+(check_false (opt_is_present no_Z))
+
+(check_bottom "25" (opt_is_present (wrong 25)))   // strict
+
+
+// opt_value
+
+(check_same 12 (eject (opt_value Z_12)))
+
+(check_bottom "not present: Z?" (opt_value no_Z))
+
+(check_bottom "24" (opt_value (wrong 24)))      // strict
+
+
+
+"SUCCESS (optional.test)"

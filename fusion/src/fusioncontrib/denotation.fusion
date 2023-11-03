@@ -39,6 +39,7 @@ Domains come in several types:
     "/fusioncontrib/denotation/private/model"
     "/fusioncontrib/denotation/private/boolean"
     "/fusioncontrib/denotation/private/integer"
+    "/fusioncontrib/denotation/private/optional"
     "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/tuple"
     "/fusioncontrib/denotation/private/unicode"
@@ -79,6 +80,11 @@ Domains come in several types:
     tuple
     product_domain_element
 
+    // Optional domain values
+    opt
+    opt_is_present
+    opt_value
+
     // Sequence domain values
     ith
     seq
@@ -97,12 +103,12 @@ Domains come in several types:
 
     // Pre-defined domains and functions
     AND
-    B 'B*'
+    B 'B?' 'B*'
     bottom_message
     EQ
     GT
     GTE
-    I 'I*'
+    I 'I?' 'I*'
     IF
     IF1
     is_bottom
@@ -112,7 +118,7 @@ Domains come in several types:
     NOT
     OR
     PLUS
-    Unicode
+    Unicode 'Unicode?' 'Unicode*'
     U_EQ
     wrong
   )

@@ -3,7 +3,7 @@
 (module unicode "/fusion"
 
   '''
-Predefined denotational model of Unicode sequences and related functions.
+Predefined denotational model of Unicode code-point sequences and related functions.
   '''
 
   (require
@@ -11,15 +11,19 @@ Predefined denotational model of Unicode sequences and related functions.
     "/fusioncontrib/denotation/private/integer"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
+    "/fusioncontrib/denotation/private/optional"
+    "/fusioncontrib/denotation/private/sequence"
   )
 
   (provide
-    Unicode
+    Unicode 'Unicode?' 'Unicode*'
     U_EQ
   )
 
 
-  (define_base_domain Unicode "Sequences of Unicode code points" is_string)
+  (define_base_domain  Unicode   "Sequences of Unicode code points" is_string)
+  (define_opt_domain  'Unicode?' "Optional Unicode strings"         Unicode)
+  (define_seq_domain  'Unicode*' "Sequence of Unicode strings"      Unicode)
 
 
   (define_fn U_EQ ((a Unicode) (b Unicode) -> B)

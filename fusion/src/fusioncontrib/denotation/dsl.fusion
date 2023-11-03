@@ -12,9 +12,9 @@ semantics DSL.
 
 
   (provide             // domains
-    B 'B*'
-    I 'I*'
-    Unicode
+    B 'B?' 'B*'
+    I 'I?' 'I*'
+    Unicode 'Unicode?' 'Unicode*'
   )
 
   (provide             // functions
@@ -41,6 +41,9 @@ semantics DSL.
     lower
     lower_to
     mk_fn
+    opt
+    opt_is_present
+    opt_value
     product_domain_element
     singleton
     subdomain
