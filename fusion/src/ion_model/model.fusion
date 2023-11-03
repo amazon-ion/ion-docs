@@ -169,11 +169,13 @@ Spec Problems
     (fn Struct_get ((s Struct) (u Unicode) -> 'Value*')
       (Fields_get (lower s 'Field*') u))
 
-    (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value*')
+    (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value?')
       (let [(vs (Struct_get s u))]
-        (if (> (seq_length vs) 1)
-          (wrong "Repeated field: " u)
-          vs)))
+        (if (= (seq_length vs) 0)
+          (opt 'Value?')
+          (if (= (seq_length vs) 1)
+            (opt 'Value?' (ith vs 0))
+            (wrong "Repeated field: " u)))))
 
 
     //=======================
@@ -199,7 +201,7 @@ Spec Problems
 
     (fn SST_name    ((s SharedSymtab) -> Unicode)     (ith s 0))
     (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
-    (fn SST_symbols ((s SharedSymtab) -> 'SymTok*') (ith s 2))
+    (fn SST_symbols ((s SharedSymtab) -> 'SymTok*')   (ith s 2))
 
     (fn is_SST ((v Value) -> B)
       (and (element_of (Value_content v) Struct)
@@ -207,7 +209,7 @@ Spec Problems
               (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
 
     (fn compile_SST ((s Struct) -> SharedSymtab)
-      (let [(n (lower (Value_content (seq_head (Struct_get1 s "name")))
+      (let [(n (lower (Value_content (opt_value (Struct_get1 s "name")))
                  String Unicode)),
             (v (normalize_version (Struct_get1 s "version")))]
         (tuple SharedSymtab n v (declared_symbols (Struct_get1 s "symbols")))))
@@ -215,27 +217,27 @@ Spec Problems
 
     (dom Catalog = (+ 'SharedSymtab*'))
 
-    (fn best_match_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedSymtab*')
+    (fn best_match_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedSymtab?')
       (best_match_SST (lower c 'SharedSymtab*') n v))
 
-    (fn best_match_SST ((ssts 'SharedSymtab*') (n Unicode) (v I) -> 'SharedSymtab*')
+    (fn best_match_SST ((ssts 'SharedSymtab*') (n Unicode) (v I) -> 'SharedSymtab?')
       (if (seq_is_empty ssts)
-        (seq 'SharedSymtab*')
+        (opt 'SharedSymtab?')
         // WARNING These variable names appear in the narrative, keep it in sync!
         (let [(sst0 (seq_head ssts)),
               (ssts1 (best_match_SST (seq_tail ssts) n v))]
           (if (not (U_EQ (SST_name sst0) n))
             ssts1
             (if (or (EQ (SST_version sst0) v)
-                    (seq_is_empty ssts1))
+                    (not (opt_is_present ssts1)))
               // Exact match, or only match.
-              (seq 'SharedSymtab*' sst0)
+              (opt 'SharedSymtab?' sst0)
               // Inexact match, and the tail had a match.
-              (if (or (EQ (SST_version (ith ssts1 0)) v)
-                      (> (SST_version (ith ssts1 0)) (SST_version sst0)))
+              (if (or (EQ (SST_version (opt_value ssts1)) v)
+                      (>  (SST_version (opt_value ssts1)) (SST_version sst0)))
                 // The tail had an exact match, or larger version.
                 ssts1
-                (seq 'SharedSymtab*' sst0)))))))
+                (opt 'SharedSymtab?' sst0)))))))
 
     (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
       // TODO reject duplicate key
@@ -264,29 +266,31 @@ Spec Problems
         (seq_append ss (symbol_padding (- n (seq_length ss))))))
 
 
-    (fn normalize_name ((vs 'Value*') -> Unicode)             // "" = absent or invalid
-      (if (seq_is_empty vs) EMPTY_UNICODE
-        (let [(c (Value_content (seq_head vs)))]
+    (fn normalize_name ((v 'Value?') -> Unicode)             // "" = absent or invalid
+      (if (opt_is_present v)
+        (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c String) (not (element_of c DotNull)))
             (lower c String Unicode)
-            EMPTY_UNICODE))))
+            EMPTY_UNICODE))
+        EMPTY_UNICODE))
 
-    (fn normalize_version ((vs 'Value*') -> I)                // 1 = absent or invalid
-      (if (seq_is_empty vs) 1
-        (let [(c (Value_content (seq_head vs)))]
+    (fn normalize_version ((v 'Value?') -> I)                // 1 = absent or invalid
+      (if (opt_is_present v)
+        (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(i (lower c Int I))]
               (if (< i 1) 1 i))
-            1))))
+            1))
+        1))
 
-    (fn normalize_max_id ((vs 'Value*') -> 'I*')              // <> = absent or invalid
-      (if (seq_is_empty vs)
-        (seq 'I*')
-        (let [(c (Value_content (seq_head vs)))]
+    (fn normalize_max_id ((v 'Value?') -> 'I?')              // <> = absent or invalid
+      (if (opt_is_present v)
+        (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(n (lower c Int I))]
-              (if (< n 0) (seq 'I*') (seq 'I*' n)))
-            (seq 'I*')))))
+              (if (< n 0) (opt 'I?') (opt 'I?' n)))
+            (opt 'I?')))
+        (opt 'I?')))
 
 
     (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
@@ -297,11 +301,11 @@ Spec Problems
                 (U_EQ n "$ion"))
           EMPTY_SYMTOKS
           (let [(ssts (best_match_Catalog (Environment_catalog r) n v))]
-            (if (not (seq_is_empty ms))  // We have max_id, adjust the length
-              (let [(ts (if (seq_is_empty ssts) (seq 'SymTok*') (SST_symbols (ith ssts 0))))]
-                (adjust_length ts (ith ms 0)))
-              (if (and (not (seq_is_empty ssts)) (EQ (SST_version (ith ssts 0)) v))
-                (SST_symbols (ith ssts 0))
+            (if (opt_is_present ms)  // We have max_id, adjust the length
+              (let [(ts (if (opt_is_present ssts) (SST_symbols (opt_value ssts)) (seq 'SymTok*')))]
+                (adjust_length ts (opt_value ms)))
+              (if (and (opt_is_present ssts) (EQ (SST_version (opt_value ssts)) v))
+                (SST_symbols (opt_value ssts))
                 (wrong "No exact-match for " n "@" v)))))))
 
 
@@ -314,17 +318,17 @@ Spec Problems
                       EMPTY_SYMTOKS))]
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
-    (fn imported_symbols ((vals 'Value*') (r Environment) -> 'SymTok*')
+    (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
       (let [(ts (SymToks_for_IVM (Environment_IVM r)))]
-        (if (seq_is_empty vals)
-          ts
-          (if (Value_is_symbol_matching (seq_head vals) "$ion_symbol_table")
+        (if (opt_is_present v)
+          (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
             (Environment_symbols r)
-            (let [(c (Value_content (seq_head vals)))]
+            (let [(c (Value_content (opt_value v)))]
               (if (and (element_of c List) (not (element_of c DotNull)))
                 (seq_append ts
                             (compile_imports (lower c List 'Value*') r))
-                ts))))))
+                ts)))
+          ts)))
 
     (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
@@ -335,13 +339,13 @@ Spec Problems
                      (lift_to SymTok SYM0)))]
             (seq_prepend t (compile_symbols (seq_tail vs)))))))
 
-    (fn declared_symbols ((vs 'Value*') -> 'SymTok*')
-      (if (seq_is_empty vs)
-        EMPTY_SYMTOKS
-        (let [(c (Value_content (seq_head vs)))]
+    (fn declared_symbols ((v 'Value?') -> 'SymTok*')
+      (if (opt_is_present v)
+        (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c List) (not (element_of c DotNull)))
             (compile_symbols (lower c List 'Value*'))
-            EMPTY_SYMTOKS))))
+            EMPTY_SYMTOKS))
+        EMPTY_SYMTOKS))
 
 
     // Environment construction
@@ -497,7 +501,7 @@ Spec Problems
     // WRT exactly what information can affect parsing.
 
     (dom ParseStep    = (* TSTree ParseStream))
-    (dom ParseStream  = (-> IVM 'ParseStep*'))
+    (dom ParseStream  = (-> IVM 'ParseStep?'))
 
     (fn ParseStep_tree ((p ParseStep) -> TSTree)      (ith p 0))
     (fn ParseStep_next ((p ParseStep) -> ParseStream) (ith p 1))
@@ -510,13 +514,13 @@ Spec Problems
 
     (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
       (let [(step (p (Environment_IVM  r)))]
-        (if (seq_is_empty step)
-          (k r (seq 'Value*'))
-          (TE_TSTree (ParseStep_tree (ith step 0)) r
+        (if (opt_is_present step)
+          (TE_TSTree (ParseStep_tree (opt_value step)) r
             (mk_fn TContinuation (r1 vs1)
-              (TE_ParseStream (ParseStep_next (ith step 0)) r1
+              (TE_ParseStream (ParseStep_next (opt_value step)) r1
                 (mk_fn TContinuation (r2 vs2)
-                  (k r2 (seq_append vs1 vs2)))))))))
+                  (k r2 (seq_append vs1 vs2))))))
+          (k r (seq 'Value*')))))
 
     (fn mk_Evaluator ((p Parser) -> Evaluator)
       (mk_fn Evaluator (d c)

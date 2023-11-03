@@ -248,8 +248,8 @@ Utilities for testing the Ion denotational model.
   (define (mk_stream tlvs)
     (mk_fn ParseStream (parse_env)
       (if (is_empty tlvs)
-        (seq 'ParseStep*')
-        (seq 'ParseStep*'
+        (opt 'ParseStep?')
+        (opt 'ParseStep?'
           (tuple ParseStep (mk_TSTree (head tlvs))
                            (mk_stream (tail tlvs)))))))
 
