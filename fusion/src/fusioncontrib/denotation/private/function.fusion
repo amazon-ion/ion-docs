@@ -182,7 +182,7 @@ Type-checking of function application:
                           (let [(r (apply impl args))]
                             // Bottom result will be returned as-is.
                             (typecheck_arg out_dom r
-                              (|| (raise_result_error (string_append "result of " (desyntax name))
+                              (|| (raise_result_error (string_append "result of " where)
                                     (symbol_to_string (domain_name out_dom)) r))))))))]
       (fn_ctor domain name applier arg_stxs code_stx)))
 
