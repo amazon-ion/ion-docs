@@ -124,6 +124,12 @@ stem:[d^{\ast}\!\dagger i = \langle e_i, ..., e_n\rangle].
 Finally, we write stem:[\#d^{\ast}] to mean the number of items in the sequence
 stem:[d^{\ast}].
 
+Similarly, we write stem:[\mbox{\bf D?}] to mean the domain of sequences of
+exactly zero or one *D*.
+We check whether such an "`option`" (optional value) contains an element by
+writing stem:[\mbox{\it v}\interrobang].
+When that's true, we can extract the wrapped element by writing stem:[\mbox{\it v}!].
+
 For domains *D* and *E*, we write stem:[\mbox{\bf D} + \mbox{\bf E}] to mean the
 disjoint sum of domains *D* and *E*.
 We write stem:[\mbox{\bf Sum} \equiv \mbox{\bf D} + \mbox{\bf E}] to define *Sum*
@@ -1249,6 +1255,16 @@ Also used to extract a field from a tuple by name.
 |Sequence "`tail`" function
 |Returns elements from the end of a sequence.
 stem:[\langle v_0 ... v_n \rangle \dagger i ~\equiv~ \langle v_i ... v_n \rangle]
+
+|stem:[\interrobang]
+|Option presence check
+|Returns true iff the option contains an element.
+stem:[v\interrobang ~\equiv~ \#v = 1]
+
+|stem:[!]
+|Option element selection
+|Returns the sole element of an option.
+stem:[v!  ~\equiv~  v \downarrow_0]
 
 |stem:[\cong]
 |Symbol matching
