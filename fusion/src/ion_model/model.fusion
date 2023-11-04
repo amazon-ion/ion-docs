@@ -114,11 +114,11 @@ Spec Problems
     (dom STree      = (+ SValue /* Eexp will go here */))
     (dom TSTree     = (+ STree IVM))
 
-    (fn SValue_annots  ((rv SValue) -> 'SSymTok*') (ith rv 0))
-    (fn SValue_content ((rv SValue) -> 'SContent') (ith rv 1))
+    (fn SValue_annots  ((sv SValue) -> 'SSymTok*') (ith sv 0))
+    (fn SValue_content ((sv SValue) -> 'SContent') (ith sv 1))
 
-    (fn SField_name  ((rf SField) -> SSymTok) (ith rf 0))
-    (fn SField_tree  ((rf SField) -> STree)   (ith rf 1))
+    (fn SField_name  ((sf SField) -> SSymTok) (ith sf 0))
+    (fn SField_tree  ((sf SField) -> STree)   (ith sf 1))
 
 
     //=============================
@@ -171,9 +171,9 @@ Spec Problems
 
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value?')
       (let [(vs (Struct_get s u))]
-        (if (= (seq_length vs) 0)
+        (if (EQ (seq_length vs) 0)
           (opt 'Value?')
-          (if (= (seq_length vs) 1)
+          (if (EQ (seq_length vs) 1)
             (opt 'Value?' (ith vs 0))
             (wrong "Repeated field: " u)))))
 
@@ -219,6 +219,8 @@ Spec Problems
 
     (fn best_match_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedSymtab?')
       (best_match_SST (lower c 'SharedSymtab*') n v))
+
+    // TODO This would probably be easier if split into exact_match and largest_match
 
     (fn best_match_SST ((ssts 'SharedSymtab*') (n Unicode) (v I) -> 'SharedSymtab?')
       (if (seq_is_empty ssts)
@@ -271,8 +273,8 @@ Spec Problems
         (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c String) (not (element_of c DotNull)))
             (lower c String Unicode)
-            EMPTY_UNICODE))
-        EMPTY_UNICODE))
+            ""))
+        ""))
 
     (fn normalize_version ((v 'Value?') -> I)                // 1 = absent or invalid
       (if (opt_is_present v)
@@ -283,6 +285,7 @@ Spec Problems
             1))
         1))
 
+    // TODO Try using `and` instead of nested IFs
     (fn normalize_max_id ((v 'Value?') -> 'I?')              // <> = absent or invalid
       (if (opt_is_present v)
         (let [(c (Value_content (opt_value v)))]
@@ -294,18 +297,18 @@ Spec Problems
 
 
     (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
-      (let [(n  (normalize_name    (Struct_get1 s "name"   ))),
-            (v  (normalize_version (Struct_get1 s "version"))),
-            (ms (normalize_max_id  (Struct_get1 s "max_id" )))]
+      (let [(n (normalize_name    (Struct_get1 s "name"   ))),
+            (v (normalize_version (Struct_get1 s "version"))),
+            (m (normalize_max_id  (Struct_get1 s "max_id" )))]
         (if (or (U_EQ n "")
                 (U_EQ n "$ion"))
           EMPTY_SYMTOKS
-          (let [(ssts (best_match_Catalog (Environment_catalog r) n v))]
-            (if (opt_is_present ms)  // We have max_id, adjust the length
-              (let [(ts (if (opt_is_present ssts) (SST_symbols (opt_value ssts)) (seq 'SymTok*')))]
-                (adjust_length ts (opt_value ms)))
-              (if (and (opt_is_present ssts) (EQ (SST_version (opt_value ssts)) v))
-                (SST_symbols (opt_value ssts))
+          (let [(s (best_match_Catalog (Environment_catalog r) n v))]
+            (if (opt_is_present m)  // We have max_id, adjust the length
+              (let [(ts (if (opt_is_present s) (SST_symbols (opt_value s)) (seq 'SymTok*')))]
+                (adjust_length ts (opt_value m)))
+              (if (and (opt_is_present s) (EQ (SST_version (opt_value s)) v))
+                (SST_symbols (opt_value s))
                 (wrong "No exact-match for " n "@" v)))))))
 
 
@@ -357,11 +360,11 @@ Spec Problems
                     (declared_symbols (Struct_get1 s "symbols")))))
 
 
-    (fn Environment_after_IVM ((ivm IVM) (r Environment) -> Environment)
+    (fn Environment_after_IVM ((i IVM) (r Environment) -> Environment)
       (tuple Environment
         (Environment_catalog r)
-        ivm
-        (SymToks_for_IVM ivm)))
+        i
+        (SymToks_for_IVM i)))
 
     (fn Environment_after_LST ((s Struct) (r Environment) -> Environment)
       (tuple Environment
@@ -376,34 +379,33 @@ Spec Problems
     (fn expand_STree ((t STree) (r Environment) -> 'Value*')
       (seq 'Value*' (expand_SValue (lower t SValue) r)))
 
-    (fn expand_SValue ((rv SValue) (r Environment) -> Value)
-      (tuple Value ('expand_SSymTok*' (SValue_annots  rv) r)
-                   ('expand_SContent' (SValue_content rv) r)))
-
-    (fn 'expand_STree*' ((rvs 'STree*') (r Environment) -> 'Value*')
-      (if (seq_is_empty rvs)
+    (fn 'expand_STree*' ((ts 'STree*') (r Environment) -> 'Value*')
+      (if (seq_is_empty ts)
         (seq 'Value*')
-        (seq_append ('expand_STree'  (seq_head rvs) r)
-                    ('expand_STree*' (seq_tail rvs) r))))
+        (seq_append ('expand_STree'  (seq_head ts) r)
+                    ('expand_STree*' (seq_tail ts) r))))
 
+    (fn expand_SValue ((sv SValue) (r Environment) -> Value)
+      (tuple Value ('expand_SSymTok*' (SValue_annots  sv) r)
+                   ('expand_SContent' (SValue_content sv) r)))
 
-    (fn expand_SContent ((rv SContent) (r Environment) -> Content)
-      (if (element_of rv SSymbol)
-        (lift (expand_SSymbol (lower rv SSymbol) r) Content)
-        (if (element_of rv SList)
-          (lift (expand_SList (lower rv SList) r) Content)
-          (if (element_of rv SSexp)
-            (lift (expand_SSexp (lower rv SSexp) r) Content)
-            (if (element_of rv SStruct)
-              (lift (expand_SStruct (lower rv SStruct) r) Content)
-              (if (element_of rv NullNull)
-                (lift (lower rv NullNull) Content)
-                (if (element_of rv Bool)
-                  (lift (lower rv Bool) Content)
-                  (if (element_of rv Int)
-                    (lift (lower rv Int) Content)
-                    (if (element_of rv String)
-                      (lift (lower rv String) Content)
+    (fn expand_SContent ((sv SContent) (r Environment) -> Content)
+      (if (element_of sv SSymbol)
+        (lift (expand_SSymbol (lower sv SSymbol) r) Content)
+        (if (element_of sv SList)
+          (lift (expand_SList (lower sv SList) r) Content)
+          (if (element_of sv SSexp)
+            (lift (expand_SSexp (lower sv SSexp) r) Content)
+            (if (element_of sv SStruct)
+              (lift (expand_SStruct (lower sv SStruct) r) Content)
+              (if (element_of sv NullNull)
+                (lift (lower sv NullNull) Content)
+                (if (element_of sv Bool)
+                  (lift (lower sv Bool) Content)
+                  (if (element_of sv Int)
+                    (lift (lower sv Int) Content)
+                    (if (element_of sv String)
+                      (lift (lower sv String) Content)
                       (wrong "should not happen"))))))))))
 
 
@@ -439,20 +441,20 @@ Spec Problems
         (lift ('expand_STree*' (lower v 'STree*') r) Sexp)))
 
 
-    (fn expand_SField ((rf 'SField') (r Environment) -> 'Field*')
-      (let [(t  (expand_SSymTok (SField_name rf) r)),
-            (vs (expand_STree   (SField_tree rf) r))]
-        (letrec [(mk_fields (lambda (vs)
-                              (if (seq_is_empty vs)
+    (fn expand_SField ((sf 'SField') (r Environment) -> 'Field*')
+      (let [(t  (expand_SSymTok (SField_name sf) r)),
+            (vs (expand_STree   (SField_tree sf) r))]
+        (letrec [(mk_fields (lambda (vs1)
+                              (if (seq_is_empty vs1)
                                   (seq 'Field*')
-                                  (seq_prepend (tuple Field t (seq_head vs))
-                                               (mk_fields (seq_tail vs))))))]
+                                  (seq_prepend (tuple Field t (seq_head vs1))
+                                               (mk_fields (seq_tail vs1))))))]
           (mk_fields vs))))
 
-    (fn 'expand_SField*' ((rfs 'SField*') (r Environment) -> 'Field*')
-      (if (seq_is_empty rfs)
+    (fn 'expand_SField*' ((sfs 'SField*') (r Environment) -> 'Field*')
+      (if (seq_is_empty sfs)
         (seq 'Field*')
-        (seq_append (expand_SField (seq_head rfs) r) ('expand_SField*' (seq_tail rfs) r))))
+        (seq_append (expand_SField (seq_head sfs) r) ('expand_SField*' (seq_tail sfs) r))))
 
     (fn expand_SStruct ((v SStruct) (r Environment) -> Struct)
       (if (element_of v DotNull)
@@ -488,10 +490,10 @@ Spec Problems
 
     // Evaluate parsed top-level ASTs; handle directives
 
-    (fn TE_TSTree ((trv TSTree) (r Environment) (k TContinuation) -> 'Value*')
-      (if (element_of trv IVM)
-        (k (Environment_after_IVM (lower trv IVM) r) (seq 'Value*'))
-        (let [(vs (expand_STree (lower trv STree) r))]
+    (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
+      (if (element_of t IVM)
+        (k (Environment_after_IVM (lower t IVM) r) (seq 'Value*'))
+        (let [(vs (expand_STree (lower t STree) r))]
           ('TE_Value*' vs r k))))
 
 
@@ -512,6 +514,7 @@ Spec Problems
     (dom Evaluator = (-> Document Catalog 'Value*'))
 
 
+    // TODO don't overload p with two different types
     (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
       (let [(step (p (Environment_IVM  r)))]
         (if (opt_is_present step)
@@ -535,6 +538,5 @@ Spec Problems
   (define SYM0             (singleton Sym0))
   (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
-  (define EMPTY_UNICODE    (inject_into Unicode ""))
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
 )
