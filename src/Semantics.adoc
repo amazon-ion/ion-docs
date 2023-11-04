@@ -16,8 +16,6 @@
 
 include::styles.adoc[]
 
-// TODO Can we write attributes that expand to stem?  eg for domain names.
-
 
 == Introduction
 
@@ -52,9 +50,9 @@ mapping Ion syntax to typed _domains_ in lambda calculus and using mathematical
 functions to define the meaning of the computational elements that translate
 that syntax into application data.
 
-Our primary goal is to illuminate and clarify the process of _expansion_ by
-which certain Ion encoding artifacts are consumed and/or transformed, ultimately
-producing the user's data.
+Our primary goal is to illuminate and clarify the _evaluation_ of an Ion document,
+the process by which certain Ion encoding artifacts are consumed and/or
+transformed, ultimately producing the user's data.
 In Ion 1.0 these artifacts include version markers, local symbol table
 directives, and symbol tokens.
 Ion 1.1 introduces much more sophisticated encoding features--new directives,
@@ -181,24 +179,24 @@ bound within _both_ stem:[e_1] and stem:[e_2], enabling recursive definitions.
 === A Roadmap
 
 At a high level, the goal of our model is to define how an Ion processor turns
-the syntax of an Ion document into data meaningful to some application.
+the syntax within an Ion document into data meaningful to some application.
 To maintain this focus, we abstract over the details of how Ion parses the
-wire-level octets, and instead treat as input the resulting "`parse tree`" or
-abstract syntax tree.  Using the domain *Document* to denote these inputs, and
+wire-level octets.
+Using the domain *Document* to denote the octets of Ion-formatted data, and
 the domain *Value* to model a resulting application datum, we can formalize our
-goal in the form of a function:
+goal in the form of a function domain:
 
-// TODO Generate these function signatures.
 [{denotation}]
 ++++
-\mbox{\it expand} : \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
+include::{modeltex}[tag=Evaluator]
 ++++
 
 That is, given a document and a catalog (a collection
 of shared symbol tables), we produce a sequence of application values.
 
+// TODO Discuss expansion vs evaluation?
 
-We now set upon the task of implementing that function by way of a formal
+We now set upon the task of implementing such a function by way of a formal
 mathematical model.
 Here's how we'll reach that goal:
 
@@ -209,13 +207,17 @@ encode.
 We then ease into denotational functions by implementing some
 useful operators over this data.
 
-* xref:syntaxmodel[xrefstyle=short] defines *Document* and related domains
-representing the structure of Ion syntax, before expansions are performed.
+* xref:syntaxmodel[xrefstyle=short] defines the domains representing the
+structure of Ion syntax, before expansion and evaluation are performed.
+It also defines a mechanism for abstracting over the parsing of **Document**s.
 
-* xref:expansion[xrefstyle=short] visits each corner of the data model,
-incrementally defining layers of functions that build up to _expand_.
+* xref:expansion[xrefstyle=short] visits each corner of the syntax model,
+incrementally defining layers of functions that expand abstract syntax into
+Ion data **Value**s.
 
-* xref:symtabs[xrefstyle=short] specifies the handling of encoding directives,
+// TODO rephrase/restructure?
+
+* xref:symtabs[xrefstyle=short] specifies the evaluation of encoding directives,
 the compilation of local symbol tables, and the responsibilities of a *Catalog*.
 
 * xref:issues[xrefstyle=short] documents the known defects with the model in its
@@ -230,14 +232,16 @@ fact pretty-printed views of executable code.  Expressed using Ion S-expressions
 (of course) in a small domain-specific language, the code is strongly typed
 and dynamically validated, with a proper test suite and code coverage tooling.
 In a meaningful sense, this document presents a real implementation of Ion
-expansion.
+evaluation.
 
 Here's an example:
 ----
-(fn expand ((d Document) (c Catalog) -> 'Value*')
-  (let [(r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
-        (k0 (mk_fn TContinuation (r vs) vs))]
-    ('TE*' (lower_to 'TRValue*' d) r0 k0)))
+(fn mk_Evaluator ((p Parser) -> Evaluator)
+  (mk_fn Evaluator (d c)
+    (let [(p0 (p d)),
+          (r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
+          (k0 (mk_fn TContinuation (r vs) vs))]
+      (TE_ParseStream p0 r0 k0))))
 ----
 
 The code is rendered into stem:[\mbox{\LaTeX}] fragments by a custom library
@@ -340,7 +344,7 @@ include::{modeltex}[tag=Symbol]
 *Sym0* is a singleton domain containing only an opaque constant named `SYM0`.
 As we'll see, this is our denotation for the syntactic token `$0`, symbol zero.
 
-:fn-symeq: footnote:[This fails to properly account for absent shared symbols; +
+:fn-symeq: footnote:[This fails to properly account for absent shared symbols; \
 see xref:iss-symeq[xrefstyle=short].]
 
 *SymTok* denotes an expanded symbol token, either a Unicode string or
@@ -363,7 +367,7 @@ include::{modeltex}[tag=Sexp]
 
 // TODO note the recursion/reflexivity introduced by using Value?
 
-:fn-structorder: footnote:[This model is subtly incorrect, since its fields +
+:fn-structorder: footnote:[This model is subtly incorrect, since its fields \
 are ordered within a struct.  See xref:iss-structorder[xrefstyle=short].]
 
 The domain model for structs is not much more complicated: a struct is either
@@ -411,7 +415,7 @@ opposed to *DotNull*) before calling *SymTok*-flavored comparison.
 include::{modeltex}[tag=Symbol_matches]
 ++++
 
-We can now check whether a value is a symbol with specific text:
+We can now check whether a *Value* is a symbol with specific text:
 
 [{denotation}]
 ++++
@@ -434,8 +438,8 @@ All that does is unwrap the struct's field sequence, making it easier to recur:
 include::{modeltex}[tag=Fields_get]
 ++++
 
-We recur on the tail of the field sequence (stem:[f^{\ast}\dagger 1]) and call
-the results stem:[v^\ast].
+We recur on the tail of the field sequence (stem:[f^{\ast}\dagger 1]) and bind
+the results to stem:[v^\ast].
 If the current field's name matches _u_, we prepend (stem:[\S]) its value
 onto the recursive results.
 
@@ -448,8 +452,8 @@ Here's a sibling function that signals an error when the lookup is ambiguous:
 include::{modeltex}[tag=Struct_get1]
 ++++
 
-Note that this still returns a **Value**{asterisk} but the sequence always has
-zero or one elements.
+Note that this returns a sequence of zero or one *Value* to comply with the
+result domain *Value?*.
 
 
 [#syntaxmodel]
@@ -459,7 +463,8 @@ The previous section defines the values presented to an Ion application, or
 rather the domain of values that can be encoded into and read from an Ion
 document or stream.
 Here we define domains denoting the _syntax_ used in such documents.
-It is reasonable to think of these domains as representing parse trees coming
+It is reasonable to think of these domains as representing the abstract syntax
+trees coming
 out of the Ion parser before doing anything involving symbols and symbol tables.
 
 NOTE: Historically, Ion documents and implementations have referred to this with
@@ -468,88 +473,142 @@ The intended (but poorly-specified) connotation was that this is the data visibl
 the "`Ion system`", requiring additional processing to generate the "`application`"
 or "`user`" view of the document.
 
-The data and syntax models are identical except for their handling of symbol
+The data and syntax models differ primarily in their handling of symbol
 tokens, so the domains mirror each other.
-Here we have the domain names prefixed with **R** to connote their raw nature.
+We prefix these domain names  with **S** to indicate that they represent syntax.
 
 // TODO  This model abstracts over the concrete syntax, so applies to text and binary
 
-In the syntax model, a symbol token is either text like `'name'` or a symbol
+In the syntax model, a symbol token is either text like "``name``" or a symbol
 address like `$4`.
-Therefore, a *RSymTok* is either a Unicode string or an integer address:
+Therefore, a *SSymTok* is either a Unicode string or an integer address:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RSymTok]
+include::{modeltex}[tag=SSymTok]
 ++++
 
-Everything else in the syntax model simply propagates *RSymTok* in place of *SymTok*.
+The rest of the syntax model propagates *SSymTok* in place of *SymTok*.
 All domains are mirrored except the simple types, which cannot contain symbol tokens.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RValue]
+include::{modeltex}[tag=STree]
 \newline
-include::{modeltex}[tag=RContent]
+include::{modeltex}[tag=SValue]
 \newline
-include::{modeltex}[tag=RSymbol]
+include::{modeltex}[tag=SContent]
 \newline
-include::{modeltex}[tag=RList]
+include::{modeltex}[tag=SSymbol]
 \newline
-include::{modeltex}[tag=RSexp]
+include::{modeltex}[tag=SList]
 \newline
-include::{modeltex}[tag=RStruct]
+include::{modeltex}[tag=SSexp]
 \newline
-include::{modeltex}[tag=RField]
+include::{modeltex}[tag=SStruct]
+\newline
+include::{modeltex}[tag=SField]
 ++++
+
+One oddity here is introduction of a syntax-tree domain *STree* _above_
+*SValue*, and used in its place within containers.
+In Ion 1.0 this extra layer has no benefit, but in Ion 1.1 we need E-expression
+syntax alongside general value syntax, where they cannot be annotated.
+We include *STree* proactively to avoid refactoring this hierarchy (and
+modifying a bunch of functions) later.
 
 As usual, accessor functions:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=RValue_annots]
+include::{modeltex}[tag=SValue_annots]
 \newline
-include::{modeltex}[tag=RValue_content]
+include::{modeltex}[tag=SValue_content]
 \newline
-include::{modeltex}[tag=RField_name]
+include::{modeltex}[tag=SField_name]
 \newline
-include::{modeltex}[tag=RField_value]
+include::{modeltex}[tag=SField_tree]
 ++++
 
 
 [id=stx-top]
-=== Top Level
+=== Top Level Syntax
+
+// TODO This should probably focus on IVMs, to not blur expansion and evaluation
 
 The syntax and data models also diverge at the top level of documents, which can
 contain __directives__ that are not part of the application-facing data model.
 Instead, directives affect the encoding of the data that follows.
 
 Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
-tables (LSTs).  The latter are simply annotated **RStruct**s that require no
+tables (LSTs).  The latter are simply annotated **SStruct**s that require no
 special handling here.  In contrast, IVMs are dedicated syntactic keywords
 (opcode in binary); to everyone's confusion, they are not symbols even though
 they match the grammar for symbols.
 
-Since we cannot express IVMs within *RValue*, we model these top-level-only
+Since we cannot express IVMs within *STree*, we model these top-level-only
 features through a top-level-only domain:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=TRValue]
+include::{modeltex}[tag=TSTree]
 \newline
 include::{modeltex}[tag=IVM]
 ++++
 
-In other words, the top-level can contain any raw value, as well as IVMs.
-There's no corresponding non-raw domain **TValue** since directives need to be
-removed by the expansion function on the way to producing application data.
+In other words, a top-level syntax tree can be any general syntax tree, or an IVM.
 
-And finally, we can model an entire Ion document:
+We'll want to compare IVMs, so here's an equality operator:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=IVM_eq]
+++++
+
+
+[id=parsing]
+=== Parsing
+
+These syntax domains represent the output of an Ion parser as it steps through
+a document.  The semantics of parsing would be far too complex to approach in
+this article, so instead we assume the presence of a parsing function with the
+following signature:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=Document]
+\newline
+include::{modeltex}[tag=Parser]
 ++++
+
+Perhaps surprisingly, a *Parser* doesn't produce **TSTree**{asterisk}.
+This is another proactive step toward Ion 1.1, where a directive can change the
+Ion version and/or install user-defined macros, both of which affect the
+interpretation of later bytes in the document.
+To achieve this, we need a feedback loop from the evaluator to the parser after
+each top-level syntax tree.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=ParseStream]
+\newline
+include::{modeltex}[tag=ParseStep]
+\newline\newline
+include::{modeltex}[tag=ParseStep_tree]
+\newline
+include::{modeltex}[tag=ParseStep_next]
+++++
+
+A *ParseStream* is a function that accepts an IVM, telling the parser what Ion
+syntax follows, and returns an optional *ParseStep* whose absence denotes
+end-of-file.  When present, the *ParseStep* contains the next *TSTree* from the
+document, and a new *ParseStream* that can produce the rest of the document.
+
+Note that necessary parser state, particularly its current position within the
+document, must be passed through each *ParseStream* in the chain.
+The details are specific to a particular *Parser* implementation (and perhaps to
+the Ion format being read), so we don't define the *ParseStream* function here
+and instead assume that it's provided by the *Parser*.
 
 This concludes our semantics of the syntax and data models.
 These are the inputs and outputs, respectively, of the expansion process, which
@@ -559,16 +618,9 @@ we will now explore.
 [#expansion]
 == Expansion
 
-Circling back a bit, remember that our goal is to define how Ion expands the raw
-document data produced by its parser to eliminate encoding features such as
-symbol IDs, thereby producing the document's application-facing data.
-We'll encapsulate that process in this function:
-
-// TODO Generate these function signatures.
-[{denotation}]
-++++
-\mbox{\it expand} : \mbox{\bf Document} \times \mbox{\bf Catalog} \rightarrow \mbox{\bf Value*}
-++++
+Circling back a bit, remember that our goal is to define how Ion expands the
+abstract syntax trees produced by its parser to eliminate encoding features such
+as symbol IDs and macros, thereby producing the document's application-facing data.
 
 To begin, let's consider the state that must be maintained while expanding a
 document.
@@ -614,55 +666,62 @@ include::{modeltex}[tag=Environment_symbols]
 === Symbol Token Expansion
 
 We've now set enough context that we can implement the core of the expansion
-process: replacing SIDs with text.  We introduce stem:[{\cal E}] ("`expand`") as
+process: replacing SIDs with text.  We introduce stem:[\cal X] ("`expand`") as
 the base name of our various expansion functions, adding the input type as a
 subscript.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E_RSymTok]
+include::{modeltex}[tag=expand_SSymTok]
 ++++
 
-Expansion of a raw symbol token requires the current environment.
+Expansion of a syntactic symbol token requires the current environment.
 If the symbol token already contains Unicode text, we simply wrap it with a
 **SymTok**. Otherwise, the token is an integer SID, so we extract it via
 stem:[\mbox{\it s\/}\mid_{\mbox{\scriptsize \mbox{\bf I}}}] and then look it up
 in the current symbol table.
-That requires a range check, returning `$0` if the SID exceeds the size of the
+That requires a range check, raising an error if the SID exceeds the size of the
 current symbol table.
-
-CAUTION: This algorithm is currently defective: Ion specifies that an
-out-of-bounds SID must evoke an error and stop parsing. Proper modeling of such
-failures is WIP.
 
 To handle annotations, we'll need a recursive function expanding a sequence of
 symbol tokens:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E_RSymTok*]
+include::{modeltex}[tag=expand_SSymTok*]
 ++++
 
 
-=== Non-Top Value Expansion
+=== Value Expansion
 
-Now we can define how non-top raw values are expanded.
-Expansion of a single **RValue** requires separate expansion of its annotations
+Turning to the generic syntax-tree domain, expansion of one *STree* is
+(for Ion 1.0 at least) a simple pass-through:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_STree]
+++++
+
+Note that this function returns **Value**{asterisk}.
+This is more 1.1-preparedness, anticipating an additional branch for
+E-expressions, which can return any number of items.
+
+We expand a sequence of **STree**s by simple recursion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_STree*]
+++++
+
+Expanding **SValue** requires separate expansion of its annotations
 and content, combining the results into a **Value**:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E]
+include::{modeltex}[tag=expand_SValue]
 ++++
 
-We expand a sequence of **RValue**s by simple recursion:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=E*]
-++++
-
-To expand **RContent** we must perform a type-switch.
+To expand *SContent* we must perform a type-switch.
 The <<simple,simple domains>> **NullNull**, **Bool**, **Int**, and **String**
 pass through easily by being re-wrapped as **Content**.
 Anything else can contain symbol tokens to be expanded, and in each case we
@@ -670,57 +729,68 @@ downcast the content, call a type-specific function, then rewrap the result.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E_RContent]
+include::{modeltex}[tag=expand_SContent]
 ++++
 
-Expanding **RSymbol** just requires distinguishing `symbol.null`:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=E_RSymbol]
-++++
-
-Expanding a sequence is similar, with recursion on its sequence of elements:
+Expanding *SSymbol* requires distinguishing `symbol.null`:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E_RList]
+include::{modeltex}[tag=expand_SSymbol]
+++++
+
+Expanding lists and sexps is similar, with recursion on the sequence of elements:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SList]
 \newline\newline
-include::{modeltex}[tag=E_RSexp]
+include::{modeltex}[tag=expand_SSexp]
 ++++
 
-To handle **RStruct** with the same pattern, we'll add a helper to expand its
+To handle **SStruct** with the same pattern, we'll use a helper to expand its
 sequence of fields:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E_RStruct]
+include::{modeltex}[tag=expand_SStruct]
 ++++
 
-Field-sequence expansion takes a bit more work.  When the sequence is not empty,
-we expand the field's name and value using the appropriately-typed variants of
-stem:[{\cal E}].  We turn those into a field and prepend it onto the result of
-(self-recursively) expanding the sequence's tail.
+Field expansion takes a bit more work.
+We expand the field's name and tree using the appropriately-typed variants of
+stem:[\cal X], but the latter can return multiple values (thank you, macros!).
+To handle those, we need a little recursive function that creates a same-named
+*Field* for each one.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=E_RField*]
+include::{modeltex}[tag=expand_SField]
 ++++
 
-At this point we have fully denoted the expansion of non-top-level raw values,
+With that, expansion of a sequence of fields is simple recursion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SField*]
+++++
+
+At this point we have fully denoted the expansion of syntax trees,
 and can turn to the top level.
 
 
 [id=eg_TE]
-=== Top-Level Expansion
+=== Top-Level Evaluation
 
 TIP: Readers will likely find this section to be the most challenging of the
 whole model. Don't hesitate to go through it in multiple passes.
 
-Expansion of <<stx-top,top-level syntax>> requires us to use a new technique
+After each *TSTree* produced by the parser is expanded, we must handle any
+directives that result.  We refer to this phase as _evaluation_.
+
+Evaluation of <<stx-top,top-level syntax>> requires us to use a new technique
 in our model, since it involves changes to the environment.
-For example, the expansion of an
-IVM or LST must produce a new environment, but no application values.
+In particular, the evaluation of a directive must produce a new environment,
+but no application values.
 
 Being purely functional, lambda calculus has no inherent concept of
 "`imperative`" concerns such as order of evaluation and mutation of state.
@@ -757,28 +827,32 @@ to indicate top-level functions and variables.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=TE]
+include::{modeltex}[tag=TE_TSTree]
 ++++
 
-There's three branches here, covering IVMs, symbol-table directives, and
-"`normal`" values:
-
-* When we encounter an IVM, we must reset the environment using a helper
+When we encounter an IVM, we must reset the environment using a helper
 function that we'll implement later.
 We pass that to the continuation stem:[\kappa] along with an empty value
 sequence, since the IVM produces no application data.
 Here we've emulated mutation of the environment:
 the current environment stem:[\rho] not passed to the continuation and is
-therefore inaccessible to any remaining data on the stream.
+therefore inaccessible to any remaining work it encapsulates.
 
-* All other top-level syntax is expanded using stem:[\cal E] and the
+All other top-level syntax is expanded using stem:[\cal X] and the
 current environment stem:[\rho].
-We check the resulting *Value* _v_ to see if it's an LST directive, in
-which case we use its content, downcast to *Struct*, to construct the new
+After expansion, we'll evaluate the resulting sequence of values.
+
+To evaluate one top-level *Value*, we must check to see if it's an LST directive.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TE_Value]
+++++
+
+Given an LST, we use its content, downcast to *Struct*, to produce the new
 environment. Similar to the IVM case, _v_ is not passed along as application
 data.
-
-* In the final *else*, the expanded _v_ is application data, so we pass it to
+In the *else* clause, the expanded _v_ is application data, so we pass it to
 the continuation along with the unaltered environment.
 
 In accordance with continuation-passing style, stem:[\overline{\cal E}] never
@@ -790,25 +864,26 @@ returned from the continuation
 (and thus by stem:[\overline{\cal E}]) denote
 the expansion of _the entire stream_.
 
-This may become more clear by considering the expansion of top-level streams:
+This may become more clear by considering the evaluation of multiple top-level
+values:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=TE*]
+include::{modeltex}[tag=TE_Value*]
 ++++
 
 Here we have our most complex denotation yet, so let's break it down.
 
 * The *if* and *then* clauses detect and handle the empty-sequence base case:
-when given no top-level syntax, the environment is unchanged and no data
+when given no top-level value, the environment is unchanged and no data
 is produced.
-* When the sequence is non-empty, we expand (with stem:[\overline{\cal E}])
-its head (stem:[\overline{\mbox{\it rv\/}^{\ast}}\!\downarrow_{0}]) using the
+* When the sequence is non-empty, we evaluate (with stem:[\overline{\cal E}])
+its head (stem:[\overline{\mbox{\it v\/}^{\ast}}\!\downarrow_{0}]) using the
 current environment stem:[\rho] and a locally-defined continuation, which will
-be invoked with the _next_ environment stem:[\rho_1] and any expanded
-application values stem:[\mbox{\it v\/}^{\ast}_{1}].
-* That continuation is responsible for handling the tail of the stream
-(stem:[\overline{\mbox{\it rv\/}^{\ast}}\dagger1]), which it expands via
+be invoked with the _next_ environment (stem:[\rho_1]) and any application values
+that result (stem:[\mbox{\it v\/}^{\ast}_{1}]).
+* The first local continuation is responsible for evaluating the tail of the
+stream (stem:[{\mbox{\it v\/}^{\ast}}\dagger1]) via
 self-recursion on stem:[\overline{{\cal E}^{\ast}}], using whatever
 environment resulted from expanding the head (stem:[\rho_1]).
 * Those results are passed to a second local continuation, which receives the
@@ -824,23 +899,52 @@ into steps, receiving incremental state and results, invoking the next step
 of computation, then returning the final, overall results via a continuation
 provided by the caller.
 
-This raises the question of where that initial continuation comes from.
-We need a way to bootstrap expansion, and that happens via the user-facing
-__expand__ function that we originally set out to achieve:
+We still need to tie the top-level iteration to the parser by walking the
+*ParseStream* it produces:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=expand]
+include::{modeltex}[tag=TE_ParseStream]
 ++++
 
-This simply invokes stem:[\overline{{\cal E}^{\ast}}] with an initial
-environment and continuation.
-The initial environment is constructed from the given catalog, in Ion 1.0 mode,
+We start by invoking the current *ParseStream* _p_, passing it the current Ion
+version so the parser knows how to interpret the next bytes of input.
+The result is optional, and the *else* clause handles the EOF situation trivially.
+
+The recursive clause is structurally similar to the one above, but here we get
+the first syntax tree via stem:[\mbox{\it step}!\downarrow_{\mbox{tree}}] and
+the next *ParseStream* via stem:[\mbox{\it step}!\downarrow_{\mbox{next}}].
+
+With this method, we can evaluate an entire document, once we've converted it
+into a parse stream, and acquired a boostrap environment and continuation.
+That's the job of the *Evaluator* domain:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Evaluator]
+++++
+
+As discussed in xref:parsing[xrefstyle=short], we are not defining parsing
+functions in this article, so we can't define an entire *Evaluator*.
+Instead, we can produce one, given a *Parser*:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=mk_Evaluator]
+++++
+
+This function produces another function in the *Evaluator* domain.
+The resulting evaluator invokes
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}]
+with an initial *ParseStream*, environment and continuation.
+The former is provided by the *Parser* _p_, given a document _d_.
+The initial environment is constructed from the given catalog _c_, in Ion 1.0 mode,
 with the appropriate symbol table provided by a helper method.
 The initial continuation, destined to receive the final expansion results, is
 trivial: nothing needs to happen before or after the call to
-stem:[\overline{{\cal E}^{\ast}}], so it discards the final environment and
-passes the aggregated application data.
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}],
+so it discards the final environment stem:[\rho] and
+returns the aggregated application data.
 
 We've now concluded the denotation functions specifying the expansion of
 symbol IDs and the handling of encoding directives in Ion 1.0 documents.
@@ -903,10 +1007,12 @@ More importantly, we see that an LST directive is fully expanded using the
 environment in effect when it begins.
 The locally-declared symbols have no effect on the encoding of any part of the
 enclosing struct.
-Their scope only starts with the next top-level value.
+Their scope only starts with the next top-level syntax tree.
 
-TIP: At this point it may be worth reviewing the definition of
-stem:[\overline{\cal E}] in xref:eg_TE[xrefstyle=short].
+TIP: At this point it may be worth reviewing the definitions of
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}] and
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf Value}}] and
+in xref:eg_TE[xrefstyle=short].
 
 At a high level, the compilation of an LST works as follows:
 
@@ -936,8 +1042,8 @@ directive's fully-expanded *Struct*.
 
 Starting with the easy part, we compile the `symbols` field into
 **SymTok**{asterisk}.
-The input here is a sequence because struct lookup stem:[\odot] returns a
-sequence of zero or one values, raising an error if the field is repeated.
+The input here is optional (that is, never more than one value) because struct
+lookup stem:[\odot] raises an error if the field is repeated.
 
 [{denotation}]
 ++++
@@ -969,11 +1075,11 @@ symbols.
 include::{modeltex}[tag=imported_symbols]
 ++++
 
-When `imports` are absent, we return the current system symbols.
+When `imports` are absent, we return the current system symbols (stem:[t^{\ast}]).
 If `imports` is the symbol `$ion_symbol_table`, we return the entire
 current symbol table.  When the content is a non-null *List*, we compile its
 elements and append them to the current system symbols; otherwise the field
-has an unexpected value, and we act is if it were absent.
+is malformed and we act is if it were absent.
 
 Compiling the `imports` elements is similar to
 stem:[{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}] but each
@@ -986,8 +1092,10 @@ include::{modeltex}[tag=compile_imports]
 
 As expected, we recurse through the elements of stem:[v^{\ast}], compiling
 non-null **Struct**s and ignoring the rest.  To compile one such struct, we
-will need to normalize its meaningful fields, checking presence, type, and
-nullness.
+delegate to stem:[\cal C_{\scriptsize import}] below.
+
+Compiling an import-struct requires normalizing its meaningful fields,
+checking presence, type, and nullness.
 We'll use stem:[\cal N] as the name of normalization helper functions.
 For `name` we return the text of non-null **String**s, normalizing everything
 else to the empty string:
@@ -1012,8 +1120,8 @@ less than zero:
 include::{modeltex}[tag=normalize_max_id]
 ++++
 
-Having extracted the field values from one import struct, we can produce a
-sequence of **SymTok**s retrieved from the catalog.
+To compile one import-struct, we lookup and normalize the field values,
+then produce a sequence of **SymTok**s retrieved from the catalog.
 
 [{denotation}]
 ++++
@@ -1024,16 +1132,15 @@ First, we ignore entries with malformed/absent names (which have been normalized
 to empty), as well as the name `$ion`; you cannot explicitly import a system
 symbol table.
 Otherwise, _best_match_ (defined below) searches the catalog for the best match
-to the name and version; it returns a sequence of at-most-one *SharedSymtab*
-(stem:[s^{\ast}]).
+to the name and version; it returns an optional *SharedSymtab* _s_.
 
-If stem:[m^{\ast}] is non-empty, a valid `max_id` was given, and we can use
-whatever we've found, even if we found nothing with the given name.
+If _m_ is present, a valid `max_id` was given, and we can use
+whatever symbol table we've found, even if we found nothing with the given name.
 Regardless, we adjust the number of symbols we return to align with the `max_id`
 by using a helper function _adjust_length_ defined below.
 
-When there's no `max_id` we require an exact match: if stem:[s^{\ast}] has an
-entry, and it has the requested version _v_, we return its symbols.
+When there's no valid `max_id` we require an exact match: if _s_ is present and
+has the requested version _v_, we return its symbols.
 Otherwise, we signal an error.
 
 The functions to adjust the sequence length are straightforward.
@@ -1077,7 +1184,7 @@ include::{modeltex}[tag=SST_version]
 include::{modeltex}[tag=SST_symbols]
 ++++
 
-Ion defines a standard serialization of SSTs, which we can easily parse:
+Ion defines a standard serialization of SSTs, which we can easily compile:
 
 [{denotation}]
 ++++
@@ -1165,17 +1272,6 @@ ____
 
 To handle this, *SymTok* needs a subdomain to capture the SST and index.
 
-=== Error handling is too informal
-
-At present our model skirts around error handling by way of _raise_ but
-conventional handling uses a bottom-type stem:[\bot] to denote failures and
-strictness rules to forcibly propagate them.  We simply haven't implemented this
-in the framework that underlies this model.
-
-=== Out of bounds SIDs must raise an error
-
-This is primarily a result of the above lack of framework support and our desire
-to test the size of the current symbol table.
 
 === Shared symbol table compilation is weak
 
@@ -1274,9 +1370,13 @@ stem:[v!  ~\equiv~  v \downarrow_0]
 |Struct lookup
 |Retrieves value(s) from a struct by Unicode field name
 
-|stem:[\cal E]
+|stem:[\cal X]
 |Expansion function
 |Transforms syntax trees into Ion data model elements
+
+|stem:[\cal E]
+|Evaluation function
+|Evaluates directives discovered at top-level
 
 |stem:[\cal C]
 |Compilation function
