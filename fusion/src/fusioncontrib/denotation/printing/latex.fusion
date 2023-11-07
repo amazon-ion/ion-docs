@@ -71,6 +71,7 @@ TODO
   //   \:  medium space     (normally 2/9 = 4/18 of a quad)
   //   \>  alt medium space
   //   \;  thick space      (normally 5/18 of a quad)
+  //   \!  negative thin space
 
   (define SPACE "\\:")       // medium space
   (define NL "\\newline\n")  // "real" newline for code readablity
