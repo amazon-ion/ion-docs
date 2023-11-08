@@ -57,6 +57,8 @@ Variant of `if` that's strict WRT the condition `c`, but not functional:
 at most one of the branches will be evaluated.
     '''
     (lambda (stx)
+      (unless (= (syntax_size stx) 4)
+        (wrong_syntax stx "Malformed `if`"))
       (let [(condition (syntax_get stx 1)),
             (then      (syntax_get stx 2)),
             (else      (syntax_get stx 3))]

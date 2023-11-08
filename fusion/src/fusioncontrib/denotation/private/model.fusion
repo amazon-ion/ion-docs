@@ -73,6 +73,8 @@ in the same order the author used.
   (define (handle_dom dom_stx name)
     // TODO Ensure `name` doesn't end with "*" to prevent clash with sequences.
     (let [(result (|d| (datum_to_syntax d CTX dom_stx)))]
+      (unless (> (syntax_size dom_stx) 3)
+        (wrong_syntax dom_stx "Too few subforms"))
       (lets [(eq   (syntax_get dom_stx 2)),  // TODO validate the `=`
              (def  (syntax_get dom_stx 3)),
              (def_val (syntax_unwrap def)),
