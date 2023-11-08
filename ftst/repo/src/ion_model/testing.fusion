@@ -4,6 +4,17 @@
 
   '''
 Utilities for testing the Ion denotational model.
+
+
+Our testing strategy uses normal Fusion data to represent input documents for
+the model to expand, and to represent the expected results of expansion.
+This allows us to use built-in Fusion equality to validate the results.
+
+We "tunnel" special tokens as follows:
+  * Both input and output documents use symbols of the form `'#$ddd'` to represent
+    SIDS.
+  * On input, `'#$ion_d_d'` represents an IVM.
+  * On output, `'#$?Message'` represents a Bottom value with the given message.
   '''
 
   (require
@@ -82,6 +93,8 @@ Utilities for testing the Ion denotational model.
         (inject_into I c)
         (let [(str (symbol_to_string c))]
           (if (string_starts_with str "#$")
+            // If the content following #$ isn't an integer, this raises an error.
+            // This is important to prevent the prefix from "leaking through".
             (inject_into I (string_to_int (string_replace str "#$" "")))
             (inject_into Unicode str))))))
 
