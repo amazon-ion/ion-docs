@@ -20,6 +20,10 @@
   (check_true (is_bottom b))
   (check === "msg1f ootrue" (bottom_message b)))
 
+// Bottom can be applied as a procedure, returning itself.
+(let [(b (wrong "msg"))]
+  (check_same b (b (wrong "arg"))))
+
 
 (expect_argument_error (bottom_message 1))         // arg is not a domain value
 (expect_argument_error (bottom_message Any_true))  // arg is not a Bottom

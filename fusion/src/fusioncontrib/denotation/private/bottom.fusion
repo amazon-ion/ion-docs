@@ -28,12 +28,21 @@
       "The error domain"
       null))
 
+  (define_values ('record:bottom' bottom_ctor is_bottom ignored_getter)
+    [
+      "private record type",
+      "private Bottom constructor",
+      '''
+    (is_bottom v)
 
-  (define (is_bottom v)
-    '''
 Determines whether `v` is a bottom value, which denotes an error condition.
-    '''
-    (domain_is v Bottom))
+    ''',
+      "private field accessor",
+    ]
+    (make_record_type (quote 'record:fn') 'record:domain_value' 1 0))
+    // The inherited domain_value_rep field holds the Bottom message.
+    // The the one new field in this subtype is the procedure to apply.
+
 
   (define (bottom_message v)
     (unless (is_bottom v)
@@ -48,10 +57,15 @@ Returns a bottom value with the given message content.
 The result's message is constructed as per `display_to_string`.
     '''
     (lambda msgs
-      (make_value Bottom
-        (apply display_to_string
-               (map (|m| (if (is_base_domain_value m) (eject m) m))
-                    msgs)))))
+      (letrec [(bottom_val
+                 (bottom_ctor
+                   Bottom
+                   (apply display_to_string
+                     (map (|m| (if (is_base_domain_value m) (eject m) m))
+                          msgs))
+                   // Here's the record-proc implementation: return ourself
+                   (lambda args bottom_val)))]
+        bottom_val)))
 
 
   //============================================================================
