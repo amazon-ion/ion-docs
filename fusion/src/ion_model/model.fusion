@@ -509,10 +509,14 @@ Spec Problems
 
     // Scan for directives in expanded values and update Environment accordingly
 
+    (fn isIonSymbolTable ((v Value) -> B)
+      (and (element_of (Value_content v) Struct)
+           (and (not (seq_is_empty (Value_annots v)))
+                (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table"))))
+
+
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
-      (if (and (element_of (Value_content v) Struct)
-               (and (not (seq_is_empty (Value_annots v)))
-                    (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table")))
+      (if (isIonSymbolTable v)
         (k (Environment_after_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
         (k r (seq 'Value*' v))))
 
