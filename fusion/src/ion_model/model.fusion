@@ -75,6 +75,7 @@ Spec Problems
     (dom IVM = (* I I) "Ion version markers")
 
     (const IVM_1_0 (tuple IVM 1 0))
+    (const IVM_1_1 (tuple IVM 1 1))
 
     (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
       (and (EQ (ith i1 0) (ith i2 0))
@@ -212,10 +213,18 @@ Spec Problems
           (lift_to SymTok "max_id")
           (lift_to SymTok "$ion_shared_symbol_table"))))
 
+    (const systemSymbols_1_1
+      (seq_append systemSymbols_1_0
+        (seq 'SymTok*'
+          (lift_to SymTok "$ion_literal")
+          /* ... */)))
+
     (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
         (tuple Module i systemSymbols_1_0)
-        (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1))))
+        (if (IVM_eq i IVM_1_1)
+          (tuple Module i systemSymbols_1_1)
+          (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1)))))
 
 
     //==========================================================================
@@ -507,11 +516,17 @@ Spec Problems
            (and (not (seq_is_empty (Value_annots v)))
                 (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table"))))
 
+    (fn isIonLiteral ((v Value) -> B)
+      (and (not (seq_is_empty (Value_annots v)))
+           (SymTok_matches (seq_head (Value_annots v)) "$ion_literal")))
+
 
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
       (if (isIonSymbolTable v)
         (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
-        (k r (seq 'Value*' v))))
+        (if (and (IVM_eq (Environment_IVM r) IVM_1_1) (isIonLiteral v))
+          (TE_literal v r k)
+          (k r (seq 'Value*' v)))))
 
     (fn 'TE_Value*' ((vs 'Value*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty vs)
@@ -524,6 +539,12 @@ Spec Problems
 
 
     // Evaluate parsed top-level ASTs; handle directives
+
+    (fn TE_literal ((v Value) (r Environment) (k TContinuation) -> 'Value*')
+      (let [(v1 (tuple Value (seq_tail (Value_annots v)) (Value_content v)))]
+        (if (isIonSymbolTable v1)
+          (wrong "Cannot use literal $ion_symbol_table struct as application data")
+          (k r (seq 'Value*' v1)))))
 
     (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of t IVM)
