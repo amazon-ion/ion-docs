@@ -82,9 +82,7 @@ This function is strict on `v`, but not on the domain.
       (raise_argument_error "lift_to" "union domain" 0 d v))
     (if (is_bottom v)
       v
-      (begin
-        (unless (is_domain_value v)
-          (raise_argument_error "lift_to" "a domain value" 1 d v))
+      (if (is_domain_value v)
         (if (union_domain_checker d v)
           (make_value d v)
           // Return ⊥ if value is not in the target domain.
@@ -92,7 +90,14 @@ This function is strict on `v`, but not on the domain.
           // OTOH, one might argue that this should be a static error, since
           // the input type should be statically known by the model.
           (wrong "Cannot lift a " (domain_name (domain_of v))
-            " to " (domain_name d))))))
+            " to " (domain_name d)))
+        // Not a domain value, auto-inject when the subdomain is unambiguous.
+        (let [(bases (choose
+                       (|d| (and (is_base_domain d) (base_domain_accepts d v)))
+                       (union_domain_subdomains d)))]
+          (if (= 1 (size bases))
+            (make_value d (inject_into (first bases) v))
+            (raise_argument_error "lift_to" "a domain value, or unambiguous injectable" 1 d v))))))
 
 
   (define (is_union_domain_value v)

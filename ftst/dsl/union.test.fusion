@@ -28,12 +28,15 @@
 
 // lift_to
 
+// Auto-injection when subdomain is unambiguous
+(check_true (element_of (lift_to Exact 12) Z))
+
 (check_bottom "31" (lift_to Exact (wrong 31)))    // 2nd arg strict
 
 (expect_argument_error (lift_to t_val z_val))     // 1st arg is not a domain
 (expect_argument_error (lift_to (wrong 1) z_val))
 (expect_argument_error (lift_to Z z_rep))         // 1st arg is not a union domain
-(expect_argument_error (lift_to Exact z_rep))     // 2nd arg isn't a domain value
+
 (check_bottom "Cannot lift a S to Exact"
   (lift_to Exact s_val))                          // 2nd arg isn't a subdomain value
 

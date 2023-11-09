@@ -37,7 +37,6 @@ Defects:
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
 Cleanup:
-* (inject_into Unicode ...) should not be needed; string literals _are_ Unicode.
 * `lambda`s should instead use `mk_fn` with ad-hoc signature.
 
 
@@ -203,15 +202,15 @@ Spec Problems
           i
           (seq 'SymTok*'
             (lift_to SymTok SYM0)
-            (lift_to SymTok (inject_into Unicode "$ion"))
-            (lift_to SymTok (inject_into Unicode "$ion_1_0"))
-            (lift_to SymTok (inject_into Unicode "$ion_symbol_table"))
-            (lift_to SymTok (inject_into Unicode "name"))
-            (lift_to SymTok (inject_into Unicode "version"))
-            (lift_to SymTok (inject_into Unicode "imports"))
-            (lift_to SymTok (inject_into Unicode "symbols"))
-            (lift_to SymTok (inject_into Unicode "max_id"))
-            (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table"))))
+            (lift_to SymTok "$ion")
+            (lift_to SymTok "$ion_1_0")
+            (lift_to SymTok "$ion_symbol_table")
+            (lift_to SymTok "name")
+            (lift_to SymTok "version")
+            (lift_to SymTok "imports")
+            (lift_to SymTok "symbols")
+            (lift_to SymTok "max_id")
+            (lift_to SymTok "$ion_shared_symbol_table")))
         (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1))))
 
 
