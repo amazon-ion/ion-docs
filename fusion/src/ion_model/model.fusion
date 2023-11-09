@@ -7,7 +7,6 @@ A denotational semantic model of Ion.
 TODO
 ----
 Terminology/Readability:
-* Replace at-most-one uses of D* with D? and bespoke accessor syntax.
 * Figure out the proper name for `I`.  N? Z?
 * Greekify invocations of:
   * Environment_after_IVM/LST to C_IVM and C_LST ?
@@ -16,8 +15,7 @@ Terminology/Readability:
 * Less type-switching via E[[]] denotations
   * Easier with distinct typed nulls
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
-* Add seq_is_not_empty for better prose in compile_import;
-  inlining Value_has_first_annot
+* [CONST] Use DSL constants to specify system module.
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
@@ -26,7 +24,7 @@ Defects:
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
   shared symbol tables, so replacing such SIDs with $0 is a destructive operation
   to the semantics of the data."
-  * Probably SymTok needs to track symbol source: SharedSymtab x N::index
+  * Probably SymTok needs to track symbol source: SharedModule x N::index
 * SIDs should be non-negative.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
   associated IDs (the same string could appear twice as children of the symbols
@@ -178,73 +176,80 @@ Spec Problems
             (wrong "Repeated field: " u)))))
 
 
-    //=======================
-    // Environment Management
+    //==========================================================================
+    // Encoding Modules
 
-    (fn SymToks_for_IVM ((i IVM) -> 'SymTok*')
+    (dom Module        = (* IVM 'SymTok*' /*'ExportedMacro*'*/))
+
+    (fn Module_specVersion ((m Module) -> IVM)               (ith m 0))
+    (fn Module_symtab      ((m Module) -> 'SymTok*')         (ith m 1))
+
+
+    (dom SharedModule  = (* Unicode I Module))   // Name and version
+
+    (fn SharedModule_name    ((m SharedModule) -> Unicode)    (ith m 0))
+    (fn SharedModule_version ((m SharedModule) -> I)          (ith m 1))
+    (fn SharedModule_module  ((m SharedModule) -> Module)     (ith m 2))
+    (fn SharedModule_symtab  ((m SharedModule) -> 'SymTok*')
+      (Module_symtab (SharedModule_module m)))
+
+
+    //==========================================================================
+    // System Modules
+
+    (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
-        (seq 'SymTok*'
-          (lift_to SymTok SYM0)
-          (lift_to SymTok (inject_into Unicode "$ion"))
-          (lift_to SymTok (inject_into Unicode "$ion_1_0"))
-          (lift_to SymTok (inject_into Unicode "$ion_symbol_table"))
-          (lift_to SymTok (inject_into Unicode "name"))
-          (lift_to SymTok (inject_into Unicode "version"))
-          (lift_to SymTok (inject_into Unicode "imports"))
-          (lift_to SymTok (inject_into Unicode "symbols"))
-          (lift_to SymTok (inject_into Unicode "max_id"))
-          (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table")))
+        (tuple Module
+          i
+          (seq 'SymTok*'
+            (lift_to SymTok SYM0)
+            (lift_to SymTok (inject_into Unicode "$ion"))
+            (lift_to SymTok (inject_into Unicode "$ion_1_0"))
+            (lift_to SymTok (inject_into Unicode "$ion_symbol_table"))
+            (lift_to SymTok (inject_into Unicode "name"))
+            (lift_to SymTok (inject_into Unicode "version"))
+            (lift_to SymTok (inject_into Unicode "imports"))
+            (lift_to SymTok (inject_into Unicode "symbols"))
+            (lift_to SymTok (inject_into Unicode "max_id"))
+            (lift_to SymTok (inject_into Unicode "$ion_shared_symbol_table"))))
         (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1))))
 
 
-    (dom SharedSymtab    = (* Unicode I 'SymTok*'))     // name, version, symbols
+    //==========================================================================
+    // Catalogs
 
-    (fn SST_name    ((s SharedSymtab) -> Unicode)     (ith s 0))
-    (fn SST_version ((s SharedSymtab) -> I)           (ith s 1))
-    (fn SST_symbols ((s SharedSymtab) -> 'SymTok*')   (ith s 2))
+    (dom Catalog = (+ 'SharedModule*'))
 
-    (fn is_SST ((v Value) -> B)
-      (and (element_of (Value_content v) Struct)
-           (and (not (seq_is_empty (Value_annots v)))
-              (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
+    (fn best_match_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule?')
+      (best_match_Module (lower c 'SharedModule*') n v))
 
-    (fn compile_SST ((s Struct) -> SharedSymtab)
-      (let [(n (lower (Value_content (opt_value (Struct_get1 s "name")))
-                 String Unicode)),
-            (v (normalize_version (Struct_get1 s "version")))]
-        (tuple SharedSymtab n v (declared_symbols (Struct_get1 s "symbols")))))
-
-
-    (dom Catalog = (+ 'SharedSymtab*'))
-
-    (fn best_match_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedSymtab?')
-      (best_match_SST (lower c 'SharedSymtab*') n v))
-
-    // TODO This would probably be easier if split into exact_match and largest_match
-
-    (fn best_match_SST ((ssts 'SharedSymtab*') (n Unicode) (v I) -> 'SharedSymtab?')
-      (if (seq_is_empty ssts)
-        (opt 'SharedSymtab?')
+    (fn best_match_Module ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule?')
+      (if (seq_is_empty ss)
+        (opt 'SharedModule?')
         // WARNING These variable names appear in the narrative, keep it in sync!
-        (let [(sst0 (seq_head ssts)),
-              (ssts1 (best_match_SST (seq_tail ssts) n v))]
-          (if (not (U_EQ (SST_name sst0) n))
-            ssts1
-            (if (or (EQ (SST_version sst0) v)
-                    (not (opt_is_present ssts1)))
+        (let [(s (seq_head ss)),
+              (ss1 (best_match_Module (seq_tail ss) n v))]
+          (if (not (U_EQ (SharedModule_name s) n))
+            ss1
+            (if (or (EQ (SharedModule_version s) v)
+                    (not (opt_is_present ss1)))
               // Exact match, or only match.
-              (opt 'SharedSymtab?' sst0)
+              (opt 'SharedModule?' s)
               // Inexact match, and the tail had a match.
-              (if (or (EQ (SST_version (opt_value ssts1)) v)
-                      (>  (SST_version (opt_value ssts1)) (SST_version sst0)))
+              (if (or (EQ (SharedModule_version (opt_value ss1)) v)
+                      (>  (SharedModule_version (opt_value ss1))
+                          (SharedModule_version s)))
                 // The tail had an exact match, or larger version.
-                ssts1
-                (opt 'SharedSymtab?' sst0)))))))
+                ss1
+                (opt 'SharedModule?' s)))))))
 
-    (fn Catalog_extend ((c Catalog) (s SharedSymtab) -> Catalog)
+    (fn Catalog_extend ((c Catalog) (s SharedModule) -> Catalog)
       // TODO reject duplicate key
-      (lift (seq_prepend s (lower c 'SharedSymtab*')) Catalog))
+      (lift (seq_prepend s (lower c 'SharedModule*')) Catalog))
 
+
+    //==========================================================================
+    // Encoding Environment
 
     (dom Environment = (* Catalog IVM 'SymTok*'))
 
@@ -253,8 +258,25 @@ Spec Problems
     (fn Environment_symbols ((r Environment) -> 'SymTok*') (ith r 2))
 
 
+    //==========================================================================
+    // Shared Symbol Table complation
 
-    // $ion_symbol_table "compilation"
+    (fn is_SST ((v Value) -> B)
+      (and (element_of (Value_content v) Struct)
+           (and (not (seq_is_empty (Value_annots v)))
+              (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
+
+    (fn compile_SST ((s Struct) -> SharedModule)
+      (let [(n (lower (Value_content (opt_value (Struct_get1 s "name")))
+                 String Unicode)),
+            (v (normalize_version (Struct_get1 s "version")))]
+        (tuple SharedModule n v
+          (tuple Module IVM_1_0
+            (declared_symbols (Struct_get1 s "symbols"))))))
+
+
+    //==========================================================================
+    // $ion_symbol_table compilation
 
     (fn symbol_padding ((n I) -> 'SymTok*')
       (if (EQ n 0)
@@ -305,10 +327,10 @@ Spec Problems
           EMPTY_SYMTOKS
           (let [(s (best_match_Catalog (Environment_catalog r) n v))]
             (if (opt_is_present m)  // We have max_id, adjust the length
-              (let [(ts (if (opt_is_present s) (SST_symbols (opt_value s)) (seq 'SymTok*')))]
+              (let [(ts (if (opt_is_present s) (SharedModule_symtab (opt_value s)) (seq 'SymTok*')))]
                 (adjust_length ts (opt_value m)))
-              (if (and (opt_is_present s) (EQ (SST_version (opt_value s)) v))
-                (SST_symbols (opt_value s))
+              (if (and (opt_is_present s) (EQ (SharedModule_version (opt_value s)) v))
+                (SharedModule_symtab (opt_value s))
                 (wrong "No exact-match for " n "@" v)))))))
 
 
@@ -322,7 +344,7 @@ Spec Problems
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
     (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
-      (let [(ts (SymToks_for_IVM (Environment_IVM r)))]
+      (let [(ts (Module_symtab (systemModule (Environment_IVM r))))]
         (if (opt_is_present v)
           (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
             (Environment_symbols r)
@@ -364,7 +386,7 @@ Spec Problems
       (tuple Environment
         (Environment_catalog r)
         i
-        (SymToks_for_IVM i)))
+        (Module_symtab (systemModule i))))
 
     (fn Environment_after_LST ((s Struct) (r Environment) -> Environment)
       (tuple Environment
@@ -528,7 +550,8 @@ Spec Problems
     (fn mk_Evaluator ((p Parser) -> Evaluator)
       (mk_fn Evaluator (d c)
         (let [(p0 (p d)),
-              (r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
+              (r0 (tuple Environment c IVM_1_0
+                    (Module_symtab (systemModule IVM_1_0)))),
               (k0 (mk_fn TContinuation (r vs) vs))]
           (TE_ParseStream p0 r0 k0))))
 
@@ -537,6 +560,6 @@ Spec Problems
   (define IVM_1_0          (tuple IVM 1 0))
   (define SYM0             (singleton Sym0))
   (define DOTNULL          (singleton DotNull))
-  (define EMPTY_CATALOG    (lift (seq 'SharedSymtab*') Catalog))
+  (define EMPTY_CATALOG    (lift (seq 'SharedModule*') Catalog))
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
 )

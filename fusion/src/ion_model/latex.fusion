@@ -29,9 +29,12 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor SValue_content       "content")
       (accessor Field_name           "name")
       (accessor Field_value          "value")
-      (accessor SST_name             "name")
-      (accessor SST_symbols          "symbols")
-      (accessor SST_version          "version")
+      (accessor Module_specVersion   "specVersion")
+      (accessor Module_symtab        "symtab")
+      (accessor SharedModule_module  "module")
+      (accessor SharedModule_name    "name")
+      (accessor SharedModule_symtab  "symtab")
+      (accessor SharedModule_version "version")
       (accessor Value_annots         "annots")
       (accessor Value_content        "content")
       (accessor ParseStep_tree       "tree")
@@ -52,13 +55,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method SymTok_matches            (pp_binary "" " \\cong " ""))
       (form_method Value_is_symbol_matching  (pp_binary "" " \\cong " ""))
 
-      // Hack to make (raise (display_to_string ...)) prettier.
-      (form_method display_to_string   (pp_nary "" "\\;\\;" ""))
-
-      // This doesn't read well, since the RHS is a quoted string
-      // (form_method Value_is_symbol_matching  (pp_binary "" " \\cong " ""))
-
-      (sym_image "\\mbox{\\it best\\_match}" best_match_Catalog best_match_SST)
+      (sym_image "\\mbox{\\it best\\_match}" best_match_Catalog best_match_Module)
 
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)
@@ -106,12 +103,10 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\rho_{1}"                               r1)
       (sym_image "\\rho_{2}"                               r2)
       (sym_image "\\mbox{\\it sf\\/}^{\\ast}"              sfs)
-      (sym_image "\\mbox{\\it s\\/}"                       sst)
-      (sym_image "\\mbox{\\it s\\/}_{0}"                   sst0)
-      (sym_image "\\mbox{\\it s\\/}^{\\ast}"               ss ssts)
-      (sym_image "\\mbox{\\it s\\/}^{\\ast}_{1}"           ssts1)
+      (sym_image "\\mbox{\\it s\\/}^{\\ast}"               ss)
+      (sym_image "\\mbox{\\it s\\/}^{\\ast}_{1}"           ss1)
       (sym_image "\\mbox{\\it t\\/}^{\\ast}"               ts)
-      (sym_image "\\mbox{\\it v\\/}^{\\ast}"               vs vals)
+      (sym_image "\\mbox{\\it v\\/}^{\\ast}"               vs)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{1}"           vs1)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{2}"           vs2)
 //    (sym_image "\\mbox{\\it v\\/}^{?}"                   'v?')   // Doesn't look good
