@@ -191,8 +191,14 @@ goal in the form of a function domain:
 include::{modeltex}[tag=Evaluator]
 ++++
 
+:fn-module: footnote:[We use the Ion 1.1 term "`shared module`" rather than \
+"`shared symbol table`" to align with the domain model, which is \
+forward-compatible with the future features.  \
+What's most important to know is that modules are generalizations of symbol \
+tables, so a shared symbol table _is_ a shared module.]
+
 That is, given a document and a catalog (a collection
-of shared symbol tables), we produce a sequence of application values.
+of shared modules{fn-module}), we produce a sequence of application values.
 
 // TODO Discuss expansion vs evaluation?
 
@@ -639,8 +645,8 @@ include::{modeltex}[tag=Environment]
 
 The encoding environment is a tuple with three components.
 
-  * The *catalog* is a collection of shared symbol tables provided to the
-expansion process.  The manner by which SSTs are collected into a catalog is
+  * The *catalog* is a collection of shared modules provided to the
+expansion process.  The manner by which modules are collected into a catalog is
 outside the scope of the Ion specification, but we define the relevant semantics
 in xref:catalog[xrefstyle=short].
   * We model the *current Ion version* as an Ion Version Marker.  This is used to
@@ -970,11 +976,11 @@ implementations will behave the same way.
 Following an IVM, the current symbol table is set to the system symbols for the
 given major and minor version of Ion.
 This is straightforward to define.
-First we define the content of the system symbol table for a given Ion version:
+First we define the content of the system module for a given Ion version:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=SymToks_for_IVM]
+include::{modeltex}[tag=systemModule]
 ++++
 
 (Apologies for the failure of our pretty printer, but you get the idea.)
@@ -1092,7 +1098,7 @@ include::{modeltex}[tag=compile_imports]
 
 As expected, we recurse through the elements of stem:[v^{\ast}], compiling
 non-null **Struct**s and ignoring the rest.  To compile one such struct, we
-delegate to stem:[\cal C_{\scriptsize import}] below.
+delegate to stem:[\cal C_{\mbox{\scriptsize import}}] below.
 
 Compiling an import-struct requires normalizing its meaningful fields,
 checking presence, type, and nullness.
@@ -1132,7 +1138,7 @@ First, we ignore entries with malformed/absent names (which have been normalized
 to empty), as well as the name `$ion`; you cannot explicitly import a system
 symbol table.
 Otherwise, _best_match_ (defined below) searches the catalog for the best match
-to the name and version; it returns an optional *SharedSymtab* _s_.
+to the name and version; it returns an optional *SharedModule* _s_.
 
 If _m_ is present, a valid `max_id` was given, and we can use
 whatever symbol table we've found, even if we found nothing with the given name.
@@ -1159,32 +1165,42 @@ words, it returns what stem:[\dagger] would discard.
 
 
 [id=catalog]
-=== Shared Symbol Tables and Catalogs
+=== Modules, Shared Modules, and Catalogs
 
-We are down to our final denotations: the meaning of catalogs and the shared
-symbol tables they contain.  We've already defined the relevant domains:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=SharedSymtab]
-\newline
-include::{modeltex}[tag=Catalog]
-++++
-
-A shared symbol table consists of a name, a version, and a sequence of
-**SymTok**s.
-Accessor functions help clarify:
+In general, a *Module* is anonymous and can be associated with various names in
+different contexts. Inherently, it consists of a specification version (that is,
+the version of Ion that defines its meaning), and--for now--a sequence of
+exported symbols.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=SST_name]
+include::{modeltex}[tag=Module]
 \newline
-include::{modeltex}[tag=SST_version]
+include::{modeltex}[tag=Module_specVersion]
 \newline
-include::{modeltex}[tag=SST_symbols]
+include::{modeltex}[tag=Module_symtab]
 ++++
 
-Ion defines a standard serialization of SSTs, which we can easily compile:
+A shared module wraps a module with a specific name and a version:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SharedModule]
+\newline
+include::{modeltex}[tag=SharedModule_name]
+\newline
+include::{modeltex}[tag=SharedModule_version]
+\newline
+include::{modeltex}[tag=SharedModule_module]
+\newline
+include::{modeltex}[tag=SharedModule_symtab]
+++++
+
+:fn-sst-issue: footnote:[This needs error handling similar to local symbol \
+tables.  See xref:iss-sst[xrefstyle=short].]
+
+Ion defines a standard serialization of shared symbol tables, which we can
+easily compile{fn-sst-issue} into shared modules:
 
 [{denotation}]
 ++++
@@ -1193,9 +1209,14 @@ include::{modeltex}[tag=is_SST]
 include::{modeltex}[tag=compile_SST]
 ++++
 
-CAUTION: The above needs error handling similar to local symbol tables.
 
-A catalog is just a sequence of shared symtabs.
+A catalog is just a sequence of shared modules.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Catalog]
+++++
+
 What's tricky is implementing the "`best match`" semantics required by the Ion
 specification: if there's no exact match to the requested version, we must
 return the largest version available.
@@ -1206,21 +1227,20 @@ First, we need to unwrap the Catalog:
 include::{modeltex}[tag=best_match_Catalog]
 ++++
 
-Having done that, we recursively walk the catalog, returning an at-most-one
-sequence holding either an exact match for the name/version, or the highest
-version, or nothing.
+Having done that, we recursively walk the module sequence, returning either an
+exact match for the name/version, or the highest version, or nothing.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=best_match_SST]
+include::{modeltex}[tag=best_match_Module]
 ++++
 
-There's a lot of cases to account for here.
-If the current entry (stem:[s_0]) has a different name, we return the recursive
-result.
-Otherwise, the name matches, so if the version matches or there's no match in the
-tail (stem:[s^{\ast}_1]), we return the current entry.
-Otherwise, if the best-match in the tail (stem:[s^{\ast}_1\downarrow_0]) is an
+There are several cases to account for here.
+If the current entry (_s_) has a different name, we return the best-match from
+the recursive tail (stem:[s^{\ast}_1]).
+Otherwise, the name matches, so if the version matches _or_ no match in the
+tail is present, we return the current entry.
+Otherwise, if the best-match in the tail (stem:[s^{\ast}_1!]) is an
 exact match, or has a larger version than the current entry, we return that.
 Otherwise, the current entry is the best we've got.
 
@@ -1273,6 +1293,7 @@ ____
 To handle this, *SymTok* needs a subdomain to capture the SST and index.
 
 
+[id=iss-sst]
 === Shared symbol table compilation is weak
 
 We don't type check the inputs, which "`crashes`" the math when given bad data.

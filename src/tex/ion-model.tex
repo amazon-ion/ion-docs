@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-04T01:16:36.685-00:00
+%%% This file was generated at 2023-11-09T02:42:16.781-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -114,12 +114,16 @@
 \mbox{\bf Value} ~\equiv~ \mbox{\bf SymTok*} \times \mbox{\bf Content}
 % end::Value[]
 \newline
-% tag::SharedSymtab[]
-\mbox{\bf SharedSymtab} ~\equiv~ \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf SymTok*}
-% end::SharedSymtab[]
+% tag::Module[]
+\mbox{\bf Module} ~\equiv~ \mbox{\bf IVM} \times \mbox{\bf SymTok*}
+% end::Module[]
+\newline
+% tag::SharedModule[]
+\mbox{\bf SharedModule} ~\equiv~ \mbox{\bf Unicode} \times \mbox{\bf I} \times \mbox{\bf Module}
+% end::SharedModule[]
 \newline
 % tag::Catalog[]
-\mbox{\bf Catalog} ~\equiv~ \mbox{\bf SharedSymtab*}
+\mbox{\bf Catalog} ~\equiv~ \mbox{\bf SharedModule*}
 % end::Catalog[]
 \newline
 % tag::Environment[]
@@ -259,77 +263,74 @@
 % end::Struct_get1[]
 \newline
 \newline
-% tag::SymToks_for_IVM[]
-\mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/}) ~\equiv~ $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::Module_specVersion[]
+\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize specVersion}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{0}$\`$ \mbox{\bf Module} \rightarrow \mbox{\bf IVM}
+% end::Module_specVersion[]
+\newline
+\newline
+% tag::Module_symtab[]
+\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize symtab}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{1}$\`$ \mbox{\bf Module} \rightarrow \mbox{\bf SymTok*}
+% end::Module_symtab[]
+\newline
+\newline
+% tag::SharedModule_name[]
+\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize name}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{0}$\`$ \mbox{\bf SharedModule} \rightarrow \mbox{\bf Unicode}
+% end::SharedModule_name[]
+\newline
+\newline
+% tag::SharedModule_version[]
+\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize version}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{1}$\`$ \mbox{\bf SharedModule} \rightarrow \mbox{\bf I}
+% end::SharedModule_version[]
+\newline
+\newline
+% tag::SharedModule_module[]
+\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize module}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{2}$\`$ \mbox{\bf SharedModule} \rightarrow \mbox{\bf Module}
+% end::SharedModule_module[]
+\newline
+\newline
+% tag::SharedModule_symtab[]
+\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize symtab}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}$\`$ \mbox{\bf SharedModule} \rightarrow \mbox{\bf SymTok*}
+% end::SharedModule_symtab[]
+\newline
+\newline
+% tag::systemModule[]
+\mbox{\it systemModule\/}(\mbox{\it i\/}) ~\equiv~ $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf Module}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it i\/} = \mbox{\it IVM\_1\_0\/}\newline
-\:\mbox{\bf{then}}\:\langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\it i\/}, \langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \rangle )\newline
 \:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt Unsupported Ion version: }''}, \mbox{\it i\/}\!\downarrow_{0}, \mbox{\rm ``{\tt .}''}, \mbox{\it i\/}\!\downarrow_{1})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::SymToks_for_IVM[]
-\newline
-\newline
-% tag::SST_name[]
-\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize name}} ~\equiv~ \mbox{\it s\/}\!\downarrow_{0}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Unicode}
-% end::SST_name[]
-\newline
-\newline
-% tag::SST_version[]
-\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}} ~\equiv~ \mbox{\it s\/}\!\downarrow_{1}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf I}
-% end::SST_version[]
-\newline
-\newline
-% tag::SST_symbols[]
-\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize symbols}} ~\equiv~ \mbox{\it s\/}\!\downarrow_{2}$\`$ \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf SymTok*}
-% end::SST_symbols[]
-\newline
-\newline
-% tag::is_SST[]
-\mbox{\it is\_SST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
-\:\: \setandincrindent
-\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''} \decrindent
-% end::is_SST[]
-\newline
-\newline
-% tag::compile_SST[]
-\mbox{\it compile\_SST\/}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedSymtab}\newline
-\:\: \setandincrindent
- \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
-\:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedSymtab}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle ) \decrindent
- \decrindent
-% end::compile_SST[]
+% end::systemModule[]
 \newline
 \newline
 % tag::best_match_Catalog[]
-\mbox{\it best\_match}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedSymtab?}\newline
+\mbox{\it best\_match}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule?}\newline
 \:\: \setandincrindent
-\mbox{\it best\_match}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedSymtab*}$}}, \mbox{\it n\/}, \mbox{\it v\/}) \decrindent
+\mbox{\it best\_match}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedModule*}$}}, \mbox{\it n\/}, \mbox{\it v\/}) \decrindent
 % end::best_match_Catalog[]
 \newline
 \newline
-% tag::best_match_SST[]
-\mbox{\it best\_match}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf SharedSymtab*} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedSymtab?}\newline
+% tag::best_match_Module[]
+\mbox{\it best\_match}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf SharedModule*} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule?}\newline
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\langle \rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it s\/}_{0} = \mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
+\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
 \:\mbox{\bf{and}}\:\mbox{\it s\/}^{\ast}_{1} = \mbox{\it best\_match}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}_{0}\!\downarrow_{\mbox{\scriptsize name}} \neq \mbox{\it n\/}\newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize name}} \neq \mbox{\it n\/}\newline
 \:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}_{1}\newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}_{0}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \lnot \mbox{\it s\/}^{\ast}_{1}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\:\langle \mbox{\it s\/}_{0}\rangle \newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \lnot \mbox{\it s\/}^{\ast}_{1}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\:\langle \mbox{\it s\/}\rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} > \mbox{\it s\/}_{0}\!\downarrow_{\mbox{\scriptsize version}}\newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} > \mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}}\newline
 \:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}_{1}\newline
-\:\mbox{\bf{else}}\:\langle \mbox{\it s\/}_{0}\rangle \newline
+\:\mbox{\bf{else}}\:\langle \mbox{\it s\/}\rangle \newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -339,13 +340,13 @@
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::best_match_SST[]
+% end::best_match_Module[]
 \newline
 \newline
 % tag::Catalog_extend[]
-\mbox{\it Catalog\_extend\/}(\mbox{\it c\/}, \mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf SharedSymtab} \rightarrow \mbox{\bf Catalog}\newline
+\mbox{\it Catalog\_extend\/}(\mbox{\it c\/}, \mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf SharedModule} \rightarrow \mbox{\bf Catalog}\newline
 \:\: \setandincrindent
-\mbox{\it{in}\small $\mbox{\bf Catalog}$}(\langle \mbox{\it s\/}\rangle \S\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedSymtab*}$}}) \decrindent
+\mbox{\it{in}\small $\mbox{\bf Catalog}$}(\langle \mbox{\it s\/}\rangle \S\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedModule*}$}}) \decrindent
 % end::Catalog_extend[]
 \newline
 \newline
@@ -362,6 +363,24 @@
 % tag::Environment_symbols[]
 \rho\!\downarrow_{\mbox{\scriptsize symbols}} ~\equiv~ \rho\!\downarrow_{2}$\`$ \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}
 % end::Environment_symbols[]
+\newline
+\newline
+% tag::is_SST[]
+\mbox{\it is\_SST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
+\:\: \setandincrindent
+\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''} \decrindent
+% end::is_SST[]
+\newline
+\newline
+% tag::compile_SST[]
+\mbox{\it compile\_SST\/}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedModule}\newline
+\:\: \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
+\:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedModule}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\it IVM\_1\_0\/}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\rangle ) \decrindent
+ \decrindent
+% end::compile_SST[]
 \newline
 \newline
 % tag::symbol_padding[]
@@ -481,7 +500,7 @@
 \:\mbox{\bf{then}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\:\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symbols}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symtab}}\newline
 \:\mbox{\bf{else}}\:\langle \rangle \newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
@@ -489,7 +508,7 @@
 \newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\ \wedge\ \mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\newline
-\:\mbox{\bf{then}}\:\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symbols}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symtab}}\newline
 \:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
@@ -529,7 +548,7 @@
 {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Value?} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it SymToks\_for\_IVM\/}(\rho\!\downarrow_{\mbox{\scriptsize IVM}})\newline
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it systemModule\/}(\rho\!\downarrow_{\mbox{\scriptsize IVM}})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
 \:\mbox{\bf{then}}\: \setandincrindent
@@ -611,7 +630,7 @@
 % tag::Environment_after_IVM[]
 \mbox{\it Environment\_after\_IVM\/}(\mbox{\it i\/}, \rho) ~\equiv~ $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \:\: \setandincrindent
-\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it i\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it i\/})\rangle ) \decrindent
+\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it i\/}, \mbox{\it systemModule\/}(\mbox{\it i\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle ) \decrindent
 % end::Environment_after_IVM[]
 \newline
 \newline
@@ -876,7 +895,7 @@
 \:\: \setandincrindent
 \lambda \mbox{\it d\/} \mbox{\it c\/}. \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it p\/}_{0} = \mbox{\it p\/}(\mbox{\it d\/})\newline
-\:\mbox{\bf{and}}\:\rho_{0} = \mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \mbox{\it c\/}, \mbox{\it IVM\_1\_0\/}, \mbox{\it SymToks\_for\_IVM\/}(\mbox{\it IVM\_1\_0\/})\rangle )\newline
+\:\mbox{\bf{and}}\:\rho_{0} = \mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \mbox{\it c\/}, \mbox{\it IVM\_1\_0\/}, \mbox{\it systemModule\/}(\mbox{\it IVM\_1\_0\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle )\newline
 \:\mbox{\bf{and}}\:\kappa_{0} = \lambda \rho \mbox{\it v\/}^{\ast}.\mbox{\it v\/}^{\ast}\newline
 \:\mbox{\bf{in}}\:\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}(\mbox{\it p\/}_{0}, \rho_{0}, \kappa_{0}) \decrindent
  \decrindent
