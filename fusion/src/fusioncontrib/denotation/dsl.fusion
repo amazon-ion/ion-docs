@@ -76,6 +76,7 @@ semantics DSL.
       (PLUS   +)))
 
   (provide                // Pretty-printing hints
+    'hint:multiline'
     'hint:oneline'
   )
 )

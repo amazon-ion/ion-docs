@@ -171,8 +171,9 @@ or syntax string or symbol.
   (define (pp_const_def v e)
     (pp_print (const_name v) e)
     (display DEFINE_EQ)
-    (pp_print (const_code v) e)
-    (display "\n"))
+    (let [(e1 (pp_incr_indentation e))]
+      (pp_print (const_code v) e1)
+      (pp_decr_indentation e1)))
 
 
   // Functions
@@ -254,7 +255,7 @@ or syntax string or symbol.
         (display LET_IN)
         (pp_print body e)
         (display LET_END))
-      (pp_decr_indentation e)))
+      (pp_decr_indentation e)))   // FIXME? shouldn't this decr e1?
 
   (define (pp_letrec s e)
     (let [(e1 (pp_incr_indentation e))]
@@ -351,7 +352,20 @@ or syntax string or symbol.
 
 
   (define (pp_seq v e)
-    (pp_print_terms (tail (tail v)) e SEQ_OPEN ", " SEQ_CLOSE))
+    (if (is_multiline_mode e)
+      (begin
+        (display SEQ_OPEN)
+        (let [(e1 (pp_incr_indentation e))]
+          (let loop [(vs (tail (tail v)))]
+            (when (is_pair vs)
+              (pp_print (head vs) e1)
+              (when (is_pair (tail vs))
+                (display ",")
+                (pp_newline e1)
+                (loop (tail vs)))))
+          (display SEQ_CLOSE)
+          (pp_decr_indentation e1)))
+      (pp_print_terms (tail (tail v)) e SEQ_OPEN ", " SEQ_CLOSE)))
 
   (define (pp_seq_prepend v e)
     "Expand (seq_prepend e1 e2) => (seq_append (seq null e1) e2)"
@@ -443,8 +457,9 @@ A model printer that renders in Unicode plain-text.
       (form_method GTE             (pp_binary "" " \\ge " ""))
       (form_method GT              (pp_binary "" " > " ""))
 
-      // Rendering hints
-      (form_method 'hint:oneline'  pp_oneline)  // TODO Should be provided by base printer.
+      // Rendering hints            // TODO Should be provided by base printer.
+      (form_method 'hint:multiline' pp_multiline)
+      (form_method 'hint:oneline'   pp_oneline)
 
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  pp_fn_call)

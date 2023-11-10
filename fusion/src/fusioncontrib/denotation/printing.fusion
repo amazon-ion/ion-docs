@@ -45,12 +45,14 @@ References:
     form_method
     func_domain_argdomains
     func_domain_output
+    'hint:multiline'
     'hint:oneline'
     is_base_domain
     is_const
     is_domain
     is_fn
     is_func_domain
+    is_multiline_mode
     is_oneline_mode
     is_product_domain
     is_seq_domain
@@ -63,6 +65,7 @@ References:
     pp_basedom
     pp_binary
     pp_display
+    pp_multiline
     pp_nary
     pp_oneline
     pp_print
@@ -96,27 +99,51 @@ References:
 
 
   //============================================================================
-  // One-Line Mode
+  // One-Line Mode and Multi-Line Mode
 
   (record 'frame:oneline' ())
+  (record 'frame:multiline' ())
 
 
   (define (is_oneline_mode e)
     (and (is_pair e)
           (or ('is_frame:oneline' (head e))
-              (is_oneline_mode (tail e)))))
+              // A multi-line frame overrides any previous one-line frame.
+              (and (not ('is_frame:multiline' (head e)))
+                   (is_oneline_mode (tail e))))))
 
   (define ('hint:oneline' v)
     '''
 Does nothing; returns the given value.
 
 When encountered by the pretty-printer, the argument code is printed in
-one-line mode.
+one-line mode.  This overrides any extant multi-line mode.
     '''
     v)
 
   (define (pp_oneline v e)
     (pp_print (. v 1) (pair ('frame:oneline') e)))
+
+
+
+  (define (is_multiline_mode e)
+    (and (is_pair e)
+          (or ('is_frame:multiline' (head e))
+              // A one-line frame overrides any previous multiline frame.
+              (and (not ('is_frame:oneline' (head e)))
+                   (is_multiline_mode (tail e))))))
+
+  (define ('hint:multiline' v)
+    '''
+Does nothing; returns the given value.
+
+When encountered by the pretty-printer, the argument code is printed in
+multi-line mode.  This overrides any extant one-line mode.
+    '''
+    v)
+
+  (define (pp_multiline v e)
+    (pp_print (. v 1) (pair ('frame:multiline') e)))
 
 
   //============================================================================
