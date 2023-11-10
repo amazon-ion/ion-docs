@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-09T02:42:16.781-00:00
+%%% This file was generated at 2023-11-10T03:28:48.453-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -18,12 +18,8 @@
 \mbox{\bf IVM} ~\equiv~ \mbox{\bf I} \times \mbox{\bf I}
 % end::IVM[]
 \newline
-% tag::Sym0[]
-\mbox{\bf Sym0} ~\equiv~ \mbox{(The undefined symbol)}
-% end::Sym0[]
-\newline
 % tag::DotNull[]
-\mbox{\bf DotNull} ~\equiv~ \mbox{(Sentinel for typed nulls)}
+\mbox{\bf DotNull} ~\equiv~ \{\; \mbox{\bf dotnull} \;\}
 % end::DotNull[]
 \newline
 % tag::NullNull[]
@@ -81,6 +77,10 @@
 % tag::TSTree[]
 \mbox{\bf TSTree} ~\equiv~ \mbox{\bf STree} + \mbox{\bf IVM}
 % end::TSTree[]
+\newline
+% tag::Sym0[]
+\mbox{\bf Sym0} ~\equiv~ \{\; \mbox{\bf sym0} \;\}
+% end::Sym0[]
 \newline
 % tag::SymTok[]
 \mbox{\bf SymTok} ~\equiv~ \mbox{\bf Unicode} + \mbox{\bf Sym0}
@@ -155,6 +155,18 @@
 % end::Evaluator[]
 \newline
 % end::domains[]
+% tag::constants[]
+\newline
+% tag::IVM_1_0[]
+\mbox{\bf ivm}_{\scriptsize 1.0} ~\equiv~ \mbox{\it{in}\small $\mbox{\bf IVM}$}(\langle 1, 0\rangle )
+% end::IVM_1_0[]
+\newline
+\newline
+% tag::systemSymbols_1_0[]
+\mbox{\bf systemSymbols}_{\scriptsize 1.0} ~\equiv~ \langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt \$ion}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt \$ion\_1\_0}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt name}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt version}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt imports}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt symbols}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt max\_id}''}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''})\rangle 
+% end::systemSymbols_1_0[]
+\newline
+% end::constants[]
 % tag::functions[]
 \newline
 % tag::IVM_eq[]
@@ -297,8 +309,8 @@
 \mbox{\it systemModule\/}(\mbox{\it i\/}) ~\equiv~ $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf Module}\newline
 \:\: \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it i\/} = \mbox{\it IVM\_1\_0\/}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\it i\/}, \langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/}), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_1\_0}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_symbol\_table}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt name}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt version}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt imports}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt symbols}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt max\_id}''})), \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it{in}\small $\mbox{\bf Unicode}$}(\mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''}))\rangle \rangle )\newline
+\:\mbox{\bf{if}}\:\mbox{\it i\/} = \mbox{\bf ivm}_{\scriptsize 1.0}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\it i\/}, \mbox{\bf systemSymbols}_{\scriptsize 1.0}\rangle )\newline
 \:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt Unsupported Ion version: }''}, \mbox{\it i\/}\!\downarrow_{0}, \mbox{\rm ``{\tt .}''}, \mbox{\it i\/}\!\downarrow_{1})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -378,7 +390,7 @@
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
 \:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
-\:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedModule}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\it IVM\_1\_0\/}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\rangle ) \decrindent
+\:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf SharedModule}$}(\langle \mbox{\it n\/}, \mbox{\it v\/}, \mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\bf ivm}_{\scriptsize 1.0}, {\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\rangle ) \decrindent
  \decrindent
 % end::compile_SST[]
 \newline
@@ -389,7 +401,7 @@
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = 0\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
-\:\mbox{\bf{else}}\:\langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/})\rangle \S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - 1)\newline
+\:\mbox{\bf{else}}\:\langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\rangle \S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - 1)\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::symbol_padding[]
@@ -584,7 +596,7 @@
 \:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}})\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it SYM0\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
@@ -752,7 +764,7 @@
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}(\mbox{\bf dotnull})\newline
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}({\cal X}_{\mbox{\scriptsize\bf SSymTok}}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf SSymTok}$}}, \rho))\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -764,7 +776,7 @@
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf List}$}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf List}$}(\mbox{\bf dotnull})\newline
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf List}$}({\cal X}_{\mbox{\scriptsize\bf STree}}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf STree*}$}}, \rho))\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -776,7 +788,7 @@
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Sexp}$}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Sexp}$}(\mbox{\bf dotnull})\newline
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Sexp}$}({\cal X}_{\mbox{\scriptsize\bf STree}}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf STree*}$}}, \rho))\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -819,7 +831,7 @@
 \:\: \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}(\mbox{\it DOTNULL\/})\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}(\mbox{\bf dotnull})\newline
 \:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}({\cal X}_{\mbox{\scriptsize\bf SField}}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf SField*}$}}, \rho))\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -895,7 +907,7 @@
 \:\: \setandincrindent
 \lambda \mbox{\it d\/} \mbox{\it c\/}. \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it p\/}_{0} = \mbox{\it p\/}(\mbox{\it d\/})\newline
-\:\mbox{\bf{and}}\:\rho_{0} = \mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \mbox{\it c\/}, \mbox{\it IVM\_1\_0\/}, \mbox{\it systemModule\/}(\mbox{\it IVM\_1\_0\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle )\newline
+\:\mbox{\bf{and}}\:\rho_{0} = \mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \mbox{\it c\/}, \mbox{\bf ivm}_{\scriptsize 1.0}, \mbox{\it systemModule\/}(\mbox{\bf ivm}_{\scriptsize 1.0})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle )\newline
 \:\mbox{\bf{and}}\:\kappa_{0} = \lambda \rho \mbox{\it v\/}^{\ast}.\mbox{\it v\/}^{\ast}\newline
 \:\mbox{\bf{in}}\:\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}(\mbox{\it p\/}_{0}, \rho_{0}, \kappa_{0}) \decrindent
  \decrindent

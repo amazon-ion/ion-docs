@@ -318,7 +318,7 @@ include::{modeltex}[tag=Int]
 include::{modeltex}[tag=String]
 ++++
 
-The singleton domain **DotNull** contains only an opaque constant `DOTNULL`
+The singleton domain **DotNull** contains only an opaque constant *dotnull*
 that we use as a sentinel for the various typed nulls.  Such a thing is the only
 option for the **NullNull** domain, where it denotes `null.null`.  The domains
 **Bool**, **Int**, and **String** simply combine the obvious primitive
@@ -347,7 +347,7 @@ include::{modeltex}[tag=SymTok]
 include::{modeltex}[tag=Symbol]
 ++++
 
-*Sym0* is a singleton domain containing only an opaque constant named `SYM0`.
+*Sym0* is a singleton domain containing only an opaque constant named *sym0*.
 As we'll see, this is our denotation for the syntactic token `$0`, symbol zero.
 
 :fn-symeq: footnote:[This fails to properly account for absent shared symbols; \
@@ -553,16 +553,22 @@ special handling here.  In contrast, IVMs are dedicated syntactic keywords
 they match the grammar for symbols.
 
 Since we cannot express IVMs within *STree*, we model these top-level-only
-features through a top-level-only domain:
+features through separate domain.
+A top-level syntax tree can be any general syntax tree, or an IVM:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=TSTree]
-\newline
-include::{modeltex}[tag=IVM]
 ++++
 
-In other words, a top-level syntax tree can be any general syntax tree, or an IVM.
+IVMs are straightforward:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=IVM]
+\newline
+include::{modeltex}[tag=IVM_1_0]
+++++
 
 We'll want to compare IVMs, so here's an equality operator:
 
@@ -980,6 +986,9 @@ First we define the content of the system module for a given Ion version:
 
 [{denotation}]
 ++++
+include::{modeltex}[tag=systemSymbols_1_0]
+\newline
+\newline
 include::{modeltex}[tag=systemModule]
 ++++
 
@@ -1422,6 +1431,13 @@ stem:[v!  ~\equiv~  v \downarrow_0]
 [{denotation}]
 ++++
 include::{modeltex}[tag=domains]
+++++
+
+=== Constants
+
+[{denotation}]
+++++
+include::{modeltex}[tag=constants]
 ++++
 
 === Functions
