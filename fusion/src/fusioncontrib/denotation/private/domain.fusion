@@ -37,7 +37,7 @@
     // Singleton domains
     define_singleton_domain
     is_singleton_domain
-    singleton
+    singleton_const_id
 
     // Base domain value operators
     is_base_domain
@@ -147,34 +147,37 @@ Determines whether `v` is a direct element of the `domain`.
   (define SingletonDomain
     (make_domain_meta "SingletonDomain" null))
 
-  (define (make_singleton_domain name desc)
-    (make_domain SingletonDomain name (always true) desc null))
+  (define (make_singleton_domain name desc const_id)
+    (make_domain SingletonDomain name (always true) desc const_id))
 
   (define (is_singleton_domain d)
     (is_domain_of_type SingletonDomain d))
 
-  (define (singleton d)
-    "Returns a value in a singleton domain `d`."
+  (define (singleton_const_id d)
     (unless (is_singleton_domain d)
-      (raise_argument_error "singleton" "singleton domain" 0 d))
-    (make_value d null))
+      (raise_argument_error "singleton_const_id" "singleton domain" 0 d))
+    (domain_data d))
 
 
   (define_syntax define_singleton_domain
     '''
-    (define_singleton_domain name description)
+    (define_singleton_domain name description const_name)
     '''
     (lambda (stx)
-      (unless (=== (syntax_size stx) 3)
+      (unless (=== (syntax_size stx) 4)
         (wrong_syntax stx "Bad syntax for define_singleton_domain"))
-      (let [(name_stx (syntax_get stx 1)),
-            (desc_stx (syntax_get stx 2))]  // TODO typecheck
+      (let [(name_stx  (syntax_get stx 1)),
+            (desc_stx  (syntax_get stx 2)),
+            (const_stx (syntax_get stx 3))]  // TODO typecheck
         (datum_to_syntax
-          (QQ
-            (define (UQ name_stx)
-              (make_singleton_domain
-                (quote (UQ name_stx))
-                (UQ desc_stx))))
+          (QQ (begin
+                (define (UQ name_stx)
+                  (make_singleton_domain
+                    (quote (UQ name_stx))
+                    (UQ desc_stx)
+                    (QS (UQ const_stx))))
+                (define (UQ const_stx)
+                  (make_value (UQ name_stx) null))))
           (quote_syntax context)
           stx))))
 

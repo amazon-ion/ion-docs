@@ -147,8 +147,10 @@ or syntax string or symbol.
 
   (define (pp_domain_rhs d e)
     (cond
-      ((is_singleton_domain d) (display "\\mbox{(" (texescape (domain_description d)) ")}"))
       ((is_base_domain      d) (display "\\mbox{(" (texescape (domain_description d)) ")}"))
+      ((is_singleton_domain d) (display "\\{\\; ")
+                               (pp_print (singleton_const_id d) e)
+                               (display " \\;\\}"))
       ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
       ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " \\times "))
       ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " \\times ")

@@ -71,6 +71,7 @@ References:
     pp_write
     product_domain_subdomains
     seq_domain_subdomain
+    singleton_const_id
     sym_image
     type_method
     union_domain_subdomains

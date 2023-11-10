@@ -10,7 +10,7 @@
   (define_model M1
     (import B)
 
-    (dom Single = "singleton")
+    (dom Single = (= SINGLE) "singleton")
 
     (dom Z = (^ is_int)       "Integers")
     (dom D = (^ is_decimal)   "Decimals")

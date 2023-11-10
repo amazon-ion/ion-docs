@@ -70,22 +70,23 @@ Spec Problems
   (define_model Ion
     (import B I Unicode)
 
-    (dom IVM     = (* I I) "Ion version markers")
+    //=============================
+    // Ion Version Markers
+
+    (dom IVM = (* I I) "Ion version markers")
+
+    (const IVM_1_0 (tuple IVM 1 0))
 
     (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
       (and (EQ (ith i1 0) (ith i2 0))
            (EQ (ith i1 1) (ith i2 1))))
-
-    (const IVM_1_0 (tuple IVM 1 0))
-
-    (dom Sym0    = "The undefined symbol")
 
 
     //=============================
     // Simple values require no expansion.
     // Their 'syntax' and 'application' denotations are the same.
 
-    (dom DotNull = "Sentinel for typed nulls")
+    (dom DotNull  = (= DOTNULL) "Sentinel for typed nulls")
 
     (dom NullNull = (+ DotNull))
     (dom Bool     = (+ B DotNull))
@@ -122,6 +123,7 @@ Spec Problems
     //=============================
     // Application-layer Data Types
 
+    (dom Sym0      = (= SYM0)            "The undefined symbol $0")
     (dom SymTok    = (+ Unicode Sym0))  // "Expanded" symbol token
     (dom Symbol    = (+ SymTok DotNull))
 
@@ -557,8 +559,6 @@ Spec Problems
 
   )
 
-  (define SYM0             (singleton Sym0))
-  (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedModule*') Catalog))
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
 )

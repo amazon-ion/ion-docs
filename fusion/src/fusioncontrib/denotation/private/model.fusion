@@ -86,27 +86,28 @@ in the same order the author used.
         (values
           (sexp
             (quote begin)
-            (if (is_string def_val)
-              (result (QQ (define_singleton_domain (UQ name) (UQ def))))
-              (if (is_pair def_val)
-                  (let [(op   (syntax_unwrap (head def_val))),
-                        (args (tail def_val))]
-                    (cond
-                      ((=== (quote ^) op)
-                       (result
-                         (pair (quote define_base_domain) (pair name (pair desc args)))))
-                      ((=== (quote +) op)
-                       (result
-                         (pair (quote define_union_domain) (pair name (pair desc args)))))
-                      ((=== (quote *) op)
-                        (result
-                          (pair (quote define_product_domain) (pair name (pair desc args)))))
-                      ((=== (quote ->) op)
-                        (result
-                          (pair (quote define_func_domain) (pair name (pair desc args)))))
-                      (true (wrong_syntax def
-                              "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
-                  (wrong_syntax def "Expected string or sexp for domain definition")))
+            (if (is_pair def_val)
+              (let [(op   (syntax_unwrap (head def_val))),
+                    (args (tail def_val))]
+                (cond
+                  ((=== (quote =) op)
+                   (result
+                     (pair (quote define_singleton_domain) (pair name (pair desc args)))))
+                  ((=== (quote ^) op)
+                   (result
+                     (pair (quote define_base_domain) (pair name (pair desc args)))))
+                  ((=== (quote +) op)
+                   (result
+                     (pair (quote define_union_domain) (pair name (pair desc args)))))
+                  ((=== (quote *) op)
+                    (result
+                      (pair (quote define_product_domain) (pair name (pair desc args)))))
+                  ((=== (quote ->) op)
+                    (result
+                      (pair (quote define_func_domain) (pair name (pair desc args)))))
+                  (true (wrong_syntax def
+                          "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+              (wrong_syntax def "Expected sexp for domain definition"))
             (result (sexp (quote define_opt_domain)
                       (datum_to_syntax (symbol_append (syntax_unwrap name) "?") name)
                       (string_append "Optional " (syntax_unwrap name))
@@ -161,15 +162,15 @@ indexes, as exposed through `model_domains` and `model_fns`.
 
   (define_syntax dom
     '''
-    (dom name = description)
-
-Defines a singleton domain with the given name and description.
-
     (dom name = <domain-spec> description?)
 
 Defines a domain within a model.
 
 The <domain-spec> must have one of these forms:
+
+    (= <const-id>)
+
+Defines a singleton domain holding only a constant bound to the given name.
 
     (^ <pred-expr>)
 
