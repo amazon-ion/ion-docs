@@ -57,9 +57,10 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
 
 
       // Singletons
-      (sym_image "\\mbox{\\bf dotnull}"                DOTNULL)
-      (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.0}" IVM_1_0)
-      (sym_image "\\mbox{\\bf sym0}"                   SYM0)
+      (sym_image "\\mbox{\\bf dotnull}"                                DOTNULL)
+      (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.0}"                 IVM_1_0)
+      (sym_image "\\mbox{\\bf sym0}"                                   SYM0)
+      (sym_image "\\mbox{\\bf systemSymbols}_{\\scriptsize 1.0}"       systemSymbols_1_0)
 
       (sym_image "\\mbox{\\it best\\_match}" best_match_Catalog best_match_Module)
 

@@ -199,21 +199,22 @@ Spec Problems
     //==========================================================================
     // System Modules
 
+    (const systemSymbols_1_0
+      (seq 'SymTok*'
+        (lift_to SymTok SYM0)
+        (lift_to SymTok "$ion")
+        (lift_to SymTok "$ion_1_0")
+        (lift_to SymTok "$ion_symbol_table")
+        (lift_to SymTok "name")
+        (lift_to SymTok "version")
+        (lift_to SymTok "imports")
+        (lift_to SymTok "symbols")
+        (lift_to SymTok "max_id")
+        (lift_to SymTok "$ion_shared_symbol_table")))
+
     (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
-        (tuple Module
-          i
-          (seq 'SymTok*'
-            (lift_to SymTok SYM0)
-            (lift_to SymTok "$ion")
-            (lift_to SymTok "$ion_1_0")
-            (lift_to SymTok "$ion_symbol_table")
-            (lift_to SymTok "name")
-            (lift_to SymTok "version")
-            (lift_to SymTok "imports")
-            (lift_to SymTok "symbols")
-            (lift_to SymTok "max_id")
-            (lift_to SymTok "$ion_shared_symbol_table")))
+        (tuple Module i systemSymbols_1_0)
         (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1))))
 
 
