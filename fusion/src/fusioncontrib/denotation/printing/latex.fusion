@@ -106,7 +106,8 @@ or syntax string or symbol.
 
 
   (define (pp_newline e)
-    (display NL))
+    (unless (is_oneline_mode e)
+      (display NL)))
 
   (define (pp_incr_indentation e)
     (display " \\setandincrindent\n")
@@ -441,6 +442,9 @@ A model printer that renders in Unicode plain-text.
       (form_method U_EQ            pp_equals)
       (form_method GTE             (pp_binary "" " \\ge " ""))
       (form_method GT              (pp_binary "" " > " ""))
+
+      // Rendering hints
+      (form_method 'hint:oneline'  pp_oneline)  // TODO Should be provided by base printer.
 
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  pp_fn_call)

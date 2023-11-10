@@ -45,11 +45,13 @@ References:
     form_method
     func_domain_argdomains
     func_domain_output
+    'hint:oneline'
     is_base_domain
     is_const
     is_domain
     is_fn
     is_func_domain
+    is_oneline_mode
     is_product_domain
     is_seq_domain
     is_singleton_domain
@@ -62,6 +64,7 @@ References:
     pp_binary
     pp_display
     pp_nary
+    pp_oneline
     pp_print
     pp_print_terms
     pp_symbol
@@ -87,9 +90,37 @@ References:
 
   // Environment is a sexp of frames, each frame is one of:
   //  * A procedure, takes a value and returns a print method xor falsey.
+  //  * A `oneline` record, avoiding line breaks for some span of code.
   //  * A `symimage` record, mapping one or more identifiers to a printed image.
   (define (model_printer_env p) (accessor p 1))
 
+
+  //============================================================================
+  // One-Line Mode
+
+  (record 'frame:oneline' ())
+
+
+  (define (is_oneline_mode e)
+    (and (is_pair e)
+          (or ('is_frame:oneline' (head e))
+              (is_oneline_mode (tail e)))))
+
+  (define ('hint:oneline' v)
+    '''
+Does nothing; returns the given value.
+
+When encountered by the pretty-printer, the argument code is printed in
+one-line mode.
+    '''
+    v)
+
+  (define (pp_oneline v e)
+    (pp_print (. v 1) (pair ('frame:oneline') e)))
+
+
+  //============================================================================
+  // Symbol images
 
   (record symimage (image vars))
 
@@ -114,6 +145,10 @@ Sequences in the arguments are flattened recursively.
                      (append (flatten_to_sexp (tail clauses)) (model_printer_env base))
                      (append (flatten_to_sexp clauses)
                        (sexp
+                         // Would like to have this here, but this is overridden
+                         // by sub-printer config for syntax-sexp (fn application).
+//                       (form_method 'hint:oneline'       pp_oneline)
+
                          (type_method is_base_domain_value pp_basedom)
                          (type_method is_string            pp_write)
                          (type_method is_symbol            pp_write)

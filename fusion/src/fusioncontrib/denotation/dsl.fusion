@@ -8,6 +8,7 @@ semantics DSL.
 
   (require
     "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/printing"
   )
 
 
@@ -73,4 +74,8 @@ semantics DSL.
       (NOT    not)
       (OR     or)
       (PLUS   +)))
+
+  (provide                // Pretty-printing hints
+    'hint:oneline'
+  )
 )
