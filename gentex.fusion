@@ -26,6 +26,16 @@
 )
 (displayln "% end::domains[]")
 
+(displayln "% tag::constants[]")
+(for [(v (model_consts Ion))]
+  (displayln "\\newline")
+  (displayln "% tag::" (const_name v) "[]")
+  (ion_print_latex v)
+  (displayln "% end::" (const_name v) "[]")
+  (displayln "\\newline")
+)
+(displayln "% end::constants[]")
+
 (displayln "% tag::functions[]")
 (for [(v (model_fns Ion))]
   (displayln "\\newline")

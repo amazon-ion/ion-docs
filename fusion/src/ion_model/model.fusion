@@ -76,6 +76,7 @@ Spec Problems
       (and (EQ (ith i1 0) (ith i2 0))
            (EQ (ith i1 1) (ith i2 1))))
 
+    (const IVM_1_0 (tuple IVM 1 0))
 
     (dom Sym0    = "The undefined symbol")
 
@@ -556,7 +557,6 @@ Spec Problems
 
   )
 
-  (define IVM_1_0          (tuple IVM 1 0))
   (define SYM0             (singleton Sym0))
   (define DOTNULL          (singleton DotNull))
   (define EMPTY_CATALOG    (lift (seq 'SharedModule*') Catalog))
