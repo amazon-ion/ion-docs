@@ -200,17 +200,18 @@ Spec Problems
     // System Modules
 
     (const systemSymbols_1_0
-      (seq 'SymTok*'
-        (lift_to SymTok SYM0)
-        (lift_to SymTok "$ion")
-        (lift_to SymTok "$ion_1_0")
-        (lift_to SymTok "$ion_symbol_table")
-        (lift_to SymTok "name")
-        (lift_to SymTok "version")
-        (lift_to SymTok "imports")
-        (lift_to SymTok "symbols")
-        (lift_to SymTok "max_id")
-        (lift_to SymTok "$ion_shared_symbol_table")))
+      ('hint:multiline'
+        (seq 'SymTok*'
+          (lift_to SymTok SYM0)
+          (lift_to SymTok "$ion")
+          (lift_to SymTok "$ion_1_0")
+          (lift_to SymTok "$ion_symbol_table")
+          (lift_to SymTok "name")
+          (lift_to SymTok "version")
+          (lift_to SymTok "imports")
+          (lift_to SymTok "symbols")
+          (lift_to SymTok "max_id")
+          (lift_to SymTok "$ion_shared_symbol_table"))))
 
     (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
@@ -296,9 +297,10 @@ Spec Problems
     (fn normalize_name ((v 'Value?') -> Unicode)             // "" = absent or invalid
       (if (opt_is_present v)
         (let [(c (Value_content (opt_value v)))]
-          (if (and (element_of c String) (not (element_of c DotNull)))
-            (lower c String Unicode)
-            ""))
+          ('hint:oneline'
+            (if (and (element_of c String) (not (element_of c DotNull)))
+              (lower c String Unicode)
+              "")))
         ""))
 
     (fn normalize_version ((v 'Value?') -> I)                // 1 = absent or invalid
@@ -306,7 +308,7 @@ Spec Problems
         (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(i (lower c Int I))]
-              (if (< i 1) 1 i))
+              ('hint:oneline' (if (< i 1) 1 i)))
             1))
         1))
 
@@ -316,7 +318,7 @@ Spec Problems
         (let [(c (Value_content (opt_value v)))]
           (if (and (element_of c Int) (not (element_of c DotNull)))
             (let [(n (lower c Int I))]
-              (if (< n 0) (opt 'I?') (opt 'I?' n)))
+              ('hint:oneline' (if (< n 0) (opt 'I?') (opt 'I?' n))))
             (opt 'I?')))
         (opt 'I?')))
 
@@ -330,7 +332,10 @@ Spec Problems
           EMPTY_SYMTOKS
           (let [(s (best_match_Catalog (Environment_catalog r) n v))]
             (if (opt_is_present m)  // We have max_id, adjust the length
-              (let [(ts (if (opt_is_present s) (SharedModule_symtab (opt_value s)) (seq 'SymTok*')))]
+              (let [(ts ('hint:oneline'
+                          (if (opt_is_present s)
+                            (SharedModule_symtab (opt_value s))
+                            (seq 'SymTok*'))))]
                 (adjust_length ts (opt_value m)))
               (if (and (opt_is_present s) (EQ (SharedModule_version (opt_value s)) v))
                 (SharedModule_symtab (opt_value s))
@@ -341,9 +346,10 @@ Spec Problems
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
-          (let [(ts (if (and (element_of c Struct) (not (element_of c DotNull)))
-                      (compile_import (lower c Struct) r)
-                      EMPTY_SYMTOKS))]
+          (let [(ts ('hint:oneline'
+                      (if (and (element_of c Struct) (not (element_of c DotNull)))
+                        (compile_import (lower c Struct) r)
+                        EMPTY_SYMTOKS)))]
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
     (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
@@ -352,27 +358,30 @@ Spec Problems
           (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
             (Environment_symbols r)
             (let [(c (Value_content (opt_value v)))]
-              (if (and (element_of c List) (not (element_of c DotNull)))
-                (seq_append ts
-                            (compile_imports (lower c List 'Value*') r))
-                ts)))
+              ('hint:oneline'
+                (if (and (element_of c List) (not (element_of c DotNull)))
+                  (seq_append ts
+                              (compile_imports (lower c List 'Value*') r))
+                  ts))))
           ts)))
 
     (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
-          (let [(t (if (and (element_of c String) (not (element_of c DotNull)))
-                     (lift_to SymTok (lower c String Unicode))
-                     (lift_to SymTok SYM0)))]
+          (let [(t ('hint:oneline'
+                     (if (and (element_of c String) (not (element_of c DotNull)))
+                       (lift_to SymTok (lower c String Unicode))
+                       (lift_to SymTok SYM0))))]
             (seq_prepend t (compile_symbols (seq_tail vs)))))))
 
     (fn declared_symbols ((v 'Value?') -> 'SymTok*')
       (if (opt_is_present v)
         (let [(c (Value_content (opt_value v)))]
-          (if (and (element_of c List) (not (element_of c DotNull)))
-            (compile_symbols (lower c List 'Value*'))
-            EMPTY_SYMTOKS))
+          ('hint:oneline'
+            (if (and (element_of c List) (not (element_of c DotNull)))
+              (compile_symbols (lower c List 'Value*'))
+              EMPTY_SYMTOKS)))
         EMPTY_SYMTOKS))
 
 
