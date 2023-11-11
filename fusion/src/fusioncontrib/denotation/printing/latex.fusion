@@ -19,9 +19,9 @@ environment with additional definitions along these lines (from LiSP2TeX):
     \\def\\decrindent{ }
     \\def\\newline{ }
   \\else
-    \\def\\setandincrindent{ $ \\@settab\\@tabplus $ }
-    \\def\\decrindent{ $ \\@tabminus $ }
-    \\def\\newline{ $ \\@tabcr $ }
+    \\def\\setandincrindent{ $\\@settab\\@tabplus$ } % Avoid space between the $
+    \\def\\decrindent{ $\\@tabminus$ }
+    \\def\\newline{ $\\@tabcr$ }
   \\fi\\begin{tabbing} $ }
 ```
 
@@ -65,6 +65,12 @@ TODO
 
 
   // Formatting constants per LiSP2TeX
+
+  // LaTeX space commands:
+  //   \,  thin space       (normally 1/6 = 3/18 of a quad)
+  //   \:  medium space     (normally 2/9 = 4/18 of a quad)
+  //   \>  alt medium space
+  //   \;  thick space      (normally 5/18 of a quad)
 
   (define SPACE "\\:")       // medium space
   (define NL "\\newline\n")  // "real" newline for code readablity
@@ -188,7 +194,7 @@ or syntax string or symbol.
     (display DEFINE_EQ)
     (display "$\\`$ ")   // Tabbing command to right-align the rest of the line
     (pp_domain_rhs (domain_of v) e)
-    (display NL SPACE SPACE)
+    (display NL "\\;\\;")
     (let [(e1 (pp_incr_indentation e))]
       (pp_print (fn_code v) e1)
       (pp_decr_indentation e1)))
@@ -222,6 +228,10 @@ or syntax string or symbol.
   //============================================================================
   // Special Forms and Functions
 
+  (define (pp_lambda stx e)
+    (pp_print_terms (. stx 1) e "\\lambda " " " "\\:.\\:")
+    (pp_print (. stx 2) e))
+
   (define (pp_fn_call stx e)
     (lets [(sexp (desyntax stx)),
            (name (head sexp)),
@@ -231,6 +241,7 @@ or syntax string or symbol.
 
 
   (define (pp_bindings bindings e)
+    "Print name=expr bindings for let, letrec, etc."
     (assert (is_sexp bindings))
     (when (is_pair bindings)
       (let [(binding (syntax_unwrap (head bindings)))]
@@ -421,16 +432,14 @@ A model printer that renders in Unicode plain-text.
       (form_method IF1             pp_if)
       (form_method inject_into     pp_lift_to)
       (form_method ith             pp_ith)
-      (form_method lambda          (|v e| (pp_print_terms (. v 1) e "\\lambda " " " ".")
-                                          (pp_print (. v 2) e)))
+      (form_method lambda          pp_lambda)
       (form_method let             pp_let)
       (form_method letrec          pp_letrec)
       (form_method lift            pp_lift)
       (form_method lift_to         pp_lift_to)
       (form_method lower           pp_lower)
       (form_method lower_to        pp_lower_to)
-      (form_method mk_fn           (|s e| (pp_print_terms (. s 2) e "\\lambda " " " ".")
-                                          (pp_print (. s 3) e)))
+      (form_method mk_fn           (|s e| (pp_lambda (tail s) e))) // Skip over the domain
       (form_method opt             pp_seq)
       (form_method opt_is_present  (pp_unary "" "\\mbox{\\ooalign{?\\cr\\hss!\\kern .025em\\hss}}"))
       (form_method opt_value       (pp_unary "" "\\mbox{!}"))

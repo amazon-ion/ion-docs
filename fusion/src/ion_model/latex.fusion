@@ -40,15 +40,19 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor Value_annots         "annots")
       (accessor Value_content        "content")
 
-      (form_method IVM_eq              (pp_binary "" " = " ""))
-      (fn_method   IVM_eq              pp_fn_def1)
 
+      // One-liners
+      (fn_method Catalog_extend           pp_fn_def1)
+      (fn_method IVM_eq                   pp_fn_def1)
       (fn_method Struct_get               pp_fn_def1)
       (fn_method SymTok_matches           pp_fn_def1)
       (fn_method Symbol_matches           pp_fn_def1)
       (fn_method Value_is_symbol_matching pp_fn_def1)
 
+
+      // Functions with infix syntax
       (form_method Fields_get                (pp_binary "" " \\odot^{\\ast} " ""))
+      (form_method IVM_eq                    (pp_binary "" " = " ""))
       (form_method Struct_get                (pp_binary "" " \\odot^{\\ast} " ""))
       (form_method Struct_get1               (pp_binary "" " \\odot " ""))
       (form_method Symbol_matches            (pp_binary "" " \\cong " ""))
@@ -62,7 +66,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\bf sym0}"                                   SYM0)
       (sym_image "\\mbox{\\bf systemSymbols}_{\\scriptsize 1.0}"       systemSymbols_1_0)
 
-      (sym_image "\\mbox{\\it best\\_match}" best_match_Catalog best_match_Module)
+      (sym_image "\\mbox{\\it best\\_match}"                           best_match_Catalog
+                                                                       best_match_Module)
 
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)
