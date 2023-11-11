@@ -78,5 +78,6 @@ semantics DSL.
   (provide                // Pretty-printing hints
     'hint:multiline'
     'hint:oneline'
+    'hint:paren'
   )
 )

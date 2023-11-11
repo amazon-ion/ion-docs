@@ -47,6 +47,7 @@ References:
     func_domain_output
     'hint:multiline'
     'hint:oneline'
+    'hint:paren'
     is_base_domain
     is_const
     is_domain
@@ -144,6 +145,19 @@ multi-line mode.  This overrides any extant one-line mode.
 
   (define (pp_multiline v e)
     (pp_print (. v 1) (pair ('frame:multiline') e)))
+
+
+  //============================================================================
+  // Forcing parentheses
+
+  (define ('hint:paren' v)
+    '''
+Does nothing; returns the given value.
+
+When encountered by the pretty-printer, the argument code is printed within
+parentheses.
+    '''
+    v)
 
 
   //============================================================================

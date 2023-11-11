@@ -469,6 +469,7 @@ A model printer that renders in Unicode plain-text.
       // Rendering hints            // TODO Should be provided by base printer.
       (form_method 'hint:multiline' pp_multiline)
       (form_method 'hint:oneline'   pp_oneline)
+      (form_method 'hint:paren'     (pp_unary "(" ")"))
 
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  pp_fn_call)
