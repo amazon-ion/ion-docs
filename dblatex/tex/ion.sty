@@ -59,7 +59,8 @@
 %% This is added when equations have the Denotation role.
 \newcommand{\BeginDenotation}{\begingroup
   \def\EndDenotation{ $ \end{tabbing}\endgroup}
-  \def\setandincrindent{ $ \@settab\@tabplus $ }
-  \def\decrindent{ $ \@tabminus $ }
-  \def\newline{ $ \@tabcr $ }
+  % Avoid space between the $ below, it adds unwanted padding around tab-stops.
+  \def\setandincrindent{ $\@settab\@tabplus$ }
+  \def\decrindent{ $\@tabminus$ }
+  \def\newline{ $\@tabcr$ }
   \begin{tabbing} $ }
