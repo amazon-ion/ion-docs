@@ -295,31 +295,26 @@ Spec Problems
 
 
     (fn normalize_name ((v 'Value?') -> Unicode)             // "" = absent or invalid
-      (if (opt_is_present v)
-        (let [(c (Value_content (opt_value v)))]
-          ('hint:oneline'
-            (if (and (element_of c String) (not (element_of c DotNull)))
-              (lower c String Unicode)
-              "")))
+      (if (and (opt_is_present v)
+               (and (element_of (Value_content (opt_value v)) String)
+                    (not (element_of (Value_content (opt_value v)) DotNull))))
+        (lower (Value_content (opt_value v)) String Unicode)
         ""))
 
     (fn normalize_version ((v 'Value?') -> I)                // 1 = absent or invalid
-      (if (opt_is_present v)
-        (let [(c (Value_content (opt_value v)))]
-          (if (and (element_of c Int) (not (element_of c DotNull)))
-            (let [(i (lower c Int I))]
-              ('hint:oneline' (if (< i 1) 1 i)))
-            1))
+      (if (and (opt_is_present v)
+               (and (element_of (Value_content (opt_value v)) Int)
+                    (and (not (element_of (Value_content (opt_value v)) DotNull))
+                         (>= (lower (Value_content (opt_value v)) Int I) 1))))
+        (lower (Value_content (opt_value v)) Int I)
         1))
 
-    // TODO Try using `and` instead of nested IFs
     (fn normalize_max_id ((v 'Value?') -> 'I?')              // <> = absent or invalid
-      (if (opt_is_present v)
-        (let [(c (Value_content (opt_value v)))]
-          (if (and (element_of c Int) (not (element_of c DotNull)))
-            (let [(n (lower c Int I))]
-              ('hint:oneline' (if (< n 0) (opt 'I?') (opt 'I?' n))))
-            (opt 'I?')))
+      (if (and (opt_is_present v)
+               (and (element_of (Value_content (opt_value v)) Int)
+                    (and (not (element_of (Value_content (opt_value v)) DotNull))
+                         (>= (lower (Value_content (opt_value v)) Int I) 0))))
+        (opt 'I?' (lower (Value_content (opt_value v)) Int I))
         (opt 'I?')))
 
 
