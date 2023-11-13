@@ -224,6 +224,19 @@ Spec Problems
 
     (dom Catalog = (+ 'SharedModule*'))
 
+
+    (fn exactModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule')
+      (exactModule_SMs (lower c 'SharedModule*') n v))
+
+    (fn exactModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule')
+      (if (seq_is_empty ss)
+        (wrong "No exact-match for " n "@" v)
+        (if (and (U_EQ (SharedModule_name (seq_head ss)) n)
+                 (EQ (SharedModule_version (seq_head ss)) v))
+          (seq_head ss)
+          (exactModule_SMs (seq_tail ss) n v))))
+
+
     (fn bestModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule?')
       (bestModule_SMs (lower c 'SharedModule*') n v))
 
@@ -324,16 +337,15 @@ Spec Problems
         (if (or (U_EQ n "")
                 (U_EQ n "$ion"))
           EMPTY_SYMTOKS
-          (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
-            (if (opt_is_present m)  // We have max_id, adjust the length
+          (if (opt_is_present m)
+            // We have max_id, find best-match and adjust the length
+            (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
               (let [(ts ('hint:oneline'
                           (if (opt_is_present s)
                             (SharedModule_symtab (opt_value s))
                             (seq 'SymTok*'))))]
-                (adjust_length ts (opt_value m)))
-              (if (and (opt_is_present s) (EQ (SharedModule_version (opt_value s)) v))
-                (SharedModule_symtab (opt_value s))
-                (wrong "No exact-match for " n "@" v)))))))
+                (adjust_length ts (opt_value m))))
+            (SharedModule_symtab (exactModule_Catalog (Environment_catalog r) n v))))))
 
 
     (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')

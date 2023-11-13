@@ -68,6 +68,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
 
       (sym_image "\\mbox{\\it bestModule}"                             bestModule_Catalog
                                                                        bestModule_SMs)
+      (sym_image "\\mbox{\\it exactModule}"                            exactModule_Catalog
+                                                                       exactModule_SMs)
 
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)
