@@ -241,6 +241,17 @@ Spec Problems
           (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
           (ExportedMacros_get (seq_tail ms) u))))
 
+    (fn BoundModules_get ((ms 'BoundModule*') (u Unicode) -> 'Macro?')
+      (if (seq_is_empty ms)
+        (opt 'Macro?')
+        (let [(m1 (ExportedMacros_get (BoundModule_mactab (seq_head ms)) u)),
+              (m2 (BoundModules_get   (seq_tail ms) u))]
+          (if (opt_is_present m1)
+            (if (opt_is_present m2)
+              (wrong "Ambiguous macroreference :" u)
+              m1)
+            m2))))
+
 
     //==========================================================================
     // System Modules
@@ -573,21 +584,30 @@ Spec Problems
 
     (fn resolve_MacroRef ((m MacroRef) (r Environment) -> Macro)
       (let [(mod (MacroRef_module m)),
-            (mac (MacroRef_macro m))]
+            (mac (MacroRef_macro  m)),
+            (sysMod (systemModule (Environment_IVM r)))]
         (if (opt_is_present mod)
           // Quailified reference
           (if (U_EQ (opt_value mod) "$ion")
-            // TODO handle ints
-            (let [(u (lower_to Unicode mac))]
+            (if (element_of mac Unicode)
               // TODO Get the module from the Environment
-              (let [(m (ExportedMacros_get (BoundModule_mactab (systemModule (Environment_IVM r))) u))]
+              (let [(m (ExportedMacros_get (BoundModule_mactab sysMod) (lower_to Unicode mac)))]
                 (if (opt_is_present m)
                   (opt_value m)
-                  (wrong "No such macro: :$ion:" u))))
+                  (wrong "No such macro: :$ion:" (lower_to Unicode mac))))
+              // TODO handle qualified ints
+              (wrong "Qualified macro addresses not implemented"))
             // TODO Find other modules
             (wrong "Module not in scope: " (opt_value mod)))
           // Named or local-offset
-          (wrong "Non-qualified references not implemented"))))
+          (if (element_of mac Unicode)
+            (let [(ms (seq_prepend sysMod (Environment_mactab r)))]
+              (let [(m (BoundModules_get ms (lower_to Unicode mac)))]
+                (if (opt_is_present m)
+                  (opt_value m)
+                  (wrong "No such macro: :" (lower_to Unicode mac)))))
+            // TODO handle unqualified ints
+            (wrong "Unqualified macro addresses not implemented")))))
 
 
     (fn expand_SEexp ((v SEexp) (r Environment) -> 'Value*')

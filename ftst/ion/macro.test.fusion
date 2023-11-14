@@ -24,6 +24,12 @@
 (check_expansion
   (quote_top 1 2)
   (quote_top '#$ion_1_1' 1 ('#$:$ion:void') 2))
+(check_expansion
+  (quote_top 1 2)
+  (quote_top '#$ion_1_1' 1 ('#$:void') 2))
+(check_expansion
+  (quote_top 1 2)
+  (quote_top '#$ion_1_1' 1 ('#$:$ion:void' true ('#$:void' false)) 2))
 
 
 // values
@@ -32,8 +38,14 @@
   (quote_top 1 2)
   (quote_top '#$ion_1_1' 1 ('#$:$ion:values') 2))
 (check_expansion
+  (quote_top 1 2)
+  (quote_top '#$ion_1_1' 1 ('#$:values') 2))
+(check_expansion
   (quote_top 1 2 3 4)
   (quote_top '#$ion_1_1' 1 ('#$:$ion:values' 2 3) 4))
+(check_expansion
+  (quote_top 1 2 3 4)
+  (quote_top '#$ion_1_1' 1 ('#$:values' 2 3) 4))
 
 
 "SUCCESS (macro.test)"
