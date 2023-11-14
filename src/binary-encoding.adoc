@@ -653,17 +653,15 @@ EB 02
 [[decimals]]
 ==== Decimals
 
-If an opcode has a high nibble of `0x6_`, it represents a decimal. Low nibble values `0x_E` and below indicate
+If an opcode has a high nibble of `0x6_`, it represents a decimal. Low nibble values indicate
 the number of trailing bytes used to encode the decimal.
 
-The body of the decimal is encoded as a <<flexint, `FlexInt`>> representing its coefficient, followed by a `FixedInt`
-representing its exponent. The width of the exponent is the total length of the decimal encoding minus the length
-of the coefficient. It is possible for the exponent to have a width of zero, indicating an exponent of `0`.
+The body of the decimal is encoded as a <<flexint, `FlexInt`>> representing its exponent, followed by a `FixedInt`
+representing its coefficient. The width of the coefficient is the total length of the decimal encoding minus the length
+of the exponent. It is possible for the coefficient to have a width of zero, indicating a coefficient of `0`. When
+the coefficient is present but has a value of `0`, the coefficient is `-0`.
 
-Decimal values that require more than 14 bytes can be encoded using the variable-length decimal opcode: `0xF6`.
-
-A decimal with a coefficient of `-0` (which cannot be encoded as a `FlexInt`) is encoded using opcode `6F`.
-The opcode is followed by a `FlexInt` representing the exponent.
+Decimal values that require more than 15 bytes can be encoded using the variable-length decimal opcode: `0xF6`.
 
 `0xEB 0x03` represents `null.decimal`.
 
@@ -680,21 +678,22 @@ The opcode is followed by a `FlexInt` representing the exponent.
 [%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
-│┌─── Low nibble 1 indicates a 1-byte decimal
+│┌─── Low nibble 2 indicates a 2-byte decimal
 ││
-61 0F
-   └─── Coefficient: FlexInt 7; no more bytes follow, so exponent is implicitly 0
+62 01 07
+   |  └─── Coefficient: 1-byte FixedInt 7
+   └─── Exponent: FlexInt 0
 ----
 
-.Figure {counter:figure}: Encoding of decimal _`1.27`_
+.Figure {counter:figure}: Encoding of decimal `_1.27_`
 [%unbreakable]
 ----
 ┌──── Opcode in range 60-6F indicates a decimal
-│┌─── Low nibble 3 indicates a 3-byte decimal
+│┌─── Low nibble 2 indicates a 2-byte decimal
 ││
-63 FD 01 FE
-   └─┬─┘ └─── Exponent: 1-byte FixedInt -2
-     └────── Coefficient: FlexInt 127
+62 FD 7F
+   |  └─── Coefficient: FixedInt 127
+   └─── Exponent: 1-byte FlexInt -2
 ----
 
 .Figure {counter:figure}: Variable-length encoding of decimal `_1.27_`
@@ -702,18 +701,30 @@ The opcode is followed by a `FlexInt` representing the exponent.
 ----
 ┌──── Opcode F6 indicates a variable-length decimal
 │
-F6 07 FD 01 FE
-   │  └─┬─┘ └─── Exponent: 1-byte FixedInt -2
-   │    └────── Coefficient: FlexInt 127
-   └───────── Decimal length: FlexUInt 3
+F6 05 FD 7F
+   |  |  └─── Coefficient: FixedInt 127
+   |  └───── Exponent: 1-byte FlexInt -2
+   └─────── Decimal length: FlexUInt 2
+----
+
+.Figure {counter:figure}: Encoding of `_0d3_`, which has a coefficient of zero
+[%unbreakable]
+----
+┌──── Opcode in range 60-6F indicates a decimal
+│┌─── Low nibble 1 indicates a 1-byte decimal
+││
+61 07
+   └────── Exponent: FlexInt 3; no more bytes follow, so the coefficient is implicitly 0
 ----
 
 .Figure {counter:figure}: Encoding of `_-0d3_`, which has a coefficient of negative zero
 [%unbreakable]
 ----
-┌──── Opcode 6F indicates a variable-length decimal with a coefficient of -0
-│
-6F 07
+┌──── Opcode in range 60-6F indicates a decimal
+│┌─── Low nibble 2 indicates a 2-byte decimal
+││
+62 07 00
+   |  └─── Coefficient: 1-byte FixedInt 0, indicating a coefficient of -0
    └────── Exponent: FlexInt 3
 ----
 
@@ -1251,11 +1262,11 @@ timestamp are encoded as bit-fields on a `FixedUInt` that corresponds to the len
 
 If the timestamp's overall length is greater than or equal to `8`, the `FixedUInt` part of the timestamp is `7` bytes
 and the remaining bytes are used to encode fractional seconds. The fractional seconds are encoded as a
-`(coefficient, scale)` pair, which is _similar_ to a <<decimals, decimal>>. The primary difference is that the *scale*
+`(scale, coefficient)` pair, which is _similar_ to a <<decimals, decimal>>. The primary difference is that the *scale*
 represents a negative *exponent* because it is illegal for the fractional seconds value to be greater than or equal to
-`1.0` or less than `0.0`. The coefficient is encoded as a `FlexUInt` (instead of `FlexInt`) to prevent the encoding of
-fractional seconds less than `0.0`. The scale is encoded as a `FixedUInt` (instead of `FixedInt`) to discourage the
-encoding of decimal numbers greater than `1.0`. Note that validation is still required; namely:
+`1.0` or less than `0.0`. The scale is encoded as a `FlexUInt` (instead of `FlexInt`) to discourage the
+encoding of decimal numbers greater than `1.0`. The coefficient is encoded as a `FixedUInt` (instead of `FixedInt`) to
+prevent the encoding of fractional seconds less than `0.0`. Note that validation is still required; namely:
 
 * A scale value of `0` is illegal, as that would result in a fractional seconds greater than `1.0` (a whole second).
 * If `coefficient * 10^-scale > 1.0`, that `(coefficient, scale)` pair is illegal.
@@ -1282,11 +1293,11 @@ byte 0   |YYYY:YYYY|
          +---------+
      6   |....:ssss|
          +=========+
-     7   |FlexUInt | <-- coefficient of the fractional seconds
+     7   |FlexUInt | <-- scale of the fractional seconds
          +---------+
          ...
          +=========+
-     N   |FixedUInt| <-- scale of the fractional seconds
+     N   |FixedUInt| <-- coefficient of the fractional seconds
          +---------+
          ...
 ----
@@ -1312,8 +1323,8 @@ byte 0   |YYYY:YYYY|
 | 1947-12-23T11:22:33+01:15
 | `F7 0F 9B 07 DF 65 AD 57 08`
 
-| 1947-12-23T11:22:33.444555666+01:15
-| `F7 1B 9B 07 DF 65 AD 57 08 50 32 EC 4F 03 09`
+| 1947-12-23T11:22:33.127+01:15
+| `F7 13 9B 07 DF 65 AD 57 08 07 7F`
 |===
 
 
