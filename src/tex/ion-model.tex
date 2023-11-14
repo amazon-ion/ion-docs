@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-13T19:03:41.940-00:00
+%%% This file was generated at 2023-11-14T01:25:59.396-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -330,32 +330,55 @@
 % end::systemModule[]
 \newline
 \newline
-% tag::best_match_Catalog[]
-\mbox{\it best\_match}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule?}\newline
+% tag::exactModule_Catalog[]
+\mbox{\it exactModule}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule}\newline
 \;\; \setandincrindent
-\mbox{\it best\_match}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedModule*}$}}, \mbox{\it n\/}, \mbox{\it v\/}) \decrindent
-% end::best_match_Catalog[]
+\mbox{\it exactModule}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedModule*}$}}, \mbox{\it n\/}, \mbox{\it v\/}) \decrindent
+% end::exactModule_Catalog[]
 \newline
 \newline
-% tag::best_match_Module[]
-\mbox{\it best\_match}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf SharedModule*} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule?}\newline
+% tag::exactModule_SMs[]
+\mbox{\it exactModule}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf SharedModule*} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize name}} = \mbox{\it n\/}\ \wedge\ \mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\newline
+\:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
+\:\mbox{\bf{else}}\:\mbox{\it exactModule}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::exactModule_SMs[]
+\newline
+\newline
+% tag::bestModule_Catalog[]
+\mbox{\it bestModule}(\mbox{\it c\/}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Catalog} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule?}\newline
+\;\; \setandincrindent
+\mbox{\it bestModule}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf SharedModule*}$}}, \mbox{\it n\/}, \mbox{\it v\/}) \decrindent
+% end::bestModule_Catalog[]
+\newline
+\newline
+% tag::bestModule_SMs[]
+\mbox{\it bestModule}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}, \mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf SharedModule*} \times \mbox{\bf Unicode} \times \mbox{\bf I} \rightarrow \mbox{\bf SharedModule?}\newline
 \;\; \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\#\mbox{\it s\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\langle \rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it s\/}^{\ast}\!\downarrow_{0}\newline
-\:\mbox{\bf{and}}\:\mbox{\it s\/}^{\ast}_{1} = \mbox{\it best\_match}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/})\newline
+\:\mbox{\bf{let}}\:\mbox{\it s\/}^{\ast}_{1} = \mbox{\it bestModule}(\mbox{\it s\/}^{\ast}\dagger1, \mbox{\it n\/}, \mbox{\it v\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize name}} \neq \mbox{\it n\/}\newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize name}} \neq \mbox{\it n\/}\newline
 \:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}_{1}\newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \lnot \mbox{\it s\/}^{\ast}_{1}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\:\langle \mbox{\it s\/}\rangle \newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \lnot \mbox{\it s\/}^{\ast}_{1}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\:\langle \mbox{\it s\/}^{\ast}\!\downarrow_{0}\rangle \newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} > \mbox{\it s\/}\!\downarrow_{\mbox{\scriptsize version}}\newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\ \vee\ \mbox{\it s\/}^{\ast}_{1}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} > \mbox{\it s\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize version}}\newline
 \:\mbox{\bf{then}}\:\mbox{\it s\/}^{\ast}_{1}\newline
-\:\mbox{\bf{else}}\:\langle \mbox{\it s\/}\rangle \newline
+\:\mbox{\bf{else}}\:\langle \mbox{\it s\/}^{\ast}\!\downarrow_{0}\rangle \newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -365,7 +388,7 @@
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::best_match_Module[]
+% end::bestModule_SMs[]
 \newline
 \newline
 % tag::Catalog_extend[]
@@ -434,13 +457,8 @@
 {\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value?} \rightarrow \mbox{\bf Unicode}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\:\mbox{\bf{else}}\:\mbox{\rm ``{\tt }''}\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf String}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\notin \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
 \:\mbox{\bf{else}}\:\mbox{\rm ``{\tt }''}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -451,21 +469,8 @@
 {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value?} \rightarrow \mbox{\bf I}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it i\/} = \mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it i\/} < 1\:\mbox{\bf{then}}\:1\:\mbox{\bf{else}}\:\mbox{\it i\/}\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{else}}\:1\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Int}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\notin \mbox{\bf DotNull}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}} \ge 1\newline
+\:\mbox{\bf{then}}\:\mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
 \:\mbox{\bf{else}}\:1\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -476,21 +481,8 @@
 {\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value?} \rightarrow \mbox{\bf I?}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Int}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it n\/} < 0\:\mbox{\bf{then}}\:\langle \rangle \:\mbox{\bf{else}}\:\langle \mbox{\it n\/}\rangle \:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{else}}\:\langle \rangle \newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Int}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\notin \mbox{\bf DotNull}\ \wedge\ \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}} \ge 0\newline
+\:\mbox{\bf{then}}\:\langle \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Int}$}}\mid_{\mbox{\scriptsize $\mbox{\bf I}$}}\rangle \newline
 \:\mbox{\bf{else}}\:\langle \rangle \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -508,23 +500,18 @@
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
 \:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it best\_match}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
-\:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it m\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
 \:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\:\mbox{\bf{then}}\:\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symtab}}\:\mbox{\bf{else}}\:\langle \rangle \:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{in}}\:\mbox{\it adjust\_length\/}(\mbox{\it t\/}^{\ast}, \mbox{\it m\/}\mbox{!}) \decrindent
-\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\ \wedge\ \mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize version}} = \mbox{\it v\/}\newline
-\:\mbox{\bf{then}}\:\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symtab}}\newline
-\:\mbox{\bf{else}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt No exact-match for }''}, \mbox{\it n\/}, \mbox{\rm ``{\tt @}''}, \mbox{\it v\/})\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
+\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it bestModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symtab}}, \mbox{\it m\/}\mbox{!})\newline
+\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\mbox{!})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
+\newline
+\:\mbox{\bf{else}}\:\mbox{\it exactModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
+\:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent

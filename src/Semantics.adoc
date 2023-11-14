@@ -1146,17 +1146,16 @@ include::{modeltex}[tag=compile_import]
 First, we ignore entries with malformed/absent names (which have been normalized
 to empty), as well as the name `$ion`; you cannot explicitly import a system
 symbol table.
-Otherwise, _best_match_ (defined below) searches the catalog for the best match
-to the name and version; it returns an optional *SharedModule* _s_.
 
-If _m_ is present, a valid `max_id` was given, and we can use
-whatever symbol table we've found, even if we found nothing with the given name.
-Regardless, we adjust the number of symbols we return to align with the `max_id`
-by using a helper function _adjust_length_ defined below.
+If _m_ is present, a valid `max_id` was given, so we call _bestModule_ (defined
+below) to search the catalog for the best match to the name and version;
+it returns an optional *SharedModule* _s_.
+When a match is present, we adjust the number of symbols we return to align with
+the `max_id` by using a helper function _adjust_length_ defined below.
+Otherwise, we return padding consisting of _m_ copies of `$0`.
 
-When there's no valid `max_id` we require an exact match: if _s_ is present and
-has the requested version _v_, we return its symbols.
-Otherwise, we signal an error.
+When there's no valid `max_id` we require an exact match; the _exactModule_
+helper will signal an error if no exact match exists.
 
 The functions to adjust the sequence length are straightforward.
 _symbol_padding_ produces a sequence of _n_ copies of `$0`, and _adjust_length_
@@ -1190,7 +1189,7 @@ include::{modeltex}[tag=Module_specVersion]
 include::{modeltex}[tag=Module_symtab]
 ++++
 
-A shared module wraps a module with a specific name and a version:
+A shared module wraps a module with a name and a version:
 
 [{denotation}]
 ++++
@@ -1209,7 +1208,7 @@ include::{modeltex}[tag=SharedModule_symtab]
 tables.  See xref:iss-sst[xrefstyle=short].]
 
 Ion defines a standard serialization of shared symbol tables, which we can
-easily compile{fn-sst-issue} into shared modules:
+easily compile{fn-sst-issue} into a shared module:
 
 [{denotation}]
 ++++
@@ -1233,7 +1232,7 @@ First, we need to unwrap the Catalog:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=best_match_Catalog]
+include::{modeltex}[tag=bestModule_Catalog]
 ++++
 
 Having done that, we recursively walk the module sequence, returning either an
@@ -1241,17 +1240,29 @@ exact match for the name/version, or the highest version, or nothing.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=best_match_Module]
+include::{modeltex}[tag=bestModule_SMs]
 ++++
 
 There are several cases to account for here.
-If the current entry (_s_) has a different name, we return the best-match from
-the recursive tail (stem:[s^{\ast}_1]).
+If the head entry (stem:[{\mbox{\it s\/}^{\ast}}\!\downarrow_0]) has a different
+name, we return the best-match from the tail (stem:[s^{\ast}_1]).
 Otherwise, the name matches, so if the version matches _or_ no match in the
-tail is present, we return the current entry.
+tail is present, we return the head.
 Otherwise, if the best-match in the tail (stem:[s^{\ast}_1!]) is an
-exact match, or has a larger version than the current entry, we return that.
-Otherwise, the current entry is the best we've got.
+exact match, or has a larger version than the head, we return that.
+Otherwise, the head is the best we've got.
+
+In some contexts, we need to ensure we find an exact match to the requested
+version.  This is somewhat easier to accomplish, and we can signal an error when
+no match is found:
+
+
+[{denotation}]
+++++
+include::{modeltex}[tag=exactModule_Catalog]
+\newline\newline
+include::{modeltex}[tag=exactModule_SMs]
+++++
 
 
 
