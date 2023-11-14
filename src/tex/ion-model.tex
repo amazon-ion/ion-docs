@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-14T01:25:59.396-00:00
+%%% This file was generated at 2023-11-14T22:40:21.079-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -601,30 +601,23 @@
 % end::declared_symbols[]
 \newline
 \newline
-% tag::SymToks_for_LST[]
-{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::compile_IVM[]
+{\cal C}_{\mbox{\scriptsize IVM}}(\mbox{\it i\/}, \rho) ~\equiv~ $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
+\;\; \setandincrindent
+\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it i\/}, \mbox{\it systemModule\/}(\mbox{\it i\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle ) \decrindent
+% end::compile_IVM[]
+\newline
+\newline
+% tag::compile_LST[]
+{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \;\; \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it{in}\small $\mbox{\bf Struct}$}(\langle \rangle ), \rho)\newline
-\:\mbox{\bf{else}}\:{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize IVM}}, {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::SymToks_for_LST[]
-\newline
-\newline
-% tag::Environment_after_IVM[]
-\mbox{\it Environment\_after\_IVM\/}(\mbox{\it i\/}, \rho) ~\equiv~ $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
-\;\; \setandincrindent
-\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it i\/}, \mbox{\it systemModule\/}(\mbox{\it i\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle ) \decrindent
-% end::Environment_after_IVM[]
-\newline
-\newline
-% tag::Environment_after_LST[]
-\mbox{\it Environment\_after\_LST\/}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
-\;\; \setandincrindent
-\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize IVM}}, {\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho)\rangle ) \decrindent
-% end::Environment_after_LST[]
+% end::compile_LST[]
 \newline
 \newline
 % tag::expand_STree[]
@@ -812,12 +805,17 @@
 % end::expand_SStruct[]
 \newline
 \newline
+% tag::isIonSymbolTable[]
+\mbox{\it ionSymbolTable?}(\mbox{\it v\/}) ~\equiv~ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}
+% end::isIonSymbolTable[]
+\newline
+\newline
 % tag::TE_Value[]
 \overline{\cal E}_{\mbox{\scriptsize\bf Value}}(\mbox{\it v\/}, \rho, \kappa) ~\equiv~ $\`$ \mbox{\bf Value} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}\newline
-\:\mbox{\bf{then}}\:\kappa(\mbox{\it Environment\_after\_LST\/}(\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Struct}$}}, \rho), \langle \rangle )\newline
+\:\mbox{\bf{if}}\:\mbox{\it ionSymbolTable?}(\mbox{\it v\/})\newline
+\:\mbox{\bf{then}}\:\kappa({\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf Struct}$}}, \rho), \langle \rangle )\newline
 \:\mbox{\bf{else}}\:\kappa(\rho, \langle \mbox{\it v\/}\rangle )\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
@@ -841,7 +839,7 @@
 \;\; \setandincrindent
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it t\/}\in \mbox{\bf IVM}\newline
-\:\mbox{\bf{then}}\:\kappa(\mbox{\it Environment\_after\_IVM\/}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf IVM}$}}, \rho), \langle \rangle )\newline
+\:\mbox{\bf{then}}\:\kappa({\cal C}_{\mbox{\scriptsize IVM}}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf IVM}$}}, \rho), \langle \rangle )\newline
 \:\mbox{\bf{else}}\: \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = {\cal X}_{\mbox{\scriptsize\bf STree}}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf STree}$}}, \rho)\newline
 \:\mbox{\bf{in}}\:\overline{\cal E}_{\mbox{\scriptsize\bf Value}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho, \kappa) \decrindent

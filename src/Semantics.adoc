@@ -841,33 +841,42 @@ to indicate top-level functions and variables.
 include::{modeltex}[tag=TE_TSTree]
 ++++
 
-When we encounter an IVM, we must reset the environment using a helper
-function that we'll implement later.
-We pass that to the continuation stem:[\kappa] along with an empty value
-sequence, since the IVM produces no application data.
+When we encounter an IVM, we compile it into a new environment using
+stem:[{\cal C}_{\mbox{\scriptsize IVM}}] (see xref:compile-ivm[xrefstyle=short]),
+passing it to the continuation stem:[\kappa] along with an empty value sequence,
+since the IVM produces no application data.
 Here we've emulated mutation of the environment:
 the current environment stem:[\rho] not passed to the continuation and is
 therefore inaccessible to any remaining work it encapsulates.
 
 All other top-level syntax is expanded using stem:[\cal X] and the
 current environment stem:[\rho].
-After expansion, we'll evaluate the resulting sequence of values.
+After expansion, we evaluate the resulting sequence of values.
 
-To evaluate one top-level *Value*, we must check to see if it's an LST directive.
+To evaluate one top-level *Value*, we must check to see if it's an LST directive:
 
 [{denotation}]
 ++++
+include::{modeltex}[tag=isIonSymbolTable]
+\newline\newline
 include::{modeltex}[tag=TE_Value]
 ++++
 
-Given an LST, we use its content, downcast to *Struct*, to produce the new
-environment. Similar to the IVM case, _v_ is not passed along as application
-data.
+Evaluating an LST is similar to the IVM case, but here we call
+stem:[{\cal C}_{\mbox{\scriptsize LST}}] (see xref:compile-lst[xrefstyle=short])
+to compile the struct into a new environment.
 In the *else* clause, the expanded _v_ is application data, so we pass it to
 the continuation along with the unaltered environment.
 
-In accordance with continuation-passing style, stem:[\overline{\cal E}] never
-returns results "`directly`": it always invokes the continuation stem:[\kappa]
+These definitions show that an LST directive is fully expanded using the
+environment in effect when it begins.
+The locally-declared symbols have no effect on the encoding of any part of the
+enclosing struct.
+Their scope only starts with the next top-level syntax tree.
+
+In accordance with continuation-passing style, variants of
+stem:[\overline{\cal E}] never return results "`directly`": they always either
+delegate to another variant, or invoke the continuation stem:[\kappa]
 with the next-current environment and any application values this step produces.
 The continuation is responsible for assembling those results with everything
 that happened previously, and anything that happens afterward, so the **Value**s
@@ -889,7 +898,7 @@ Here we have our most complex denotation yet, so let's break it down.
 when given no top-level value, the environment is unchanged and no data
 is produced.
 * When the sequence is non-empty, we evaluate (with stem:[\overline{\cal E}])
-its head (stem:[\overline{\mbox{\it v\/}^{\ast}}\!\downarrow_{0}]) using the
+its head (stem:[\mbox{\it v\/}^{\ast}\!\downarrow_{0}]) using the
 current environment stem:[\rho] and a locally-defined continuation, which will
 be invoked with the _next_ environment (stem:[\rho_1]) and any application values
 that result (stem:[\mbox{\it v\/}^{\ast}_{1}]).
@@ -1095,6 +1104,7 @@ whatever nonsense appears inside an LST directive, all
 implementations will behave the same way.
 
 
+[#compile-ivm]
 === Ion Version Markers
 
 Following an IVM, the current symbol table is set to the system symbols for the
@@ -1104,51 +1114,28 @@ but replaces the IVM and resets the symbol table to that of the new Ion version:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=Environment_after_IVM]
+include::{modeltex}[tag=compile_IVM]
 ++++
 
 
+[#compile-lst]
 === Local Symbol Tables
 
 The environment after an LST directive is as follows, where
 stem:[{\cal C}_{\mbox{\scriptsize LST}}] denotes the compilation of an LST
-directive into a sequence of symbol tokens that will become the current symbol
-table:
+directive into a new environment:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=Environment_after_LST]
-++++
-
-Here we see that the directive has the effect of retaining the current catalog
-and Ion version, replacing only the current symbols.
-// TODO Move this, it isn't illustrated by this code:
-More importantly, we see that an LST directive is fully expanded using the
-environment in effect when it begins.
-The locally-declared symbols have no effect on the encoding of any part of the
-enclosing struct.
-Their scope only starts with the next top-level syntax tree.
-
-TIP: At this point it may be worth reviewing the definitions of
-stem:[\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}] and
-stem:[\overline{\cal E}_{\mbox{\scriptsize\bf Value}}] and
-in xref:eg_TE[xrefstyle=short].
-
-At a high level, the compilation of an LST works as follows:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=SymToks_for_LST]
+include::{modeltex}[tag=compile_LST]
 ++++
 
 Here we encounter the first of many null checks. In particular, top-level
 `$ion_symbol_table::null.struct` is equivalent to `$ion_symbol_table::{}`.
-Otherwise, we concatenate the imported symbols and the locally-declared symbols.
+Otherwise, we produce the new symbol table by concatenating the imported symbols
+and the locally-declared symbols.
 The former sequence includes any system symbols implicitly imported from the
 current Ion version.
-
-// TODO It might be interesting to show a proof that
-//   C_LST({}, ρ) == SymToks_for_IVM(ρ↓IVM)
 
 This function sidesteps the more heavy-duty work of turning the
 directive into **SymTok**{asterisk} by delegating to helper functions
@@ -1157,8 +1144,13 @@ stem:[{\cal C}_{\mbox{\scriptsize\tt imports}}].
 What follows is effectively a recursive-descent process over the
 directive's fully-expanded *Struct*.
 
+TIP: At this point it may be worth reviewing the definitions of
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}] and
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf Value}}] and
+in xref:eg_TE[xrefstyle=short].
 
-==== Compiling Local Symbols
+
+==== Compiling Locally-Declared Symbols
 
 Starting with the easy part, we compile the `symbols` field into
 **SymTok**{asterisk}.
