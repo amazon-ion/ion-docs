@@ -340,11 +340,9 @@ Spec Problems
           (if (opt_is_present m)
             // We have max_id, find best-match and adjust the length
             (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
-              (let [(ts ('hint:oneline'
-                          (if (opt_is_present s)
-                            (SharedModule_symtab (opt_value s))
-                            (seq 'SymTok*'))))]
-                (adjust_length ts (opt_value m))))
+              (if (opt_is_present s)
+                (adjust_length (SharedModule_symtab (opt_value s)) (opt_value m))
+                (symbol_padding (opt_value m))))
             (SharedModule_symtab (exactModule_Catalog (Environment_catalog r) n v))))))
 
 
