@@ -9,7 +9,6 @@ TODO
 Terminology/Readability:
 * Figure out the proper name for `I`.  N? Z?
 * Greekify invocations of:
-  * Environment_after_IVM/LST to C_IVM and C_LST ?
   * symbol_padding
   * adjust_length
 * Less type-switching via E[[]] denotations
@@ -389,26 +388,20 @@ Spec Problems
         EMPTY_SYMTOKS))
 
 
-    // Environment construction
-    
-    (fn SymToks_for_LST ((s Struct) (r Environment) -> 'SymTok*')
-      (if (element_of s DotNull)
-        (SymToks_for_LST (lift (seq 'Field*') Struct) r)
-        (seq_append (imported_symbols (Struct_get1 s "imports") r)
-                    (declared_symbols (Struct_get1 s "symbols")))))
-
-
-    (fn Environment_after_IVM ((i IVM) (r Environment) -> Environment)
+    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
       (tuple Environment
         (Environment_catalog r)
         i
         (Module_symtab (systemModule i))))
 
-    (fn Environment_after_LST ((s Struct) (r Environment) -> Environment)
-      (tuple Environment
-        (Environment_catalog r)
-        (Environment_IVM r)
-        (SymToks_for_LST s r)))
+    (fn compile_LST ((s Struct) (r Environment) -> Environment)
+      (if (element_of s DotNull)
+        (compile_LST (lift (seq 'Field*') Struct) r)
+        (tuple Environment
+          (Environment_catalog r)
+          (Environment_IVM r)
+          (seq_append (imported_symbols (Struct_get1 s "imports") r)
+                      (declared_symbols (Struct_get1 s "symbols"))))))
 
 
     //==========================================================================
@@ -517,7 +510,7 @@ Spec Problems
 
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
       (if (isIonSymbolTable v)
-        (k (Environment_after_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
+        (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
         (k r (seq 'Value*' v))))
 
     (fn 'TE_Value*' ((vs 'Value*') (r Environment) (k TContinuation) -> 'Value*')
@@ -534,7 +527,7 @@ Spec Problems
 
     (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
       (if (element_of t IVM)
-        (k (Environment_after_IVM (lower t IVM) r) (seq 'Value*'))
+        (k (compile_IVM (lower t IVM) r) (seq 'Value*'))
         (let [(vs (expand_STree (lower t STree) r))]
           ('TE_Value*' vs r k))))
 
