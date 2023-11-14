@@ -1,0 +1,39 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+(check_expansion "#$?Eexp not allowed in Ion 1.0"
+  (quote_top '#$ion_1_0' ('#$:nomod:mac')))
+
+(check_expansion "#$?Module not in scope: nomod"
+  (quote_top '#$ion_1_1' ('#$:nomod:mac')))
+
+(check_expansion "#$?No such macro: :$ion:mac"
+  (quote_top '#$ion_1_1' ('#$:$ion:mac')))
+
+
+// void
+
+(check_expansion
+  (quote_top 1 2)
+  (quote_top '#$ion_1_1' 1 ('#$:$ion:void') 2))
+
+
+// values
+
+(check_expansion
+  (quote_top 1 2)
+  (quote_top '#$ion_1_1' 1 ('#$:$ion:values') 2))
+(check_expansion
+  (quote_top 1 2 3 4)
+  (quote_top '#$ion_1_1' 1 ('#$:$ion:values' 2 3) 4))
+
+
+"SUCCESS (macro.test)"

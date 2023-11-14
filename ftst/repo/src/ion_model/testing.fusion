@@ -14,6 +14,8 @@ We "tunnel" special tokens as follows:
   * Both input and output documents use symbols of the form `'#$ddd'` to represent
     SIDS.
   * On input, `'#$ion_d_d'` represents an IVM.
+  * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
+    an E-expression.  The text starting with : is parsef as a macro reference.
   * On output, `'#$?Message'` represents a Bottom value with the given message.
   '''
 
@@ -124,6 +126,36 @@ We "tunnel" special tokens as follows:
             (tuple SField (mk_SSymTok k) (mk_STree v)))))))
 
 
+  // E-expressions
+
+  (define (is_eexp c)
+    (and (is_sexp c)
+         (is_symbol (head c))
+         (string_starts_with (symbol_to_string (head c)) "#$:")))
+
+  (define (mk_NameOrAddr c)
+    (let [(val (with_ion_from_string c read))]
+      (lift_to NameOrAddr
+        (cond
+          ((is_symbol val) (inject_into Unicode (symbol_to_string val)))
+          ((is_int    val) (inject_into I val))
+          (true raise_argument_error "mk_NameOrAddr" "text of symbol/int" 0 c)))))
+
+  (define (mk_MacroRef c)
+    (let [(parts (string_split (symbol_to_string c) ":"))]
+      (if (= 2 (size parts))
+        (tuple MacroRef
+          (opt 'Unicode?')
+          (mk_NameOrAddr (. parts 1)))
+        (tuple MacroRef
+          (opt 'Unicode?' (inject_into Unicode (. parts 1)))
+          (mk_NameOrAddr (. parts 2))))))
+
+  (define (mk_SEexp c)
+    (let [(ref (mk_MacroRef (head c)))]
+      (tuple SEexp ref (apply seq 'STree*' (map mk_STree (tail c))))))
+
+
   // Values
 
   (define (mk_SValue c)
@@ -144,7 +176,9 @@ We "tunnel" special tokens as follows:
 
   (define (mk_STree c)
     (lift_to STree
-      (mk_SValue c)))
+      (if (is_eexp c)
+        (mk_SEexp c)
+        (mk_SValue c))))
 
   (define (mk_TSTree c)
     (lift_to TSTree

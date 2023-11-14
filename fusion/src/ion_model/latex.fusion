@@ -22,13 +22,23 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       // TODO these functions, and the print configuration, should be generated.
       (accessor Environment_catalog  "catalog")
       (accessor Environment_IVM      "IVM")
+      (accessor Environment_mactab   "mactab")
       (accessor Environment_symbols  "symbols")
+      (accessor ExportedMacro_macro  "macro")
+      (accessor ExportedMacro_name   "name")
       (accessor Field_name           "name")
       (accessor Field_value          "value")
+      (accessor Macro_signature      "signature")
+      (accessor Macro_xform          "xform")
+      (accessor MacroRef_macro       "nameOrAddr")
+      (accessor MacroRef_module      "module")
+      (accessor Module_mactab        "mactab")
       (accessor Module_specVersion   "specVersion")
       (accessor Module_symtab        "symtab")
       (accessor ParseStep_next       "next")
       (accessor ParseStep_tree       "tree")
+      (accessor SEexp_args           "args")
+      (accessor SEexp_ref            "ref")
       (accessor SField_name          "name")
       (accessor SField_tree          "tree")
       (accessor SharedModule_module  "module")
@@ -52,6 +62,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
 
 
       // Functions with infix syntax
+      (form_method ExportedMacros_get        (pp_binary "" " \\odot " ""))
       (form_method Fields_get                (pp_binary "" " \\odot^{\\ast} " ""))
       (form_method IVM_eq                    (pp_binary "" " = " ""))
       (form_method Struct_get                (pp_binary "" " \\odot^{\\ast} " ""))
@@ -66,6 +77,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.0}"                 IVM_1_0)
       (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.1}"                 IVM_1_1)
       (sym_image "\\mbox{\\bf sym0}"                                   SYM0)
+      (sym_image "\\mbox{\\bf systemMacros}_{\\scriptsize 1.1}"        systemMacros_1_1)
       (sym_image "\\mbox{\\bf systemSymbols}_{\\scriptsize 1.0}"       systemSymbols_1_0)
       (sym_image "\\mbox{\\bf systemSymbols}_{\\scriptsize 1.1}"       systemSymbols_1_1)
 
@@ -91,6 +103,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
 
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf STree}}"           'expand_STree')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf STree}}^{\\ast}"   'expand_STree*')
+      (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SEexp}}"           'expand_SEexp')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SValue}}"          'expand_SValue')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SContent}}"        'expand_SContent')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SSymTok}}"         'expand_SSymTok')

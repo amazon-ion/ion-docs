@@ -107,11 +107,23 @@ Spec Problems
     (dom SStruct   = (+ 'SField*' DotNull))
 
 
+    (dom NameOrAddr = (+ Unicode I))
+    (dom MacroRef   = (* 'Unicode?' NameOrAddr))
+
+    (fn  MacroRef_module ((m MacroRef) -> 'Unicode?')  (ith m 0))
+    (fn  MacroRef_macro  ((m MacroRef) -> NameOrAddr)  (ith m 1))
+
+    (dom SEexp      = (* MacroRef 'STree*'))
+
     (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
                          /*Decimal Float Timestamp Blob Clob*/))
     (dom SValue     = (* 'SSymTok*' SContent))
-    (dom STree      = (+ SValue /* Eexp will go here */))
+    (dom STree      = (+ SValue SEexp))
     (dom TSTree     = (+ STree IVM))
+
+
+    (fn SEexp_ref  ((e SEexp) -> MacroRef)  (ith e 0))
+    (fn SEexp_args ((e SEexp) -> 'STree*')  (ith e 1))
 
     (fn SValue_annots  ((sv SValue) -> 'SSymTok*') (ith sv 0))
     (fn SValue_content ((sv SValue) -> 'SContent') (ith sv 1))
@@ -181,10 +193,35 @@ Spec Problems
     //==========================================================================
     // Encoding Modules
 
-    (dom Module        = (* IVM 'SymTok*' /*'ExportedMacro*'*/))
+    (dom Signature     = (= DUMMY_SIGNATURE))
+    (dom Xformer       = (-> 'Value*' 'Value*'))
+    (dom Macro         = (* Signature Xformer))
+
+    (fn Macro_signature ((m Macro) -> Signature)  (ith m 0))
+    (fn Macro_xform     ((m Macro) -> Xformer)    (ith m 1))
+
+
+    (dom ExportedMacro = (* 'Unicode?' Macro))
+
+    (fn ExportedMacro_name  ((m ExportedMacro) -> 'Unicode?')  (ith m 0))
+    (fn ExportedMacro_macro ((m ExportedMacro) -> Macro)       (ith m 1))
+
+
+    (dom Module        = (* IVM 'SymTok*' 'ExportedMacro*'))
 
     (fn Module_specVersion ((m Module) -> IVM)               (ith m 0))
     (fn Module_symtab      ((m Module) -> 'SymTok*')         (ith m 1))
+    (fn Module_mactab      ((m Module) -> 'ExportedMacro*')  (ith m 2))
+
+
+    (dom BoundModule  = (* Unicode Module))   // Locally-assigned name
+
+    (fn BoundModule_name    ((m BoundModule) -> Unicode)    (ith m 0))
+    (fn BoundModule_module  ((m BoundModule) -> Module)     (ith m 1))
+    (fn BoundModule_symtab  ((m BoundModule) -> 'SymTok*')
+      (Module_symtab (BoundModule_module m)))
+    (fn BoundModule_mactab  ((m BoundModule) -> 'ExportedMacro*')
+      (Module_mactab (BoundModule_module m)))
 
 
     (dom SharedModule  = (* Unicode I Module))   // Name and version
@@ -194,6 +231,15 @@ Spec Problems
     (fn SharedModule_module  ((m SharedModule) -> Module)     (ith m 2))
     (fn SharedModule_symtab  ((m SharedModule) -> 'SymTok*')
       (Module_symtab (SharedModule_module m)))
+
+
+    (fn ExportedMacros_get ((ms 'ExportedMacro*') (u Unicode) -> 'Macro?')
+      (if (seq_is_empty ms)
+        (opt 'Macro?')
+        (if (and (opt_is_present  (ExportedMacro_name (seq_head ms)))
+                 (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
+          (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
+          (ExportedMacros_get (seq_tail ms) u))))
 
 
     //==========================================================================
@@ -219,11 +265,22 @@ Spec Problems
           (lift_to SymTok "$ion_literal")
           /* ... */)))
 
-    (fn systemModule ((i IVM) -> Module)
+    (const systemMacros_1_1
+      ('hint:multiline'
+        (seq 'ExportedMacro*'
+          (tuple ExportedMacro (opt 'Unicode?' "void")
+            (tuple Macro DUMMY_SIGNATURE
+              (mk_fn Xformer (vs) (seq 'Value*'))))
+          (tuple ExportedMacro (opt 'Unicode?' "values")
+            (tuple Macro DUMMY_SIGNATURE
+              (mk_fn Xformer (vs) vs)))
+          /* ... */)))
+
+    (fn systemModule ((i IVM) -> BoundModule)
       (if (IVM_eq i IVM_1_0)
-        (tuple Module i systemSymbols_1_0)
+        (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_0 (seq 'ExportedMacro*')))
         (if (IVM_eq i IVM_1_1)
-          (tuple Module i systemSymbols_1_1)
+          (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_1 systemMacros_1_1))
           (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1)))))
 
 
@@ -275,11 +332,13 @@ Spec Problems
     //==========================================================================
     // Encoding Environment
 
-    (dom Environment = (* Catalog IVM 'SymTok*'))
+    (dom Environment = (* Catalog IVM 'SymTok*' 'BoundModule*' 'BoundModule*'))
 
-    (fn Environment_catalog ((r Environment) -> Catalog)   (ith r 0))
-    (fn Environment_IVM     ((r Environment) -> IVM)       (ith r 1))
-    (fn Environment_symbols ((r Environment) -> 'SymTok*') (ith r 2))
+    (fn Environment_catalog ((r Environment) -> Catalog)        (ith r 0))
+    (fn Environment_IVM     ((r Environment) -> IVM)            (ith r 1))
+    (fn Environment_symbols ((r Environment) -> 'SymTok*')      (ith r 2))
+    (fn Environment_modules ((r Environment) -> 'BoundModule*') (ith r 3))
+    (fn Environment_mactab  ((r Environment) -> 'BoundModule*') (ith r 4))
 
 
     //==========================================================================
@@ -296,7 +355,8 @@ Spec Problems
             (v (normalize_version (Struct_get1 s "version")))]
         (tuple SharedModule n v
           (tuple Module IVM_1_0
-            (declared_symbols (Struct_get1 s "symbols"))))))
+            (declared_symbols (Struct_get1 s "symbols"))
+            (seq 'ExportedMacro*')))))
 
 
     //==========================================================================
@@ -365,7 +425,7 @@ Spec Problems
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
     (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
-      (let [(ts (Module_symtab (systemModule (Environment_IVM r))))]
+      (let [(ts (BoundModule_symtab (systemModule (Environment_IVM r))))]
         (if (opt_is_present v)
           (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
             (Environment_symbols r)
@@ -401,7 +461,9 @@ Spec Problems
       (tuple Environment
         (Environment_catalog r)
         i
-        (Module_symtab (systemModule i))))
+        (BoundModule_symtab (systemModule i))
+        (seq 'BoundModule*' (systemModule i))
+        (seq 'BoundModule*' /* No user macros installed */)))
 
     (fn compile_LST ((s Struct) (r Environment) -> Environment)
       (if (element_of s DotNull)
@@ -410,14 +472,18 @@ Spec Problems
           (Environment_catalog r)
           (Environment_IVM r)
           (seq_append (imported_symbols (Struct_get1 s "imports") r)
-                      (declared_symbols (Struct_get1 s "symbols"))))))
+                      (declared_symbols (Struct_get1 s "symbols")))
+          (seq 'BoundModule*' (systemModule (Environment_IVM r)))
+          (seq 'BoundModule*'))))
 
 
     //==========================================================================
     // Expansion of abstract syntax trees into values
 
     (fn expand_STree ((t STree) (r Environment) -> 'Value*')
-      (seq 'Value*' (expand_SValue (lower t SValue) r)))
+      (if (element_of t SValue)
+        (seq 'Value*' (expand_SValue (lower t SValue) r))
+        (expand_SEexp (lower t SEexp) r)))
 
     (fn 'expand_STree*' ((ts 'STree*') (r Environment) -> 'Value*')
       (if (seq_is_empty ts)
@@ -503,6 +569,37 @@ Spec Problems
 
 
     //==========================================================================
+    // Macro Expansion
+
+    (fn resolve_MacroRef ((m MacroRef) (r Environment) -> Macro)
+      (let [(mod (MacroRef_module m)),
+            (mac (MacroRef_macro m))]
+        (if (opt_is_present mod)
+          // Quailified reference
+          (if (U_EQ (opt_value mod) "$ion")
+            // TODO handle ints
+            (let [(u (lower_to Unicode mac))]
+              // TODO Get the module from the Environment
+              (let [(m (ExportedMacros_get (BoundModule_mactab (systemModule (Environment_IVM r))) u))]
+                (if (opt_is_present m)
+                  (opt_value m)
+                  (wrong "No such macro: :$ion:" u))))
+            // TODO Find other modules
+            (wrong "Module not in scope: " (opt_value mod)))
+          // Named or local-offset
+          (wrong "Non-qualified references not implemented"))))
+
+
+    (fn expand_SEexp ((v SEexp) (r Environment) -> 'Value*')
+      (if (IVM_eq (Environment_IVM r) IVM_1_0)
+        (wrong "Eexp not allowed in Ion 1.0")
+        (let [(x (Macro_xform (resolve_MacroRef (SEexp_ref v) r)))]
+          // FIXME: inner expansion needs to be signature-aware, otherwise it
+          //  cannot handle implicit macro invocations.
+          (x ('expand_STree*' (SEexp_args v) r)))))
+
+
+    //==========================================================================
     // Top-level evaluation
 
     (dom TContinuation = (-> Environment 'Value*' 'Value*')
@@ -585,7 +682,9 @@ Spec Problems
       (mk_fn Evaluator (d c)
         (let [(p0 (p d)),
               (r0 (tuple Environment c IVM_1_0
-                    (Module_symtab (systemModule IVM_1_0)))),
+                    (BoundModule_symtab (systemModule IVM_1_0))
+                    (seq 'BoundModule*' (systemModule IVM_1_0))
+                    (seq 'BoundModule*' /* No user macros installed */))),
               (k0 (mk_fn TContinuation (r vs) vs))]
           (TE_ParseStream p0 r0 k0))))
 
