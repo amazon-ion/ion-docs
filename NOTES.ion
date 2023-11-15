@@ -4,6 +4,10 @@
 
 TODOs
 -----
+* [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
+  It should work like the `fn` and `define_fn' forms, basically.
+* [FN-DOM] F (or P?) domain including all functions (procedures).
+  * Useful for weak-ish typing of macro transformers
 * [TUPLE1] Tuples should allow one field; more natural than singleton unions.
   * I'm not sure; it's simpler to simply lift than to wrap in sequence then lift
     which is how tuple construction works (and how its rendered).
@@ -24,8 +28,8 @@ TODOs
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
   * This makes indirect lowering unambiguous.
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
-* [CONST] Domain constants `(val <name> <expr>)`
-  * Either print definition as part of the model, or inline them where used.
+* [CONST-INLINE] Render selected `const`s inline, not printed explicitly as
+  part of the model
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
 * Delay and memoize component domains (enable recursive types)

@@ -205,7 +205,8 @@ Type-checking of function application:
     (lambda (stx)
       (unless (=== 4 (syntax_size stx))
         (wrong_syntax stx "invalid syntax"))
-      (let [(domain_stx (syntax_get stx 1)),  // TODO allow for ad-hoc domains as per `fn` and `define_fn`
+      // TODO [FN-ADHOC] Allow for ad-hoc domains as per `fn` and `define_fn`
+      (let [(domain_stx (syntax_get stx 1)),
             (args_stx   (syntax_get stx 2)),
             (body_stx   (syntax_get stx 3))]
         (unless (is_identifier domain_stx)
