@@ -33,9 +33,7 @@ Print domain models in a Unicode-rich plain-text format.
   (define (pp_domain_rhs d e)
     (cond
       ((is_base_domain      d) (display "<" (domain_description d) ">"))
-      ((is_singleton_domain d) (display "{ ")
-                               (pp_display (singleton_const_id d) e)
-                               (display " }"))
+      ((is_enum_domain      d) (pp_print_terms (enum_const_ids d) e "{ " ", " " }"))
       ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
       ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " * "))
       ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " * ")

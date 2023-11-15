@@ -35,6 +35,7 @@ Domains come in several types:
     "/fusion/exception"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/enum"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
     "/fusioncontrib/denotation/private/boolean"
@@ -102,7 +103,7 @@ Domains come in several types:
     AND
     B 'B?' 'B*'
     bottom_message
-    EQ
+    EQ EQ_Enum
     GT
     GTE
     I 'I?' 'I*'

@@ -10,17 +10,6 @@
 
 
 //====================
-// Singleton domains
-
-(check_pred is_domain_value SINGLE)
-
-(check_true (domain_is  SINGLE Single))
-(check_true (element_of SINGLE Single))
-
-(check bound_identifier_equal (quote_syntax SINGLE) (singleton_const_id Single))
-
-
-//====================
 // Base domain values
 
 (check_false (domain_is  z_rep Z))        // 1st arg is not a domain value

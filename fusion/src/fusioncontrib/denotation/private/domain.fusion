@@ -34,11 +34,6 @@
     domain_value_domain
     domain_value_rep
 
-    // Singleton domains
-    define_singleton_domain
-    is_singleton_domain
-    singleton_const_id
-
     // Base domain value operators
     is_base_domain
     is_base_domain_value
@@ -139,47 +134,6 @@ Determines whether `v` is a direct element of the `domain`.
       (raise_argument_error "domain_is" "domain" 1 v domain))
     (and (is_domain_value v)
          (ident domain (domain_value_domain v))))
-
-
-  //-------------------
-  // Singleton Domains
-
-  (define SingletonDomain
-    (make_domain_meta "SingletonDomain" null))
-
-  (define (make_singleton_domain name desc const_id)
-    (make_domain SingletonDomain name (always true) desc const_id))
-
-  (define (is_singleton_domain d)
-    (is_domain_of_type SingletonDomain d))
-
-  (define (singleton_const_id d)
-    (unless (is_singleton_domain d)
-      (raise_argument_error "singleton_const_id" "singleton domain" 0 d))
-    (domain_data d))
-
-
-  (define_syntax define_singleton_domain
-    '''
-    (define_singleton_domain name description const_name)
-    '''
-    (lambda (stx)
-      (unless (=== (syntax_size stx) 4)
-        (wrong_syntax stx "Bad syntax for define_singleton_domain"))
-      (let [(name_stx  (syntax_get stx 1)),
-            (desc_stx  (syntax_get stx 2)),
-            (const_stx (syntax_get stx 3))]  // TODO typecheck
-        (datum_to_syntax
-          (QQ (begin
-                (define (UQ name_stx)
-                  (make_singleton_domain
-                    (quote (UQ name_stx))
-                    (UQ desc_stx)
-                    (QS (UQ const_stx))))
-                (define (UQ const_stx)
-                  (make_value (UQ name_stx) null))))
-          (quote_syntax context)
-          stx))))
 
 
   //-------------------

@@ -10,7 +10,8 @@
   (define_model M1
     (import B)
 
-    (dom Single = (= SINGLE) "singleton")
+    (dom Single = (= SINGLE)   "singleton")
+    (dom Enum   = (= E1 E2 E3) "enumeration")
 
     (dom Z = (^ is_int)       "Integers")
     (dom D = (^ is_decimal)   "Decimals")

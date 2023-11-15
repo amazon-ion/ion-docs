@@ -60,6 +60,7 @@ semantics DSL.
 
     // Pre-defined domains and functions
     EQ
+    EQ_Enum
     IF
     U_EQ
 

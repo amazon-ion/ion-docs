@@ -8,6 +8,7 @@
     "/fusion/private/record"
     "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/enum"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/optional"
     "/fusioncontrib/denotation/private/sequence"
@@ -92,7 +93,7 @@ in the same order the author used.
                 (cond
                   ((=== (quote =) op)
                    (result
-                     (pair (quote define_singleton_domain) (pair name (pair desc args)))))
+                     (pair (quote define_enum_domain) (pair name (pair desc args)))))
                   ((=== (quote ^) op)
                    (result
                      (pair (quote define_base_domain) (pair name (pair desc args)))))
@@ -168,9 +169,9 @@ Defines a domain within a model.
 
 The <domain-spec> must have one of these forms:
 
-    (= <const-id>)
+    (= <const-id> ...+)
 
-Defines a singleton domain holding only a constant bound to the given name.
+Defines an enumeration domain holding opaque constants bound to the given names.
 
     (^ <pred-expr>)
 

@@ -23,6 +23,7 @@ References:
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/enum"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/model"
     "/fusioncontrib/denotation/private/sequence"
@@ -36,6 +37,7 @@ References:
     const_name
     domain_method
     domain_name
+    enum_const_ids
     fn_args
     fn_binding
     fn_code
@@ -51,13 +53,13 @@ References:
     is_base_domain
     is_const
     is_domain
+    is_enum_domain
     is_fn
     is_func_domain
     is_multiline_mode
     is_oneline_mode
     is_product_domain
     is_seq_domain
-    is_singleton_domain
     is_union_domain
     make_printer
     model_consts
@@ -78,7 +80,6 @@ References:
     pp_write
     product_domain_subdomains
     seq_domain_subdomain
-    singleton_const_id
     sym_image
     type_method
     union_domain_subdomains

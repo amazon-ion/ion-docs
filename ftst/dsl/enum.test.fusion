@@ -1,0 +1,64 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusion/experimental/syntax"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/domain"
+  "/fusioncontrib/denotation/private/enum"
+  "/fusioncontrib/denotation/testing"
+  "/model1")
+
+
+
+(check_pred is_enum_domain Single)
+(check == "singleton" (domain_description Single))
+
+(check_pred is_enum_value SINGLE)
+
+(check_true (domain_is  SINGLE Single))
+(check_true (element_of SINGLE Single))
+
+(check bound_identifier_equal (quote_syntax SINGLE) (first (enum_const_ids Single)))
+
+(check ident (quote SINGLE) (enum_value_name SINGLE))
+
+
+(check_pred is_enum_domain Enum)
+(check == "enumeration" (domain_description Enum))
+
+(check_pred is_enum_value E1)
+(check_pred is_enum_value E2)
+(check_pred is_enum_value E3)
+
+
+(check_true (domain_is  E1 Enum))
+(check_true (element_of E1 Enum))
+(check_true (domain_is  E2 Enum))
+(check_true (element_of E2 Enum))
+(check_true (domain_is  E3 Enum))
+(check_true (element_of E3 Enum))
+
+(let [(ids (enum_const_ids Enum))]
+  (check bound_identifier_equal (quote_syntax E1) (. ids 0))
+  (check bound_identifier_equal (quote_syntax E2) (. ids 1))
+  (check bound_identifier_equal (quote_syntax E3) (. ids 2)))
+
+
+(check ident (quote E1) (enum_value_name E1))
+(check ident (quote E2) (enum_value_name E2))
+(check ident (quote E3) (enum_value_name E3))
+
+
+(check_true  (EQ_Enum E1 E1))
+(check_true  (EQ_Enum E2 E2))
+(check_true  (EQ_Enum E3 E3))
+
+(check_false (EQ_Enum E1 E2))
+(check_false (EQ_Enum E1 E3))
+(check_false (EQ_Enum E2 E1))
+(check_false (EQ_Enum E2 E3))
+(check_false (EQ_Enum E3 E1))
+(check_false (EQ_Enum E3 E2))
+
+(check_false (EQ_Enum SINGLE E1))  // Both are the first element of their enums

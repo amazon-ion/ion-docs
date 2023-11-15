@@ -1,0 +1,88 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(module enum "/fusion"
+
+  '''
+Domains of opaque constants.
+  '''
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide
+    define_enum_domain
+    enum_const_ids
+    enum_value_name
+    is_enum_domain
+    is_enum_value
+    EQ_Enum
+  )
+
+
+  (define EnumDomain
+    (make_domain_meta "EnumDomain" null))
+
+  (define (make_enum_domain name desc const_ids)
+    (make_domain EnumDomain name (|d v| (is_symbol v)) desc (apply list const_ids)))
+
+  (define (is_enum_domain d)
+    (is_domain_of_type EnumDomain d))
+
+
+  (define (enum_const_ids d)
+    '''
+Returns a list containing the bound identifiers of the enum constants.
+    '''
+    (unless (is_enum_domain d)
+      (raise_argument_error "enum_const_ids" "enum domain" 0 d))
+    (domain_data d))
+
+
+  (define (is_enum_value v)
+    (and (is_domain_value v)
+         (is_enum_domain (domain_value_domain v))))
+
+  (define (enum_value_name v)
+    (unless (is_enum_value v)
+      (raise_argument_error "enum_value_name" "enum value" 0 v))
+    (domain_value_rep v))
+
+
+  (define (make_enum_values dom names)
+    "Helper to reduce code bloat."
+    (apply values (for_sexp [(n names)] (make_value dom n))))
+
+
+  (define_syntax define_enum_domain
+    '''
+    (define_enum_domain name description const_name ...+)
+    '''
+    (lambda (stx)
+      (unless (>= (syntax_size stx) 4)
+        (wrong_syntax stx "Bad syntax for define_enum_domain"))
+      (let [(name_stx  (syntax_get stx 1)),
+            (desc_stx  (syntax_get stx 2)),
+            (consts_stx (tail (tail (tail (syntax_unwrap stx)))))]  // TODO typecheck
+        (datum_to_syntax
+          (QQ (begin
+                (define (UQ name_stx)
+                  (make_enum_domain
+                    (quote (UQ name_stx))
+                    (UQ desc_stx)
+                    (syntax_unwrap (QS (UQ consts_stx)))))
+               (define_values (UQ consts_stx)
+                  (make_enum_values (UQ name_stx) (Q (UQ consts_stx))))))
+          (quote_syntax context)
+          stx))))
+
+
+  (define (EQ_Enum v w)
+    (and (is_enum_value v)
+         (is_enum_value w)
+         (ident (domain_value_domain v) (domain_value_domain w))
+         (ident (enum_value_name v) (enum_value_name w))))
+)
