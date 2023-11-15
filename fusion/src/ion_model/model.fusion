@@ -18,6 +18,7 @@ Terminology/Readability:
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
+* Macro argument type-checking
 
 Defects:
 * From spec: "$0 is not semantically equivalent to SIDs with unknown text from
@@ -191,15 +192,49 @@ Spec Problems
 
 
     //==========================================================================
-    // Encoding Modules
+    // Macros
 
-    (dom Signature     = (= DUMMY_SIGNATURE))
-    (dom Xformer       = (-> 'Value*' 'Value*'))
-    (dom Macro         = (* Signature Xformer))
+    (dom ParamType   = (= ANY))
 
+    (dom Cardinality = (= EXACTLY_ONE ONE_OR_MORE ZERO_OR_ONE ZERO_OR_MORE))
+
+    (dom ParamShape  = (* ParamType Cardinality /*B isGrouped*/))
+
+    (fn ParamShape_type    ((s ParamShape) -> ParamType)   (ith s 0))
+    (fn ParamShape_card    ((s ParamShape) -> Cardinality) (ith s 1))
+//  (fn ParamShape_grouped ((s ParamShape) -> B)           (ith s 2))
+
+
+    // TODO Should param-name be a SymTok?
+    (dom ParamSpec     = (* Unicode ParamShape))
+
+    (fn ParamSpec_name  ((p ParamSpec) -> Unicode)    (ith p 0))
+    (fn ParamSpec_shape ((p ParamSpec) -> ParamShape) (ith p 1))
+
+    (fn is_voidable ((p ParamSpec) -> B)
+      (let [(c (ParamShape_card (ParamSpec_shape p)))]
+        (or (EQ_Enum c ZERO_OR_ONE) (EQ_Enum c ZERO_OR_MORE))))
+
+
+    (dom Signature     = (* 'ParamSpec*' B /*::isRest*/ /* TODO ResultSpec */))
+
+    (fn Signature_params   ((s Signature) -> 'ParamSpec*') (ith s 0))
+    (fn Signature_hasRest  ((s Signature) -> B)            (ith s 1))
+
+    (const CONSTANT_SIGNATURE
+      (tuple Signature (seq 'ParamSpec*') false))
+
+
+    (dom ArgStream    = (+ 'Value*'))   // TODO Rename to ParamStream?
+    (dom Xformer       = (-> 'ArgStream*' 'Value*'))
+    (dom Macro         = (* Signature Xformer))  // TODO [FN-DOM] xform should be generic
+    
     (fn Macro_signature ((m Macro) -> Signature)  (ith m 0))
     (fn Macro_xform     ((m Macro) -> Xformer)    (ith m 1))
 
+
+    //==========================================================================
+    // Modules
 
     (dom ExportedMacro = (* 'Unicode?' Macro))
 
@@ -280,11 +315,21 @@ Spec Problems
       ('hint:multiline'
         (seq 'ExportedMacro*'
           (tuple ExportedMacro (opt 'Unicode?' "void")
-            (tuple Macro DUMMY_SIGNATURE
-              (mk_fn Xformer (vs) (seq 'Value*'))))
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (mk_fn Xformer (streams)
+                (seq 'Value*'))))
           (tuple ExportedMacro (opt 'Unicode?' "values")
-            (tuple Macro DUMMY_SIGNATURE
-              (mk_fn Xformer (vs) vs)))
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (mk_fn Xformer (vs)
+                (lower_to 'Value*' (ith vs 0)))))
           /* ... */)))
 
     (fn systemModule ((i IVM) -> BoundModule)
@@ -561,7 +606,7 @@ Spec Problems
     (fn expand_SField ((sf 'SField') (r Environment) -> 'Field*')
       (let [(t  (expand_SSymTok (SField_name sf) r)),
             (vs (expand_STree   (SField_tree sf) r))]
-        (letrec [(mk_fields (lambda (vs1)
+        (letrec [(mk_fields (lambda (vs1)           // TODO [FN-ADHOC] Use mk_fn
                               (if (seq_is_empty vs1)
                                   (seq 'Field*')
                                   (seq_prepend (tuple Field t (seq_head vs1))
@@ -613,10 +658,40 @@ Spec Problems
     (fn expand_SEexp ((v SEexp) (r Environment) -> 'Value*')
       (if (IVM_eq (Environment_IVM r) IVM_1_0)
         (wrong "Eexp not allowed in Ion 1.0")
-        (let [(x (Macro_xform (resolve_MacroRef (SEexp_ref v) r)))]
-          // FIXME: inner expansion needs to be signature-aware, otherwise it
+        (let [(m (resolve_MacroRef (SEexp_ref v) r))]
+          // FIXME: inner expansion needs to be happen during invocation, so we
+          // don't lose the individual streams.
           //  cannot handle implicit macro invocations.
-          (x ('expand_STree*' (SEexp_args v) r)))))
+          (Macro_invoke m (SEexp_args v) r))))
+
+
+    (fn collateArgs ((ps 'ParamSpec*') (isRest B) (r Environment) (ts 'STree*') -> 'ArgStream*')
+      (if (seq_is_empty ps)
+        (if (seq_is_empty ts)
+          (seq 'ArgStream*')  // All done!
+          (wrong "Too many arguments"))
+        (let [(p (seq_head ps))]
+          (if (seq_is_empty ts)
+            // We hava a param, but no more arguments; param must be voidable.
+            (if (is_voidable p)
+              (seq_prepend (lift_to ArgStream (seq 'Value*'))
+                (collateArgs (seq_tail ps) isRest r ts))
+              (wrong "Too few arguments"))
+            // We have both a param and more arguments
+            (if (and isRest (seq_is_empty (seq_tail ps)))
+              // We're at a rest-parameter, so grab everything that remains.
+              (seq 'ArgStream*' (lift_to ArgStream ('expand_STree*' ts r)))
+              (let [(t  (seq_head ts)),
+                    (is (collateArgs (seq_tail ps) isRest r (seq_tail ts) ))]
+                // TODO Grouped parameters
+                (seq_prepend (lift_to ArgStream (expand_STree t r)) is)))))))
+
+
+    // Collate, validate the arguments based on the Macro's signature, then
+    // invoke the macro
+    (fn Macro_invoke ((m Macro) (ts 'STree*') (r Environment) -> 'Value*')
+      (let [(sig (Macro_signature m))]
+        ((Macro_xform m) (collateArgs (Signature_params sig) (Signature_hasRest sig) r ts))))
 
 
     //==========================================================================
