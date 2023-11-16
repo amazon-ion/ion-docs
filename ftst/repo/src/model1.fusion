@@ -15,12 +15,12 @@
 
     (dom Z = (^ is_int)       "Integers")
     (dom D = (^ is_decimal)   "Decimals")
-    (dom F = (^ is_float)     "Floats")
+    (dom Flt = (^ is_float)   "Floats")
     (dom S = (^ is_string)    "Strings")
     (dom T = (^ is_timestamp) "Timestamps")
 
     (dom Exact = (+ Z D))
-    (dom Num   = (+ Z D F))
+    (dom Num   = (+ Z D Flt))
     (dom Any   = (+ B Num S T) "All Values")
 
     (dom Stamped = (* T Any) "A timestamped value")
@@ -63,7 +63,7 @@
   (define z_val (inject_into Z z_rep))
 
   (define d_val (inject_into D 1.23))
-  (define f_val (inject_into F 4.56e0))
+  (define Flt_4_56e0 (inject_into Flt 4.56e0))
   (define s_val (inject_into S "an S"))
   (define t_val (inject_into T 1776T))
 
@@ -73,7 +73,7 @@
   (define int_exact_val (lift_to Exact z_val))
   (define dec_exact_val (lift_to Exact d_val))
   (define int_num_val   (lift_to Num z_val))
-  (define flt_num_val   (lift_to Num f_val))
+  (define flt_num_val   (lift_to Num Flt_4_56e0))
 
   (define Any_true    (lift_to Any true_val))
   (define int_any_val (lift z_val Num Any))

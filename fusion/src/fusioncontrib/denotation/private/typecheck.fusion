@@ -11,12 +11,24 @@
   )
 
   (provide
+    F
     typecheck_arg
     typecheck_args
   )
 
 
   // TODO This doesn't really belong in this module.
+  (define FMeta
+    (make_domain_meta "FMeta" (|d v| (is_procedure v))))
+
+  (define F
+    (make_domain FMeta "F"
+      (always false) // checker
+      "All functions"
+      null))
+
+
+
   (define (typecheck_arg d v fail_thunk)
     '''
 Determines whether `v` is an acceptable argument for domain `d`, returning
@@ -24,12 +36,14 @@ the effective value after any necessary injection.  Bottom values pass through.
 
 Invokes `fail_thunk` when `v` is not acceptable to domain `d`.
     '''
-    (if (or (is_bottom v) (domain_is v d))
-      v
-      (if (and (is_base_domain d) (base_domain_accepts d v))
+    (cond
+      ((is_bottom v)   v)
+      ((domain_is v d) v)
+      ((and (ident d F) (is_procedure v)) v)
+      ((and (is_base_domain d) (base_domain_accepts d v))
         // Auto-inject
-        (inject_into d v)
-        (fail_thunk))))
+        (inject_into d v))
+      (true (fail_thunk))))
 
 
 

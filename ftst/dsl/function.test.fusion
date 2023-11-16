@@ -10,6 +10,15 @@
   "/model1")
 
 
+(check_true (element_of filter F))
+(check_true (element_of (|| true) F))
+
+(check_false (element_of Projection F))  // Function domain is not a function
+
+(let [(sum (APPLY PLUS (seq 'I*' (inject_into I 1) (inject_into I 2))))] // [SEQ-INJECT]
+  (check === 3 (eject sum)))
+
+
 
 (define_check (check_argdomains expected_args func_dom)
   (let [(arg_doms (func_domain_argdomains func_dom))]

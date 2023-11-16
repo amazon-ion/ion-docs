@@ -101,9 +101,11 @@ Domains come in several types:
 
     // Pre-defined domains and functions
     AND
+    APPLY
     B 'B?' 'B*'
     bottom_message
     EQ EQ_Enum
+    F 'F?' 'F*'
     GT
     GTE
     I 'I?' 'I*'

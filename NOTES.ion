@@ -4,6 +4,7 @@
 
 TODOs
 -----
+* [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
 * [FN-DOM] F (or P?) domain including all functions (procedures).
@@ -13,6 +14,7 @@ TODOs
     which is how tuple construction works (and how its rendered).
   * Still, I see no reason to disallow it.
 * [ACCESSORS] Auto-define tuple field accessors by putting names in the defn.
+* [SEQ-INJECT] `seq` should auto-inject arguments.
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
   * Z = integers
