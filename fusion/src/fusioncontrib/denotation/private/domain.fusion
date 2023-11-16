@@ -70,7 +70,7 @@ Creates a new domain "class".
   //   We can't name this field "meta" b/c its accessor would clash with
   //   the `domain_meta` constructor.
   // * The `checker` is a procedure that accepts the domain and a value,
-  //   returning true when the value can be lifted into the domain.
+  //   returning true when the value is an acceptable domain_value_rep.
   // * The shape of `data` is controlled by the type.
   //   TODO We could probably use record subtypes instead.
 
@@ -94,12 +94,6 @@ Creates a new domain "class".
     (and (is_domain v)
          (ident d (domain_type v))))
 
-  (define (domain_accepts d v)
-    // TODO Replace this with something better defined. It's not used uniformly.
-    //   It only checks the _internal representation_ of domain values.
-    (unless (is_domain d)
-      (raise_argument_error "domain_accepts" "domain" 0 d v))
-    ((domain_checker d) d v))
 
   (define (is_list_of_domains v)
     (and (is_list v) (every is_domain v)))
@@ -115,9 +109,9 @@ Creates a new domain "class".
   (define (make_value domain v)
     (unless (is_domain domain)
       (raise_argument_error "make_value" "domain" 0 domain v))
-    (unless (domain_accepts domain v)
+    (unless ((domain_checker domain) domain v)
       (raise_argument_error "make_value"
-        (string_append "value acceptable to domain " (domain_name domain))
+        (string_append "domain_value rep for domain " (domain_name domain))
         1 domain v))
     (domain_value domain v))
 
@@ -146,7 +140,7 @@ Determines whether `v` is a direct element of the `domain`.
     (let [(pred (or pred (always true)))]
       // TODO type check args
       (make_domain BaseDomain name
-        (|d v| (pred v))
+        (|d v| (pred v)) // checker
         desc
         pred)))
 
@@ -157,7 +151,8 @@ Determines whether `v` is a direct element of the `domain`.
     (domain_data d))
 
   (define (base_domain_accepts d v)
-    (domain_accepts d v))
+    // TODO typecheck d
+    ((base_domain_predicate d) v))
 
 
   (define (inject_into d v)
@@ -166,7 +161,7 @@ Lifts a Fusion value into a base domain.
     '''
     (unless (is_base_domain d)
       (raise_argument_error "inject_into" "base domain" 0 d v))
-    (unless (domain_accepts d v)
+    (unless (base_domain_accepts d v)
       (raise_argument_error "inject_into"
         (string_append "value in domain " (domain_name d))
         1 d v))

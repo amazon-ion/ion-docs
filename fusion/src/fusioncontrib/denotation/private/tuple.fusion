@@ -102,11 +102,9 @@ Access component i of domain value v in domain d.
 
   (define (product_domain_checker d values)
     (let [(subdomains (product_domain_subdomains d))]
+      // We don't type-check the elements here, its been done by `tuple`.
       (and (is_list values)
-           (same_size values subdomains)
-           (for_fold [(all_are_good true)]
-                     [(v values), (s subdomains)]
-             (and all_are_good (domain_is v s))))))
+           (same_size values subdomains))))
 
   (define_syntax define_product_domain
     '''
