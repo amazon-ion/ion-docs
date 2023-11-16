@@ -39,7 +39,7 @@ Determines whether `v` is a bottom value, which denotes an error condition.
     ''',
       "private field accessor",
     ]
-    (make_record_type (quote 'record:fn') 'record:domain_value' 1 0))
+    (make_record_type (quote 'record:bottom') 'record:domain_value' 1 0))
     // The inherited domain_value_rep field holds the Bottom message.
     // The the one new field in this subtype is the procedure to apply.
 
