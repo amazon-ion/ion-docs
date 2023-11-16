@@ -9,7 +9,7 @@ Print domain models in a Unicode-rich plain-text format.
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
-    "/fusioncontrib/denotation/dsl"
+    "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/printing"
     "/fusioncontrib/denotation/private/util"
   )
@@ -130,7 +130,7 @@ A model printer that renders in Unicode plain-text.
       // Special forms
       (form_method eject           (pp_unary "" ""))
       (form_method element_of      (pp_binary "" " ∈ " ""))
-      (form_method if              (pp_ternary "IF " " THEN " " ELSE " " ENDIF"))
+      (form_method IF1             (pp_ternary "IF " " THEN " " ELSE " " ENDIF"))
       (form_method inject_into     (|s e| (pp_lift_to (. s 1) (. s 2) e)))
       (form_method ith             (pp_binary "" "↓" ""))
       (form_method let             pp_let)
@@ -153,11 +153,11 @@ A model printer that renders in Unicode plain-text.
       // TODO seq_truncate
       (form_method tuple           pp_tuple)
 
-      (form_method +               (pp_binary "" " + " ""))
-      (form_method -               (pp_binary "" " - " ""))
-      (form_method <               (pp_binary "" " < " ""))
-      (form_method ===             (pp_binary "" " = " ""))
-      (form_method >               (pp_binary "" " > " ""))
+      (form_method PLUS            (pp_binary "" " + " ""))
+      (form_method MINUS           (pp_binary "" " - " ""))
+      (form_method LT              (pp_binary "" " < " ""))
+      (form_method EQ              (pp_binary "" " = " ""))
+      (form_method GT              (pp_binary "" " > " ""))
 
       // Function application. This must follow other forms!
       (type_method is_syntax_pair  (|stx e| (pp_print_terms stx e "(" " " ")")))

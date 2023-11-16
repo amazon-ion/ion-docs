@@ -35,6 +35,7 @@ References:
   (provide
     const_code
     const_name
+    domain_description
     domain_method
     domain_name
     enum_const_ids
@@ -56,6 +57,7 @@ References:
     is_enum_domain
     is_fn
     is_func_domain
+    is_model
     is_multiline_mode
     is_oneline_mode
     is_product_domain
