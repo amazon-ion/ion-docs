@@ -330,6 +330,26 @@ Spec Problems
                 true)  // has rest param
               (mk_fn Xformer (vs)
                 (lower_to 'Value*' (ith vs 0)))))
+          (tuple ExportedMacro (opt 'Unicode?' "make_list")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (mk_fn Xformer (vs)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift_to Content (lift_to List (lower_to 'Value*' (ith vs 0)))))))))
+          (tuple ExportedMacro (opt 'Unicode?' "make_sexp")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (mk_fn Xformer (vs)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift_to Content (lift_to Sexp (lower_to 'Value*' (ith vs 0)))))))))
           /* ... */)))
 
     (fn systemModule ((i IVM) -> BoundModule)

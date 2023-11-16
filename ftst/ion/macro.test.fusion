@@ -48,4 +48,24 @@
   (quote_top '#$ion_1_1' 1 ('#$:values' 2 3) 4))
 
 
+// make_list
+
+(check_expansion
+  (quote_top [] [1, 2])
+  (quote_top '#$ion_1_1' ('#$:$ion:make_list') ('#$:$ion:make_list' 1 2)))
+(check_expansion
+  (quote_top [1, 2, 3, 4])
+  (quote_top '#$ion_1_1' ('#$:$ion:make_list' 1 ('#$:values' 2 3) 4)))
+
+
+// make_sexp
+
+(check_expansion
+  (quote_top () (1 2))
+  (quote_top '#$ion_1_1' ('#$:$ion:make_sexp') ('#$:$ion:make_sexp' 1 2)))
+(check_expansion
+  (quote_top (1 2 3 4))
+  (quote_top '#$ion_1_1' ('#$:$ion:make_sexp' 1 ('#$:values' 2 3) 4)))
+
+
 "SUCCESS (macro.test)"
