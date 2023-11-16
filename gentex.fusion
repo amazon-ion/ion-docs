@@ -19,10 +19,13 @@
 
 (displayln "% tag::domains[]")
 (for [(v (model_domains Ion))]
-  (displayln "% tag::" (domain_name v) "[]")
-  (ion_print_latex v)
-  (displayln "% end::" (domain_name v) "[]")
-  (displayln "\\newline")
+  // Exclude explicitly-defined sequences; their definition is axiomatic.
+  // TODO [SEQSEQ] model_domains should exclude such things.
+  (unless (is_seq_domain v)
+    (displayln "% tag::" (domain_name v) "[]")
+    (ion_print_latex v)
+    (displayln "% end::" (domain_name v) "[]")
+    (displayln "\\newline"))
 )
 (displayln "% end::domains[]")
 

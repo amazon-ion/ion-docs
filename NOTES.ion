@@ -34,6 +34,9 @@ TODOs
   part of the model
 * Improve error reporting locations; TCE + PCS = no meaningful stack
   * I wish I could override `#%app`!
+* [SEQSEQ] Sequences of sequences could use some improvements.
+  * The definition form shouldn't allow name variance, eg (dom Foo (** Bar))
+  * `model_domains` should filter axiomatic definitions like `(** 'Value*')`.
 * Delay and memoize component domains (enable recursive types)
   * Allows the author to arrange domains arbitrarily, controlling the order in
     the document.

@@ -106,6 +106,9 @@ in the same order the author used.
                   ((=== (quote ->) op)
                     (result
                       (pair (quote define_func_domain) (pair name (pair desc args)))))
+                  ((=== (quote **) op)
+                    (result
+                      (pair (quote define_seq_domain) (pair name (pair desc args)))))
                   (true (wrong_syntax def
                           "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
               (wrong_syntax def "Expected sexp for domain definition"))
@@ -113,6 +116,7 @@ in the same order the author used.
                       (datum_to_syntax (symbol_append (syntax_unwrap name) "?") name)
                       (string_append "Optional " (syntax_unwrap name))
                       name))
+            // TODO probably shouldn't do this for **
             (result (sexp (quote define_seq_domain)
                       (datum_to_syntax (symbol_append (syntax_unwrap name) "*") name)
                       (string_append "Sequence of " (syntax_unwrap name))
@@ -185,6 +189,12 @@ Defines a union of one or more domains.
     (* <dom-id> <dom-id> ...+)
 
 Defines a product of two or more domains.
+
+    (** <dom-id>)
+
+Defines a sequence of zero elements of <dom-id>.
+Since sequence domains are defined automatically for all other definitions,
+this is typically only needed to create sequences-of-sequences, eg `Domain**`.
 
     (-> <dom-id> <dom-id>)
 

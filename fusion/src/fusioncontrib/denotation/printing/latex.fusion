@@ -129,7 +129,9 @@ or syntax string or symbol.
   // Printing Model Definitions
 
   (define (pp_model m e)
-    (pp_print_terms (model_domains m) e "" NL NL)
+    // TODO [SEQSEQ] model_domains should exclude axiomatic sequence definitions.
+    (let [(non_seq_domains (choose (negate is_seq_domain) (model_domains m)))]
+      (pp_print_terms non_seq_domains e "" NL NL))
     (unless (is_empty (model_fns m))
       (pp_print_terms (model_fns m) e NL "\\newline\n\\newline\n" "")))
 
