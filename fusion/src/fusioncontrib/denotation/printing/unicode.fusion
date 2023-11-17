@@ -32,14 +32,14 @@ Print domain models in a Unicode-rich plain-text format.
 
   (define (pp_domain_rhs d e)
     (cond
-      ((is_base_domain      d) (display "<" (domain_description d) ">"))
-      ((is_enum_domain      d) (pp_print_terms (enum_const_ids d) e "{ " ", " " }"))
-      ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
-      ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " * "))
-      ((is_func_domain      d) (pp_subdoms (func_domain_inputs        d) e " * ")
-                               (display " -> ")
-                               (pp_domain_name_else_rhs (func_domain_output d) e))
-      ((is_seq_domain       d) (display (domain_name (seq_domain_subdomain d)) "*"))
+      ((is_base_domain  d) (display "<" (domain_description d) ">"))
+      ((is_enum_domain  d) (pp_print_terms (enum_const_ids d) e "{ " ", " " }"))
+      ((is_union_domain d) (pp_subdoms (union_domain_subdomains d) e " + "))
+      ((is_tuple_domain d) (pp_subdoms (tuple_domain_subdomains d) e " * "))
+      ((is_func_domain  d) (pp_subdoms (func_domain_inputs      d) e " * ")
+                           (display " -> ")
+                           (pp_domain_name_else_rhs (func_domain_output d) e))
+      ((is_seq_domain   d) (display (domain_name (seq_domain_subdomain d)) "*"))
       (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))
 
 

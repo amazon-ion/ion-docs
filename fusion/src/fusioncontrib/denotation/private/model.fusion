@@ -103,7 +103,7 @@ in the same order the author used.
                      (pair (quote define_union_domain) (pair name (pair desc args)))))
                   ((=== (quote *) op)
                     (result
-                      (pair (quote define_product_domain) (pair name (pair desc args)))))
+                      (pair (quote define_tuple_domain) (pair name (pair desc args)))))
                   ((=== (quote ->) op)
                     (result
                       (pair (quote define_func_domain) (pair name (pair desc args)))))
@@ -189,7 +189,7 @@ Defines a union of one or more domains.
 
     (* <dom-id> <dom-id> ...+)
 
-Defines a product of two or more domains.
+Defines a tuple of two or more domains.
 
     (** <dom-id>)
 

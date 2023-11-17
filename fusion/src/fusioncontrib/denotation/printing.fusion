@@ -61,7 +61,7 @@ References:
     is_model
     is_multiline_mode
     is_oneline_mode
-    is_product_domain
+    is_tuple_domain
     is_seq_domain
     is_union_domain
     make_printer
@@ -81,7 +81,7 @@ References:
     pp_ternary
     pp_unary
     pp_write
-    product_domain_subdomains
+    tuple_domain_subdomains
     seq_domain_subdomain
     sym_image
     type_method

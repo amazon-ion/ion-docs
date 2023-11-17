@@ -12,30 +12,29 @@
   )
 
   (provide
-    define_product_domain
-    is_product_domain
+    define_tuple_domain
     is_tuple
-    make_product_domain
-    product_domain_element
-    product_domain_subdomains
+    is_tuple_domain
+    make_tuple_domain
     tuple
+    tuple_domain_subdomains
     tuple_ith
     tuple_values
   )
 
 
 
-  (define ProductDomain
-    (make_domain_meta "ProductDomain" null))
+  (define TupleDomain
+    (make_domain_meta "TupleDomain" null))
 
-  (define (make_product_domain name description domain_producer)  // Ugh
+  (define (make_tuple_domain name description domain_producer)  // Ugh
     // TODO Memoize domain production
-    (make_domain ProductDomain name product_domain_checker description domain_producer))
+    (make_domain TupleDomain name tuple_domain_checker description domain_producer))
 
-  (define (is_product_domain d)
-    (is_domain_of_type ProductDomain d))
+  (define (is_tuple_domain d)
+    (is_domain_of_type TupleDomain d))
 
-  (define (product_domain_subdomains d)
+  (define (tuple_domain_subdomains d)
     '''
 Returns the list of component domains.
     '''
@@ -43,14 +42,14 @@ Returns the list of component domains.
       // TODO Why are we validating this in an accessor?
       (unless (and (is_list domains)
                    (every is_domain domains))
-        (raise_result_error "product_domain_subdomains" "list of domains" domains))
+        (raise_result_error "tuple_domain_subdomains" "list of domains" domains))
       domains))
 
   (define tuple
     '''
     (tuple domain elt0 elt1 ...+)
 
-Constructs a product-domain value.
+Constructs a tuple-domain value.
     '''
     (lambda rest
       (unless (is_pair rest)
@@ -58,10 +57,10 @@ Constructs a product-domain value.
         (apply raise_arity_error "tuple" 2 rest))
       (let [(domain (head rest)),
             (args   (tail rest))]
-        (unless (is_product_domain domain)
-          (apply raise_argument_error "tuple" "product domain" 0 rest))
+        (unless (is_tuple_domain domain)
+          (apply raise_argument_error "tuple" "tuple domain" 0 rest))
         (lets [(where (string_append "tuple " (domain_name domain))),
-               (subs  (apply sexp (product_domain_subdomains domain))),
+               (subs  (apply sexp (tuple_domain_subdomains domain))),
                (arity (size subs))]
           (unless (=== (size args) arity)
             (apply raise_arity_error where (+ 1 arity) rest))
@@ -72,7 +71,7 @@ Constructs a product-domain value.
 
   (define (is_tuple v)
     (and (is_domain_value v)
-         (is_product_domain (domain_value_domain v))))
+         (is_tuple_domain (domain_value_domain v))))
 
 
   (define (tuple_values tuple)
@@ -92,36 +91,28 @@ Access component i of tuple v.
     (list_element (domain_value_rep v) i))
 
 
-  (define (product_domain_element d v i)
-    '''
-Access component i of domain value v in domain d.
-    '''
-    // TODO type-check v
-    (list_element (domain_value_rep v) i))
-
-
-  (define (product_domain_checker d values)
-    (let [(subdomains (product_domain_subdomains d))]
+  (define (tuple_domain_checker d values)
+    (let [(subdomains (tuple_domain_subdomains d))]
       // We don't type-check the elements here, its been done by `tuple`.
       (and (is_list values)
            (same_size values subdomains))))
 
-  (define_syntax define_product_domain
+  (define_syntax define_tuple_domain
     '''
-    (define_product_domain name description domain0 domain1 ...+)
+    (define_tuple_domain name description domain0 domain1 ...+)
     '''
     (lambda (stx)
       (when (< (syntax_size stx) 4)
-        (wrong_syntax stx "Bad syntax for define_product_domain"))
+        (wrong_syntax stx "Bad syntax for define_tuple_domain"))
       (let [(name_stx (syntax_get stx 1)),
             (desc_stx (syntax_get stx 2)),  // TODO typecheck
             (domains (tail (tail (tail (syntax_unwrap stx)))))]
         (when (< (size domains) 2)
-          (wrong_syntax stx "define_product_domain requires at least two elements"))
+          (wrong_syntax stx "define_tuple_domain requires at least two elements"))
         (datum_to_syntax
           (QQ
             (define (UQ name_stx)
-              (make_product_domain
+              (make_tuple_domain
                 (quote (UQ name_stx))
                 (UQ desc_stx)
                 // Delay evaluation of the domains, so they can recurse

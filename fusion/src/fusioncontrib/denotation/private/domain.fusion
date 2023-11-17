@@ -41,7 +41,7 @@
 
 
   // Basically the class metaobject/vtable for domain objects.
-  // Instances include BaseDomain, UnionDomain, ProductDomain, FuncDomain.
+  // Instances include BaseDomain, UnionDomain, TupleDomain, FuncDomain.
   (record domain_meta (name eltof_fn))
 
   (define (make_domain_meta name eltof_fn)
@@ -57,7 +57,7 @@ Creates a new domain "class".
 
   // The "classes" from which domain values can be created.
   (record domain (type name checker description data))
-  // * The `type` is the category of domain: base, union, product, etc.
+  // * The `type` is the category of domain: base, union, tuple, etc.
   //   We can't name this field "meta" b/c its accessor would clash with
   //   the `domain_meta` constructor.
   // * The `checker` is a procedure that accepts the domain and a value,

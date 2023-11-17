@@ -28,7 +28,7 @@
 // Single argument (union)
 (check_argdomains [Exact] (make_func_domain null.string "desc" [Exact] T))
 
-// Single argument (product)
+// Single argument (tuple)
 (check_argdomains [Stamped] (make_func_domain null.string "desc" [Stamped] T))
 
 // Multiple arguments
@@ -37,7 +37,7 @@
 // Anonymous input domain not allowed.
 (expect_argument_error
   (make_func_domain null.string "desc"
-    [(make_product_domain null.string "desc" (|| [T, Any]))] T))
+    [(make_tuple_domain null.string "desc" (|| [T, Any]))] T))
 
 
 "SUCCESS (function.test)"
