@@ -21,25 +21,23 @@
 
 
 (define_check (check_argdomains expected_args func_dom)
-  (let [(arg_doms (func_domain_argdomains func_dom))]
+  (let [(arg_doms (func_domain_inputs func_dom))]
     (check_pred is_list arg_doms)
     (check === expected_args arg_doms)))
 
 // Single argument (union)
-(check_argdomains [Exact] (make_func_domain null.string "desc" Exact  T))
 (check_argdomains [Exact] (make_func_domain null.string "desc" [Exact] T))
 
 // Single argument (product)
-(check_argdomains [Stamped] (make_func_domain null.string "desc"  Stamped  T))
 (check_argdomains [Stamped] (make_func_domain null.string "desc" [Stamped] T))
 
 // Multiple arguments
 (check_argdomains [Z, Any] (make_func_domain null.string "desc" [Z, Any] Stamped))
 
-// Anonymous product domain not allowed.
+// Anonymous input domain not allowed.
 (expect_argument_error
   (make_func_domain null.string "desc"
-    (make_product_domain null.string "desc" (|| [T, Any])) T))
+    [(make_product_domain null.string "desc" (|| [T, Any]))] T))
 
 
 "SUCCESS (function.test)"

@@ -46,7 +46,7 @@ References:
     fn_name
     form_matches
     form_method
-    func_domain_argdomains
+    func_domain_inputs
     func_domain_output
     'hint:multiline'
     'hint:oneline'

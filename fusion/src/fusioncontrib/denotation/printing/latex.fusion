@@ -163,7 +163,7 @@ or syntax string or symbol.
                                (display " \\;\\}"))
       ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
       ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " \\times "))
-      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " \\times ")
+      ((is_func_domain      d) (pp_subdoms (func_domain_inputs        d) e " \\times ")
                                (display " \\rightarrow ")
                                (pp_domain_name_else_rhs (func_domain_output d) e))
       (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))

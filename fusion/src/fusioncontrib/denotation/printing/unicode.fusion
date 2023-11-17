@@ -36,7 +36,7 @@ Print domain models in a Unicode-rich plain-text format.
       ((is_enum_domain      d) (pp_print_terms (enum_const_ids d) e "{ " ", " " }"))
       ((is_union_domain     d) (pp_subdoms (union_domain_subdomains   d) e " + "))
       ((is_product_domain   d) (pp_subdoms (product_domain_subdomains d) e " * "))
-      ((is_func_domain      d) (pp_subdoms (func_domain_argdomains    d) e " * ")
+      ((is_func_domain      d) (pp_subdoms (func_domain_inputs        d) e " * ")
                                (display " -> ")
                                (pp_domain_name_else_rhs (func_domain_output d) e))
       ((is_seq_domain       d) (display (domain_name (seq_domain_subdomain d)) "*"))
