@@ -96,7 +96,7 @@ Remember that _everything is functional here_, even things like IF.
     '''
     (lambda (stx)
       (when (< (syntax_size stx) 5)
-        (wrong_syntax stx "Bad syntax for define_func_domain"))
+        (wrong_syntax stx "function domain requires at least two domain subforms"))
       (lets [(name_stx (syntax_get stx 1)),
              (desc_stx (syntax_get stx 2)),  // TODO typecheck
              (domains (tail (tail (tail (syntax_unwrap stx))))),

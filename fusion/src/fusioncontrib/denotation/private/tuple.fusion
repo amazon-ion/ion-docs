@@ -108,7 +108,7 @@ Access component i of tuple v.
             (desc_stx (syntax_get stx 2)),  // TODO typecheck
             (domains (tail (tail (tail (syntax_unwrap stx)))))]
         (when (< (size domains) 2)
-          (wrong_syntax stx "define_tuple_domain requires at least two elements"))
+          (wrong_syntax stx "tuple domain requires at least two elements"))
         (datum_to_syntax
           (QQ
             (define (UQ name_stx)

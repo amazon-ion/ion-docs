@@ -12,23 +12,19 @@
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom TT = (+ T T))))  // Duplicate subdomain in +
+    (dom BB = (+ B B))))  // Duplicate subdomain in +
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom Tx = (* T))))    // Must have more than one in tuple
+    (dom Bs = (* B))))    // Must have more than one in tuple
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom Tx = (-> T))))    // Must have more than one in function
+    (dom Fn = (-> B))))    // Must have more than one subform in function
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom Tx = (- T T))))    // Undefined operator
+    (dom D = (- B B))))    // Undefined operator
 
 
 (require "/model1")
