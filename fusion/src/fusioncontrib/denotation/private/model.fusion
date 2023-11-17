@@ -111,7 +111,7 @@ in the same order the author used.
                     (result
                       (pair (quote define_seq_domain) (pair name (pair desc args)))))
                   (true (wrong_syntax def
-                          "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+                          "Expected (+ D ...+) or (* D ...+) or (-> A ...+ R)"))))
               (wrong_syntax def "Expected sexp for domain definition"))
             (result (sexp (quote define_opt_domain)
                       (datum_to_syntax (symbol_append (syntax_unwrap name) "?") name)
@@ -187,9 +187,9 @@ predicate.
 
 Defines a union of one or more domains.
 
-    (* <dom-id> <dom-id> ...+)
+    (* <dom-id> ...+)
 
-Defines a tuple of two or more domains.
+Defines a tuple of one or more domains.
 
     (** <dom-id>)
 

@@ -38,10 +38,9 @@
     '''
 Returns the list of component domains.
     '''
-    (let [(domains ((domain_data d)))]
-      // TODO Why are we validating this in an accessor?
-      (unless (and (is_list domains)
-                   (every is_domain domains))
+    (lets [(domain_producer (domain_data d)),
+           (domains (domain_producer))]
+      (unless (and (is_list_of_domains domains) (not (is_empty domains)))
         (raise_result_error "tuple_domain_subdomains" "list of domains" domains))
       domains))
 
@@ -99,16 +98,16 @@ Access component i of tuple v.
 
   (define_syntax define_tuple_domain
     '''
-    (define_tuple_domain name description domain0 domain1 ...+)
+    (define_tuple_domain name description domain ...+)
     '''
     (lambda (stx)
-      (when (< (syntax_size stx) 4)
+      (when (< (syntax_size stx) 3)
         (wrong_syntax stx "Bad syntax for define_tuple_domain"))
       (let [(name_stx (syntax_get stx 1)),
             (desc_stx (syntax_get stx 2)),  // TODO typecheck
             (domains (tail (tail (tail (syntax_unwrap stx)))))]
-        (when (< (size domains) 2)
-          (wrong_syntax stx "tuple domain requires at least two elements"))
+        (unless (> (size domains) 0)
+          (wrong_syntax stx "tuple domain requires at least one element"))
         (datum_to_syntax
           (QQ
             (define (UQ name_stx)

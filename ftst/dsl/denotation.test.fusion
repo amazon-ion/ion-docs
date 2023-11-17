@@ -16,10 +16,6 @@
 
 (expect_syntax_error
   (define_model Bad
-    (dom Bs = (* B))))    // Must have more than one in tuple
-
-(expect_syntax_error
-  (define_model Bad
     (dom Fn = (-> B))))    // Must have more than one subform in function
 
 (expect_syntax_error

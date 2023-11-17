@@ -3,11 +3,19 @@
 (require
   "/fusion/experimental/check"
   "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/private/boolean"
   "/fusioncontrib/denotation/private/domain"
   "/fusioncontrib/denotation/private/tuple"
   "/fusioncontrib/denotation/testing"
   "/model1")
 
+
+(expect_syntax_error
+  (define_model Bad
+    (dom Bs = (*))))    // Must have at least one subform in tuple
+
+(define_model Ok
+  (dom BWrap = (* B)))  // Single-element tuple is ok
 
 
 (check_true (domain_is  stamped_int_val Stamped))
@@ -22,6 +30,14 @@
 (expect_arity_error (tuple Stamped t_val))
 (expect_arity_error (tuple Stamped stamped_int_val))
 
+
+(let [(bw (tuple BWrap TRUE))]
+  (check element_of bw BWrap)
+  (check_same TRUE (ith bw 0)))
+
+(let [(bw (tuple BWrap true))]   // Auto-injection
+  (check element_of bw BWrap)
+  (check_true (eject (ith bw 0))))
 
 (let [(v (tuple Point2d 0 1))]   // Auto-injection
   (check element_of v Point2d)

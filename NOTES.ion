@@ -7,10 +7,6 @@ TODOs
 * [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
-* [TUPLE1] Tuples should allow one field; more natural than singleton unions.
-  * I'm not sure; it's simpler to simply lift than to wrap in sequence then lift
-    which is how tuple construction works (and how its rendered).
-  * Still, I see no reason to disallow it.
 * [ACCESSORS] Auto-define tuple field accessors by putting names in the defn.
 * [SEQ-INJECT] `seq` should auto-inject arguments.
 * [TOP] TOP domain
