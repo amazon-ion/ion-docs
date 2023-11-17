@@ -9,6 +9,7 @@ Predefined denotational model of Boolean values and related logical functions.
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/optional"

@@ -33,6 +33,7 @@ Domains come in several types:
   '''
   (require
     "/fusion/exception"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/enum"

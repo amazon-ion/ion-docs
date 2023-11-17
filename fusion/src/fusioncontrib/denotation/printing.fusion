@@ -21,6 +21,7 @@ References:
     "/fusion/experimental/syntax"
     "/fusion/private/record"
     "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/enum"
@@ -177,9 +178,7 @@ parentheses.
 
   (define make_printer
     '''
-Contruct a customized pretty-printer.
-
-You'll generally need to add methods for is_fn, is_domain_value, etc.
+Contruct a customized pretty-printer, given configuration clauses.
 
 Sequences in the arguments are flattened recursively.
     '''
