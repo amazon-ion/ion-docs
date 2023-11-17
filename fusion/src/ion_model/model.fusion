@@ -201,11 +201,11 @@ Spec Problems
     //==========================================================================
     // Catalogs
 
-    (dom Catalog = (+ 'SharedModule*'))
+    (dom Catalog = (* 'SharedModule*'::modules))
 
 
     (fn exactModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule')
-      (exactModule_SMs (lower c 'SharedModule*') n v))
+      (exactModule_SMs (Catalog_modules c) n v))
 
     (fn exactModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule')
       (if (seq_is_empty ss)
@@ -217,7 +217,7 @@ Spec Problems
 
 
     (fn bestModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule?')
-      (bestModule_SMs (lower c 'SharedModule*') n v))
+      (bestModule_SMs (Catalog_modules c) n v))
 
     (fn bestModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule?')
       (if (seq_is_empty ss)
@@ -240,7 +240,7 @@ Spec Problems
 
     (fn Catalog_extend ((c Catalog) (s SharedModule) -> Catalog)
       // TODO reject duplicate key
-      (lift (seq_prepend s (lower c 'SharedModule*')) Catalog))
+      (tuple Catalog (seq_prepend s (Catalog_modules c))))
 
 
     //==========================================================================
@@ -542,6 +542,5 @@ Spec Problems
 
   )
 
-  (define EMPTY_CATALOG    (lift (seq 'SharedModule*') Catalog))
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
 )

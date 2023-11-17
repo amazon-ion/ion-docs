@@ -288,6 +288,9 @@ We "tunnel" special tokens as follows:
   //============================================================================
   // Catalogs
 
+  (define EMPTY_CATALOG
+    (tuple Catalog (seq 'SharedModule*')))
+
   (define catalog_data
     (quote_top
       $ion_shared_symbol_table::{
