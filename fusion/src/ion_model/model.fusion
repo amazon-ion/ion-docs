@@ -102,21 +102,15 @@ Spec Problems
     (dom SList     = (+ 'STree*' DotNull))
     (dom SSexp     = (+ 'STree*' DotNull))
 
-    (dom SField    = (* SSymTok STree))
+    (dom SField    = (* SSymTok::name STree::tree))
     (dom SStruct   = (+ 'SField*' DotNull))
 
 
     (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
                          /*Decimal Float Timestamp Blob Clob*/))
-    (dom SValue     = (* 'SSymTok*' SContent))
+    (dom SValue     = (* 'SSymTok*'::annots SContent::content))
     (dom STree      = (+ SValue /* Eexp will go here */))
     (dom TSTree     = (+ STree IVM))
-
-    (fn SValue_annots  ((sv SValue) -> 'SSymTok*') (ith sv 0))
-    (fn SValue_content ((sv SValue) -> 'SContent') (ith sv 1))
-
-    (fn SField_name  ((sf SField) -> SSymTok) (ith sf 0))
-    (fn SField_tree  ((sf SField) -> STree)   (ith sf 1))
 
 
     //=============================
@@ -129,20 +123,14 @@ Spec Problems
     (dom List     = (+ 'Value*' DotNull))
     (dom Sexp     = (+ 'Value*' DotNull))
 
-    (dom Field    = (* SymTok Value))
+    (dom Field    = (* SymTok::name Value::value))
     (dom Struct   = (+ 'Field*' DotNull))
 
     // The Ion data model, proper
     (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String
                         /*Decimal Float Timestamp Blob Clob*/))
-    (dom Value     = (* 'SymTok*' Content))
+    (dom Value     = (* 'SymTok*'::annots Content::content))
 
-
-    (fn Value_annots  ((v Value) -> 'SymTok*') (ith v 0))
-    (fn Value_content ((v Value) -> 'Content') (ith v 1))
-
-    (fn Field_name  ((f Field) -> SymTok)   (ith f 0))
-    (fn Field_value ((f Field) -> Value)    (ith f 1))
 
     (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
       (and (element_of s Unicode)
@@ -180,17 +168,9 @@ Spec Problems
     //==========================================================================
     // Encoding Modules
 
-    (dom Module        = (* IVM 'SymTok*' /*'ExportedMacro*'*/))
+    (dom Module        = (* IVM::specVersion 'SymTok*'::symtab /*'ExportedMacro*'*/))
+    (dom SharedModule  = (* Unicode::name I::version Module::module))
 
-    (fn Module_specVersion ((m Module) -> IVM)               (ith m 0))
-    (fn Module_symtab      ((m Module) -> 'SymTok*')         (ith m 1))
-
-
-    (dom SharedModule  = (* Unicode I Module))   // Name and version
-
-    (fn SharedModule_name    ((m SharedModule) -> Unicode)    (ith m 0))
-    (fn SharedModule_version ((m SharedModule) -> I)          (ith m 1))
-    (fn SharedModule_module  ((m SharedModule) -> Module)     (ith m 2))
     (fn SharedModule_symtab  ((m SharedModule) -> 'SymTok*')
       (Module_symtab (SharedModule_module m)))
 
@@ -266,11 +246,7 @@ Spec Problems
     //==========================================================================
     // Encoding Environment
 
-    (dom Environment = (* Catalog IVM 'SymTok*'))
-
-    (fn Environment_catalog ((r Environment) -> Catalog)   (ith r 0))
-    (fn Environment_IVM     ((r Environment) -> IVM)       (ith r 1))
-    (fn Environment_symbols ((r Environment) -> 'SymTok*') (ith r 2))
+    (dom Environment = (* Catalog::catalog IVM::IVM 'SymTok*'::symbols))
 
 
     //==========================================================================
@@ -537,12 +513,8 @@ Spec Problems
     // It would be easier to just pass the Environment, but this is explicit
     // WRT exactly what information can affect parsing.
 
-    (dom ParseStep    = (* TSTree ParseStream))
+    (dom ParseStep    = (* TSTree::tree ParseStream::next))
     (dom ParseStream  = (-> IVM 'ParseStep?'))
-
-    (fn ParseStep_tree ((p ParseStep) -> TSTree)      (ith p 0))
-    (fn ParseStep_next ((p ParseStep) -> ParseStream) (ith p 1))
-
 
     (dom Document  = (^ is_truthy) "Ion documents")
     (dom Parser    = (-> Document ParseStream))
