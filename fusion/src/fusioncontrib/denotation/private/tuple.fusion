@@ -15,7 +15,6 @@
     define_tuple_domain
     is_tuple
     is_tuple_domain
-    make_tuple_domain
     tuple
     tuple_domain_subdomains
     tuple_ith
@@ -27,8 +26,7 @@
   (define TupleDomain
     (make_domain_meta "TupleDomain" null))
 
-  (define (make_tuple_domain name description domain_producer)  // Ugh
-    // TODO Memoize domain production
+  (define (make_tuple_domain name description domain_producer)
     (make_domain TupleDomain name tuple_domain_checker description domain_producer))
 
   (define (is_tuple_domain d)
@@ -38,10 +36,10 @@
     '''
 Returns the list of component domains.
     '''
-    (lets [(domain_producer (domain_data d)),
-           (domains (domain_producer))]
-      (unless (and (is_list_of_domains domains) (not (is_empty domains)))
-        (raise_result_error "tuple_domain_subdomains" "list of domains" domains))
+    (lets [(producer (domain_data d)),
+           (domains  (producer))]
+      (unless (is_list_of_named_domains domains)
+        (raise_result_error "tuple_domain_subdomains" "list of named domains" domains))
       domains))
 
   (define tuple

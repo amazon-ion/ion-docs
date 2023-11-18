@@ -31,9 +31,10 @@ TODOs
 * [SEQSEQ] Sequences of sequences could use some improvements.
   * The definition form shouldn't allow name variance, eg (dom Foo (** Bar))
   * `model_domains` should filter axiomatic definitions like `(** 'Value*')`.
-* Delay and memoize component domains (enable recursive types)
-  * Allows the author to arrange domains arbitrarily, controlling the order in
-    the document.
+* Memoize component domains production for efficiency.
+  * Producing the domains is efficient: a few module-level binding references,
+    perhaps wrapped into a list. Memoizing this isn't worth it.
+  * However, we need to results every time. That could be worth memoizing.
 * `lift` and `lower` should statically detect impossible steps after the first.
 
 

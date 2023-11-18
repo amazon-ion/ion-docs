@@ -25,19 +25,20 @@
     (check_pred is_list arg_doms)
     (check === expected_args arg_doms)))
 
-// Single argument (union)
-(check_argdomains [Exact] (make_func_domain null.string "desc" [Exact] T))
+(check_argdomains [Any]     Any2Any)
+(check_argdomains [Point2d] Projection)
+(check_argdomains [T, Any]  Stamper)
 
-// Single argument (tuple)
-(check_argdomains [Stamped] (make_func_domain null.string "desc" [Stamped] T))
 
-// Multiple arguments
-(check_argdomains [Z, Any] (make_func_domain null.string "desc" [Z, Any] Stamped))
+(define_model FnDomainCanForwardReference
+  (dom Forward = (-> Arg Result))
+  (dom Arg     = (= A))
+  (dom Result  = (= R)))
 
-// Anonymous input domain not allowed.
-(expect_argument_error
-  (make_func_domain null.string "desc"
-    [(make_tuple_domain null.string "desc" (|| [T, Any]))] T))
+(define_model FnDefCanForwardReference
+  (dom In  = (= IN))
+  (dom Out = (= OUT))
+  (fn forward ((a In) -> Out) OUT))
 
 
 "SUCCESS (function.test)"

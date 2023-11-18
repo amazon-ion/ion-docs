@@ -34,6 +34,7 @@
 
     // Helpers
     is_list_of_domains
+    is_list_of_named_domains
   )
 
 
@@ -88,6 +89,11 @@ Creates a new domain "class".
 
   (define (is_list_of_domains v)
     (and (is_list v) (every is_domain v)))
+
+  (define (is_list_of_named_domains v)
+    (and (is_list_of_domains v)
+         (not (is_empty v))
+         (every domain_name v)))
 
 
   //-------------------
