@@ -7,6 +7,7 @@
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
+    "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/typecheck"
     "/fusioncontrib/denotation/private/util"
   )
@@ -94,26 +95,86 @@ Access component i of tuple v.
       (and (is_list values)
            (same_size values subdomains))))
 
+
+  (define (split_field_decl decl)
+    (lets [(anns (annotations (syntax_unwrap decl)))]
+      (if (is_empty anns)
+        (values decl (void))
+        (if (== 1 (size anns))
+          (values (datum_to_syntax (first anns) decl decl)
+                  (annotate (syntax_unwrap decl)))
+          (wrong_syntax decl "Too many annotations in field declaration")))))
+
+  (define (split_field_decls decls)
+    (if (is_empty decls)
+      (values (sexp) (sexp))
+      (let_values [((head_domain   head_name) (split_field_decl  (head decls))),
+                   ((tail_domains tail_names) (split_field_decls (tail decls)))]
+        (values (pair head_domain tail_domains)
+                (pair head_name   tail_names)))))
+
+
+  (define_syntax define_field_accessor
+    '''
+    (define_field_accessor name tuple_domain field_domain index)
+    '''
+    (lambda (stx)
+      (unless (= (syntax_size stx) 5)
+        (wrong_syntax stx "Bad syntax for define_field_accessor"))
+      (let [(name_stx  (syntax_get stx 1)),
+            (tuple_dom (syntax_get stx 2)),
+            (field_dom (syntax_get stx 3)),
+            (index     (syntax_get stx 4))]
+        (datum_to_syntax
+          (QQ
+            (define_fn (UQ name_stx) ((v (UQ tuple_dom)) -> (UQ field_dom))
+              (tuple_ith v (UQ index))))
+          (quote_syntax context)
+          stx))))
+
+  (define (accessor_name domname_stx fname_text)
+    "Intentionally non-hygienic, so the accessor is accessible."
+    (datum_to_syntax
+      (symbol_append (syntax_unwrap domname_stx) "_" fname_text)
+      domname_stx))
+
   (define_syntax define_tuple_domain
     '''
-    (define_tuple_domain name description domain ...+)
+    (define_tuple_domain name description <field> ...+)
+
+Each <field> is either an identifier bound to the field's domain, or
+`domain::field_name`.
     '''
     (lambda (stx)
       (when (< (syntax_size stx) 3)
         (wrong_syntax stx "Bad syntax for define_tuple_domain"))
-      (let [(name_stx (syntax_get stx 1)),
-            (desc_stx (syntax_get stx 2)),  // TODO typecheck
-            (domains (tail (tail (tail (syntax_unwrap stx)))))]
-        (unless (> (size domains) 0)
-          (wrong_syntax stx "tuple domain requires at least one element"))
-        (datum_to_syntax
-          (QQ
-            (define (UQ name_stx)
-              (make_tuple_domain
-                (quote (UQ name_stx))
-                (UQ desc_stx)
-                // Delay evaluation of the domains, so they can recurse
-                (thunk (UQ (pair (quote list) domains))))))
-          (quote_syntax context)
-          stx))))
+      (let [(domname_stx (syntax_get stx 1)),
+            (desc_stx    (syntax_get stx 2)),  // TODO typecheck
+            (fields      (tail (tail (tail (syntax_unwrap stx)))))]
+        (unless (> (size fields) 0)
+          (wrong_syntax stx "tuple domain requires at least one field"))
+        (let_values [((domains fnames) (split_field_decls fields))]
+          (datum_to_syntax
+            (apply sexp
+              (QS begin)
+              (QQ
+                (define (UQ domname_stx)
+                  (make_tuple_domain
+                    (quote (UQ domname_stx))
+                    (UQ desc_stx)
+                    // Delay evaluation of the domains, so they can recurse
+                    (thunk (UQ (pair (quote list) domains))))))
+              (let def_fields [(domains domains), (fnames fnames), (index 0)]
+                (if (is_empty domains)
+                  (sexp (QS (begin)))
+                  (pair
+                    (if (head fnames)
+                      // We have a named field
+                      (let [(fname_stx (accessor_name domname_stx (head fnames)))]
+                        (QQ (define_field_accessor (UQ fname_stx)
+                              (UQ domname_stx) (UQ (head domains)) (UQ index))))
+                      (QS (begin)))
+                    (def_fields (tail domains) (tail fnames) (+ 1 index))))))
+            (quote_syntax context)
+            stx)))))
 )

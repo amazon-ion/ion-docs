@@ -75,4 +75,30 @@
 (check_bottom "1721" (tuple_ith stamped_int_val (wrong 1721)))  // strict on 2nd arg
 
 
+// Field accessors
+
+(define_model Accessors
+  (dom IWrap = (* I::num))
+  (dom IB    = (* I::num B::bool))
+  (dom BI    = (* B I::num)))
+
+(let [(v (tuple IWrap 16))]
+  (check_same 16 (eject (ith v 0)))
+  (check_same 16 (eject (IWrap_num v))))
+
+(let [(v (tuple IB 19 true))]
+  (check_same 19   (eject (IB_num v)))
+  (check_same true (eject (IB_bool v))))
+
+(expect_argument_error (IB_num (tuple IWrap 49)))
+(expect_argument_error (BI_num (tuple IB -9 true)))
+
+
+(define_model AccessorsCanForwardReference
+  (dom Forward = (* Later::later))
+  (dom Later = (= LATER)))
+
+(tuple Forward LATER)
+
+
 "SUCCESS (tuple.test)"

@@ -7,7 +7,7 @@ TODOs
 * [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
-* [ACCESSORS] Auto-define tuple field accessors by putting names in the defn.
+* [ACCESSORS] Auto-configure printer for tuple field accessors.
 * [SEQ-INJECT] `seq` should auto-inject arguments.
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
@@ -24,6 +24,7 @@ TODOs
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
   * This makes indirect lowering unambiguous.
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
+* [CONST-TYPE] Render the domain of a constant, as with functions.
 * [CONST-INLINE] Render selected `const`s inline, not printed explicitly as
   part of the model
 * Improve error reporting locations; TCE + PCS = no meaningful stack
