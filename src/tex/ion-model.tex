@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-20T23:25:40.565-00:00
+%%% This file was generated at 2023-11-20T23:41:54.632-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -248,11 +248,6 @@
 % end::Struct_get1[]
 \newline
 \newline
-% tag::SharedModule_symtab[]
-\mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize symtab}} ~\equiv~ \mbox{\it m\/}\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}$\`$ \mbox{\bf SharedModule} \rightarrow \mbox{\bf SymTok*}
-% end::SharedModule_symtab[]
-\newline
-\newline
 % tag::systemModule[]
 \mbox{\it systemModule\/}(\mbox{\it i\/}) ~\equiv~ $\`$ \mbox{\bf IVM} \rightarrow \mbox{\bf Module}\newline
 \;\; \setandincrindent
@@ -425,12 +420,12 @@
 \:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it bestModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize symtab}}, \mbox{\it m\/}\mbox{!})\newline
+\:\mbox{\bf{then}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}, \mbox{\it m\/}\mbox{!})\newline
 \:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\mbox{!})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 \newline
-\:\mbox{\bf{else}}\:\mbox{\it exactModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
+\:\mbox{\bf{else}}\:\mbox{\it exactModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent

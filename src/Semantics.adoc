@@ -946,8 +946,6 @@ A shared module wraps a module with a name and a version:
 [{denotation}]
 ++++
 include::{modeltex}[tag=SharedModule]
-\newline
-include::{modeltex}[tag=SharedModule_symtab]
 ++++
 
 :fn-sst-issue: footnote:[This needs error handling similar to local symbol \
