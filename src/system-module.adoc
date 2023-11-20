@@ -26,29 +26,16 @@ This section describes operators that cannot be defined as macros.
 
 ==== Stream Constructors
 
-===== `void`
+===== `stream`
 
 [{nrm}]
 ----
-(void) \-> any?
+(stream [v]) \-> any*
 ----
 
-Produces an empty stream.
-The most common use of this operator is to supply “no value” to a voidable parameter.
-To make such use more readable, the special-case E-expression `(:)` is synonymous to `(:void)`.
-
-
-===== `values`
-
-[{nrm}]
-----
-(values (v any\...)) \-> any*
-----
-
-Produces a stream from any number of arguments, concatenating the streams produced by the nested
-expressions.
-Used to aggregate multiple values or sub-streams to pass to a single argument, or to return
-multiple results. Generally only useful with more than one subexpression.
+Produces a stream from any number of arguments, concatenating the streams produced by the nested expressions.
+Used to aggregate multiple values or sub-streams to pass to a single argument, or to return multiple results.
+The `stream` macro also has the syntactic sugar of
 
 
 ==== Value Constructors
@@ -57,7 +44,7 @@ multiple results. Generally only useful with more than one subexpression.
 
 [{nrm}]
 ----
-(make_string (content text\...)) \-> string
+(make_string [content]) \-> string
 ----
 
 Produces a non-null, unannotated string containing the concatenated content produced by the
@@ -73,7 +60,7 @@ as characters. Lobs wouldn’t work well, though.
 
 [{nrm}]
 ----
-(make_symbol (content text\...)) \-> symbol
+(make_symbol [content]) \-> symbol
 ----
 
 Like `make_string` but produces a symbol.
@@ -83,7 +70,7 @@ Like `make_string` but produces a symbol.
 
 [{nrm}]
 ----
-(make_list (vals any\...)) \-> list
+(make_list [vals]) \-> list
 ----
 
 Produces a non-null, unannotated list from any number of inputs.
@@ -94,7 +81,7 @@ Template expressions of the form `[E~1~, …, E~n~]` are equivalent to `(make_li
 
 [{nrm}]
 ----
-(make_sexp (vals any\...)) \-> sexp
+(make_sexp [vals]) \-> sexp
 ----
 
 Like `make_list` but produces a sexp.
@@ -112,7 +99,7 @@ templates are not <<ref:quasi-literals, quasi-literals>>.
 
 [{nrm}]
 ----
-(make_struct (kv any\...)) \-> struct
+(make_struct [kv]) \-> struct
 ----
 
 Produces a non-null, unannotated struct from any number of elements.
@@ -150,7 +137,7 @@ key-value pairs may not align with the actual arguments.  This is different from
 
 [{nrm}]
 ----
-(make_decimal (coefficient int) (exponent int)) \-> decimal
+(make_decimal int::exponent int::coefficient) \-> decimal
 ----
 
 Since decimal is already compact, this is perhaps most useful in conjunction with packed arrays,
@@ -181,9 +168,9 @@ before arriving here.
 [{nrm}]
 ----
 (make_timestamp
-  (year int) (month? int) (day int?)
-  (hour int?)  (minute int?) (second decimal?)
-  (offset int?))
+  int::year uint8::month uint8::day
+  uint8::hour  uint8::minute decimal::second
+  int::offset)
   -> timestamp
 ----
 Produces a non-null, unannotated timestamp at various levels of precision.
@@ -197,7 +184,7 @@ Example:
 [{nrm}]
 ----
 (*macro* ts_today
-  \((hour uint8) (minute uint8) (seconds_millis uint32))
+  (uint8::hour uint8::minute uint32::seconds_millis)
   (make_timestamp 2022 04 28 hour minute
     (decimal seconds_millis -3) 0))
 ----
@@ -207,7 +194,7 @@ Example:
 
 [{nrm}]
 ----
-(annotate (ann [text]*) value) \-> any
+(annotate [text::ann] value) \-> any
 ----
 
 Produces the `value` prefixed with the annotations ``ann``s.
@@ -232,14 +219,14 @@ This macro is optimized for representing symbols-list with minimal space.
 [{nrm}]
 ----
 (*macro* import
-  \((name *string*) (version uint**?**) (max_id uint**?**)) \-> struct
+  (string::name uint::version uint::max_id)
   { name:name, version:version, max_id:max_id })
 
 (*macro* local_symtab
-  \((imports [import]) (symbols string**\...**))
+  ([import::imports] [string::symbols])
   $ion_symbol_table::{
-    imports:(*if_void* imports (void) [imports]),
-    symbols:(*if_void* symbols (void) [symbols]),
+    imports:(*if_void* imports [:] [imports]),
+    symbols:(*if_void* symbols [:] [symbols]),
   })
 ----
 
@@ -257,9 +244,9 @@ This macro is optimized for representing symbols-list with minimal space.
 [{nrm}]
 ----
 (*macro* lst_append
-  \((symbols string\...))
+  ([string::symbols])
   (*if_void* symbols
-    (void)                  // Produce nothing if no symbols provided.
+    [:]                  // Produce nothing if no symbols provided.
     $ion_symbol_table::{
       imports: (*literal* $ion_symbol_table),
       symbols: [symbols]}))

@@ -1930,9 +1930,6 @@ EB 05
 [[annotations]]
 === Annotations
 
-[sidebar]
-TODO: Decide whether we want an Ion 1.0-style double-length-prefixed sequence.
-
 Annotations can be encoded either <<annotations_with_symbol_addresses, as symbol addresses>>
 or <<annotations_with_flexsym_text, as ``FlexSym``s>>. In both encodings, the annotations sequence appears
 just before the value that it decorates.
@@ -2372,9 +2369,9 @@ E-expression arguments corresponding to each parameter are encoded one after the
 ----
 (macro foo             // Macro name
   [                    // Parameters
-    (a string!),
-    (b compact_symbol!),
-    (c uint16!)
+    string::a,
+    compact_symbol::b,
+    uint16::c,
   ]
   /* ... */            // Body (elided)
 )
@@ -2432,7 +2429,7 @@ parameter can have 0, 1, or 2 bits.
 .2+|`(x int?)`
 .4+|1
 |`0`
-<|No expression; equivalent to `(:void)`
+<|No expression; equivalent to `[:]` (void).
 
 |`1`
 <|One expression
@@ -2440,7 +2437,7 @@ parameter can have 0, 1, or 2 bits.
 .2+|Zero-or-more
 .2+|`(x int*)`
 |`0`
-<|No expression; equivalent to `(:void)`
+<|No expression; equivalent to `[:]` (void).
 
 |`1`
 <|One expression
@@ -2457,7 +2454,7 @@ parameter can have 0, 1, or 2 bits.
 `(x int\...)`
 .8+|2
 |`00`
-|No expression; equivalent to `(:void)`
+|No expression; equivalent to  `[:]` (void).
 
 |`01`
 <|One expression
@@ -2551,7 +2548,7 @@ The example encodings in the following sections refer to this macro definition:
 ----
 (macro
     foo          // Macro name
-    [(x [int])]  // Parameters; `x` is a grouped parameter
+    ([int::x])   // Parameters; `x` is a grouped parameter
     /*...*/      // Body (elided)
 )
 ----
@@ -2619,7 +2616,7 @@ the end of the sequence of pages.
 ----
 (macro
     compact_foo          // Macro name
-    [(x [compact_int])]  // Parameters; `x` is a grouped parameter
+    ([compact_int::x])   // Parameters; `x` is a grouped parameter
     /*...*/              // Body (elided)
 )
 ----

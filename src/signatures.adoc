@@ -135,8 +135,8 @@ Examples:
 
 [{nrm}]
 ----
-(counts [int])         // Accepts zero or more ints
-(points [point]+)      // Accepts one or more points
+[int::count]          // Accepts zero or more ints
+[point::points]+      // Accepts one or more points
 ----
 
 
@@ -156,8 +156,8 @@ Examples:
 
 [{nrm}]
 ----
-(counts int \...)      // Accepts zero or more ints
-(points point \...+)   // Accepts one or more points
+int::counts\...      // Accepts zero or more ints
+point::points\...+   // Accepts one or more points
 ----
 
 
