@@ -34,7 +34,6 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor SField_tree          "tree")
       (accessor SharedModule_module  "module")
       (accessor SharedModule_name    "name")
-      (accessor SharedModule_symtab  "symtab")
       (accessor SharedModule_version "version")
       (accessor SValue_annots        "annots")
       (accessor SValue_content       "content")

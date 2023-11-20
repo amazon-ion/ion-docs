@@ -171,9 +171,6 @@ Spec Problems
     (dom Module        = (* IVM::specVersion 'SymTok*'::symtab /*'ExportedMacro*'*/))
     (dom SharedModule  = (* Unicode::name I::version Module::module))
 
-    (fn SharedModule_symtab  ((m SharedModule) -> 'SymTok*')
-      (Module_symtab (SharedModule_module m)))
-
 
     //==========================================================================
     // System Modules
@@ -316,9 +313,9 @@ Spec Problems
             // We have max_id, find best-match and adjust the length
             (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
               (if (opt_is_present s)
-                (adjust_length (SharedModule_symtab (opt_value s)) (opt_value m))
+                (adjust_length (Module_symtab (SharedModule_module (opt_value s))) (opt_value m))
                 (symbol_padding (opt_value m))))
-            (SharedModule_symtab (exactModule_Catalog (Environment_catalog r) n v))))))
+            (Module_symtab (SharedModule_module (exactModule_Catalog (Environment_catalog r) n v)))))))
 
 
     (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
