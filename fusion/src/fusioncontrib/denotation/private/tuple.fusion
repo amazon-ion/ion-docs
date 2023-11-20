@@ -17,8 +17,8 @@
     is_tuple
     is_tuple_domain
     tuple
-    tuple_domain_subdomains
     tuple_domain_field_names
+    tuple_domain_subdomains
     tuple_ith
     tuple_values
   )

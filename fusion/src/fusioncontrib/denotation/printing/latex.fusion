@@ -136,6 +136,8 @@ or syntax string or symbol.
       (pp_print_terms (model_fns m) e NL "\\newline\n\\newline\n" "")))
 
 
+  // Domains
+
   (define pp_domain_name_symbol
     (pp_symbol (|sym| (string_append "\\mbox{\\bf " (texescape sym) "}"))))
 
@@ -155,6 +157,19 @@ or syntax string or symbol.
         (pp_domain_name (domain_name (list_element subdoms i)) env)
         (loop (+ 1 i)))))
 
+  (define (pp_tuple_rhs d e)
+    (let [(types (tuple_domain_subdomains d)),
+          (names (tuple_domain_field_names d))]
+      (let loop [(i 0)]
+        (when (< i (size types))
+          (unless (= 0 i) (display " \\times "))
+          (let [(type (list_element types i)),
+                (name (list_element names i))]
+            (pp_domain_name (domain_name type) e)
+            (when name
+                (display "\\mbox{ : " name "}")))
+          (loop (+ 1 i))))))
+
   (define (pp_domain_rhs d e)
     (cond
       ((is_base_domain  d) (display "\\mbox{(" (texescape (domain_description d)) ")}"))
@@ -162,7 +177,7 @@ or syntax string or symbol.
                            (pp_print_terms (enum_const_ids d) e "" ", " "")
                            (display " \\;\\}"))
       ((is_union_domain d) (pp_subdoms (union_domain_subdomains d) e " + "))
-      ((is_tuple_domain d) (pp_subdoms (tuple_domain_subdomains d) e " \\times "))
+      ((is_tuple_domain d) (pp_tuple_rhs d e))
       ((is_func_domain  d) (pp_subdoms (func_domain_inputs      d) e " \\times ")
                            (display " \\rightarrow ")
                            (pp_domain_name_else_rhs (func_domain_output d) e))

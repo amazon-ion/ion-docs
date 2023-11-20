@@ -108,7 +108,7 @@
     (dom U = (+ B I))
     (dom V = (+ U Single))
 
-    (dom Tuple = (* U B Single))
+    (dom Tuple = (* U B::bool Single))
     (dom Func = (-> U Tuple B))
 
 
@@ -148,7 +148,7 @@ Single = { SINGLE }
 Enum = { ENUM1, ENUM2 }
 U = B + I
 V = U + Single
-Tuple = U * B * Single
+Tuple = U * B:bool * Single
 Func = U * Tuple -> B
 
 Constants

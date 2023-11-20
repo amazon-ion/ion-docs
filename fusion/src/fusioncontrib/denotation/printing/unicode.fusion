@@ -20,28 +20,7 @@ Print domain models in a Unicode-rich plain-text format.
 
 
   //============================================================================
-  // Custom Printing Methods
-
-  (define (pp_domain_name_else_rhs d e)
-    (let [(name (domain_name d))]
-      // This is the DSL `if`, which we need for the printer config below.
-      (if (not (is_null name)) (display name) (pp_domain_rhs d e))))
-
-  (define (pp_subdoms subdoms e mid)
-    (pp_print_terms (map domain_name subdoms) e "" mid ""))
-
-  (define (pp_domain_rhs d e)
-    (cond
-      ((is_base_domain  d) (display "<" (domain_description d) ">"))
-      ((is_enum_domain  d) (pp_print_terms (enum_const_ids d) e "{ " ", " " }"))
-      ((is_union_domain d) (pp_subdoms (union_domain_subdomains d) e " + "))
-      ((is_tuple_domain d) (pp_subdoms (tuple_domain_subdomains d) e " * "))
-      ((is_func_domain  d) (pp_subdoms (func_domain_inputs      d) e " * ")
-                           (display " -> ")
-                           (pp_domain_name_else_rhs (func_domain_output d) e))
-      ((is_seq_domain   d) (display (domain_name (seq_domain_subdomain d)) "*"))
-      (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))
-
+  // Printing Model Definitions
 
   (define (pp_model m e)
     (display "Domains\n=======")
@@ -53,14 +32,56 @@ Print domain models in a Unicode-rich plain-text format.
       (display "\nFunctions\n=========")
       (pp_print_terms (model_fns m) e "\n" "\n" "\n")))
 
+
+  // Domains
+
+  (define (pp_domain_name_else_rhs d e)
+    (let [(name (domain_name d))]
+      // This is the DSL `if`, which we need for the printer config below.
+      (if (not (is_null name)) (display name) (pp_domain_rhs d e))))
+
+  (define (pp_subdoms subdoms e mid)
+    (pp_print_terms (map domain_name subdoms) e "" mid ""))
+
+  (define (pp_tuple_rhs d e)
+    (let [(types (tuple_domain_subdomains d)),
+          (names (tuple_domain_field_names d))]
+      (let loop [(i 0)]
+        (when (< i (size types))
+          (unless (= 0 i) (display " * "))
+          (let [(type (list_element types i)),
+                (name (list_element names i))]
+            (display (domain_name type))
+            (when name
+              (display ":" name)))
+          (loop (+ 1 i))))))
+
+  (define (pp_domain_rhs d e)
+    (cond
+      ((is_base_domain  d) (display "<" (domain_description d) ">"))
+      ((is_enum_domain  d) (pp_print_terms (enum_const_ids d) e "{ " ", " " }"))
+      ((is_union_domain d) (pp_subdoms (union_domain_subdomains d) e " + "))
+      ((is_tuple_domain d) (pp_tuple_rhs d e))
+      ((is_func_domain  d) (pp_subdoms (func_domain_inputs      d) e " * ")
+                           (display " -> ")
+                           (pp_domain_name_else_rhs (func_domain_output d) e))
+      ((is_seq_domain   d) (display (domain_name (seq_domain_subdomain d)) "*"))
+      (true (raise_argument_error "pp_domain_rhs" "known domain type" 0 d e))))
+
   (define (pp_domain_def d e)
     (display (domain_name d) " = ")
     (pp_domain_rhs d e))
+
+
+  // Constants
 
   (define (pp_const_def v e)
     (pp_print (const_name v) e)
     (display " = ")
     (pp_print (const_code v) e))
+
+
+  // Functions
 
   (define (pp_fn_def f e)
     (pp_print       (fn_name f) e)
@@ -68,6 +89,7 @@ Print domain models in a Unicode-rich plain-text format.
     (pp_print       (fn_code f) e))
 
 
+  //============================================================================
   // Special Forms and Functions
 
   (define (pp_bindings bindings e)
