@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-20T23:41:54.632-00:00
+%%% This file was generated at 2023-11-20T23:44:09.331-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -127,7 +127,7 @@
 % end::Catalog[]
 \newline
 % tag::Environment[]
-\mbox{\bf Environment} ~\equiv~ \mbox{\bf Catalog}\mbox{ : catalog} \times \mbox{\bf IVM}\mbox{ : IVM} \times \mbox{\bf SymTok*}\mbox{ : symbols}
+\mbox{\bf Environment} ~\equiv~ \mbox{\bf Catalog}\mbox{ : catalog} \times \mbox{\bf IVM}\mbox{ : ivm} \times \mbox{\bf SymTok*}\mbox{ : symbols}
 % end::Environment[]
 \newline
 % tag::TContinuation[]
@@ -458,7 +458,7 @@
 {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Value?} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it systemModule\/}(\rho\!\downarrow_{\mbox{\scriptsize IVM}})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it systemModule\/}(\rho\!\downarrow_{\mbox{\scriptsize ivm}})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
 \:\mbox{\bf{then}}\: \setandincrindent
@@ -529,7 +529,7 @@
  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
 \:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it{in}\small $\mbox{\bf Struct}$}(\langle \rangle ), \rho)\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize IVM}}, {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize ivm}}, {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::compile_LST[]
@@ -768,7 +768,7 @@
 \overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}(\mbox{\it p\/}, \rho, \kappa) ~\equiv~ $\`$ \mbox{\bf ParseStream} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it step\/} = \mbox{\it p\/}(\rho\!\downarrow_{\mbox{\scriptsize IVM}})\newline
+\:\mbox{\bf{let}}\:\mbox{\it step\/} = \mbox{\it p\/}(\rho\!\downarrow_{\mbox{\scriptsize ivm}})\newline
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it step\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
 \:\mbox{\bf{then}}\:\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}(\mbox{\it step\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize tree}}, \rho, \lambda \rho_{1} \mbox{\it v\/}^{\ast}_{1}\:.\:\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}(\mbox{\it step\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize next}}, \rho_{1}, \lambda \rho_{2} \mbox{\it v\/}^{\ast}_{2}\:.\:\kappa(\rho_{2}, \mbox{\it v\/}^{\ast}_{1}\S\mbox{\it v\/}^{\ast}_{2})))\newline
