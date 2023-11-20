@@ -18,6 +18,7 @@
     is_tuple_domain
     tuple
     tuple_domain_subdomains
+    tuple_domain_field_names
     tuple_ith
     tuple_values
   )
@@ -27,21 +28,34 @@
   (define TupleDomain
     (make_domain_meta "TupleDomain" null))
 
-  (define (make_tuple_domain name description domain_producer)
-    (make_domain TupleDomain name tuple_domain_checker description domain_producer))
+  (define (make_tuple_domain name description domain_producer field_names)
+    (assert (is_list field_names) field_names)
+    (make_domain TupleDomain name tuple_domain_checker description
+      [domain_producer, field_names]))
 
   (define (is_tuple_domain d)
     (is_domain_of_type TupleDomain d))
 
+  // TODO rename -> tuple_domain_field_types
   (define (tuple_domain_subdomains d)
     '''
-Returns the list of component domains.
+Returns a list of domains: the types of the fields of the tuple domain `d`.
     '''
-    (lets [(producer (domain_data d)),
+    (lets [(producer (element (domain_data d) 0)),
            (domains  (producer))]
       (unless (is_list_of_named_domains domains)
         (raise_result_error "tuple_domain_subdomains" "list of named domains" domains))
       domains))
+
+
+  (define (tuple_domain_field_names d)
+    '''
+Returns a list of symbols: the names of the fields of the tuple domain `d`.
+
+When a field doesn't have a name, its entry in the list is `null.symbol`.
+    '''
+    (element (domain_data d) 1))
+
 
   (define tuple
     '''
@@ -99,13 +113,14 @@ Access component i of tuple v.
   (define (split_field_decl decl)
     (lets [(anns (annotations (syntax_unwrap decl)))]
       (if (is_empty anns)
-        (values decl (void))
+        (values decl (quote null.symbol))
         (if (== 1 (size anns))
           (values (datum_to_syntax (first anns) decl decl)
                   (annotate (syntax_unwrap decl)))
           (wrong_syntax decl "Too many annotations in field declaration")))))
 
   (define (split_field_decls decls)
+    "Returns two sexps, holding the field types and names."
     (if (is_empty decls)
       (values (sexp) (sexp))
       (let_values [((head_domain   head_name) (split_field_decl  (head decls))),
@@ -163,7 +178,8 @@ Each <field> is either an identifier bound to the field's domain, or
                     (quote (UQ domname_stx))
                     (UQ desc_stx)
                     // Delay evaluation of the domains, so they can recurse
-                    (thunk (UQ (pair (quote list) domains))))))
+                    (thunk (UQ (pair (quote list) domains)))
+                    (apply list (quote (UQ fnames))))))
               (let def_fields [(domains domains), (fnames fnames), (index 0)]
                 (if (is_empty domains)
                   (sexp (QS (begin)))

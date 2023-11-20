@@ -82,6 +82,13 @@
   (dom IB    = (* I::num B::bool))
   (dom BI    = (* B I::num)))
 
+(check_same (quote num)          (. (tuple_domain_field_names IWrap) 0))
+(check_same (quote num)          (. (tuple_domain_field_names IB)    0))
+(check_same (quote bool)         (. (tuple_domain_field_names IB)    1))
+(check_same (quote null.symbol)  (. (tuple_domain_field_names BI)    0))
+(check_same (quote num)          (. (tuple_domain_field_names BI)    1))
+
+
 (let [(v (tuple IWrap 16))]
   (check_same 16 (eject (ith v 0)))
   (check_same 16 (eject (IWrap_num v))))
