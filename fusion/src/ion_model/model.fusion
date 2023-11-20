@@ -243,7 +243,7 @@ Spec Problems
     //==========================================================================
     // Encoding Environment
 
-    (dom Environment = (* Catalog::catalog IVM::IVM 'SymTok*'::symbols))
+    (dom Environment = (* Catalog::catalog IVM::ivm 'SymTok*'::symbols))
 
 
     //==========================================================================
@@ -329,7 +329,7 @@ Spec Problems
             (seq_append ts (compile_imports (seq_tail vs) r))))))
 
     (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
-      (let [(ts (Module_symtab (systemModule (Environment_IVM r))))]
+      (let [(ts (Module_symtab (systemModule (Environment_ivm r))))]
         (if (opt_is_present v)
           (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
             (Environment_symbols r)
@@ -372,7 +372,7 @@ Spec Problems
         (compile_LST (lift (seq 'Field*') Struct) r)
         (tuple Environment
           (Environment_catalog r)
-          (Environment_IVM r)
+          (Environment_ivm r)
           (seq_append (imported_symbols (Struct_get1 s "imports") r)
                       (declared_symbols (Struct_get1 s "symbols"))))))
 
@@ -520,7 +520,7 @@ Spec Problems
 
     // TODO don't overload p with two different types
     (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
-      (let [(step (p (Environment_IVM  r)))]
+      (let [(step (p (Environment_ivm  r)))]
         (if (opt_is_present step)
           (TE_TSTree (ParseStep_tree (opt_value step)) r
             (mk_fn TContinuation (r1 vs1)

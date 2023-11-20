@@ -22,7 +22,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       // TODO these functions, and the print configuration, should be generated.
       (accessor Catalog_modules      "modules")
       (accessor Environment_catalog  "catalog")
-      (accessor Environment_IVM      "IVM")
+      (accessor Environment_ivm      "ivm")
       (accessor Environment_symbols  "symbols")
       (accessor Field_name           "name")
       (accessor Field_value          "value")
