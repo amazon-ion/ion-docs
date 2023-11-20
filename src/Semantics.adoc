@@ -138,18 +138,17 @@ Conversely, we can inject or "`lift`" (that is, upcast or wrap) a value into
 function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
 assuming stem:[v \in \mbox{\bf D} \vee v \in \mbox{\bf E}].
 
-We write stem:[\mbox{\bf Prod} \equiv \mbox{\bf D} \times \mbox{\bf E}] to
-define *Prod* to be the Cartesian product of *D* and *E*.
+We write
+stem:[\mbox{\bf Prod} \equiv \mbox{{\bf D}:foo} \times \mbox{{\bf E}:bar}]
+to define *Prod* to be the Cartesian product of *D* and *E*.
 These are tuples, effectively constrained  sequences containing first some
 stem:[d \in \mbox{\bf D}] and then some stem:[e \in \mbox{\bf E}].
 We construct them by tagging a sequence:
 stem:[\mbox{\it{in}\small\bf Prod}(\langle d, e \rangle)].
-To extract elements from a tuple we can overload the stem:[\downarrow]
-operator, so that when stem:[p \in \mbox{\bf Prod}] we have
-stem:[p \downarrow_{1} \in \mbox{\bf D}] and
-stem:[p \downarrow_{2} \in \mbox{\bf E}].
-To improve readability, we'll usually introduce additional overloads
-addressing tuple fields by name, rather than by index.
+To make field access easier, we give the elements names and overload the
+stem:[\downarrow] operator, so that when stem:[p \in \mbox{\bf Prod}] we have
+stem:[p\!\downarrow_{\mbox{\scriptsize foo}} \in \mbox{\bf D}] and
+stem:[p\!\downarrow_{\mbox{\scriptsize bar}} \in \mbox{\bf E}].
 
 Perhaps stretching credibility, we assume another primitive domain, *Unicode*,
 denoting Unicode strings.
@@ -280,23 +279,6 @@ blob, and clob types; these cannot contain symbols and thus "`pass through`" the
 expansion process unchanged.  Since they have little effect on the model other
 than to add a bunch of type-cases, we currently omit them for brevity.
 
-We'll take the opportunity to introduce a syntactic habit that we'll use for
-tuple domains like *Value*: simple functions that provide access to the tuple's
-components by name:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=Value_annots]
-\newline
-include::{modeltex}[tag=Value_content]
-++++
-
-This notation further overloads the stem:[\downarrow] operator, but everything
-here is strongly-typed so things remain unambiguous.
-
-TIP: When we define a function, we include its signature to the right, to be
-explicit about the types of the arguments and result.
-
 
 [id=simple]
 === Simple Values
@@ -386,15 +368,6 @@ include::{modeltex}[tag=Struct]
 include::{modeltex}[tag=Field]
 ++++
 
-As before, we introduce some helper notation to deconstruct fields:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=Field_name]
-\newline
-include::{modeltex}[tag=Field_value]
-++++
-
 
 === Matching Symbols
 
@@ -411,6 +384,9 @@ Otherwise, the token must be *Sym0*, so we return *false*.
 ++++
 include::{modeltex}[tag=SymTok_matches]
 ++++
+
+TIP: When we define a function, we include its signature to the right, to be
+explicit about the types of the arguments and result.
 
 To match a symbol value, we check whether the *Symbol* is a *SymTok* (as
 opposed to *DotNull*) before calling *SymTok*-flavored comparison.
@@ -522,19 +498,6 @@ syntax alongside general value syntax, where they cannot be annotated.
 We include *STree* proactively to avoid refactoring this hierarchy (and
 modifying a bunch of functions) later.
 
-As usual, accessor functions:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=SValue_annots]
-\newline
-include::{modeltex}[tag=SValue_content]
-\newline
-include::{modeltex}[tag=SField_name]
-\newline
-include::{modeltex}[tag=SField_tree]
-++++
-
 
 [id=stx-top]
 === Top Level Syntax
@@ -580,7 +543,7 @@ include::{modeltex}[tag=IVM_eq]
 [id=parsing]
 === Parsing
 
-These syntax domains represent the output of an Ion parser as it steps through
+The preceding syntax domains represent the output of an Ion parser as it steps through
 a document.  The semantics of parsing would be far too complex to approach in
 this article, so instead we assume the presence of a parsing function with the
 following signature:
@@ -592,7 +555,7 @@ include::{modeltex}[tag=Document]
 include::{modeltex}[tag=Parser]
 ++++
 
-Perhaps surprisingly, a *Parser* doesn't produce **TSTree**{asterisk}.
+Perhaps surprisingly, our *Parser* abstraction doesn't produce **TSTree**{asterisk}.
 This is another proactive step toward Ion 1.1, where a directive can change the
 Ion version and/or install user-defined macros, both of which affect the
 interpretation of later bytes in the document.
@@ -604,10 +567,6 @@ each top-level syntax tree.
 include::{modeltex}[tag=ParseStream]
 \newline
 include::{modeltex}[tag=ParseStep]
-\newline\newline
-include::{modeltex}[tag=ParseStep_tree]
-\newline
-include::{modeltex}[tag=ParseStep_next]
 ++++
 
 A *ParseStream* is a function that accepts an IVM, telling the parser what Ion
@@ -615,10 +574,10 @@ syntax follows, and returns an optional *ParseStep* whose absence denotes
 end-of-file.  When present, the *ParseStep* contains the next *TSTree* from the
 document, and a new *ParseStream* that can produce the rest of the document.
 
-Note that necessary parser state, particularly its current position within the
+Note that any necessary parser state, like its current position within the
 document, must be passed through each *ParseStream* in the chain.
 The details are specific to a particular *Parser* implementation (and perhaps to
-the Ion format being read), so we don't define the *ParseStream* function here
+the Ion format being read), so we don't define a *ParseStream* function here
 and instead assume that it's provided by the *Parser*.
 
 This concludes our semantics of the syntax and data models.
@@ -633,8 +592,8 @@ Circling back a bit, remember that our goal is to define how Ion expands the
 abstract syntax trees produced by its parser to eliminate encoding features such
 as symbol IDs and macros, thereby producing the document's application-facing data.
 
-To begin, let's consider the state that must be maintained while expanding a
-document.
+To begin defining the expansion of a document, let's consider the state that
+must be maintained while doing so.
 
 
 === The Encoding Environment
@@ -660,18 +619,9 @@ process based on Ion version.
   * We model the *current symbol table* as a sequence of symbol tokens defining
 all current SIDs, starting from zero.
 
-Following our practice for tuples, we'll define environment accessor functions.
 Following computer science tradition, we use the Greek letter rho (stem:[\rho])
-as the variable denoting environments.
-
-[{denotation}]
-++++
-include::{modeltex}[tag=Environment_catalog]
-\newline
-include::{modeltex}[tag=Environment_IVM]
-\newline
-include::{modeltex}[tag=Environment_symbols]
-++++
+as the variable denoting environments, so for example
+stem:[\rho\!\downarrow_{\mbox{\scriptsize symbols}}] is the current symbol table.
 
 
 === Symbol Token Expansion
@@ -989,10 +939,6 @@ exported symbols.
 [{denotation}]
 ++++
 include::{modeltex}[tag=Module]
-\newline
-include::{modeltex}[tag=Module_specVersion]
-\newline
-include::{modeltex}[tag=Module_symtab]
 ++++
 
 A shared module wraps a module with a name and a version:
@@ -1000,12 +946,6 @@ A shared module wraps a module with a name and a version:
 [{denotation}]
 ++++
 include::{modeltex}[tag=SharedModule]
-\newline
-include::{modeltex}[tag=SharedModule_name]
-\newline
-include::{modeltex}[tag=SharedModule_version]
-\newline
-include::{modeltex}[tag=SharedModule_module]
 \newline
 include::{modeltex}[tag=SharedModule_symtab]
 ++++
