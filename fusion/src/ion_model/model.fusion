@@ -14,7 +14,6 @@ Terminology/Readability:
 * Less type-switching via E[[]] denotations
   * Easier with distinct typed nulls
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
-* [CONST] Use DSL constants to specify system module.
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
@@ -96,6 +95,12 @@ Spec Problems
     //=============================
     // Abstract Syntax Trees, which can contain unresolved SIDs
 
+    (dom TSTree     = (+ STree IVM))
+    (dom STree      = (+ SValue /* Eexp will go here */))
+    (dom SValue     = (* 'SSymTok*'::annots SContent::content))
+    (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
+                         /*Decimal Float Timestamp Blob Clob*/))
+
     (dom SSymTok   = (+ Unicode I))
     (dom SSymbol   = (+ SSymTok DotNull))
 
@@ -106,30 +111,19 @@ Spec Problems
     (dom SStruct   = (+ 'SField*' DotNull))
 
 
-    (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
-                         /*Decimal Float Timestamp Blob Clob*/))
-    (dom SValue     = (* 'SSymTok*'::annots SContent::content))
-    (dom STree      = (+ SValue /* Eexp will go here */))
-    (dom TSTree     = (+ STree IVM))
-
-
     //=============================
     // Application-layer Data Types
+
+    (dom Value     = (* 'SymTok*'::annots Content::content))
+    (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String
+                        /*Decimal Float Timestamp Blob Clob*/))
+
+
+    // Symbols
 
     (dom Sym0      = (= SYM0)            "The undefined symbol $0")
     (dom SymTok    = (+ Unicode Sym0))  // "Expanded" symbol token
     (dom Symbol    = (+ SymTok DotNull))
-
-    (dom List     = (+ 'Value*' DotNull))
-    (dom Sexp     = (+ 'Value*' DotNull))
-
-    (dom Field    = (* SymTok::name Value::value))
-    (dom Struct   = (+ 'Field*' DotNull))
-
-    // The Ion data model, proper
-    (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String
-                        /*Decimal Float Timestamp Blob Clob*/))
-    (dom Value     = (* 'SymTok*'::annots Content::content))
 
 
     (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
@@ -143,6 +137,15 @@ Spec Problems
     (fn Value_is_symbol_matching ((v Value) (u Unicode) -> B)
       (and (element_of (Value_content v) Symbol)
            (Symbol_matches (lower (Value_content v) Symbol) u)))
+
+
+    // Containers
+
+    (dom List     = (+ 'Value*' DotNull))
+    (dom Sexp     = (+ 'Value*' DotNull))
+    (dom Struct   = (+ 'Field*' DotNull))
+    (dom Field    = (* SymTok::name Value::value))
+
 
     (fn Fields_get ((fs 'Field*') (u Unicode) -> 'Value*')
       (if (seq_is_empty fs)
@@ -266,16 +269,82 @@ Spec Problems
     //==========================================================================
     // $ion_symbol_table compilation
 
-    (fn symbol_padding ((n I) -> 'SymTok*')
-      (if (EQ n 0)
-        EMPTY_SYMTOKS
-        (seq_prepend (lift SYM0 SymTok)
-          (symbol_padding (- n 1)))))
+    (fn isIonSymbolTable ((v Value) -> B)
+      (and (element_of (Value_content v) Struct)
+           (and (not (seq_is_empty (Value_annots v)))
+                (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table"))))
 
-    (fn adjust_length ((ss 'SymTok*') (n I) -> 'SymTok*')
-      (if (< n (seq_length ss))
-        (seq_truncate ss (eject n))
-        (seq_append ss (symbol_padding (- n (seq_length ss))))))
+    (fn compile_LST ((s Struct) (r Environment) -> Environment)
+      (if (element_of s DotNull)
+        (compile_LST (lift (seq 'Field*') Struct) r)
+        (tuple Environment
+          (Environment_catalog r)
+          (Environment_ivm r)
+          (seq_append (imported_symbols (Struct_get1 s "imports") r)
+                      (declared_symbols (Struct_get1 s "symbols"))))))
+
+
+    // LST symbols field
+
+    (fn declared_symbols ((v 'Value?') -> 'SymTok*')
+      (if (opt_is_present v)
+        (let [(c (Value_content (opt_value v)))]
+          ('hint:oneline'
+            (if (and (element_of c List) (not (element_of c DotNull)))
+              (compile_symbols (lower c List 'Value*'))
+              EMPTY_SYMTOKS)))
+        EMPTY_SYMTOKS))
+
+    (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
+      (if (seq_is_empty vs)
+        EMPTY_SYMTOKS
+        (let [(c (Value_content (seq_head vs)))]
+          (let [(t ('hint:oneline'
+                     (if (and (element_of c String) (not (element_of c DotNull)))
+                       (lift_to SymTok (lower c String Unicode))
+                       (lift_to SymTok SYM0))))]
+            (seq_prepend t (compile_symbols (seq_tail vs)))))))
+
+
+    // LST imports field
+
+    (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
+      (let [(ts (Module_symtab (systemModule (Environment_ivm r))))]
+        (if (opt_is_present v)
+          (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
+            (Environment_symbols r)
+            (let [(c (Value_content (opt_value v)))]
+              ('hint:oneline'
+                (if (and (element_of c List) (not (element_of c DotNull)))
+                  (seq_append ts
+                              (compile_imports (lower c List 'Value*') r))
+                  ts))))
+          ts)))
+
+    (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
+      (if (seq_is_empty vs)
+        EMPTY_SYMTOKS
+        (let [(c (Value_content (seq_head vs)))]
+          (let [(ts ('hint:oneline'
+                      (if (and (element_of c Struct) (not (element_of c DotNull)))
+                        (compile_import (lower c Struct) r)
+                        EMPTY_SYMTOKS)))]
+            (seq_append ts (compile_imports (seq_tail vs) r))))))
+
+    (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
+      (let [(n (normalize_name    (Struct_get1 s "name"   ))),
+            (v (normalize_version (Struct_get1 s "version"))),
+            (m (normalize_max_id  (Struct_get1 s "max_id" )))]
+        (if (or (U_EQ n "")
+                (U_EQ n "$ion"))
+          EMPTY_SYMTOKS
+          (if (opt_is_present m)
+            // We have max_id, find best-match and adjust the length
+            (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
+              (if (opt_is_present s)
+                (adjust_length (Module_symtab (SharedModule_module (opt_value s))) (opt_value m))
+                (symbol_padding (opt_value m))))
+            (Module_symtab (SharedModule_module (exactModule_Catalog (Environment_catalog r) n v)))))))
 
 
     (fn normalize_name ((v 'Value?') -> Unicode)             // "" = absent or invalid
@@ -302,79 +371,16 @@ Spec Problems
         (opt 'I?')))
 
 
-    (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
-      (let [(n (normalize_name    (Struct_get1 s "name"   ))),
-            (v (normalize_version (Struct_get1 s "version"))),
-            (m (normalize_max_id  (Struct_get1 s "max_id" )))]
-        (if (or (U_EQ n "")
-                (U_EQ n "$ion"))
-          EMPTY_SYMTOKS
-          (if (opt_is_present m)
-            // We have max_id, find best-match and adjust the length
-            (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
-              (if (opt_is_present s)
-                (adjust_length (Module_symtab (SharedModule_module (opt_value s))) (opt_value m))
-                (symbol_padding (opt_value m))))
-            (Module_symtab (SharedModule_module (exactModule_Catalog (Environment_catalog r) n v)))))))
-
-
-    (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
-      (if (seq_is_empty vs)
+    (fn symbol_padding ((n I) -> 'SymTok*')
+      (if (EQ n 0)
         EMPTY_SYMTOKS
-        (let [(c (Value_content (seq_head vs)))]
-          (let [(ts ('hint:oneline'
-                      (if (and (element_of c Struct) (not (element_of c DotNull)))
-                        (compile_import (lower c Struct) r)
-                        EMPTY_SYMTOKS)))]
-            (seq_append ts (compile_imports (seq_tail vs) r))))))
+        (seq_prepend (lift SYM0 SymTok)
+          (symbol_padding (- n 1)))))
 
-    (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
-      (let [(ts (Module_symtab (systemModule (Environment_ivm r))))]
-        (if (opt_is_present v)
-          (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
-            (Environment_symbols r)
-            (let [(c (Value_content (opt_value v)))]
-              ('hint:oneline'
-                (if (and (element_of c List) (not (element_of c DotNull)))
-                  (seq_append ts
-                              (compile_imports (lower c List 'Value*') r))
-                  ts))))
-          ts)))
-
-    (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
-      (if (seq_is_empty vs)
-        EMPTY_SYMTOKS
-        (let [(c (Value_content (seq_head vs)))]
-          (let [(t ('hint:oneline'
-                     (if (and (element_of c String) (not (element_of c DotNull)))
-                       (lift_to SymTok (lower c String Unicode))
-                       (lift_to SymTok SYM0))))]
-            (seq_prepend t (compile_symbols (seq_tail vs)))))))
-
-    (fn declared_symbols ((v 'Value?') -> 'SymTok*')
-      (if (opt_is_present v)
-        (let [(c (Value_content (opt_value v)))]
-          ('hint:oneline'
-            (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_symbols (lower c List 'Value*'))
-              EMPTY_SYMTOKS)))
-        EMPTY_SYMTOKS))
-
-
-    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
-      (tuple Environment
-        (Environment_catalog r)
-        i
-        (Module_symtab (systemModule i))))
-
-    (fn compile_LST ((s Struct) (r Environment) -> Environment)
-      (if (element_of s DotNull)
-        (compile_LST (lift (seq 'Field*') Struct) r)
-        (tuple Environment
-          (Environment_catalog r)
-          (Environment_ivm r)
-          (seq_append (imported_symbols (Struct_get1 s "imports") r)
-                      (declared_symbols (Struct_get1 s "symbols"))))))
+    (fn adjust_length ((ss 'SymTok*') (n I) -> 'SymTok*')
+      (if (< n (seq_length ss))
+        (seq_truncate ss (eject n))
+        (seq_append ss (symbol_padding (- n (seq_length ss))))))
 
 
     //==========================================================================
@@ -413,6 +419,13 @@ Spec Problems
                       (wrong "should not happen"))))))))))
 
 
+    // Symbol expansion
+
+    (fn expand_SSymbol ((v SSymbol) (r Environment) -> Symbol)
+      (if (element_of v DotNull)
+        (lift DOTNULL Symbol)
+        (lift (expand_SSymTok (lower v SSymTok) r) Symbol)))
+
     (fn expand_SSymTok ((s SSymTok) (r Environment) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
@@ -428,11 +441,8 @@ Spec Problems
         (seq_prepend (expand_SSymTok  (seq_head ss) r)
                      ('expand_SSymTok*' (seq_tail ss) r))))
 
-    (fn expand_SSymbol ((v SSymbol) (r Environment) -> Symbol)
-      (if (element_of v DotNull)
-        (lift DOTNULL Symbol)
-        (lift (expand_SSymTok (lower v SSymTok) r) Symbol)))
 
+    // Sequence expansion
 
     (fn expand_SList ((v SList) (r Environment) -> List)
       (if (element_of v DotNull)
@@ -444,6 +454,13 @@ Spec Problems
         (lift DOTNULL Sexp)
         (lift ('expand_STree*' (lower v 'STree*') r) Sexp)))
 
+
+    // Struct expansion
+
+    (fn expand_SStruct ((v SStruct) (r Environment) -> Struct)
+      (if (element_of v DotNull)
+        (lift DOTNULL Struct)
+        (lift ('expand_SField*' (lower v 'SField*') r) Struct)))
 
     (fn expand_SField ((sf 'SField') (r Environment) -> 'Field*')
       (let [(t  (expand_SSymTok (SField_name sf) r)),
@@ -460,11 +477,6 @@ Spec Problems
         (seq 'Field*')
         (seq_append (expand_SField (seq_head sfs) r) ('expand_SField*' (seq_tail sfs) r))))
 
-    (fn expand_SStruct ((v SStruct) (r Environment) -> Struct)
-      (if (element_of v DotNull)
-        (lift DOTNULL Struct)
-        (lift ('expand_SField*' (lower v 'SField*') r) Struct)))
-
 
     //==========================================================================
     // Top-level evaluation
@@ -473,12 +485,19 @@ Spec Problems
       "Continuation when expanding top-level values")
 
 
-    // Scan for directives in expanded values and update Environment accordingly
+    // Evaluate parsed top-level ASTs; handle directives
+    (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
+      (if (element_of t IVM)
+        (k (compile_IVM (lower t IVM) r) (seq 'Value*'))
+        (let [(vs (expand_STree (lower t STree) r))]
+          ('TE_Value*' vs r k))))
 
-    (fn isIonSymbolTable ((v Value) -> B)
-      (and (element_of (Value_content v) Struct)
-           (and (not (seq_is_empty (Value_annots v)))
-                (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table"))))
+
+    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
+      (tuple Environment
+        (Environment_catalog r)
+        i
+        (Module_symtab (systemModule i))))
 
 
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
@@ -494,15 +513,6 @@ Spec Problems
             ('TE_Value*' (seq_tail vs) r1
               (mk_fn TContinuation (r2 vs2)
                 (k r2 (seq_append vs1 vs2))))))))
-
-
-    // Evaluate parsed top-level ASTs; handle directives
-
-    (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
-      (if (element_of t IVM)
-        (k (compile_IVM (lower t IVM) r) (seq 'Value*'))
-        (let [(vs (expand_STree (lower t STree) r))]
-          ('TE_Value*' vs r k))))
 
 
     // Here we abstract over the parser, to show the encoding feedback loop.
@@ -536,7 +546,6 @@ Spec Problems
                     (Module_symtab (systemModule IVM_1_0)))),
               (k0 (mk_fn TContinuation (r vs) vs))]
           (TE_ParseStream p0 r0 k0))))
-
   )
 
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
