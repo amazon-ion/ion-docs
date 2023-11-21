@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-21T00:14:59.261-00:00
+%%% This file was generated at 2023-11-21T00:17:01.475-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -327,14 +327,14 @@
 \newline
 \newline
 % tag::is_SST[]
-\mbox{\it is\_SST\/}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
+\mbox{\it SST?}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}\newline
 \;\; \setandincrindent
 \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_shared\_symbol\_table}''} \decrindent
 % end::is_SST[]
 \newline
 \newline
 % tag::compile_SST[]
-\mbox{\it compile\_SST\/}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedModule}\newline
+{\cal C}_{\mbox{\scriptsize SST}}(\mbox{\it s\/}) ~\equiv~ $\`$ \mbox{\bf Struct} \rightarrow \mbox{\bf SharedModule}\newline
 \;\; \setandincrindent
  \setandincrindent
 \:\mbox{\bf{let}}\:\mbox{\it n\/} = \mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\newline
