@@ -22,8 +22,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       // TODO these functions, and the print configuration, should be generated.
       (accessor Catalog_modules      "modules")
       (accessor Environment_catalog  "catalog")
-      (accessor Environment_ivm      "ivm")
-      (accessor Environment_symbols  "symbols")
+      (accessor Environment_sysModule   "sysModule")
+      (accessor Environment_docSymbols  "docSymbols")
       (accessor Field_name           "name")
       (accessor Field_value          "value")
       (accessor Module_specVersion   "specVersion")
@@ -49,6 +49,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (fn_method SymTok_matches           pp_fn_def1)
       (fn_method Symbol_matches           pp_fn_def1)
       (fn_method Value_is_symbol_matching pp_fn_def1)
+      (fn_method compile_symtab_exact     pp_fn_def1)
+      (fn_method compile_symtab_max       pp_fn_def1)
 
 
       // Functions with infix syntax
@@ -59,6 +61,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method Symbol_matches            (pp_binary "" " \\cong " ""))
       (form_method SymTok_matches            (pp_binary "" " \\cong " ""))
       (form_method Value_is_symbol_matching  (pp_binary "" " \\cong " ""))
+      (form_method 'Value?_is_symbol_matching' (pp_binary "" " \\cong " ""))
 
 
       // Singletons
@@ -72,18 +75,21 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it exactModule}"                            exactModule_Catalog
                                                                        exactModule_SMs)
 
-      (sym_image "\\mbox{\\it ionSymbolTable?}"                        isLocalSymbolTable)
+      (sym_image "\\mbox{\\it LST?}"                                   isLocalSymbolTable)
       (sym_image "\\mbox{\\it SST?}"                                   isSST)
 
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize IVM}}"                compile_IVM)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST}}"                compile_LST)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST.\\tt imports}}"   compile_LST_imports)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST.\\tt symbols}}"   compile_LST_symbols)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST}}"                compile_SST)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize symbol}}^{\\ast}"     compile_symbols)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize\\tt symbols}}"        declared_symbols)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize\\tt imports}}"        imported_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST.\\tt symbols}}"   compile_SST_symbols)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize symtab}}"             compile_symtab_exact
+                                                                       compile_symtab_loop
+                                                                       compile_symtab_max)
 
+      (sym_image "{\\cal N}_{\\mbox{\\scriptsize list}}"               normalize_list)
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt max\\_id}}"       normalize_max_id)
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt name}}"           normalize_name)
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt version}}"        normalize_version)
@@ -111,6 +117,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it f\\/}^{\\ast}"               fs)
       (sym_image "\\mbox{\\it f\\/}^{\\ast}_{1}"           fs1)
       (sym_image "\\mbox{\\it f\\/}^{\\ast}_{2}"           fs2)
+      (sym_image "\\mbox{\\it i\\/}^{\\ast}"               is)
       (sym_image "\\mbox{\\it i\\/}_{1}"                   i1)
       (sym_image "\\mbox{\\it i\\/}_{2}"                   i2)
       (sym_image "\\kappa"                                 k)
@@ -124,6 +131,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it s\\/}^{\\ast}"               ss)
       (sym_image "\\mbox{\\it s\\/}^{\\ast}_{1}"           ss1)
       (sym_image "\\mbox{\\it t\\/}^{\\ast}"               ts)
+      (sym_image "\\mbox{\\it u\\/}^{\\ast}"               us)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}"               vs)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{1}"           vs1)
       (sym_image "\\mbox{\\it v\\/}^{\\ast}_{2}"           vs2)

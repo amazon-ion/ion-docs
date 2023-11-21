@@ -8,9 +8,6 @@ TODO
 ----
 Terminology/Readability:
 * Figure out the proper name for `I`.  N? Z?
-* Greekify invocations of:
-  * symbol_padding
-  * adjust_length
 * Less type-switching via E[[]] denotations
   * Easier with distinct typed nulls
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
@@ -67,6 +64,8 @@ Spec Problems
 
   (define_model Ion
     (import B I Unicode)
+    (dom 'Unicode?*' = (** 'Unicode?'))
+
 
     //=============================
     // Ion Version Markers
@@ -138,6 +137,9 @@ Spec Problems
       (and (element_of (Value_content v) Symbol)
            (Symbol_matches (lower (Value_content v) Symbol) u)))
 
+    (fn 'Value?_is_symbol_matching' ((v 'Value?') (u Unicode) -> B)
+      (and (opt_is_present v) (Value_is_symbol_matching (opt_value v) u)))
+
 
     // Containers
 
@@ -171,7 +173,7 @@ Spec Problems
     //==========================================================================
     // Encoding Modules
 
-    (dom Module        = (* IVM::specVersion 'SymTok*'::symtab /*'ExportedMacro*'*/))
+    (dom Module        = (* IVM::specVersion 'Unicode?*'::symtab /*'ExportedMacro*'*/))
     (dom SharedModule  = (* Unicode::name I::version Module::module))
 
 
@@ -180,17 +182,16 @@ Spec Problems
 
     (const systemSymbols_1_0
       ('hint:multiline'
-        (seq 'SymTok*'
-          (lift_to SymTok SYM0)
-          (lift_to SymTok "$ion")
-          (lift_to SymTok "$ion_1_0")
-          (lift_to SymTok "$ion_symbol_table")
-          (lift_to SymTok "name")
-          (lift_to SymTok "version")
-          (lift_to SymTok "imports")
-          (lift_to SymTok "symbols")
-          (lift_to SymTok "max_id")
-          (lift_to SymTok "$ion_shared_symbol_table"))))
+        (seq 'Unicode?*'
+          (opt 'Unicode?' "$ion")
+          (opt 'Unicode?' "$ion_1_0")
+          (opt 'Unicode?' "$ion_symbol_table")
+          (opt 'Unicode?' "name")
+          (opt 'Unicode?' "version")
+          (opt 'Unicode?' "imports")
+          (opt 'Unicode?' "symbols")
+          (opt 'Unicode?' "max_id")
+          (opt 'Unicode?' "$ion_shared_symbol_table"))))
 
     (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
@@ -246,7 +247,17 @@ Spec Problems
     //==========================================================================
     // Encoding Environment
 
-    (dom Environment = (* Catalog::catalog IVM::ivm 'SymTok*'::symbols))
+    (dom Environment = (* Catalog::catalog Module::sysModule 'SymTok*'::docSymbols))
+    // docSymbols does not include $0 or system symbols
+
+
+    // [SEQ-MAP] Avoid over-general dependency on compile_symtab.
+    // Just need to unwrap and lift elements.
+    (fn currentSymtab ((r Environment) -> 'SymTok*')
+      (let [(ss (Module_symtab (Environment_sysModule r)))]
+        (seq_prepend (lift_to SymTok SYM0)
+                     (seq_append (compile_symtab_exact ss "$ion")
+                                 (Environment_docSymbols r)))))
 
 
     //==========================================================================
@@ -260,10 +271,22 @@ Spec Problems
     (fn compile_SST ((s Struct) -> SharedModule)
       (let [(n (lower (Value_content (opt_value (Struct_get1 s "name")))
                  String Unicode)),
+            // Yes, SST version is normalized to 1
             (v (normalize_version (Struct_get1 s "version")))]
         (tuple SharedModule n v
           (tuple Module IVM_1_0
-            (declared_symbols (Struct_get1 s "symbols"))))))
+            (compile_SST_symbols (normalize_list (Struct_get1 s "symbols")))))))
+
+    (fn compile_SST_symbols ((vs 'Value*') -> 'Unicode?*')
+      // TODO [SEQ-MAP]
+      (if (seq_is_empty vs)
+        (seq 'Unicode?*')
+        (let [(c (Value_content (seq_head vs)))]
+          (let [(t ('hint:oneline'
+                     (if (and (element_of c String) (not (element_of c DotNull)))
+                       (opt 'Unicode?' (lower c String Unicode))
+                       (opt 'Unicode?'))))]
+            (seq_prepend t (compile_SST_symbols (seq_tail vs)))))))
 
 
     //==========================================================================
@@ -272,8 +295,8 @@ Spec Problems
     (fn compile_IVM ((i IVM) (r Environment) -> Environment)
       (tuple Environment
         (Environment_catalog r)
-        i
-        (Module_symtab (systemModule i))))
+        (systemModule i)
+        EMPTY_SYMTOKS))
 
 
     //==========================================================================
@@ -287,25 +310,32 @@ Spec Problems
     (fn compile_LST ((s Struct) (r Environment) -> Environment)
       (if (element_of s DotNull)
         (compile_LST (lift (seq 'Field*') Struct) r)
-        (tuple Environment
-          (Environment_catalog r)
-          (Environment_ivm r)
-          (seq_append (imported_symbols (Struct_get1 s "imports") r)
-                      (declared_symbols (Struct_get1 s "symbols"))))))
+        (let [(is (if ('Value?_is_symbol_matching'
+                        ('hint:paren' (Struct_get1 s "imports"))
+                        "$ion_symbol_table")
+                    (Environment_docSymbols r)
+                    (compile_LST_imports (normalize_list (Struct_get1 s "imports")) r))),
+              (ss (compile_LST_symbols (normalize_list (Struct_get1 s "symbols"))))]
+          (tuple Environment
+            (Environment_catalog r)
+            (Environment_sysModule r)
+            (seq_append is ss)))))
 
 
     // LST symbols field
 
-    (fn declared_symbols ((v 'Value?') -> 'SymTok*')
+    // Try inlining c for better math and collapsing ifs
+    (fn normalize_list ((v 'Value?') -> 'Value*')
       (if (opt_is_present v)
         (let [(c (Value_content (opt_value v)))]
           ('hint:oneline'
             (if (and (element_of c List) (not (element_of c DotNull)))
-              (compile_symbols (lower c List 'Value*'))
-              EMPTY_SYMTOKS)))
-        EMPTY_SYMTOKS))
+              (lower c List 'Value*')
+              (seq 'Value*'))))
+        (seq 'Value*')))
 
-    (fn compile_symbols ((vs 'Value*') -> 'SymTok*')
+    (fn compile_LST_symbols ((vs 'Value*') -> 'SymTok*')
+      // TODO [SEQ-MAP]
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
@@ -313,25 +343,13 @@ Spec Problems
                      (if (and (element_of c String) (not (element_of c DotNull)))
                        (lift_to SymTok (lower c String Unicode))
                        (lift_to SymTok SYM0))))]
-            (seq_prepend t (compile_symbols (seq_tail vs)))))))
+            (seq_prepend t (compile_LST_symbols (seq_tail vs)))))))
 
 
     // LST imports field
 
-    (fn imported_symbols ((v 'Value?') (r Environment) -> 'SymTok*')
-      (let [(ts (Module_symtab (systemModule (Environment_ivm r))))]
-        (if (opt_is_present v)
-          (if (Value_is_symbol_matching (opt_value v) "$ion_symbol_table")
-            (Environment_symbols r)
-            (let [(c (Value_content (opt_value v)))]
-              ('hint:oneline'
-                (if (and (element_of c List) (not (element_of c DotNull)))
-                  (seq_append ts
-                              (compile_imports (lower c List 'Value*') r))
-                  ts))))
-          ts)))
-
-    (fn compile_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
+    (fn compile_LST_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
+      // TODO [SEQ-MAP]
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]
@@ -339,7 +357,7 @@ Spec Problems
                       (if (and (element_of c Struct) (not (element_of c DotNull)))
                         (compile_import (lower c Struct) r)
                         EMPTY_SYMTOKS)))]
-            (seq_append ts (compile_imports (seq_tail vs) r))))))
+            (seq_append ts (compile_LST_imports (seq_tail vs) r))))))
 
     (fn compile_import ((s Struct) (r Environment) -> 'SymTok*')
       (let [(n (normalize_name    (Struct_get1 s "name"   ))),
@@ -347,14 +365,35 @@ Spec Problems
             (m (normalize_max_id  (Struct_get1 s "max_id" )))]
         (if (or (U_EQ n "")
                 (U_EQ n "$ion"))
-          EMPTY_SYMTOKS
+          (seq 'SymTok*')
           (if (opt_is_present m)
             // We have max_id, find best-match and adjust the length
             (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
-              (if (opt_is_present s)
-                (adjust_length (Module_symtab (SharedModule_module (opt_value s))) (opt_value m))
-                (symbol_padding (opt_value m))))
-            (Module_symtab (SharedModule_module (exactModule_Catalog (Environment_catalog r) n v)))))))
+              (let [(symtab ('hint:oneline'
+                              (if (opt_is_present s)
+                                (Module_symtab (SharedModule_module (opt_value s)))
+                                (seq 'Unicode?*'))))]
+                (compile_symtab_max symtab n (opt_value m))))
+            (let [(s (exactModule_Catalog (Environment_catalog r) n v))]
+              (let [(symtab (Module_symtab (SharedModule_module s)))]
+                (compile_symtab_exact symtab n)))))))
+
+
+    (fn compile_symtab_exact ((us 'Unicode?*') (moduleName Unicode) -> 'SymTok*')
+      (compile_symtab_max us moduleName (seq_length us)))
+
+    (fn compile_symtab_max ((us 'Unicode?*') (moduleName Unicode) (maxId I) -> 'SymTok*')
+      (compile_symtab_loop us moduleName maxId 0))
+
+    (fn compile_symtab_loop ((us 'Unicode?*') (moduleName Unicode) (maxId I) (i I) -> 'SymTok*')
+      // i = number of elements collected so far; index of next elt
+      (if (EQ i maxId)
+        (seq 'SymTok*')
+        (let [(s (if (and (< i (seq_length us))
+                          (opt_is_present (ith us i)))
+                   (lift (opt_value (ith us i)) SymTok)
+                   (lift SYM0 SymTok)))]
+          (seq_prepend s (compile_symtab_loop us moduleName maxId (+ i 1))))))
 
 
     (fn normalize_name ((v 'Value?') -> Unicode)             // "" = absent or invalid
@@ -379,18 +418,6 @@ Spec Problems
                          (>= (lower (Value_content (opt_value v)) Int I) 0))))
         (opt 'I?' (lower (Value_content (opt_value v)) Int I))
         (opt 'I?')))
-
-
-    (fn symbol_padding ((n I) -> 'SymTok*')
-      (if (EQ n 0)
-        EMPTY_SYMTOKS
-        (seq_prepend (lift SYM0 SymTok)
-          (symbol_padding (- n 1)))))
-
-    (fn adjust_length ((ss 'SymTok*') (n I) -> 'SymTok*')
-      (if (< n (seq_length ss))
-        (seq_truncate ss n)
-        (seq_append ss (symbol_padding (- n (seq_length ss))))))
 
 
     //==========================================================================
@@ -440,7 +467,7 @@ Spec Problems
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
         (let [(i  (lower s I)),
-              (ts (Environment_symbols r))]
+              (ts (currentSymtab r))]
           (if (< i (seq_length ts))
             (ith ts i)
             (wrong "Invalid symbol address " i)))))
@@ -533,7 +560,7 @@ Spec Problems
 
     // TODO don't overload p with two different types
     (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
-      (let [(step (p (Environment_ivm  r)))]
+      (let [(step (p (Module_specVersion (Environment_sysModule r))))]
         (if (opt_is_present step)
           (TE_TSTree (ParseStep_tree (opt_value step)) r
             (mk_fn TContinuation (r1 vs1)
@@ -545,8 +572,7 @@ Spec Problems
     (fn mk_Evaluator ((p Parser) -> Evaluator)
       (mk_fn Evaluator (d c)
         (let [(p0 (p d)),
-              (r0 (tuple Environment c IVM_1_0
-                    (Module_symtab (systemModule IVM_1_0)))),
+              (r0 (tuple Environment c (systemModule IVM_1_0) EMPTY_SYMTOKS)),
               (k0 (mk_fn TContinuation (r vs) vs))]
           (TE_ParseStream p0 r0 k0))))
   )
