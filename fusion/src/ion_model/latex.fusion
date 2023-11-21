@@ -73,11 +73,13 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
                                                                        exactModule_SMs)
 
       (sym_image "\\mbox{\\it ionSymbolTable?}"                        isIonSymbolTable)
+      (sym_image "\\mbox{\\it SST?}"                                   is_SST)
 
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize IVM}}"                compile_IVM)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST}}"                compile_LST)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST}}"                compile_SST)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize symbol}}^{\\ast}"     compile_symbols)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize\\tt symbols}}"        declared_symbols)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize\\tt imports}}"        imported_symbols)
