@@ -30,7 +30,6 @@ Remember that _everything is functional here_, even things like IF.
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/optional"
     "/fusioncontrib/denotation/private/sequence"
-    "/fusioncontrib/denotation/private/tuple"
     "/fusioncontrib/denotation/private/typecheck"
     "/fusioncontrib/denotation/private/util"
   )
@@ -44,11 +43,10 @@ Remember that _everything is functional here_, even things like IF.
     fn_binding
     fn_code
     fn_name
-    func_domain_argdomains
+    func_domain_inputs
     func_domain_output
     is_fn
     is_func_domain
-    make_func_domain
     mk_fn
   )
 
@@ -67,42 +65,30 @@ Remember that _everything is functional here_, even things like IF.
     (make_domain_meta "FuncDomain" null))
 
 
-  (define (make_func_domain name description input output)
+  (define (make_func_domain name description inputs_producer output_producer)
     '''
-`input` can be a named domain, a list of named domains for multi-arg,
-or null for TOP (accept any one value).
+`inputs` must be a list of named domains; `output` must be a named domain.
     '''
-    (unless (or (is_domain input)
-                (is_list_of_domains input)
-                (is_null input))                                        // [TOP]
-      (raise_argument_error "make_func_domain" "input domain or domains" 2
-        name description input output))
-    (when (and (is_product_domain input) (is_null (domain_name input)))
-      // FIXME This doesn't handle single-entry list
-      (raise_argument_error "make_func_domain"
-        "singular product-domain arg must be named" 0
-        name description input output))
-    (unless (is_domain output)                                          // [TOP]
-      (raise_argument_error "make_func_domain" "output domain" 3
-        name description input output))
-    (let [(input (if (is_list_of_domains input)
-                   (if (=== 1 (size input))
-                     (. input 0)
-                     (make_product_domain null.string null.string (|| input)))
-                   input))]
-      (make_domain FuncDomain name is_procedure description [input, output])))
+    (make_domain FuncDomain name is_procedure description
+      [inputs_producer, output_producer]))
 
   (define (is_func_domain v) (is_domain_of_type FuncDomain v))
 
-  (define (func_domain_input  d) (list_element (domain_data d) 0))
-  (define (func_domain_output d) (list_element (domain_data d) 1))
+  (define (func_domain_inputs d)
+    "Return a list of domains modeling the arguments to func_domain `d`."
+    (lets [(producer (list_element (domain_data d) 0)),
+           (domains (producer))]
+      (unless (is_list_of_named_domains domains)
+        (raise_result_error "func_domain_inputs" "list of named domains" domains))
+      domains))
 
-  (define (func_domain_argdomains d)
-    "Return list of domains for the arguments to `d`."
-    (let [(in_dom (func_domain_input d))]
-      (if (and (is_product_domain in_dom) (is_null (domain_name in_dom)))
-        (product_domain_subdomains in_dom)
-        [in_dom])))
+  (define (func_domain_output d)
+    "Return the result domain for func_domain `d`."
+    (lets [(producer (list_element (domain_data d) 1)),
+           (domain   (producer))]
+      (unless (is_domain domain)
+        (raise_result_error "func_domain_output" "domain" domain))
+      domain))
 
 
   (define_syntax define_func_domain
@@ -111,7 +97,7 @@ or null for TOP (accept any one value).
     '''
     (lambda (stx)
       (when (< (syntax_size stx) 5)
-        (wrong_syntax stx "Bad syntax for define_func_domain"))
+        (wrong_syntax stx "function domain requires at least two domain subforms"))
       (lets [(name_stx (syntax_get stx 1)),
              (desc_stx (syntax_get stx 2)),  // TODO typecheck
              (domains (tail (tail (tail (syntax_unwrap stx))))),
@@ -123,9 +109,8 @@ or null for TOP (accept any one value).
                 (make_func_domain
                   (quote (UQ name_stx))
                   (UQ desc_stx)
-                  // TODO Delay evaluation of the domains, so they can recurse
-                  (UQ (pair (quote list) in_domains))
-                  (UQ out_domain))))
+                  (thunk (UQ (pair (quote list) in_domains)))
+                  (thunk (UQ out_domain)))))
           CTX stx))))
 
 
@@ -163,16 +148,12 @@ Predicate for domain functions.
   (define (fn_code fn) (fn_get fn 2))
 
 
+  // TODO name argument should be name_stx and moved down the list
+  // TODO Similarly, the record:fn should have fields reordered similarly.
 
   (define (make_fn name domain impl arg_stxs code_stx)
     '''
 The `domain` must be a func_domain, the `impl` a Fusion procedure.
-
-Type-checking of function application:
-  * If input domain is named (even a product domain), then the function requires
-    one domain value of that domain.
-  * If the input domain is an anonymous product domain, then the function requires
-    arguments of the same number and type of the subdomains.
     '''
       // TODO validate name
     (unless (or (is_identifier name) (is_null name))
@@ -181,17 +162,16 @@ Type-checking of function application:
       (raise_argument_error "make_fn" "function domain" 1 name domain impl))
     (unless (is_procedure impl)
       (raise_argument_error "make_fn" "procedure" 2 name domain impl))
-    (lets [(argdomains (apply sexp (func_domain_argdomains domain))),
-           (out_dom (func_domain_output domain)),
+    (lets [(where (or (desyntax name)
+                      (string_append "local " (or (domain_name domain) "function")))),
            (applier (lambda rest
-                      (lets [(where (or (desyntax name)
-                                      (string_append "local "
-                                        (or (domain_name domain) "function")))),
-                             (args (typecheck_args where argdomains rest 0))]
+                      (lets [(in_doms (apply sexp (func_domain_inputs domain))),
+                             (args    (typecheck_args where in_doms rest 0))]
                         // Strictness check
                         (if (is_bottom args)
                           args                         // Don't invoke the function w/ bottom.
-                          (let [(r (apply impl args))]
+                          (let [(r (apply impl args)),
+                                (out_dom (func_domain_output domain))]
                             // Bottom result will be returned as-is.
                             (typecheck_arg out_dom r
                               (|| (raise_result_error (string_append "result of " where)
@@ -204,7 +184,7 @@ Type-checking of function application:
       (raise_contract_error "mk_fn"
         (display_to_string "expected function domain, given "
           (if (is_domain d) (domain_name d) d))))
-    (let [(arity (size (func_domain_argdomains d)))]
+    (let [(arity (size (func_domain_inputs d)))]
       (unless (same arity (size args))
         (raise_contract_error "mk_fn"
           (display_to_string (domain_name d) " has arity " arity " but declaration is " args)))))
@@ -251,7 +231,9 @@ Returns:
     '''
     (let_values [((domains argnames codomain) (split_fn_sig sig_stx))]
       // TODO check for absent codomain
-      (values (sexp (Q make_func_domain) null.string null.string (apply list domains) codomain)
+      (values (QQ (make_func_domain null.string null.string
+                    (thunk (UQ (apply list domains)))
+                    (thunk (UQ codomain))))
               argnames)))
 
 

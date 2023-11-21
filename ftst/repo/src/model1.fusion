@@ -29,9 +29,9 @@
     (dom Pred    = (-> Any B)  "A predicate function")
 
     (dom Point2d = (* Z Z))
-    (dom Projection = (-> Point2d Z))  // Single argument of product domain
+    (dom Projection = (-> Point2d Z))  // Single argument of tuple domain
 
-    (dom Stamper = (-> T Any Stamped)) // Two arguments (ie, anonymous product)
+    (dom Stamper = (-> T Any Stamped)) // Two arguments
 
     (const Z_0     (inject_into Z 0))
     (const Exact_0 (lift_to Exact Z_0))
@@ -79,7 +79,7 @@
   (define int_any_val (lift z_val Num Any))
 
 
-  // Product domain values
+  // Tuple domain values
 
   (define stamped_int_val (tuple Stamped t_val int_any_val))
 

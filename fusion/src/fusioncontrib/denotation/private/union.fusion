@@ -5,6 +5,7 @@
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/util"
@@ -29,7 +30,6 @@
     (make_domain_meta "UnionDomain" null))
 
   (define (make_union_domain name description domain_producer)
-    // TODO Memoize domain production
     (make_domain UnionDomain name union_domain_checker description domain_producer))
 
   (define (is_union_domain d)
@@ -37,10 +37,10 @@
 
   (define (union_domain_subdomains d)
     "Returns list of domains"
-    (let [(domains ((domain_data d)))]
-      (unless (and (is_list domains)
-                   (every is_domain domains))
-        (raise_result_error "union_domain_subdomains" "list of domains" domains))
+    (lets [(producer (domain_data d)),
+           (domains  (producer))]
+      (unless (is_list_of_named_domains domains)
+        (raise_result_error "union_domain_subdomains" "list of named domains" domains))
       domains))
 
   (define (union_domain_checker d v)

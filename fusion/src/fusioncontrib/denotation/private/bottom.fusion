@@ -6,6 +6,7 @@
     "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusion/private/record"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/util"
   )

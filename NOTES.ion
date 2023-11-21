@@ -7,13 +7,7 @@ TODOs
 * [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
-* [FN-DOM] F (or P?) domain including all functions (procedures).
-  * Useful for weak-ish typing of macro transformers
-* [TUPLE1] Tuples should allow one field; more natural than singleton unions.
-  * I'm not sure; it's simpler to simply lift than to wrap in sequence then lift
-    which is how tuple construction works (and how its rendered).
-  * Still, I see no reason to disallow it.
-* [ACCESSORS] Auto-define tuple field accessors by putting names in the defn.
+* [ACCESSORS] Auto-configure printer for tuple field accessors.
 * [SEQ-INJECT] `seq` should auto-inject arguments.
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
@@ -30,6 +24,7 @@ TODOs
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
   * This makes indirect lowering unambiguous.
   * BUT: it will break current Ion modeling since each type is (+ DotNull ...)
+* [CONST-TYPE] Render the domain of a constant, as with functions.
 * [CONST-INLINE] Render selected `const`s inline, not printed explicitly as
   part of the model
 * Improve error reporting locations; TCE + PCS = no meaningful stack
@@ -37,9 +32,10 @@ TODOs
 * [SEQSEQ] Sequences of sequences could use some improvements.
   * The definition form shouldn't allow name variance, eg (dom Foo (** Bar))
   * `model_domains` should filter axiomatic definitions like `(** 'Value*')`.
-* Delay and memoize component domains (enable recursive types)
-  * Allows the author to arrange domains arbitrarily, controlling the order in
-    the document.
+* Memoize component domains production for efficiency.
+  * Producing the domains is efficient: a few module-level binding references,
+    perhaps wrapped into a list. Memoizing this isn't worth it.
+  * However, we need to results every time. That could be worth memoizing.
 * `lift` and `lower` should statically detect impossible steps after the first.
 
 

@@ -23,8 +23,6 @@
     domain_data
     domain_type
 
-    define_base_domain
-
     // Domain Values
     'record:domain_value'
     make_value
@@ -34,15 +32,9 @@
     domain_value_domain
     domain_value_rep
 
-    // Base domain value operators
-    is_base_domain
-    is_base_domain_value
-    base_domain_accepts
-    inject_into
-    eject
-
     // Helpers
     is_list_of_domains
+    is_list_of_named_domains
   )
 
 
@@ -50,7 +42,7 @@
 
 
   // Basically the class metaobject/vtable for domain objects.
-  // Instances include BaseDomain, UnionDomain, ProductDomain, FuncDomain.
+  // Instances include BaseDomain, UnionDomain, TupleDomain, FuncDomain.
   (record domain_meta (name eltof_fn))
 
   (define (make_domain_meta name eltof_fn)
@@ -66,7 +58,7 @@ Creates a new domain "class".
 
   // The "classes" from which domain values can be created.
   (record domain (type name checker description data))
-  // * The `type` is the category of domain: base, union, product, etc.
+  // * The `type` is the category of domain: base, union, tuple, etc.
   //   We can't name this field "meta" b/c its accessor would clash with
   //   the `domain_meta` constructor.
   // * The `checker` is a procedure that accepts the domain and a value,
@@ -98,6 +90,11 @@ Creates a new domain "class".
   (define (is_list_of_domains v)
     (and (is_list v) (every is_domain v)))
 
+  (define (is_list_of_named_domains v)
+    (and (is_list_of_domains v)
+         (not (is_empty v))
+         (every domain_name v)))
+
 
   //-------------------
   // Domain Values
@@ -128,75 +125,4 @@ Determines whether `v` is a direct element of the `domain`.
       (raise_argument_error "domain_is" "domain" 1 v domain))
     (and (is_domain_value v)
          (ident domain (domain_value_domain v))))
-
-
-  //-------------------
-  // Base Domains
-
-  (define BaseDomain
-    (make_domain_meta "BaseDomain" null))
-
-  (define (make_base_domain name desc pred)
-    (let [(pred (or pred (always true)))]
-      // TODO type check args
-      (make_domain BaseDomain name
-        (|d v| (pred v)) // checker
-        desc
-        pred)))
-
-  (define (is_base_domain d)
-    (is_domain_of_type BaseDomain d))
-
-  (define (base_domain_predicate d)
-    (domain_data d))
-
-  (define (base_domain_accepts d v)
-    // TODO typecheck d
-    ((base_domain_predicate d) v))
-
-
-  (define (inject_into d v)
-    '''
-Lifts a Fusion value into a base domain.
-    '''
-    (unless (is_base_domain d)
-      (raise_argument_error "inject_into" "base domain" 0 d v))
-    (unless (base_domain_accepts d v)
-      (raise_argument_error "inject_into"
-        (string_append "value in domain " (domain_name d))
-        1 d v))
-    (make_value d v))
-
-
-  (define (is_base_domain_value v)
-    (and (is_domain_value v)
-         (is_base_domain (domain_value_domain v))))
-
-
-  (define (eject v)
-    "Extracts the implementation datum from a base value"
-    (unless (is_base_domain_value v)
-      (raise_argument_error "eject" "base-domain value" 0 v))
-    (domain_value_rep v))
-
-
-  (define_syntax define_base_domain
-    '''
-    (define_base_domain name description predicate)
-    '''
-    (lambda (stx)
-      (unless (=== (syntax_size stx) 4)
-        (wrong_syntax stx "Bad syntax for define_base_domain"))
-      (let [(name_stx (syntax_get stx 1)),
-            (desc_stx (syntax_get stx 2)),  // TODO typecheck
-            (pred_stx (syntax_get stx 3))]
-        (datum_to_syntax
-          (QQ
-            (define (UQ name_stx)
-              (make_base_domain
-                (quote (UQ name_stx))
-                (UQ desc_stx)
-                (UQ pred_stx))))
-          (quote_syntax context)
-          stx))))
 )

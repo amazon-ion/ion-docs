@@ -46,7 +46,6 @@ semantics DSL.
     opt
     opt_is_present
     opt_value
-    product_domain_element
     subdomain
     tuple
     seq

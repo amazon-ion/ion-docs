@@ -6,6 +6,7 @@
     "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusion/private/record"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/enum"
@@ -102,7 +103,7 @@ in the same order the author used.
                      (pair (quote define_union_domain) (pair name (pair desc args)))))
                   ((=== (quote *) op)
                     (result
-                      (pair (quote define_product_domain) (pair name (pair desc args)))))
+                      (pair (quote define_tuple_domain) (pair name (pair desc args)))))
                   ((=== (quote ->) op)
                     (result
                       (pair (quote define_func_domain) (pair name (pair desc args)))))
@@ -110,7 +111,7 @@ in the same order the author used.
                     (result
                       (pair (quote define_seq_domain) (pair name (pair desc args)))))
                   (true (wrong_syntax def
-                          "Expected (+ D ...+) or (* D D ...+) or (-> A ...+ R)"))))
+                          "Expected (+ D ...+) or (* D ...+) or (-> A ...+ R)"))))
               (wrong_syntax def "Expected sexp for domain definition"))
             (result (sexp (quote define_opt_domain)
                       (datum_to_syntax (symbol_append (syntax_unwrap name) "?") name)
@@ -186,9 +187,9 @@ predicate.
 
 Defines a union of one or more domains.
 
-    (* <dom-id> <dom-id> ...+)
+    (* <dom-id> ...+)
 
-Defines a product of two or more domains.
+Defines a tuple of one or more domains.
 
     (** <dom-id>)
 

@@ -7,8 +7,8 @@ Predefined denotational model of Unicode code-point sequences and related functi
   '''
 
   (require
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/boolean"
-    "/fusioncontrib/denotation/private/integer"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
     "/fusioncontrib/denotation/private/optional"

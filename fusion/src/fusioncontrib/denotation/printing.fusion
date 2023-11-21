@@ -21,6 +21,7 @@ References:
     "/fusion/experimental/syntax"
     "/fusion/private/record"
     "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/constant"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/enum"
@@ -46,7 +47,7 @@ References:
     fn_name
     form_matches
     form_method
-    func_domain_argdomains
+    func_domain_inputs
     func_domain_output
     'hint:multiline'
     'hint:oneline'
@@ -60,7 +61,7 @@ References:
     is_model
     is_multiline_mode
     is_oneline_mode
-    is_product_domain
+    is_tuple_domain
     is_seq_domain
     is_union_domain
     make_printer
@@ -80,7 +81,8 @@ References:
     pp_ternary
     pp_unary
     pp_write
-    product_domain_subdomains
+    tuple_domain_field_names
+    tuple_domain_subdomains
     seq_domain_subdomain
     sym_image
     type_method
@@ -177,9 +179,7 @@ parentheses.
 
   (define make_printer
     '''
-Contruct a customized pretty-printer.
-
-You'll generally need to add methods for is_fn, is_domain_value, etc.
+Contruct a customized pretty-printer, given configuration clauses.
 
 Sequences in the arguments are flattened recursively.
     '''

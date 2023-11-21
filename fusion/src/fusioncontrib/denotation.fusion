@@ -25,7 +25,7 @@ Domains come in several types:
   * _Union domains_ model tagged unions of other domains.
     They are "tagged" in the sense that elements of a subdomain must be
     explicitly lifted into the union, and lowered back out of the union.
-  * _Product domains_ model ordered tuples of values.
+  * _Tuple domains_ model ordered tuples of values.
   * _Sequence domains_ model sequences of zero or more values from a given
     domain.  Sequence domains cannot be defined directly, they are defined
     automatically for each domain.
@@ -33,6 +33,7 @@ Domains come in several types:
   '''
   (require
     "/fusion/exception"
+    "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/enum"
@@ -74,9 +75,8 @@ Domains come in several types:
     lower
     lower_to
 
-    // Product domains
+    // Tuple domains
     tuple
-    product_domain_element
 
     // Optional domain values
     opt

@@ -12,23 +12,15 @@
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom TT = (+ T T))))  // Duplicate subdomain in +
+    (dom BB = (+ B B))))  // Duplicate subdomain in +
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom Tx = (* T))))    // Must have more than one in product
+    (dom Fn = (-> B))))    // Must have more than one subform in function
 
 (expect_syntax_error
   (define_model Bad
-    (dom T = "T")
-    (dom Tx = (-> T))))    // Must have more than one in function
-
-(expect_syntax_error
-  (define_model Bad
-    (dom T = "T")
-    (dom Tx = (- T T))))    // Undefined operator
+    (dom D = (- B B))))    // Undefined operator
 
 
 (require "/model1")
@@ -87,15 +79,15 @@
 (expect_syntax_error (fn bad_identity Any2Any identity))  // Missing argument declaration
 
 
-// Functions over product domains require one argument in that domain.
+// Functions over tuple domains require one argument in that domain.
 
 (define_fn project_x Projection (point)
-  (product_domain_element Point2d point 0))
+  (ith point 0))
 (let [(p (tuple Point2d 17 39))]
   (check === 17 (eject (project_x p))))
 
 (define_fn stamped_time ((stamped Stamped) -> T)
-  (product_domain_element Stamped stamped 0))
+  (ith stamped 0))
 (check_same t_val (stamped_time stamped_int_val))
 
 // Even though <T, Any> matches Stamped, we need a proper domain value for strong typing.
@@ -109,8 +101,8 @@
 (lets [(x (inject_into Z 18)),
        (y (inject_into Z 50)),
        (p (make_point2d x y))]
-  (check ident x (product_domain_element Point2d p 0))
-  (check ident y (product_domain_element Point2d p 1)))
+  (check ident x (ith p 0))
+  (check ident y (ith p 1)))
 
 (let [(p (make_point2d 123 456))]                 // Auto injection of arguments
   (check_same 123 (eject (ith p 0)))
