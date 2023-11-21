@@ -89,6 +89,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\mbox{\\it ionSymbolTable?}"                        isIonSymbolTable)
       (sym_image "\\mbox{\\it ionLiteral?}"                            isIonLiteral)
       (sym_image "\\mbox{\\it SST?}"                                   is_SST)
+      (sym_image "\\mbox{\\it voidable?}"                              is_voidable)
 
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}"             compile_import)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize import}}^{\\ast}"     compile_imports)

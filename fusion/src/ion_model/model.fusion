@@ -178,27 +178,18 @@ Spec Problems
     //==========================================================================
     // Macros
 
-    (dom ParamType   = (= ANY))
+    (dom Macro = (* Signature::signature F::xform))
 
-    (dom Cardinality = (= EXACTLY_ONE ONE_OR_MORE ZERO_OR_ONE ZERO_OR_MORE))
-
+    (dom Signature   = (* 'ParamSpec*'::params B::hasRest /* TODO ResultSpec */))
+    (dom ParamSpec   = (* Unicode::name ParamShape::shape))  // TODO Should name be a SymTok?
     (dom ParamShape  = (* ParamType::type Cardinality::card /*B::grouped*/))
-
-
-    // TODO Should param-name be a SymTok?
-    (dom ParamSpec     = (* Unicode::name ParamShape::shape))
+    (dom ParamType   = (= ANY))
+    (dom Cardinality = (= EXACTLY_ONE ONE_OR_MORE ZERO_OR_ONE ZERO_OR_MORE))
 
 
     (fn is_voidable ((p ParamSpec) -> B)
       (let [(c (ParamShape_card (ParamSpec_shape p)))]
         (or (EQ_Enum c ZERO_OR_ONE) (EQ_Enum c ZERO_OR_MORE))))
-
-    (dom Signature     = (* 'ParamSpec*'::params B::hasRest /* TODO ResultSpec */))
-
-    (const CONSTANT_SIGNATURE
-      (tuple Signature (seq 'ParamSpec*') false))
-
-    (dom Macro         = (* Signature::signature F::xform))
 
 
     //==========================================================================
@@ -356,7 +347,8 @@ Spec Problems
     //==========================================================================
     // Encoding Environment
 
-    (dom Environment = (* Catalog::catalog IVM::ivm 'SymTok*'::symbols  'BoundModule*'::modules 'BoundModule*'::mactab))
+    (dom Environment = (* Catalog::catalog IVM::ivm 'SymTok*'::symbols
+                          'BoundModule*'::modules 'BoundModule*'::mactab))
 
 
     //==========================================================================
