@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-20T23:44:09.331-00:00
+%%% This file was generated at 2023-11-21T00:14:59.261-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -38,6 +38,22 @@
 \mbox{\bf String} ~\equiv~ \mbox{\bf Unicode} + \mbox{\bf DotNull}
 % end::String[]
 \newline
+% tag::TSTree[]
+\mbox{\bf TSTree} ~\equiv~ \mbox{\bf STree} + \mbox{\bf IVM}
+% end::TSTree[]
+\newline
+% tag::STree[]
+\mbox{\bf STree} ~\equiv~ \mbox{\bf SValue}
+% end::STree[]
+\newline
+% tag::SValue[]
+\mbox{\bf SValue} ~\equiv~ \mbox{\bf SSymTok*}\mbox{ : annots} \times \mbox{\bf SContent}\mbox{ : content}
+% end::SValue[]
+\newline
+% tag::SContent[]
+\mbox{\bf SContent} ~\equiv~ \mbox{\bf SSymbol} + \mbox{\bf SList} + \mbox{\bf SSexp} + \mbox{\bf SStruct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
+% end::SContent[]
+\newline
 % tag::SSymTok[]
 \mbox{\bf SSymTok} ~\equiv~ \mbox{\bf Unicode} + \mbox{\bf I}
 % end::SSymTok[]
@@ -62,21 +78,13 @@
 \mbox{\bf SStruct} ~\equiv~ \mbox{\bf SField*} + \mbox{\bf DotNull}
 % end::SStruct[]
 \newline
-% tag::SContent[]
-\mbox{\bf SContent} ~\equiv~ \mbox{\bf SSymbol} + \mbox{\bf SList} + \mbox{\bf SSexp} + \mbox{\bf SStruct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
-% end::SContent[]
+% tag::Value[]
+\mbox{\bf Value} ~\equiv~ \mbox{\bf SymTok*}\mbox{ : annots} \times \mbox{\bf Content}\mbox{ : content}
+% end::Value[]
 \newline
-% tag::SValue[]
-\mbox{\bf SValue} ~\equiv~ \mbox{\bf SSymTok*}\mbox{ : annots} \times \mbox{\bf SContent}\mbox{ : content}
-% end::SValue[]
-\newline
-% tag::STree[]
-\mbox{\bf STree} ~\equiv~ \mbox{\bf SValue}
-% end::STree[]
-\newline
-% tag::TSTree[]
-\mbox{\bf TSTree} ~\equiv~ \mbox{\bf STree} + \mbox{\bf IVM}
-% end::TSTree[]
+% tag::Content[]
+\mbox{\bf Content} ~\equiv~ \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
+% end::Content[]
 \newline
 % tag::Sym0[]
 \mbox{\bf Sym0} ~\equiv~ \{\; \mbox{\bf sym0} \;\}
@@ -98,21 +106,13 @@
 \mbox{\bf Sexp} ~\equiv~ \mbox{\bf Value*} + \mbox{\bf DotNull}
 % end::Sexp[]
 \newline
-% tag::Field[]
-\mbox{\bf Field} ~\equiv~ \mbox{\bf SymTok}\mbox{ : name} \times \mbox{\bf Value}\mbox{ : value}
-% end::Field[]
-\newline
 % tag::Struct[]
 \mbox{\bf Struct} ~\equiv~ \mbox{\bf Field*} + \mbox{\bf DotNull}
 % end::Struct[]
 \newline
-% tag::Content[]
-\mbox{\bf Content} ~\equiv~ \mbox{\bf Symbol} + \mbox{\bf List} + \mbox{\bf Sexp} + \mbox{\bf Struct} + \mbox{\bf NullNull} + \mbox{\bf Bool} + \mbox{\bf Int} + \mbox{\bf String}
-% end::Content[]
-\newline
-% tag::Value[]
-\mbox{\bf Value} ~\equiv~ \mbox{\bf SymTok*}\mbox{ : annots} \times \mbox{\bf Content}\mbox{ : content}
-% end::Value[]
+% tag::Field[]
+\mbox{\bf Field} ~\equiv~ \mbox{\bf SymTok}\mbox{ : name} \times \mbox{\bf Value}\mbox{ : value}
+% end::Field[]
 \newline
 % tag::Module[]
 \mbox{\bf Module} ~\equiv~ \mbox{\bf IVM}\mbox{ : specVersion} \times \mbox{\bf SymTok*}\mbox{ : symtab}
@@ -344,28 +344,133 @@
 % end::compile_SST[]
 \newline
 \newline
-% tag::symbol_padding[]
-\mbox{\it symbol\_padding\/}(\mbox{\it n\/}) ~\equiv~ $\`$ \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::isIonSymbolTable[]
+\mbox{\it ionSymbolTable?}(\mbox{\it v\/}) ~\equiv~ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}
+% end::isIonSymbolTable[]
+\newline
+\newline
+% tag::compile_LST[]
+{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it n\/} = 0\newline
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it{in}\small $\mbox{\bf Struct}$}(\langle \rangle ), \rho)\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize ivm}}, {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::compile_LST[]
+\newline
+\newline
+% tag::declared_symbols[]
+{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value?} \rightarrow \mbox{\bf SymTok*}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf List}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Value*}$}})\:\mbox{\bf{else}}\:\langle\rangle\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{else}}\:\langle\rangle\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::declared_symbols[]
+\newline
+\newline
+% tag::compile_symbols[]
+{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
-\:\mbox{\bf{else}}\:\langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\rangle \S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - 1)\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}})\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
+ \decrindent
+\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::symbol_padding[]
+% end::compile_symbols[]
 \newline
 \newline
-% tag::adjust_length[]
-\mbox{\it adjust\_length\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}) ~\equiv~ $\`$ \mbox{\bf SymTok*} \times \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::imported_symbols[]
+{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Value?} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it n\/} < \#\mbox{\it s\/}^{\ast}\newline
-\:\mbox{\bf{then}}\:\mbox{\it seq\_truncate\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/})\newline
-\:\mbox{\bf{else}}\:\mbox{\it s\/}^{\ast}\S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - \#\mbox{\it s\/}^{\ast})\newline
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it systemModule\/}(\rho\!\downarrow_{\mbox{\scriptsize ivm}})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{!} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}\newline
+\:\mbox{\bf{then}}\:\rho\!\downarrow_{\mbox{\scriptsize symbols}}\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf List}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Value*}$}}, \rho)\:\mbox{\bf{else}}\:\mbox{\it t\/}^{\ast}\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\:\mbox{\it t\/}^{\ast}\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::adjust_length[]
+ \decrindent
+% end::imported_symbols[]
+\newline
+\newline
+% tag::compile_imports[]
+{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
+\:\mbox{\bf{then}}\:\langle\rangle\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Struct}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Struct}$}}, \rho)\:\mbox{\bf{else}}\:\langle\rangle\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{in}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it v\/}^{\ast}\dagger1, \rho) \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::compile_imports[]
+\newline
+\newline
+% tag::compile_import[]
+{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it n\/} = {\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''})\newline
+\:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
+\:\mbox{\bf{and}}\:\mbox{\it m\/} = {\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt max\_id}''})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
+\:\mbox{\bf{then}}\:\langle\rangle\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it m\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it bestModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
+\:\mbox{\bf{in}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
+\:\mbox{\bf{then}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}, \mbox{\it m\/}\mbox{!})\newline
+\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\mbox{!})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+\newline
+\:\mbox{\bf{else}}\:\mbox{\it exactModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+ \decrindent
+% end::compile_import[]
 \newline
 \newline
 % tag::normalize_name[]
@@ -404,135 +509,28 @@
 % end::normalize_max_id[]
 \newline
 \newline
-% tag::compile_import[]
-{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::symbol_padding[]
+\mbox{\it symbol\_padding\/}(\mbox{\it n\/}) ~\equiv~ $\`$ \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it n\/} = {\cal N}_{\mbox{\scriptsize\tt name}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt name}''})\newline
-\:\mbox{\bf{and}}\:\mbox{\it v\/} = {\cal N}_{\mbox{\scriptsize\tt version}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt version}''})\newline
-\:\mbox{\bf{and}}\:\mbox{\it m\/} = {\cal N}_{\mbox{\scriptsize\tt max\_id}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt max\_id}''})\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\ \vee\ \mbox{\it n\/} = \mbox{\rm ``{\tt \$ion}''}\newline
+\:\mbox{\bf{if}}\:\mbox{\it n\/} = 0\newline
 \:\mbox{\bf{then}}\:\langle\rangle\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it m\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it s\/} = \mbox{\it bestModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\:\mbox{\it adjust\_length\/}(\mbox{\it s\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}, \mbox{\it m\/}\mbox{!})\newline
-\:\mbox{\bf{else}}\:\mbox{\it symbol\_padding\/}(\mbox{\it m\/}\mbox{!})\newline
+\:\mbox{\bf{else}}\:\langle \mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\rangle \S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - 1)\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-\newline
-\:\mbox{\bf{else}}\:\mbox{\it exactModule}(\rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it n\/}, \mbox{\it v\/})\!\downarrow_{\mbox{\scriptsize module}}\!\downarrow_{\mbox{\scriptsize symtab}}\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
- \decrindent
-% end::compile_import[]
+% end::symbol_padding[]
 \newline
 \newline
-% tag::compile_imports[]
-{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho) ~\equiv~ $\`$ \mbox{\bf Value*} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::adjust_length[]
+\mbox{\it adjust\_length\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/}) ~\equiv~ $\`$ \mbox{\bf SymTok*} \times \mbox{\bf I} \rightarrow \mbox{\bf SymTok*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\:\langle\rangle\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} =  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf Struct}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize import}}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf Struct}$}}, \rho)\:\mbox{\bf{else}}\:\langle\rangle\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{in}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it v\/}^{\ast}\dagger1, \rho) \decrindent
- \decrindent
-\newline
+\:\mbox{\bf{if}}\:\mbox{\it n\/} < \#\mbox{\it s\/}^{\ast}\newline
+\:\mbox{\bf{then}}\:\mbox{\it seq\_truncate\/}(\mbox{\it s\/}^{\ast}, \mbox{\it n\/})\newline
+\:\mbox{\bf{else}}\:\mbox{\it s\/}^{\ast}\S\mbox{\it symbol\_padding\/}(\mbox{\it n\/} - \#\mbox{\it s\/}^{\ast})\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::compile_imports[]
-\newline
-\newline
-% tag::imported_symbols[]
-{\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Value?} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok*}\newline
-\;\; \setandincrindent
- \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/}^{\ast} = \mbox{\it systemModule\/}(\rho\!\downarrow_{\mbox{\scriptsize ivm}})\!\downarrow_{\mbox{\scriptsize symtab}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{!} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}\newline
-\:\mbox{\bf{then}}\:\rho\!\downarrow_{\mbox{\scriptsize symbols}}\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\mbox{\it t\/}^{\ast}\S{\cal C}_{\mbox{\scriptsize import}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf List}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Value*}$}}, \rho)\:\mbox{\bf{else}}\:\mbox{\it t\/}^{\ast}\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{else}}\:\mbox{\it t\/}^{\ast}\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
- \decrindent
-% end::imported_symbols[]
-\newline
-\newline
-% tag::compile_symbols[]
-{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
-\;\; \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\:\langle\rangle\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}})\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::compile_symbols[]
-\newline
-\newline
-% tag::declared_symbols[]
-{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value?} \rightarrow \mbox{\bf SymTok*}\newline
-\;\; \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\mbox{\ooalign{?\cr\hss!\kern .025em\hss}}\newline
-\:\mbox{\bf{then}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\mbox{!}\!\downarrow_{\mbox{\scriptsize content}}\newline
-\:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf List}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize symbol}}^{\ast}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf List}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Value*}$}})\:\mbox{\bf{else}}\:\langle\rangle\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-\newline
-\:\mbox{\bf{else}}\:\langle\rangle\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::declared_symbols[]
-\newline
-\newline
-% tag::compile_IVM[]
-{\cal C}_{\mbox{\scriptsize IVM}}(\mbox{\it i\/}, \rho) ~\equiv~ $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
-\;\; \setandincrindent
-\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it i\/}, \mbox{\it systemModule\/}(\mbox{\it i\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle ) \decrindent
-% end::compile_IVM[]
-\newline
-\newline
-% tag::compile_LST[]
-{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf Struct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
-\;\; \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it s\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:{\cal C}_{\mbox{\scriptsize LST}}(\mbox{\it{in}\small $\mbox{\bf Struct}$}(\langle \rangle ), \rho)\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \rho\!\downarrow_{\mbox{\scriptsize ivm}}, {\cal C}_{\mbox{\scriptsize\tt imports}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}, \rho)\S{\cal C}_{\mbox{\scriptsize\tt symbols}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''})\rangle )\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::compile_LST[]
+% end::adjust_length[]
 \newline
 \newline
 % tag::expand_STree[]
@@ -608,6 +606,18 @@
 % end::expand_SContent[]
 \newline
 \newline
+% tag::expand_SSymbol[]
+{\cal X}_{\mbox{\scriptsize\bf SSymbol}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf SSymbol} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Symbol}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}(\mbox{\bf dotnull})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}({\cal X}_{\mbox{\scriptsize\bf SSymTok}}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf SSymTok}$}}, \rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::expand_SSymbol[]
+\newline
+\newline
 % tag::expand_SSymTok[]
 {\cal X}_{\mbox{\scriptsize\bf SSymTok}}(\mbox{\it s\/}, \rho) ~\equiv~ $\`$ \mbox{\bf SSymTok} \times \mbox{\bf Environment} \rightarrow \mbox{\bf SymTok}\newline
 \;\; \setandincrindent
@@ -641,18 +651,6 @@
 % end::expand_SSymTok*[]
 \newline
 \newline
-% tag::expand_SSymbol[]
-{\cal X}_{\mbox{\scriptsize\bf SSymbol}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf SSymbol} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Symbol}\newline
-\;\; \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}(\mbox{\bf dotnull})\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Symbol}$}({\cal X}_{\mbox{\scriptsize\bf SSymTok}}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf SSymTok}$}}, \rho))\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::expand_SSymbol[]
-\newline
-\newline
 % tag::expand_SList[]
 {\cal X}_{\mbox{\scriptsize\bf SList}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf SList} \times \mbox{\bf Environment} \rightarrow \mbox{\bf List}\newline
 \;\; \setandincrindent
@@ -675,6 +673,18 @@
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::expand_SSexp[]
+\newline
+\newline
+% tag::expand_SStruct[]
+{\cal X}_{\mbox{\scriptsize\bf SStruct}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf SStruct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Struct}\newline
+\;\; \setandincrindent
+ \setandincrindent
+\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
+\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}(\mbox{\bf dotnull})\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}({\cal X}_{\mbox{\scriptsize\bf SField}}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf SField*}$}}, \rho))\newline
+\:\mbox{\bf{endif}}\: \decrindent
+ \decrindent
+% end::expand_SStruct[]
 \newline
 \newline
 % tag::expand_SField[]
@@ -708,21 +718,26 @@
 % end::expand_SField*[]
 \newline
 \newline
-% tag::expand_SStruct[]
-{\cal X}_{\mbox{\scriptsize\bf SStruct}}(\mbox{\it v\/}, \rho) ~\equiv~ $\`$ \mbox{\bf SStruct} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Struct}\newline
+% tag::TE_TSTree[]
+\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}(\mbox{\it t\/}, \rho, \kappa) ~\equiv~ $\`$ \mbox{\bf TSTree} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it v\/}\in \mbox{\bf DotNull}\newline
-\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}(\mbox{\bf dotnull})\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf Struct}$}({\cal X}_{\mbox{\scriptsize\bf SField}}^{\ast}(\mbox{\it v\/}\mid_{\mbox{\scriptsize $\mbox{\bf SField*}$}}, \rho))\newline
+\:\mbox{\bf{if}}\:\mbox{\it t\/}\in \mbox{\bf IVM}\newline
+\:\mbox{\bf{then}}\:\kappa({\cal C}_{\mbox{\scriptsize IVM}}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf IVM}$}}, \rho), \langle \rangle )\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = {\cal X}_{\mbox{\scriptsize\bf STree}}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf STree}$}}, \rho)\newline
+\:\mbox{\bf{in}}\:\overline{\cal E}_{\mbox{\scriptsize\bf Value}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho, \kappa) \decrindent
+\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::expand_SStruct[]
+% end::TE_TSTree[]
 \newline
 \newline
-% tag::isIonSymbolTable[]
-\mbox{\it ionSymbolTable?}(\mbox{\it v\/}) ~\equiv~ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\in \mbox{\bf Struct}\ \wedge\ \#\mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\neq 0\ \wedge\ \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize annots}}\!\downarrow_{0} \cong \mbox{\rm ``{\tt \$ion\_symbol\_table}''}$\`$ \mbox{\bf Value} \rightarrow \mbox{\bf B}
-% end::isIonSymbolTable[]
+% tag::compile_IVM[]
+{\cal C}_{\mbox{\scriptsize IVM}}(\mbox{\it i\/}, \rho) ~\equiv~ $\`$ \mbox{\bf IVM} \times \mbox{\bf Environment} \rightarrow \mbox{\bf Environment}\newline
+\;\; \setandincrindent
+\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}}, \mbox{\it i\/}, \mbox{\it systemModule\/}(\mbox{\it i\/})\!\downarrow_{\mbox{\scriptsize symtab}}\rangle ) \decrindent
+% end::compile_IVM[]
 \newline
 \newline
 % tag::TE_Value[]
@@ -747,21 +762,6 @@
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
 % end::TE_Value*[]
-\newline
-\newline
-% tag::TE_TSTree[]
-\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}(\mbox{\it t\/}, \rho, \kappa) ~\equiv~ $\`$ \mbox{\bf TSTree} \times \mbox{\bf Environment} \times \mbox{\bf TContinuation} \rightarrow \mbox{\bf Value*}\newline
-\;\; \setandincrindent
- \setandincrindent
-\:\mbox{\bf{if}}\:\mbox{\it t\/}\in \mbox{\bf IVM}\newline
-\:\mbox{\bf{then}}\:\kappa({\cal C}_{\mbox{\scriptsize IVM}}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf IVM}$}}, \rho), \langle \rangle )\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it v\/}^{\ast} = {\cal X}_{\mbox{\scriptsize\bf STree}}(\mbox{\it t\/}\mid_{\mbox{\scriptsize $\mbox{\bf STree}$}}, \rho)\newline
-\:\mbox{\bf{in}}\:\overline{\cal E}_{\mbox{\scriptsize\bf Value}}^{\ast}(\mbox{\it v\/}^{\ast}, \rho, \kappa) \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
- \decrindent
-% end::TE_TSTree[]
 \newline
 \newline
 % tag::TE_ParseStream[]
