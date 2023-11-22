@@ -7,6 +7,7 @@ Predefined denotational model of Integer values and related functions.
   '''
 
   (require
+    "/fusion/exception"
     "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/boolean"
     "/fusioncontrib/denotation/private/domain"
@@ -17,6 +18,7 @@ Predefined denotational model of Integer values and related functions.
   (provide
     I
     EQ
+    eject_I
     GT
     GTE
     LT
@@ -35,4 +37,10 @@ Predefined denotational model of Integer values and related functions.
   (define_fn LTE   ((a I) (b I) -> B)  (<=   (eject a) (eject b)))
   (define_fn MINUS ((a I) (b I) -> I)  (-    (eject a) (eject b)))
   (define_fn PLUS  ((a I) (b I) -> I)  (+    (eject a) (eject b)))
+
+
+  (define (eject_I i)
+    (cond ((domain_is i I) (eject i))
+          ((is_int i)      i)
+          (true (raise_argument_error "eject_I" "I or int" 0 i))))
 )

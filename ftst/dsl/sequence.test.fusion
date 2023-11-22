@@ -28,6 +28,7 @@
 (check_pred is_seq Z012)
 (check_same z0 (ith Z012 0))
 (check_same z2 (ith Z012 2))
+(check_same z2 (ith Z012 (inject_into I 2)))    // Accepts domain integers
 
 (check_bottom "57" (seq 'Z*' (wrong 57)))       // strict on values (not domain)
 (check_bottom "57" (seq 'Z*' z0 (wrong 57)))
@@ -57,6 +58,8 @@
 
 
 // seq_ith
+
+(check_same z0 (seq_ith Z012 (inject_into I 0)))       // Accepts domain integers
 
 (check_bottom "1733" (seq_ith (wrong 1733) 0))         // strict on 1st arg
 (check_bottom "1734" (seq_ith empty_Zs (wrong 1734)))  // strict on 2nd arg
@@ -127,6 +130,8 @@
   (check_same z0 (ith s3 0))
   (check_same z1 (ith s3 1))
   (check_same z2 (ith s3 2)))
+
+(check_same 1 (seq_length (seq_truncate Z012 (inject_into I 1))))  // Accepts domain integers
 
 (check_bottom "55" (seq_truncate (wrong 55) 1))    // 1st arg strict
 (check_bottom "55" (seq_truncate Z012 (wrong 55))) // 2nd arg strict
