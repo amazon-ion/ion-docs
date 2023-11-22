@@ -379,7 +379,7 @@ Spec Problems
 
     (fn adjust_length ((ss 'SymTok*') (n I) -> 'SymTok*')
       (if (< n (seq_length ss))
-        (seq_truncate ss (eject n))
+        (seq_truncate ss n)
         (seq_append ss (symbol_padding (- n (seq_length ss))))))
 
 
@@ -429,7 +429,7 @@ Spec Problems
     (fn expand_SSymTok ((s SSymTok) (r Environment) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
-        (let [(i  (eject (lower s I))),
+        (let [(i  (lower s I)),
               (ts (Environment_symbols r))]
           (if (< i (seq_length ts))
             (ith ts i)

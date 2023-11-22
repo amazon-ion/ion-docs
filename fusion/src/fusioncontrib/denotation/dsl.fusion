@@ -28,7 +28,6 @@ semantics DSL.
     domain_is
     domain_name
     domain_of
-    eject                 // TODO remove
     element_of
     fn
     import
