@@ -252,7 +252,7 @@ Spec Problems
     //==========================================================================
     // Shared Symbol Table complation
 
-    (fn is_SST ((v Value) -> B)
+    (fn isSST ((v Value) -> B)
       (and (element_of (Value_content v) Struct)
            (and (not (seq_is_empty (Value_annots v)))
               (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
@@ -269,7 +269,7 @@ Spec Problems
     //==========================================================================
     // $ion_symbol_table compilation
 
-    (fn isIonSymbolTable ((v Value) -> B)
+    (fn isLocalSymbolTable ((v Value) -> B)
       (and (element_of (Value_content v) Struct)
            (and (not (seq_is_empty (Value_annots v)))
                 (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table"))))
@@ -501,7 +501,7 @@ Spec Problems
 
 
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
-      (if (isIonSymbolTable v)
+      (if (isLocalSymbolTable v)
         (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
         (k r (seq 'Value*' v))))
 
