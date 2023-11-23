@@ -167,7 +167,7 @@ or syntax string or symbol.
                 (name (list_element names i))]
             (pp_domain_name (domain_name type) e)
             (when name
-                (display "\\mbox{ : " name "}")))
+                (display "\\mbox{:" name "}")))
           (loop (+ 1 i))))))
 
   (define (pp_domain_rhs d e)
@@ -255,7 +255,7 @@ or syntax string or symbol.
            (name (head sexp)),
            (args (tail sexp))]
       (pp_print name e)
-      (pp_print_terms args e "(" ", " ")")))
+      (pp_print_terms args e "(" ",\\:" ")")))
 
 
   (define (pp_bindings bindings e)
@@ -394,7 +394,7 @@ or syntax string or symbol.
                 (loop (tail vs)))))
           (display SEQ_CLOSE)
           (pp_decr_indentation e1)))
-      (pp_print_terms (tail (tail v)) e SEQ_OPEN ", " SEQ_CLOSE)))
+      (pp_print_terms (tail (tail v)) e SEQ_OPEN ",\\:" SEQ_CLOSE)))
 
   (define (pp_seq_prepend v e)
     "Expand (seq_prepend e1 e2) => (seq_append (seq null e1) e2)"
