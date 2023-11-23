@@ -267,6 +267,16 @@ Spec Problems
 
 
     //==========================================================================
+    // IVM compilation
+
+    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
+      (tuple Environment
+        (Environment_catalog r)
+        i
+        (Module_symtab (systemModule i))))
+
+
+    //==========================================================================
     // $ion_symbol_table compilation
 
     (fn isLocalSymbolTable ((v Value) -> B)
@@ -491,13 +501,6 @@ Spec Problems
         (k (compile_IVM (lower t IVM) r) (seq 'Value*'))
         (let [(vs (expand_STree (lower t STree) r))]
           ('TE_Value*' vs r k))))
-
-
-    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
-      (tuple Environment
-        (Environment_catalog r)
-        i
-        (Module_symtab (systemModule i))))
 
 
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
