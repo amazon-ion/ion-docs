@@ -586,14 +586,12 @@ we will now explore.
 
 
 [#expansion]
-== Expansion
+== Expansion and Evaluation
 
 Circling back a bit, remember that our goal is to define how Ion expands the
 abstract syntax trees produced by its parser to eliminate encoding features such
 as symbol IDs and macros, thereby producing the document's application-facing data.
-
-To begin defining the expansion of a document, let's consider the state that
-must be maintained while doing so.
+To begin, let's consider the state that must be maintained while doing so.
 
 
 === The Encoding Environment
@@ -807,7 +805,7 @@ To evaluate one top-level *Value*, we must check to see if it's an LST directive
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=isIonSymbolTable]
+include::{modeltex}[tag=isLocalSymbolTable]
 \newline\newline
 include::{modeltex}[tag=TE_Value]
 ++++
@@ -956,7 +954,7 @@ easily compile{fn-sst-issue} into a shared module:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=is_SST]
+include::{modeltex}[tag=isSST]
 \newline\newline
 include::{modeltex}[tag=compile_SST]
 ++++
@@ -992,8 +990,8 @@ If the head entry (stem:[{\mbox{\it s\/}^{\ast}}\!\downarrow_0]) has a different
 name, we return the best-match from the tail (stem:[s^{\ast}_1]).
 Otherwise, the name matches, so if the version matches _or_ no match in the
 tail is present, we return the head.
-Otherwise, if the best-match in the tail (stem:[s^{\ast}_1!]) is an
-exact match, or has a larger version than the head, we return that.
+Otherwise, if the best-match in the tail (stem:[s^{\ast}_1!]) has the requested
+version, or has a larger version than the head, we return that.
 Otherwise, the head is the best we've got.
 
 In some contexts, we need to ensure we find an exact match to the requested
@@ -1092,7 +1090,7 @@ in xref:eg_TE[xrefstyle=short].
 
 Starting with the easy part, we compile the `symbols` field into
 **SymTok**{asterisk}.
-The input here is optional (that is, never more than one value) because struct
+The input here is optional because struct
 lookup stem:[\odot] raises an error if the field is repeated.
 
 [{denotation}]
@@ -1281,8 +1279,8 @@ It's a bit unclear why this clause exists, but the model doesn't specify it.
 
 === Legend
 
-Here we catalog various glyphs, conventions, and low-level functions used
-throughout the denotation.
+This table summarizes the various glyphs, conventions, and low-level functions
+used throughout the denotation.
 
 // TODO (?) IF; LET; LETREC; AND/OR/NOT
 
@@ -1301,6 +1299,12 @@ throughout the denotation.
 |stem:[v\mid_{\mbox{\scriptsize\bf Domain}}]
 |Union domain projection
 |Unwraps or lowers a union domain value into a component domain.
+
+
+|stem:[\mbox{\bf Domain*}]
+|Sequence domain
+|Trailing asterisk in a domain name indicates a sequence of zero or more
+elements of the base domain
 
 |stem:[\mbox{\it name}^{\ast}]
 |Sequence indicator
@@ -1333,6 +1337,12 @@ Also used to extract a field from a tuple by name.
 |Sequence "`tail`" function
 |Returns elements from the end of a sequence.
 stem:[\langle v_0 ... v_n \rangle \dagger i ~\equiv~ \langle v_i ... v_n \rangle]
+
+
+|stem:[\mbox{\bf Domain?}]
+|Option domain
+|Trailing *?* in a domain name indicates an optional value; a sequence of at
+most one element of the base domain
 
 |stem:[\interrobang]
 |Option presence check
