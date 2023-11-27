@@ -161,8 +161,6 @@ stem:[\mbox{\bf A} \times \mbox{\bf B} \rightarrow \mbox{\bf C}]
 is the domain of two-argument functions that accept an element of *A* and
 an element of *B* and return an element of *C*.
 
-// TODO: function-definition syntax
-
 In some cases our functions make use of local variables.  The special syntax
 stem:[\mbox{\bf let}\: v = e_1 \: \mbox{\bf in}\: e_2]
 means that _v_ is bound to the value of stem:[e_1] within the scope of
@@ -186,18 +184,24 @@ goal in the form of a function domain:
 include::{modeltex}[tag=Evaluator]
 ++++
 
-// FIXME This footnote is not rendered properly: quotes and italic is handled.
-
-:fn-module: footnote:[We use the Ion 1.1 term "`shared module`" rather than \
-"`shared symbol table`" to align with the domain model, which is \
+// The wrapping pass macro ensures markup is rendered properly.
+:fn-module: pass:c,q[footnote:[We use the Ion 1.1 term "`shared module`" rather \
+than "`shared symbol table`" to align with the domain model, which is \
 forward-compatible with the future features.  \
 What's most important to know is that modules are generalizations of symbol \
-tables, so a shared symbol table _is_ a shared module.]
+tables, so a shared symbol table _is_ a shared module.]]
 
 That is, given a document and a catalog (a collection
 of shared modules{fn-module}), we produce a sequence of application values.
+We use the term "`evaluation`" from the perspective that the syntax of an Ion
+document is code that we must execute in order to produce some resulting values.
+While this may feel unreasonable for Ion 1.0, the introduction of macros in 1.1
+makes this perspective essential.
+The predominant phase of evaluation is _expansion_, during which syntax forms,
+most importantly symbol IDs (and, later, macros), are transformed into their
+intended data.
 
-// TODO Discuss expansion vs evaluation?
+// TODO A diagram might be nice here.
 
 We now set upon the task of implementing such a function by way of a formal
 mathematical model.
@@ -210,7 +214,7 @@ encode.
 We then ease into denotational functions by implementing some
 useful operators over this data.
 
-* xref:syntaxmodel[xrefstyle=short] defines the domains representing the
+* xref:syntaxmodel[xrefstyle=short] defines domains representing the
 structure of Ion syntax, before expansion and evaluation are performed.
 It also defines a mechanism for abstracting over the parsing of **Document**s.
 
@@ -352,8 +356,6 @@ include::{modeltex}[tag=List]
 include::{modeltex}[tag=Sexp]
 ++++
 
-// TODO note the recursion/reflexivity introduced by using Value?
-
 :fn-structorder: footnote:[This model is subtly incorrect, since its fields \
 are ordered within a struct.  See xref:iss-structorder[xrefstyle=short].]
 
@@ -440,13 +442,15 @@ result domain *Value?*.
 [#syntaxmodel]
 == The Syntax Model
 
-The previous section defines the values presented to an Ion application, or
-rather the domain of values that can be encoded into and read from an Ion
+The previous section defines the values presented to an Ion application,
+that is, the domain of values that can be encoded into and read from an Ion
 document or stream.
-Here we define domains denoting the _syntax_ used in such documents.
+Here we define domains denoting the _syntax_ used in Ion documents.
 It is reasonable to think of these domains as representing the abstract syntax
 trees coming
 out of the Ion parser before doing anything involving symbols and symbol tables.
+Put another way, this is an abstraction over Ion's various concrete syntax
+formats, both text and binary.
 
 NOTE: Historically, Ion documents and implementations have referred to this with
 various combinations of the words "`system`" or "`raw`" with "`view`" or "`layer`".
@@ -457,8 +461,6 @@ or "`user`" view of the document.
 The data and syntax models differ primarily in their handling of symbol
 tokens, so the domains mirror each other.
 We prefix these domain names  with **S** to indicate that they represent syntax.
-
-// TODO  This model abstracts over the concrete syntax, so applies to text and binary
 
 In the syntax model, a symbol token is either text like "``name``" or a symbol
 address like `$4`.
@@ -502,8 +504,6 @@ modifying a bunch of functions) later.
 [id=stx-top]
 === Top Level Syntax
 
-// TODO This should probably focus on IVMs, to not blur expansion and evaluation
-
 The syntax and data models also diverge at the top level of documents, which can
 contain __directives__ that are not part of the application-facing data model.
 Instead, directives affect the encoding of the data that follows.
@@ -514,16 +514,17 @@ special handling here.  In contrast, IVMs are dedicated syntactic keywords
 (opcode in binary); to everyone's confusion, they are not symbols even though
 they match the grammar for symbols.
 
-Since we cannot express IVMs within *STree*, we model these top-level-only
-features through separate domain.
-A top-level syntax tree can be any general syntax tree, or an IVM:
+Since IVMs cannot appear at arbitrary points in the document hierarchy, we
+cannot model them as part of *STree*.
+Instead, we model these top-level-only features through separate domain.
+A top-level syntax tree can thus be any general syntax tree, or an IVM:
 
 [{denotation}]
 ++++
 include::{modeltex}[tag=TSTree]
 ++++
 
-IVMs are straightforward:
+IVMs are straightforward, and we define a constant to represent `$ion_1_0`:
 
 [{denotation}]
 ++++
@@ -1125,7 +1126,10 @@ include::{modeltex}[tag=imported_symbols]
 
 When `imports` are absent, we return the current system symbols (stem:[t^{\ast}]).
 If `imports` is the symbol `$ion_symbol_table`, we return the entire
-current symbol table.  When the content is a non-null *List*, we compile its
+current symbol table, per the little-known
+https://amazon-ion.github.io/ion-docs/docs/symbols.html#imports["`local symbol
+table extension`" feature].
+When the content is a non-null *List*, we compile its
 elements and append them to the current system symbols; otherwise the field
 is malformed and we act is if it were absent.
 
@@ -1204,6 +1208,8 @@ include::{modeltex}[tag=adjust_length]
 Here, _seq_truncate_ returns the first _n_ entries from a sequence; in other
 words, it returns what stem:[\dagger] would discard.
 
+
+This concludes our walk-through of the Ion 1.0 semantic model.
 
 [#issues]
 == Known Issues
