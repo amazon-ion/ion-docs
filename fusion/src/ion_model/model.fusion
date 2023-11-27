@@ -426,7 +426,7 @@ Spec Problems
                     (lift (lower sv Int) Content)
                     (if (element_of sv String)
                       (lift (lower sv String) Content)
-                      (wrong "should not happen"))))))))))
+                      (wrong "not implemented in this model"))))))))))
 
 
     // Symbol expansion
