@@ -17,6 +17,9 @@ Terminology/Readability:
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
+* Eexpr in field-position (struct inlining)
+  * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
+    Isn't (:values V) == V ?
 * Macro argument type-checking
 
 Defects:
