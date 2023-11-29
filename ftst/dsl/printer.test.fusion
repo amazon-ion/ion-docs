@@ -203,9 +203,9 @@ mk_Tuple(u, b, s) = inTuple(⟨u, b, s⟩)
   'i2$v?')
 
 (check_latex
-  '''\\mbox{\\it mk\\_Tuple\\/}(\\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}) ~\\equiv~ $\\`$ \\mbox{\\bf U} \\times \\mbox{\\bf B} \\times \\mbox{\\bf Single} \\rightarrow \\mbox{\\bf Tuple}\\newline\n'''
+  '''\\mbox{\\it mk\\_Tuple\\/}(\\mbox{\\it u\\/},\\:\\mbox{\\it b\\/},\\:\\mbox{\\it s\\/}) ~\\equiv~ $\\`$ \\mbox{\\bf U} \\times \\mbox{\\bf B} \\times \\mbox{\\bf Single} \\rightarrow \\mbox{\\bf Tuple}\\newline\n'''
   '''\\;\\; \\setandincrindent\n'''
-  '''\\mbox{\\it{in}\\small $\\mbox{\\bf Tuple}$}(\\langle \\mbox{\\it u\\/}, \\mbox{\\it b\\/}, \\mbox{\\it s\\/}\\rangle ) \\decrindent\n'''
+  '''\\mbox{\\it{in}\\small $\\mbox{\\bf Tuple}$}(\\langle \\mbox{\\it u\\/},\\:\\mbox{\\it b\\/},\\:\\mbox{\\it s\\/}\\rangle ) \\decrindent\n'''
   mk_Tuple)
 
 

@@ -354,7 +354,7 @@ Spec Problems
     //==========================================================================
     // Shared Symbol Table complation
 
-    (fn is_SST ((v Value) -> B)
+    (fn isSST ((v Value) -> B)
       (and (element_of (Value_content v) Struct)
            (and (not (seq_is_empty (Value_annots v)))
               (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
@@ -370,9 +370,21 @@ Spec Problems
 
 
     //==========================================================================
+    // IVM compilation
+
+    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
+      (tuple Environment
+        (Environment_catalog r)
+        i
+        (BoundModule_symtab (systemModule i))
+        (seq 'BoundModule*' (systemModule i))
+        (seq 'BoundModule*' /* No user macros installed */)))
+
+
+    //==========================================================================
     // $ion_symbol_table compilation
 
-    (fn isIonSymbolTable ((v Value) -> B)
+    (fn isLocalSymbolTable ((v Value) -> B)
       (and (element_of (Value_content v) Struct)
            (and (not (seq_is_empty (Value_annots v)))
                 (SymTok_matches (seq_head (Value_annots v)) "$ion_symbol_table"))))
@@ -484,7 +496,7 @@ Spec Problems
 
     (fn adjust_length ((ss 'SymTok*') (n I) -> 'SymTok*')
       (if (< n (seq_length ss))
-        (seq_truncate ss (eject n))
+        (seq_truncate ss n)
         (seq_append ss (symbol_padding (- n (seq_length ss))))))
 
 
@@ -523,7 +535,7 @@ Spec Problems
                     (lift (lower sv Int) Content)
                     (if (element_of sv String)
                       (lift (lower sv String) Content)
-                      (wrong "should not happen"))))))))))
+                      (wrong "not implemented in this model"))))))))))
 
 
     // Symbol expansion
@@ -536,7 +548,7 @@ Spec Problems
     (fn expand_SSymTok ((s SSymTok) (r Environment) -> SymTok)
       (if (element_of s Unicode)
         (lift (lower s Unicode) SymTok)
-        (let [(i  (eject (lower s I))),
+        (let [(i  (lower s I)),
               (ts (Environment_symbols r))]
           (if (< i (seq_length ts))
             (ith ts i)
@@ -673,21 +685,8 @@ Spec Problems
           ('TE_Value*' vs r k))))
 
 
-    (fn compile_IVM ((i IVM) (r Environment) -> Environment)
-      (tuple Environment
-        (Environment_catalog r)
-        i
-        (BoundModule_symtab (systemModule i))
-        (seq 'BoundModule*' (systemModule i))
-        (seq 'BoundModule*' /* No user macros installed */)))
-
-    (fn isIonLiteral ((v Value) -> B)
-      (and (not (seq_is_empty (Value_annots v)))
-           (SymTok_matches (seq_head (Value_annots v)) "$ion_literal")))
-
-
     (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
-      (if (isIonSymbolTable v)
+      (if (isLocalSymbolTable v)
         (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
         (if (and (IVM_eq (Environment_ivm r) IVM_1_1) (isIonLiteral v))
           (TE_literal v r k)
@@ -703,9 +702,13 @@ Spec Problems
                 (k r2 (seq_append vs1 vs2))))))))
 
 
+    (fn isIonLiteral ((v Value) -> B)
+      (and (not (seq_is_empty (Value_annots v)))
+           (SymTok_matches (seq_head (Value_annots v)) "$ion_literal")))
+
     (fn TE_literal ((v Value) (r Environment) (k TContinuation) -> 'Value*')
       (let [(v1 (tuple Value (seq_tail (Value_annots v)) (Value_content v)))]
-        (if (isIonSymbolTable v1)
+        (if (isLocalSymbolTable v1)
           (wrong "Cannot use literal $ion_symbol_table struct as application data")
           (k r (seq 'Value*' v1)))))
 

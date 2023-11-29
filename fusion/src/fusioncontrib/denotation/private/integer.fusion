@@ -7,18 +7,18 @@ Predefined denotational model of Integer values and related functions.
   '''
 
   (require
+    "/fusion/exception"
     "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/boolean"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/function"
-    "/fusioncontrib/denotation/private/optional"
-    "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/util"
   )
 
   (provide
-    I 'I?' 'I*'
+    I
     EQ
+    eject_I
     GT
     GTE
     LT
@@ -28,9 +28,7 @@ Predefined denotational model of Integer values and related functions.
   )
 
 
-  (define_base_domain I   "Integers"       is_int)
-  (define_opt_domain 'I?' "Optional I"     I)
-  (define_seq_domain 'I*' "Sequence of I"  I)
+  (define_base_domain I "Integers" is_int)
 
   (define_fn EQ    ((a I) (b I) -> B)  (same (eject a) (eject b)))
   (define_fn GT    ((a I) (b I) -> B)  (>    (eject a) (eject b)))
@@ -39,4 +37,10 @@ Predefined denotational model of Integer values and related functions.
   (define_fn LTE   ((a I) (b I) -> B)  (<=   (eject a) (eject b)))
   (define_fn MINUS ((a I) (b I) -> I)  (-    (eject a) (eject b)))
   (define_fn PLUS  ((a I) (b I) -> I)  (+    (eject a) (eject b)))
+
+
+  (define (eject_I i)
+    (cond ((domain_is i I) (eject i))
+          ((is_int i)      i)
+          (true (raise_argument_error "eject_I" "I or int" 0 i))))
 )

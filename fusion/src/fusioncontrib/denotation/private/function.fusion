@@ -28,8 +28,6 @@ Remember that _everything is functional here_, even things like IF.
     "/fusion/private/record"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
-    "/fusioncontrib/denotation/private/optional"
-    "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/typecheck"
     "/fusioncontrib/denotation/private/util"
   )
@@ -37,8 +35,7 @@ Remember that _everything is functional here_, even things like IF.
   (provide
     define_fn
     define_func_domain
-    F 'F?' 'F*'
-    APPLY
+    F
     fn_args
     fn_binding
     fn_code
@@ -49,14 +46,6 @@ Remember that _everything is functional here_, even things like IF.
     is_func_domain
     mk_fn
   )
-
-
-  (define_opt_domain  'F?' "Optional F"    F)
-  (define_seq_domain  'F*' "Sequence of F" F)
-
-  (define_strict (APPLY fn seq)
-    (apply fn (domain_value_rep seq)))
-
 
 
   (define CTX (quote_syntax lexical_context))

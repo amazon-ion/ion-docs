@@ -16,14 +16,12 @@ Predefined denotational model of Unicode code-point sequences and related functi
   )
 
   (provide
-    Unicode 'Unicode?' 'Unicode*'
+    Unicode
     U_EQ
   )
 
 
-  (define_base_domain  Unicode   "Sequences of Unicode code points" is_string)
-  (define_opt_domain  'Unicode?' "Optional Unicode strings"         Unicode)
-  (define_seq_domain  'Unicode*' "Sequence of Unicode strings"      Unicode)
+  (define_base_domain Unicode "Sequences of Unicode code points" is_string)
 
 
   (define_fn U_EQ ((a Unicode) (b Unicode) -> B)

@@ -12,14 +12,12 @@ Predefined denotational model of Boolean values and related logical functions.
     "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
-    "/fusioncontrib/denotation/private/optional"
-    "/fusioncontrib/denotation/private/sequence"
     "/fusioncontrib/denotation/private/util"
   )
 
   (provide
     AND
-    B 'B?' 'B*'
+    B
     FALSE
     IF
     IF1
@@ -29,9 +27,7 @@ Predefined denotational model of Boolean values and related logical functions.
   )
 
 
-  (define_base_domain  B   "Booleans"      is_bool)
-  (define_opt_domain  'B?' "Optional B"    B)
-  (define_seq_domain  'B*' "Sequence of B" B)
+  (define_base_domain B "Booleans" is_bool)
 
   (define TRUE  (inject_into B true))
   (define FALSE (inject_into B false))

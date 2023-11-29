@@ -124,6 +124,19 @@ Domains come in several types:
   )
 
 
+  (define_opt_domain 'B?'       "Optional B"                  B)
+  (define_seq_domain 'B*'       "Sequence of B"               B)
+  (define_opt_domain 'I?'       "Optional I"                  I)
+  (define_seq_domain 'I*'       "Sequence of I"               I)
+  (define_opt_domain 'F?'       "Optional F"                  F)
+  (define_seq_domain 'F*'       "Sequence of F"               F)
+  (define_opt_domain 'Unicode?' "Optional Unicode strings"    Unicode)
+  (define_seq_domain 'Unicode*' "Sequence of Unicode strings" Unicode)
+
+  (define_strict (APPLY fn seq)
+    (apply fn (domain_value_rep seq)))
+
+
   // Functions that are polymorphic over multiple domain types
 
   (define (element_of v domain)  // i.e., ∈
