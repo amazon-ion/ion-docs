@@ -48,8 +48,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
                Symbol_matches
                'Value_is_symbol_matching'
                'Value?_is_symbol_matching'
-               compile_symtab_exact
-               compile_symtab_max
+               compile_symtab
                isLocalSymbolTable)
 
       // Functions with infix syntax
@@ -84,9 +83,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST.\\tt symbols}}"   compile_LST_symbols)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST}}"                compile_SST)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST.\\tt symbols}}"   compile_SST_symbols)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize symtab}}"             compile_symtab_exact
-                                                                       compile_symtab_loop
-                                                                       compile_symtab_max)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize symtab}}"             compile_symtab
+                                                                       compile_symtab_loop)
 
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize list}}"               normalize_list)
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt max\\_id}}"       normalize_max_id)

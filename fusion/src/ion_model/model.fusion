@@ -7,10 +7,13 @@ A denotational semantic model of Ion.
 TODO
 ----
 Terminology/Readability:
+* The names around "document symbols" don't read well in prose. "local symbols"
+  might be better but that requires careful editing to keep "local" precise.
 * Figure out the proper name for `I`.  N? Z?
 * Less type-switching via E[[]] denotations
   * Easier with distinct typed nulls
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
+* Separate syntactic IVM from semantic spec-version?
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
@@ -248,12 +251,10 @@ Spec Problems
     // docSymbols does not include $0 or system symbols
 
 
-    // [SEQ-MAP] Avoid over-general dependency on compile_symtab.
-    // Just need to unwrap and lift elements.
     (fn currentSymtab ((r Environment) -> 'SymTok*')
       (let [(ss (Module_symtab (Environment_sysModule r)))]
         (seq_prepend (lift_to SymTok SYM0)
-                     (seq_append (compile_symtab_exact ss "$ion")
+                     (seq_append (compile_symtab ss "$ion" (seq_length ss))
                                  (Environment_docSymbols r)))))
 
 
@@ -371,16 +372,13 @@ Spec Problems
                               (if (opt_is_present s)
                                 (Module_symtab (SharedModule_module (opt_value s)))
                                 (seq 'Unicode?*'))))]
-                (compile_symtab_max symtab n (opt_value m))))
+                (compile_symtab symtab n (opt_value m))))
             (let [(s (exactModule_Catalog (Environment_catalog r) n v))]
               (let [(symtab (Module_symtab (SharedModule_module s)))]
-                (compile_symtab_exact symtab n)))))))
+                (compile_symtab symtab n (seq_length symtab))))))))
 
 
-    (fn compile_symtab_exact ((us 'Unicode?*') (moduleName Unicode) -> 'SymTok*')
-      (compile_symtab_max us moduleName (seq_length us)))
-
-    (fn compile_symtab_max ((us 'Unicode?*') (moduleName Unicode) (maxId I) -> 'SymTok*')
+    (fn compile_symtab ((us 'Unicode?*') (moduleName Unicode) (maxId I) -> 'SymTok*')
       (compile_symtab_loop us moduleName maxId 0))
 
     (fn compile_symtab_loop ((us 'Unicode?*') (moduleName Unicode) (maxId I) (i I) -> 'SymTok*')
