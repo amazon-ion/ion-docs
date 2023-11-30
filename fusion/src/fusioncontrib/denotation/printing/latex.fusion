@@ -57,6 +57,7 @@ TODO
   (provide
     accessor
     latexprint
+    oneline
     pp_domain_def
     pp_ith
     pp_fn_def
@@ -241,6 +242,12 @@ or syntax string or symbol.
                (fn_method   (UQ fn) pp_fn_def1)])
           (QS context)
           stx))))
+
+  (define oneline
+    (lambda fns
+      (for_list [(f fns)]
+        // TODO typecheck
+        (fn_method f pp_fn_def1))))
 
 
   //============================================================================

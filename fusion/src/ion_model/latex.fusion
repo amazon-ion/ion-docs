@@ -41,17 +41,16 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (accessor Value_content        "content")
 
 
-      // One-liners
-      (fn_method Catalog_extend           pp_fn_def1)
-      (fn_method IVM_eq                   pp_fn_def1)
-      (fn_method isLocalSymbolTable       pp_fn_def1)
-      (fn_method Struct_get               pp_fn_def1)
-      (fn_method SymTok_matches           pp_fn_def1)
-      (fn_method Symbol_matches           pp_fn_def1)
-      (fn_method Value_is_symbol_matching pp_fn_def1)
-      (fn_method compile_symtab_exact     pp_fn_def1)
-      (fn_method compile_symtab_max       pp_fn_def1)
-
+      (oneline Catalog_extend
+               IVM_eq
+               Struct_get
+               SymTok_matches
+               Symbol_matches
+               'Value_is_symbol_matching'
+               'Value?_is_symbol_matching'
+               compile_symtab_exact
+               compile_symtab_max
+               isLocalSymbolTable)
 
       // Functions with infix syntax
       (form_method Fields_get                (pp_binary "" " \\odot^{\\ast} " ""))
