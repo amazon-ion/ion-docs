@@ -17,12 +17,12 @@ Features:
 
 Defects:
 * SIDs should be non-negative.
+* The spec doesn't say that SST must have its annotation as the first one.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
   associated IDs (the same string could appear twice as children of the symbols
   field). Implementations MUST select the lowest known ID, and all other
   associated IDs MUST be handled as if undefined."
   * Not sure what "handled as undefined" implies.
-* SST compilation is very weak.
 * Catalog construction should reject duplicate keys, so we don't imply anything
   about selection criteria.
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
@@ -266,13 +266,14 @@ Spec Problems
               (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
 
     (fn compile_SST ((s Struct) -> SharedModule)
-      (let [(n (lower (Value_content (opt_value (Struct_get1 s "name")))
-                 String Unicode)),
+      (let [(n (normalize_name    (Struct_get1 s "name"))),
             // Yes, SST version is normalized to 1
             (v (normalize_version (Struct_get1 s "version")))]
-        (tuple SharedModule n v
-          (tuple Module IVM_1_0
-            (compile_SST_symbols (normalize_list (Struct_get1 s "symbols")))))))
+        (if (U_EQ n "")
+          (wrong "SST has invalid name")
+          (tuple SharedModule n v
+            (tuple Module IVM_1_0
+              (compile_SST_symbols (normalize_list (Struct_get1 s "symbols"))))))))
 
     (fn compile_SST_symbols ((vs 'Value*') -> 'Unicode?*')
       // TODO [SEQ-MAP]
