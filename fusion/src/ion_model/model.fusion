@@ -16,10 +16,6 @@ Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 
 Defects:
-* From spec: "$0 is not semantically equivalent to SIDs with unknown text from
-  shared symbol tables, so replacing such SIDs with $0 is a destructive operation
-  to the semantics of the data."
-  * Probably SymTok needs to track symbol source: SharedModule x N::index
 * SIDs should be non-negative.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
   associated IDs (the same string could appear twice as children of the symbols
@@ -121,7 +117,8 @@ Spec Problems
     // Symbols
 
     (dom Sym0      = (= SYM0)            "The undefined symbol $0")
-    (dom SymTok    = (+ Unicode Sym0))  // "Expanded" symbol token
+    (dom AbsentSym = (* Unicode::module I::index))
+    (dom SymTok    = (+ Unicode Sym0 AbsentSym))
     (dom Symbol    = (+ SymTok DotNull))
 
 
@@ -392,7 +389,7 @@ Spec Problems
         (let [(s (if (and (< i (seq_length us))
                           (opt_is_present (ith us i)))
                    (lift (opt_value (ith us i)) SymTok)
-                   (lift SYM0 SymTok)))]
+                   (lift (tuple AbsentSym moduleName (+ i 1)) SymTok)))]
           (seq_prepend s (compile_symtab_loop us moduleName maxId (+ i 1))))))
 
 
