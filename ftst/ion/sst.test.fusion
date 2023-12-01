@@ -22,4 +22,29 @@
         (expand1 (quote_top $ion_shared_symbol_table::{name:"a", version:1, version:1}))))))
 
 
+(check_bottom "SST has invalid name"
+  (compile_SST
+    (lower_to Struct
+      (Value_content
+        (expand1 (quote_top $ion_shared_symbol_table::{version:1, symbols:["a"]}))))))
+
+(check_bottom "SST has invalid name"
+  (compile_SST
+    (lower_to Struct
+      (Value_content
+        (expand1 (quote_top $ion_shared_symbol_table::{name:null.string, version:1, symbols:["a"]}))))))
+
+(check_bottom "SST has invalid name"
+  (compile_SST
+    (lower_to Struct
+      (Value_content
+        (expand1 (quote_top $ion_shared_symbol_table::{name:"", version:1, symbols:["a"]}))))))
+
+(check_bottom "SST has invalid name"
+  (compile_SST
+    (lower_to Struct
+      (Value_content
+        (expand1 (quote_top $ion_shared_symbol_table::{name:foo, version:1, symbols:["a"]}))))))
+
+
 "SUCCESS (sst.test)"

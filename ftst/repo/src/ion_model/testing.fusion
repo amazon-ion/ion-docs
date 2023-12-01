@@ -17,6 +17,7 @@ We "tunnel" special tokens as follows:
   * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
     an E-expression.  The text starting with : is parsef as a macro reference.
   * On output, `'#$?Message'` represents a Bottom value with the given message.
+  * On output, `'#$name/ddd'` represents absent symbol at index `ddd` of SST `name`.
   '''
 
   (require
@@ -221,7 +222,11 @@ We "tunnel" special tokens as follows:
   (define (eject_SymTok sym)
     (if (element_of sym Unicode)
       (string_to_symbol (eject (check_lower sym Unicode)))
-      (quote '#$0')))
+      (if (element_of sym AbsentSym)
+        (let [(a (lower sym AbsentSym))]
+          (symbol_append "#$" (eject (AbsentSym_module a))
+                         "#" (int_to_string (eject (AbsentSym_index a)))))
+        (quote '#$0'))))
 
   (define (eject_SymToks syms)
     (assert (domain_is syms 'SymTok*'))
@@ -343,7 +348,7 @@ We "tunnel" special tokens as follows:
         name:"mnop", version:3, symbols:["m", "n", "o"]
       }
       $ion_shared_symbol_table::{
-        name:"mnop", version:4, symbols:["4", "n", "o", "p"]  // Change used to detect v4
+        name:"mnop", version:4, symbols:[absent, "n", "o", "p"]  // Gap used to detect v4
       }
     ))
 
