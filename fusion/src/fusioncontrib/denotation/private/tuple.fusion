@@ -76,7 +76,7 @@ Constructs a tuple-domain value.
                (arity (size subs))]
           (unless (=== (size args) arity)
             (apply raise_arity_error where (+ 1 arity) rest))
-          (let [(args (typecheck_args where subs args 1))]
+          (let [(args (typecheck_args where subs rest 1))]
             (if (is_bottom args)
                 args
                 (make_value domain (apply list args))))))))
