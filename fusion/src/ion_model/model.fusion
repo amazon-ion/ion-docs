@@ -14,6 +14,8 @@ Terminology/Readability:
   * Easier with distinct typed nulls
     * [LITERALS] Requires literals to render them as typewriter `null.foo`.
 * Separate syntactic IVM from semantic spec-version?
+* Print the Appendix in manually-assembled sections.
+  * Should have a way to detect when a domain element is forgotten.
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob

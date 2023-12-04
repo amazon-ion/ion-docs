@@ -108,6 +108,7 @@ within `domain`'s subdomain.
                             v
                             (if (domain_is (head vs) subdomain)
                               (loop (+ 1 i) (tail vs))
+                              // TODO This needs a better error message
                               (wrong "Value #" i
                                 " not in " (domain_name subdomain))))))))]
           (or btm (make_value domain values))))))

@@ -100,7 +100,7 @@ within `domain`'s subdomain.
             (unless (is_empty (tail values))
               (apply raise_arity_error "opt" 2 rest))
             (lets [(subdomain (opt_domain_subdomain domain)),
-                   (values (typecheck_args "opt" (sexp subdomain) values 2))]
+                   (values (typecheck_args "opt" (sexp subdomain) rest 1))]
               (if (is_bottom values) values
                 (apply make_value domain values))))))))
 

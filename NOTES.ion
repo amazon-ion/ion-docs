@@ -4,12 +4,13 @@
 
 TODOs
 -----
+* [SEQ-MAP] `seq_map` function to transform sequences without letrec.
+  * Tricky part is figuring out the type of the resulting sequence.
 * [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
 * [ACCESSORS] Auto-configure printer for tuple field accessors.
-* [SEQ-MAP] `seq_map` function to transform sequences without letrec.
-  * Tricky part is figuring out the type of the resulting sequence.
+  * Requires a factory method, Model x Printer:super -> Printer
 * [SEQ-INJECT] `seq` should auto-inject arguments.
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
@@ -17,10 +18,11 @@ TODOs
   * N = natural numbers?
   * S = strings of Unicode code points?
   * C = Unicode code point?
+* [CTORS] (+2) Predefine constructors for each domain
+  * Eliminate `inject_into`, `lift_to` `seq`, `tuple`, `opt`, `mk_fn`
 * For union types `U = A+B`, autogenerate:
-  * lifting function `inU()`
+  * lifting function `inU()` -- part of [CTORS]
   * lowering functions `U->A()` and `U->B()`
-* For tuple types, autogenerate `mkDom` constructor.
 * Typecase to safely and completely lower a union domain value
   * Similar seqcase to traverse sequences
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
@@ -44,6 +46,9 @@ TODOs
 Requires Fusion features:
 * We need `with_output_to_string` in a non-private library.
 * Better `display` of domains and values.
+  * Could be improved by using sub-records instead of holding domain records
+    inside value records.
+    * Perhaps needs record-type properties to get from instance back to domain?
 * [GUARD] Use record constructor guards to type-check values and supply defaults.
 
 
@@ -57,11 +62,37 @@ DSL Dialect
 
 Printer
 -------
+* Multi-line hint should only affect one form, subforms print normally.
 * It's not great that printer config needs to use "internal" names like `IF`.
   This may be unavoidable due to the phase-shifting between the DSL and model
   features and normal Fusion bindings for the print methods.
   * Perhaps can be fixed by having all models inherit from a base, then having
     the print-config clauses lookup fn/dom bindings separately.
+
+
+Record Hierarchy
+----------------
+Domain >: OptDomain >: 'Value?'
+DomainValue >: OptDomainValue >: 'Value?Value'
+
+(opt Foo?) instanceof record:Foo?
+
+
+(dom Pair = (* I I))
+
+Pair  instanceof  TupleDomain  <:  Domain
+
+(tuple Pair 1 2)  instanceof  record:Pair  <:  TupleDomainValue  <:  DomainValue
+
+
+DomainValue instances shouldn't contain their Domain in a field.
+* Otherwise printing is still nasty.
+* We still need access to the domain_value_domain, for:
+    * domain_is
+    * EQ_Enum to match domain
+* Easy with record-type properties
+* I wonder if we can get rid of Domain record/types this way?
+    * Meaning: the domain-value's record-type _is_ the domain object.
 
 
 Denoters

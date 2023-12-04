@@ -119,6 +119,7 @@ Domains come in several types:
     OR
     PLUS
     Unicode 'Unicode?' 'Unicode*'
+    Unicode_append
     U_EQ
     wrong
   )

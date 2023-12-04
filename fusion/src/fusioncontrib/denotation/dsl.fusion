@@ -62,6 +62,7 @@ semantics DSL.
     EQ_Enum
     IF
     U_EQ
+    Unicode_append
 
     (rename_out
       (AND    and)

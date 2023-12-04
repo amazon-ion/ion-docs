@@ -50,8 +50,8 @@ Invokes `fail_thunk` when `v` is not acceptable to domain `d`.
 
   (define (typecheck_args where domains args offset)
     '''
-Typechecks each element of the sexp `args` against correspending elements of the
-sexp `domains`.
+Typechecks each element of the sexp `args` (skipping the first `offset` items)
+against correspending elements of the sexp `domains`.
 If any argument fails typechecking, an exception is raised; this is considered
 a defect in the model.  The `offset` is added to the implicated argument index.
 If any argument is a `Bottom` value, the first such value is returned.
@@ -60,18 +60,19 @@ injection.
     '''
     (unless (is_text where)
       (raise_argument_error "typecheck_args" "text"  0 where domains args offset))
-    (let [(count (size domains))]
-      (unless (=== count (size args))
-        (apply raise_arity_error where count args))
+    (let [(count (size domains)),
+          (vals (subseq args offset (size args)))]
+      (unless (=== count (size vals))
+        (apply raise_arity_error where count vals))
       (let [(valid_args
-              (let loop [(i 0), (ds domains), (as args)]
-                (if (=== count i)
+              (let loop [(i offset), (ds domains), (as vals)]
+                (if (=== i (size args))
                   (quote ())
                   (let [(d (head ds)), (a (head as))]
                     (pair (typecheck_arg d a
                             (|| (apply raise_argument_error where
                                   (symbol_to_string (domain_name d))
-                                  (+ i offset) args)))
+                                  i args)))
                       (loop (+ 1 i) (tail ds) (tail as)))))))]
         (or (find is_bottom valid_args) valid_args))))
   )
