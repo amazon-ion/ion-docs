@@ -48,6 +48,60 @@
   (quote_top '#$ion_1_1' 1 ('#$:values' 2 3) 4))
 
 
+// make_string
+
+(check_expansion
+  (quote_top "" "str" "sym")
+  (quote_top '#$ion_1_1'
+    ('#$:make_string') ('#$:make_string' "str") ('#$:make_string' sym)))
+
+(check_expansion
+  (quote_top "ab" "ab" "ab" "ab")
+  (quote_top '#$ion_1_1'
+    ('#$:make_string' "a" "b") ('#$:make_string' a  b)
+    ('#$:make_string' "a"  b ) ('#$:make_string' a "b")))
+
+// null.string and null.symbol act like ""
+(check_expansion
+  (quote_top "" "" "")
+  (quote_top '#$ion_1_1'
+    ('#$:make_string' null.string) ('#$:make_string' null.symbol)
+    ('#$:make_string' null.string "" null.symbol)))
+(check_expansion
+  (quote_top "ab" "ab" "ab")
+  (quote_top '#$ion_1_1'
+    ('#$:make_string' null.string "ab" null.symbol "")
+    ('#$:make_string' "a" null.string "b" null.symbol)
+    ('#$:make_string' null.symbol "a" null.string "b")))
+
+
+// make_symbol
+
+(check_expansion
+  (quote_top '' str sym)
+  (quote_top '#$ion_1_1'
+    ('#$:make_symbol') ('#$:make_symbol' "str") ('#$:make_symbol' sym)))
+
+(check_expansion
+  (quote_top ab ab ab ab)
+  (quote_top '#$ion_1_1'
+    ('#$:make_symbol' "a" "b") ('#$:make_symbol' a  b)
+    ('#$:make_symbol' "a"  b ) ('#$:make_symbol' a "b")))
+
+// null.string and null.symbol act like ""
+(check_expansion
+  (quote_top '' '' '')
+  (quote_top '#$ion_1_1'
+    ('#$:make_symbol' null.string) ('#$:make_symbol' null.symbol)
+    ('#$:make_symbol' null.string "" null.symbol)))
+(check_expansion
+  (quote_top ab ab ab)
+  (quote_top '#$ion_1_1'
+    ('#$:make_symbol' null.string "ab" null.symbol "")
+    ('#$:make_symbol' "a" null.string "b" null.symbol)
+    ('#$:make_symbol' null.symbol "a" null.string "b")))
+
+
 // make_list
 
 (check_expansion

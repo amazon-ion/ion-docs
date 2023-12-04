@@ -275,6 +275,28 @@ Spec Problems
                 true)  // has rest param
               (lambda (rest)
                 rest)))
+          (tuple ExportedMacro (opt 'Unicode?' "make_string")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  // TODO ANY should be TEXT
+                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (content /* Value* */)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift (appendText content) String Content))))))
+          (tuple ExportedMacro (opt 'Unicode?' "make_symbol")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  // TODO ANY should be TEXT
+                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (content /* Value* */)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift (appendText content) SymTok Symbol Content))))))
           (tuple ExportedMacro (opt 'Unicode?' "make_list")
             (tuple Macro
               (tuple Signature
@@ -303,6 +325,25 @@ Spec Problems
         (if (IVM_eq i IVM_1_1)
           (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_1 systemMacros_1_1))
           (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1)))))
+
+
+    (fn appendText ((vs 'Value*') -> Unicode)
+      (if (seq_is_empty vs)
+        (inject_into Unicode "")
+        (Unicode_append (Value_unicode (seq_head vs))
+          (appendText (seq_tail vs)))))
+
+    (fn Value_unicode ((v Value) -> Unicode)
+      (let [(c (Value_content v))]
+        (if (element_of c Symbol)
+          (if (element_of c Unicode)
+            (lower c Symbol SymTok Unicode)
+            "")
+          (if (element_of c String)
+            (if (element_of c Unicode)
+              (lower c String Unicode)
+              "")
+            (wrong "Not a text value")))))
 
 
     //==========================================================================
