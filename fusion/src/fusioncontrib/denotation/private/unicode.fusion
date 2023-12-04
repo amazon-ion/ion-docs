@@ -17,12 +17,16 @@ Predefined denotational model of Unicode code-point sequences and related functi
 
   (provide
     Unicode
+    Unicode_append
     U_EQ
   )
 
 
   (define_base_domain Unicode "Sequences of Unicode code points" is_string)
 
+
+  (define_fn Unicode_append ((a Unicode) (b Unicode) -> Unicode)
+    (string_append (eject a) (eject b)))
 
   (define_fn U_EQ ((a Unicode) (b Unicode) -> B)
     (=== (eject a) (eject b)))
