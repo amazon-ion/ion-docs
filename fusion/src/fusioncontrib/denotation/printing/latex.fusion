@@ -464,6 +464,7 @@ A model printer that renders in Unicode plain-text.
       (form_method lift_to         pp_lift_to)
       (form_method lower           pp_lower)
       (form_method lower_to        pp_lower_to)
+      (form_method MAP             (|s e| (pp_fn_call (pair (head s) (tail (tail s))) e)))
       (form_method mk_fn           (|s e| (pp_lambda (tail s) e))) // Skip over the domain
       (form_method opt             pp_seq)
       (form_method opt_is_present  (pp_unary "" "\\mbox{\\ooalign{?\\cr\\hss!\\kern .025em\\hss}}"))

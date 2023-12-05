@@ -72,6 +72,7 @@ semantics DSL.
       (IF1    if)
       (LT     <)
       (LTE    <=)
+      (MAP    map)
       (MINUS  -)
       (NOT    not)
       (OR     or)

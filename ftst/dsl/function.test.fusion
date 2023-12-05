@@ -19,6 +19,15 @@
   (check === 3 (eject sum)))
 
 
+(let [(s (MAP 'I*'
+           (lambda (i) (PLUS i 1))
+           (seq 'I*' (inject_into I 1) (inject_into I 2))))] // [SEQ-INJECT]
+  (check_same 'I*' (domain_value_domain s))
+  (check === 2 (seq_length s))
+  (check === 2 (eject (ith s 0)))
+  (check === 3 (eject (ith s 1))))
+
+
 
 (define_check (check_argdomains expected_args func_dom)
   (let [(arg_doms (func_domain_inputs func_dom))]

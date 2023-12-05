@@ -4,8 +4,6 @@
 
 TODOs
 -----
-* [SEQ-MAP] `seq_map` function to transform sequences without letrec.
-  * Tricky part is figuring out the type of the resulting sequence.
 * [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
