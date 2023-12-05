@@ -1003,16 +1003,16 @@ if the field isn't an actual list:
 include::{modeltex}[tag=normalize_list]
 ++++
 
-To build a module from the sequence of (presumably) **String**s, we need an
-inner compilation loop:
+To build a module from the sequence of (presumably) **String**s, we map a
+helper function over the sequence of values in `symbols`:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=compile_SST_symbols]
+include::{modeltex}[tag=compile_SST_symbol]
 ++++
 
-This recursive loop validates that entries are actual strings, returning
-their text, or an absent entry (stem:[\langle \rangle]) when malformed.
+This validates that an entry is an actual string, returning its text,
+or an absent entry (stem:[\langle \rangle]) when malformed.
 
 
 === Catalogs
@@ -1149,15 +1149,14 @@ in xref:eg_TE[xrefstyle=short].
 
 ==== Compiling Locally-Declared Symbols
 
-Starting with the easy part, we compile the `symbols` entries into
-**SymTok**{asterisk}.
+Starting with the easy part, we compile an element of the `symbols` list
+into a *SymTok*:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=compile_LST_symbols]
+include::{modeltex}[tag=compile_LST_symbol]
 ++++
 
-This recursively compiles each list element into a *SymTok*.
 For content that is a *String* and not null, we extract the Unicode and rewrap
 it.  All other values produce `$0`.
 

@@ -1,5 +1,5 @@
 %%%---------------------------------------------------------
-%%% This file was generated at 2023-11-30T22:56:02.858-00:00
+%%% This file was generated at 2023-12-05T21:13:16.166-00:00
 %%%---------------------------------------------------------
 % tag::domains[]
 % tag::B[]
@@ -378,31 +378,23 @@
 \:\mbox{\bf{in}}\: \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it n\/} = \mbox{\rm ``{\tt }''}\newline
 \:\mbox{\bf{then}}\:\mbox{\it wrong\/}(\mbox{\rm ``{\tt SST has invalid name}''})\newline
-\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SharedModule}$}(\langle \mbox{\it n\/},\:\mbox{\it v\/},\:\mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\bf ivm}_{\scriptsize 1.0},\:{\cal C}_{\mbox{\scriptsize SST.\tt symbols}}({\cal N}_{\mbox{\scriptsize list}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}))\rangle )\rangle )\newline
+\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SharedModule}$}(\langle \mbox{\it n\/},\:\mbox{\it v\/},\:\mbox{\it{in}\small $\mbox{\bf Module}$}(\langle \mbox{\bf ivm}_{\scriptsize 1.0},\:\mbox{\it map\/}({\cal C}_{\mbox{\scriptsize SST-symbol}},\:{\cal N}_{\mbox{\scriptsize list}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}))\rangle )\rangle )\newline
 \:\mbox{\bf{endif}}\: \decrindent
  \decrindent
  \decrindent
 % end::compile_SST[]
 \newline
 \newline
-% tag::compile_SST_symbols[]
-{\cal C}_{\mbox{\scriptsize SST.\tt symbols}}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf Unicode?*}\newline
+% tag::compile_SST_symbol[]
+{\cal C}_{\mbox{\scriptsize SST-symbol}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf Unicode?}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\:\langle \rangle \newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\langle \mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}}\rangle \:\mbox{\bf{else}}\:\langle \rangle \:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S{\cal C}_{\mbox{\scriptsize SST.\tt symbols}}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
  \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::compile_SST_symbols[]
+% end::compile_SST_symbol[]
 \newline
 \newline
 % tag::compile_IVM[]
@@ -430,7 +422,7 @@
 \:\mbox{\bf{else}}\:{\cal C}_{\mbox{\scriptsize LST.\tt imports}}({\cal N}_{\mbox{\scriptsize list}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt imports}''}),\:\rho)\newline
 \:\mbox{\bf{endif}}\: \decrindent
 \newline
-\:\mbox{\bf{and}}\:\mbox{\it s\/}^{\ast} = {\cal C}_{\mbox{\scriptsize LST.\tt symbols}}({\cal N}_{\mbox{\scriptsize list}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}))\newline
+\:\mbox{\bf{and}}\:\mbox{\it s\/}^{\ast} = \mbox{\it map\/}({\cal C}_{\mbox{\scriptsize LST-symbol}},\:{\cal N}_{\mbox{\scriptsize list}}(\mbox{\it s\/} \odot \mbox{\rm ``{\tt symbols}''}))\newline
 \:\mbox{\bf{in}}\:\mbox{\it{in}\small $\mbox{\bf Environment}$}(\langle \rho\!\downarrow_{\mbox{\scriptsize catalog}},\:\rho\!\downarrow_{\mbox{\scriptsize sysModule}},\:\mbox{\it i\/}^{\ast}\S\mbox{\it s\/}^{\ast}\rangle ) \decrindent
 \newline
 \:\mbox{\bf{endif}}\: \decrindent
@@ -455,24 +447,16 @@
 % end::normalize_list[]
 \newline
 \newline
-% tag::compile_LST_symbols[]
-{\cal C}_{\mbox{\scriptsize LST.\tt symbols}}(\mbox{\it v\/}^{\ast}) ~\equiv~ $\`$ \mbox{\bf Value*} \rightarrow \mbox{\bf SymTok*}\newline
+% tag::compile_LST_symbol[]
+{\cal C}_{\mbox{\scriptsize LST-symbol}}(\mbox{\it v\/}) ~\equiv~ $\`$ \mbox{\bf Value} \rightarrow \mbox{\bf SymTok}\newline
 \;\; \setandincrindent
  \setandincrindent
-\:\mbox{\bf{if}}\:\#\mbox{\it v\/}^{\ast}=0\newline
-\:\mbox{\bf{then}}\:\langle\rangle\newline
-\:\mbox{\bf{else}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}^{\ast}\!\downarrow_{0}\!\downarrow_{\mbox{\scriptsize content}}\newline
+\:\mbox{\bf{let}}\:\mbox{\it c\/} = \mbox{\it v\/}\!\downarrow_{\mbox{\scriptsize content}}\newline
 \:\mbox{\bf{in}}\: \setandincrindent
-\:\mbox{\bf{let}}\:\mbox{\it t\/} =  \setandincrindent
 \:\mbox{\bf{if}}\:\mbox{\it c\/}\in \mbox{\bf String}\ \wedge\ \mbox{\it c\/}\notin \mbox{\bf DotNull}\:\mbox{\bf{then}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\it c\/}\mid_{\mbox{\scriptsize $\mbox{\bf String}$}}\mid_{\mbox{\scriptsize $\mbox{\bf Unicode}$}})\:\mbox{\bf{else}}\:\mbox{\it{in}\small $\mbox{\bf SymTok}$}(\mbox{\bf sym0})\:\mbox{\bf{endif}}\: \decrindent
-\newline
-\:\mbox{\bf{in}}\:\langle \mbox{\it t\/}\rangle \S{\cal C}_{\mbox{\scriptsize LST.\tt symbols}}(\mbox{\it v\/}^{\ast}\dagger1) \decrindent
  \decrindent
-\newline
-\:\mbox{\bf{endif}}\: \decrindent
  \decrindent
-% end::compile_LST_symbols[]
+% end::compile_LST_symbol[]
 \newline
 \newline
 % tag::compile_LST_imports[]
