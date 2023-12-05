@@ -114,6 +114,7 @@ Domains come in several types:
     is_bottom
     LT
     LTE
+    MAP
     MINUS
     NOT
     OR
@@ -137,6 +138,11 @@ Domains come in several types:
   (define_strict (APPLY fn seq)
     (apply fn (domain_value_rep seq)))
 
+  (define_strict (MAP domain fn s)
+    // FIXME use of domain_value_rep is bad coupling
+    (assert (is_seq_domain domain) domain)
+    (let [(r (map fn (domain_value_rep s)))]
+      (apply seq domain r)))
 
   // Functions that are polymorphic over multiple domain types
 

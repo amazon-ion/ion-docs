@@ -425,19 +425,16 @@ Spec Problems
           (wrong "SST has invalid name")
           (tuple SharedModule n v
             (tuple Module IVM_1_0
-              (compile_SST_symbols (normalize_list (Struct_get1 s "symbols")))
+              (map 'Unicode?*' compile_SST_symbol
+                (normalize_list (Struct_get1 s "symbols")))
               (seq 'ExportedMacro*'))))))
 
-    (fn compile_SST_symbols ((vs 'Value*') -> 'Unicode?*')
-      // TODO [SEQ-MAP]
-      (if (seq_is_empty vs)
-        (seq 'Unicode?*')
-        (let [(c (Value_content (seq_head vs)))]
-          (let [(t ('hint:oneline'
-                     (if (and (element_of c String) (not (element_of c DotNull)))
-                       (opt 'Unicode?' (lower c String Unicode))
-                       (opt 'Unicode?'))))]
-            (seq_prepend t (compile_SST_symbols (seq_tail vs)))))))
+    (fn compile_SST_symbol ((v Value) -> 'Unicode?')
+      (let [(c (Value_content v))]
+        ('hint:oneline'
+          (if (and (element_of c String) (not (element_of c DotNull)))
+            (opt 'Unicode?' (lower c String Unicode))
+            (opt 'Unicode?')))))
 
 
     //==========================================================================
@@ -468,7 +465,8 @@ Spec Problems
                         "$ion_symbol_table")
                     (Environment_docSymbols r)
                     (compile_LST_imports (normalize_list (Struct_get1 s "imports")) r))),
-              (ss (compile_LST_symbols (normalize_list (Struct_get1 s "symbols"))))]
+              (ss (map 'SymTok*' compile_LST_symbol
+                    (normalize_list (Struct_get1 s "symbols"))))]
           (tuple Environment
             (Environment_catalog r)
             (Environment_sysModule r)
@@ -489,22 +487,17 @@ Spec Problems
               (seq 'Value*'))))
         (seq 'Value*')))
 
-    (fn compile_LST_symbols ((vs 'Value*') -> 'SymTok*')
-      // TODO [SEQ-MAP]
-      (if (seq_is_empty vs)
-        EMPTY_SYMTOKS
-        (let [(c (Value_content (seq_head vs)))]
-          (let [(t ('hint:oneline'
-                     (if (and (element_of c String) (not (element_of c DotNull)))
-                       (lift_to SymTok (lower c String Unicode))
-                       (lift_to SymTok SYM0))))]
-            (seq_prepend t (compile_LST_symbols (seq_tail vs)))))))
-
+    (fn compile_LST_symbol ((v Value) -> SymTok)
+      (let [(c (Value_content v))]
+        ('hint:oneline'
+          (if (and (element_of c String) (not (element_of c DotNull)))
+            (lift_to SymTok (lower c String Unicode))
+            (lift_to SymTok SYM0)))))
 
     // LST imports field
 
     (fn compile_LST_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
-      // TODO [SEQ-MAP]
+      // Would be nice to `map`, but this has two args and appends, not cons'es.
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]

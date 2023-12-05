@@ -35,8 +35,8 @@
 (check_bottom "57" (seq 'Z*' z0 z1 (wrong 57)))
 
 (expect_argument_error (seq Z))                           // 1st arg isn't a seq domain
-(check_bottom "Value #1 not in Z" (seq 'Z*' 0))           // 2nd arg isn't a domain value
-(check_bottom "Value #1 not in Z" (seq 'Z*' int_any_val)) // 2nd arg is "above" the sequence type
+(check_bottom "seq element #1 not in Z" (seq 'Z*' 0))           // 2nd arg isn't a domain value
+(check_bottom "seq element #1 not in Z" (seq 'Z*' int_any_val)) // 2nd arg is "above" the sequence type
 
 
 // seq_is_empty
