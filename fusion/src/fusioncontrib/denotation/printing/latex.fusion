@@ -394,7 +394,7 @@ or syntax string or symbol.
         (let [(e1 (pp_incr_indentation e))]
           (let loop [(vs (tail (tail v)))]
             (when (is_pair vs)
-              (pp_print (head vs) e1)
+              (pp_normline (head vs) e1)
               (when (is_pair (tail vs))
                 (display ",")
                 (pp_newline e1)
@@ -493,8 +493,8 @@ A model printer that renders in Unicode plain-text.
       (form_method GT              (pp_binary "" " > " ""))
 
       // Rendering hints            // TODO Should be provided by base printer.
-      (form_method 'hint:multiline' pp_multiline)
-      (form_method 'hint:oneline'   pp_oneline)
+      (form_method 'hint:multiline' (ppmod_multiline (pp_unary "" "")))
+      (form_method 'hint:oneline'   (ppmod_oneline   (pp_unary "" "")))
       (form_method 'hint:paren'     (pp_unary "(" ")"))
 
       // Function application. This must follow other forms!
