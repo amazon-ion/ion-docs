@@ -602,6 +602,9 @@ Spec Problems
 
 
     //==========================================================================
+    // Ion 1.1
+
+    //==========================================================================
     // Literals
 
     (fn isIonLiteral ((v Value) -> B)
@@ -665,7 +668,6 @@ Spec Problems
           // Quailified reference
           (if (U_EQ (opt_value mod) "$ion")
             (if (element_of mac Unicode)
-              // TODO Get the module from the Environment
               (let [(m (ExportedMacros_get (BoundModule_mactab sysMod) (lower_to Unicode mac)))]
                 (if (opt_is_present m)
                   (opt_value m)
@@ -689,9 +691,6 @@ Spec Problems
       (if (IVM_eq (currentSpecVersion r) IVM_1_0)
         (wrong "Eexp not allowed in Ion 1.0")
         (let [(m (resolve_MacroRef (SEexp_ref v) r))]
-          // FIXME: inner expansion needs to be happen during invocation, so we
-          // don't lose the individual streams.
-          //  cannot handle implicit macro invocations.
           (Macro_invoke m (SEexp_args v) r))))
 
 
