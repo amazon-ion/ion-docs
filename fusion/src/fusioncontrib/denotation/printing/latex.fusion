@@ -60,6 +60,7 @@ TODO
     oneline
     pp_domain_def
     pp_ith
+    pp_fn_call
     pp_fn_def
     pp_fn_def1
   )
@@ -262,7 +263,21 @@ or syntax string or symbol.
            (name (head sexp)),
            (args (tail sexp))]
       (pp_print name e)
-      (pp_print_terms args e "(" ",\\:" ")")))
+      (display "(")
+      (if (is_multiline_mode e)
+        (begin
+          (let [(e1 (pp_incr_indentation e))]
+            (let loop [(vs args)]
+              (when (is_pair vs)
+                (pp_normline (head vs) e1)
+                (when (is_pair (tail vs))
+                  (display ",\\:")
+                  (pp_newline e1)
+                  (loop (tail vs)))))
+            (display SEQ_CLOSE)
+            (pp_decr_indentation e1)))
+        (pp_print_terms args e "" ",\\:" ""))
+      (display ")")))
 
 
   (define (pp_bindings bindings e)
