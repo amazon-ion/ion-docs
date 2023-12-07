@@ -198,8 +198,8 @@ pairs are spliced into the parent struct (TODO: Link)
               ┌─── The leading FlexInt ends in a `1`,
               │    no more FlexInt bytes follow.
               │
-0 0 0 0 0 0 0 1  1110000
-└─────┬─────┘    └──┬──┘
+0 0 0 0 0 0 0 1   01110000
+└─────┬─────┘     └───┬──┘
   2's comp.      opcode 0x70:
   zero           empty symbol
 ----
@@ -1820,7 +1820,7 @@ D9 FD 66 6F 6F 51 01 17 91 02
 ----
 
 [sidebar]
-TODO: Demonstrate splicing macro values into the struct via FlexSym escape code `0x00`.
+TODO: Demonstrate splicing macro values into the struct via FlexSym escape code `0x01`.
 
 [[delimited_structs]]
 ===== Delimited Structs
@@ -1829,7 +1829,7 @@ Opcode `0xF3` indicates the beginning of a delimited struct with <<flexsym, `Fle
 
 Unlike lists and S-expressions, structs cannot use opcode `0xF0` by itself to indicate the end of the delimited
 container. This is because `0xF0` is a valid `FlexSym` (a symbol with 16 bytes of inline text). To close the delimited
-struct, the writer emits a `0x00` byte (a `FlexSym` escape) followed by the opcode `0xF0`.
+struct, the writer emits a `0x01` byte (a `FlexSym` escape) followed by the opcode `0xF0`.
 
 NOTE: While length-prefixed structs can choose between <<structs_with_symbol_address_field_names, structs with
 symbol address field names>> and <<structs_with_flexsym_field_names, structs with `FlexSym` field names>>,
@@ -1839,10 +1839,10 @@ delimited structs always use `FlexSym`-encoded field names.
 [%unbreakable]
 ----
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `FlexSym` field names.
-│  ┌─── FlexSym escape code 0x00: an opcode follows
+│  ┌─── FlexSym escape code 0x01: an opcode follows
 │  │  ┌─── Opcode 0xF0 indicates the end of the most
 │  │  │    recently opened delimited container
-F3 00 F0
+F3 01 F0
 ----
 
 .Figure {counter:figure}: Delimited encoding of `_{"foo": 1, $11: 2}_`
@@ -1851,10 +1851,10 @@ F3 00 F0
 ┌─── Opcode 0xF3 indicates the beginning of a delimited struct with `FlexSym` field names.
 │
 │  ┌─ FlexSym -3     ┌─ FlexSym: 11 ($11)
-│  │                 │        ┌─── FlexSym escape code 0x00: an opcode follows
+│  │                 │        ┌─── FlexSym escape code 0x01: an opcode follows
 │  │                 │        │  ┌─── Opcode 0xF0 indicates the end of the most
 │  │   f  o  o       │        │  │    recently opened delimited container
-F3 FD 66 6F 6F 51 01 17 91 02 00 F0
+F3 FD 66 6F 6F 51 01 17 91 02 01 F0
       └──┬───┘ └─┬─┘    └─┬─┘
       3 UTF-8    1        2
        bytes
