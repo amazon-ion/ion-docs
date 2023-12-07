@@ -31,7 +31,7 @@ semantics DSL.
     element_of
     fn
     import
-    inject_into           // TODO remove?
+    inject_into      // TODO Remove, but still needed to make base-domain consts
     is_bottom
     is_domain
     is_fn

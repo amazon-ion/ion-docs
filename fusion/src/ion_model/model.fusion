@@ -73,60 +73,21 @@ Spec Problems
 
 
     //=============================
-    // Ion Version Markers
-
-    (dom IVM = (* I I) "Ion version markers")
-
-    (const IVM_1_0 (tuple IVM 1 0))
-    (const IVM_1_1 (tuple IVM 1 1))
-
-    (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
-      (and (EQ (ith i1 0) (ith i2 0))
-           (EQ (ith i1 1) (ith i2 1))))
-
-
-    //=============================
-    // Simple values require no expansion.
-    // Their 'syntax' and 'application' denotations are the same.
-
-    (dom DotNull  = (= DOTNULL) "Sentinel for typed nulls")
-
-    (dom NullNull = (+ DotNull))
-    (dom Bool     = (+ B DotNull))
-    (dom Int      = (+ I DotNull))
-    (dom String   = (+ Unicode DotNull))
-
-
-    //=============================
-    // Abstract Syntax Trees, which can contain unresolved SIDs
-
-    (dom TSTree     = (+ STree IVM))
-    (dom STree      = (+ SValue SEexp))
-    (dom SValue     = (* 'SSymTok*'::annots SContent::content))
-    (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
-                         /*Decimal Float Timestamp Blob Clob*/))
-
-    (dom SSymTok   = (+ Unicode I))
-    (dom SSymbol   = (+ SSymTok DotNull))
-
-    (dom SList     = (+ 'STree*' DotNull))
-    (dom SSexp     = (+ 'STree*' DotNull))
-
-    (dom SField    = (* SSymTok::name STree::tree))
-    (dom SStruct   = (+ 'SField*' DotNull))
-
-
-    (dom SEexp      = (* MacroRef::ref 'STree*'::args))
-    (dom MacroRef   = (* 'Unicode?'::module NameOrAddr::macro))
-    (dom NameOrAddr = (+ Unicode I))
-
-
-    //=============================
     // Application-layer Data Types
 
     (dom Value     = (* 'SymTok*'::annots Content::content))
     (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String
                         /*Decimal Float Timestamp Blob Clob*/))
+
+
+    // Simple values require no expansion.
+    // Their 'syntax' and 'application' denotations are the same.
+
+    (dom DotNull  = (= DOTNULL) "Sentinel for typed nulls")
+    (dom NullNull = (+ DotNull))
+    (dom Bool     = (+ B DotNull))
+    (dom Int      = (+ I DotNull))
+    (dom String   = (+ Unicode DotNull))
 
 
     // Symbols
@@ -183,216 +144,57 @@ Spec Problems
 
 
     //==========================================================================
-    // Macros
+    // Abstract Syntax Trees, which can contain unresolved SIDs
 
-    (dom Macro = (* Signature::signature F::xform))
+    (dom TSTree     = (+ STree IVM))
+    (dom STree      = (+ SValue SEexp))
+    (dom SValue     = (* 'SSymTok*'::annots SContent::content))
+    (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
+                         /*Decimal Float Timestamp Blob Clob*/))
 
-    (dom Signature   = (* 'ParamSpec*'::params B::hasRest /* TODO ResultSpec */))
-    (dom ParamSpec   = (* Unicode::name ParamShape::shape))  // TODO Should name be a SymTok?
-    (dom ParamShape  = (* ParamType::type Cardinality::card /*B::grouped*/))
-    (dom ParamType   = (= ANY))
-    (dom Cardinality = (= EXACTLY_ONE ONE_OR_MORE ZERO_OR_ONE ZERO_OR_MORE))
+    (dom SSymTok   = (+ Unicode I))
+    (dom SSymbol   = (+ SSymTok DotNull))
 
+    (dom SList     = (+ 'STree*' DotNull))
+    (dom SSexp     = (+ 'STree*' DotNull))
 
-    (fn is_voidable ((p ParamSpec) -> B)
-      (let [(c (ParamShape_card (ParamSpec_shape p)))]
-        (or (EQ_Enum c ZERO_OR_ONE) (EQ_Enum c ZERO_OR_MORE))))
+    (dom SField    = (* SSymTok::name STree::tree))
+    (dom SStruct   = (+ 'SField*' DotNull))
 
-
-    //==========================================================================
-    // Encoding Modules
-
-    (dom Module        = (* IVM::specVersion 'Unicode?*'::symtab 'ExportedMacro*'::mactab))
-    (dom SharedModule  = (* Unicode::name I::version Module::module))
-    (dom BoundModule   = (* Unicode::name Module::module))   // Locally-assigned name
-
-    (fn BoundModule_symtab  ((m BoundModule) -> 'SymTok*')
-      (Module_symtab (BoundModule_module m)))
-    (fn BoundModule_mactab  ((m BoundModule) -> 'ExportedMacro*')
-      (Module_mactab (BoundModule_module m)))
+    (dom SEexp      = (* MacroRef::ref 'STree*'::args))
+    (dom MacroRef   = (* 'Unicode?'::module NameOrAddr::macro))
+    (dom NameOrAddr = (+ Unicode I))
 
 
-    (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
+    // Ion Version Markers
 
-    (fn ExportedMacros_get ((ms 'ExportedMacro*') (u Unicode) -> 'Macro?')
-      (if (seq_is_empty ms)
-        (opt 'Macro?')
-        (if (and (opt_is_present  (ExportedMacro_name (seq_head ms)))
-                 (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
-          (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
-          (ExportedMacros_get (seq_tail ms) u))))
+    (dom IVM = (* I I) "Ion version markers")
 
-    (fn BoundModules_get ((ms 'BoundModule*') (u Unicode) -> 'Macro?')
-      (if (seq_is_empty ms)
-        (opt 'Macro?')
-        (let [(m1 (ExportedMacros_get (BoundModule_mactab (seq_head ms)) u)),
-              (m2 (BoundModules_get   (seq_tail ms) u))]
-          (if (opt_is_present m1)
-            (if (opt_is_present m2)
-              (wrong "Ambiguous macroreference :" u)
-              m1)
-            m2))))
+    (const IVM_1_0 (tuple IVM 1 0))
+    (const IVM_1_1 (tuple IVM 1 1))
+
+    (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
+      (and (EQ (ith i1 0) (ith i2 0))
+           (EQ (ith i1 1) (ith i2 1))))
 
 
     //==========================================================================
-    // System Modules
+    // Parsing Interface
 
-    (const systemSymbols_1_0
-      ('hint:multiline'
-        (seq 'Unicode?*'
-          (opt 'Unicode?' "$ion")
-          (opt 'Unicode?' "$ion_1_0")
-          (opt 'Unicode?' "$ion_symbol_table")
-          (opt 'Unicode?' "name")
-          (opt 'Unicode?' "version")
-          (opt 'Unicode?' "imports")
-          (opt 'Unicode?' "symbols")
-          (opt 'Unicode?' "max_id")
-          (opt 'Unicode?' "$ion_shared_symbol_table"))))
+    // Here we abstract over the parser, to show the encoding feedback loop.
+    // The parsing layer is given a subset of the expansion environment.
+    // It would be easier to just pass the Environment, but this is explicit
+    // WRT exactly what information can affect parsing.
 
-    (const systemSymbols_1_1
-      (seq_append systemSymbols_1_0
-        (seq 'Unicode?*'
-          (opt 'Unicode?' "$ion_literal")
-          /* ... */)))
+    (dom ParseStep    = (* TSTree::tree ParseStream::next))
+    (dom ParseStream  = (-> IVM 'ParseStep?'))
 
-    (const systemMacros_1_1
-      ('hint:multiline'
-        (seq 'ExportedMacro*'
-          (tuple ExportedMacro (opt 'Unicode?' "void")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                (seq 'Value*'))))
-          (tuple ExportedMacro (opt 'Unicode?' "values")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                rest)))
-          (tuple ExportedMacro (opt 'Unicode?' "make_string")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  // TODO ANY should be TEXT
-                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (content /* Value* */)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift (appendText content) String Content))))))
-          (tuple ExportedMacro (opt 'Unicode?' "make_symbol")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  // TODO ANY should be TEXT
-                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (content /* Value* */)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift (appendText content) SymTok Symbol Content))))))
-          (tuple ExportedMacro (opt 'Unicode?' "make_list")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift_to Content (lift_to List rest)))))))
-          (tuple ExportedMacro (opt 'Unicode?' "make_sexp")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift_to Content (lift_to Sexp rest)))))))
-          /* ... */)))
-
-    (fn systemModule ((i IVM) -> BoundModule)
-      (if (IVM_eq i IVM_1_0)
-        (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_0 (seq 'ExportedMacro*')))
-        (if (IVM_eq i IVM_1_1)
-          (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_1 systemMacros_1_1))
-          (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1)))))
-
-
-    (fn appendText ((vs 'Value*') -> Unicode)
-      (if (seq_is_empty vs)
-        (inject_into Unicode "")
-        (Unicode_append (Value_unicode (seq_head vs))
-          (appendText (seq_tail vs)))))
-
-    (fn Value_unicode ((v Value) -> Unicode)
-      (let [(c (Value_content v))]
-        (if (element_of c Symbol)
-          (if (element_of c Unicode)
-            (lower c Symbol SymTok Unicode)
-            "")
-          (if (element_of c String)
-            (if (element_of c Unicode)
-              (lower c String Unicode)
-              "")
-            (wrong "Not a text value")))))
+    (dom Document  = (^ is_truthy) "Ion documents")
+    (dom Parser    = (-> Document ParseStream))
 
 
     //==========================================================================
-    // Catalogs
-
-    (dom Catalog = (* 'SharedModule*'::modules))
-
-
-    (fn exactModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule')
-      (exactModule_SMs (Catalog_modules c) n v))
-
-    (fn exactModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule')
-      (if (seq_is_empty ss)
-        (wrong "No exact-match for " n "@" v)
-        (if (and (U_EQ (SharedModule_name (seq_head ss)) n)
-                 (EQ (SharedModule_version (seq_head ss)) v))
-          (seq_head ss)
-          (exactModule_SMs (seq_tail ss) n v))))
-
-
-    (fn bestModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule?')
-      (bestModule_SMs (Catalog_modules c) n v))
-
-    (fn bestModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule?')
-      (if (seq_is_empty ss)
-        (opt 'SharedModule?')
-        // WARNING These variable names appear in the narrative, keep it in sync!
-        (let [(ss1 (bestModule_SMs (seq_tail ss) n v))]
-          (if (not (U_EQ (SharedModule_name (seq_head ss)) n))
-            ss1
-            (if (or (EQ (SharedModule_version (seq_head ss)) v)
-                    (not (opt_is_present ss1)))
-              // Exact match, or only match.
-              (opt 'SharedModule?' (seq_head ss))
-              // Inexact match, and the tail had a match.
-              (if (or (EQ (SharedModule_version (opt_value ss1)) v)
-                      (>  (SharedModule_version (opt_value ss1))
-                          (SharedModule_version (seq_head ss))))
-                // The tail had an exact match, or larger version.
-                ss1
-                (opt 'SharedModule?' (seq_head ss))))))))
-
-    (fn Catalog_extend ((c Catalog) (s SharedModule) -> Catalog)
-      // TODO reject duplicate key
-      (tuple Catalog (seq_prepend s (Catalog_modules c))))
-
-
-    //==========================================================================
-    // Encoding Environment
+    // Expansion of abstract syntax trees into values
 
     (dom Environment = (* Catalog::catalog BoundModule::sysModule 'SymTok*'::docSymbols
                           'BoundModule*'::modules 'BoundModule*'::mactab))
@@ -409,32 +211,154 @@ Spec Problems
                                  (Environment_docSymbols r)))))
 
 
+    (fn expand_STree ((t STree) (r Environment) -> 'Value*')
+      (if (element_of t SValue)
+        (seq 'Value*' (expand_SValue (lower t SValue) r))
+        (expand_SEexp (lower t SEexp) r)))
+
+    (fn 'expand_STree*' ((ts 'STree*') (r Environment) -> 'Value*')
+      (if (seq_is_empty ts)
+        (seq 'Value*')
+        (seq_append ('expand_STree'  (seq_head ts) r)
+                    ('expand_STree*' (seq_tail ts) r))))
+
+    (fn expand_SValue ((sv SValue) (r Environment) -> Value)
+      (tuple Value ('expand_SSymTok*' (SValue_annots  sv) r)
+                   ('expand_SContent' (SValue_content sv) r)))
+
+    (fn expand_SContent ((sv SContent) (r Environment) -> Content)
+      (if (element_of sv SSymbol)
+        (lift (expand_SSymbol (lower sv SSymbol) r) Content)
+        (if (element_of sv SList)
+          (lift (expand_SList (lower sv SList) r) Content)
+          (if (element_of sv SSexp)
+            (lift (expand_SSexp (lower sv SSexp) r) Content)
+            (if (element_of sv SStruct)
+              (lift (expand_SStruct (lower sv SStruct) r) Content)
+              (if (element_of sv NullNull)
+                (lift (lower sv NullNull) Content)
+                (if (element_of sv Bool)
+                  (lift (lower sv Bool) Content)
+                  (if (element_of sv Int)
+                    (lift (lower sv Int) Content)
+                    (if (element_of sv String)
+                      (lift (lower sv String) Content)
+                      (wrong "not implemented in this model"))))))))))
+
+
+    // Symbol expansion
+
+    (fn expand_SSymbol ((v SSymbol) (r Environment) -> Symbol)
+      (if (element_of v DotNull)
+        (lift DOTNULL Symbol)
+        (lift (expand_SSymTok (lower v SSymTok) r) Symbol)))
+
+    (fn expand_SSymTok ((s SSymTok) (r Environment) -> SymTok)
+      (if (element_of s Unicode)
+        (lift (lower s Unicode) SymTok)
+        (let [(i  (lower s I)),
+              (ts (currentSymtab r))]
+          (if (< i (seq_length ts))
+            (ith ts i)
+            (wrong "Invalid symbol address " i)))))
+
+    (fn 'expand_SSymTok*' ((ss 'SSymTok*') (r Environment) -> 'SymTok*')
+      (if (seq_is_empty ss)
+        EMPTY_SYMTOKS
+        (seq_prepend (expand_SSymTok  (seq_head ss) r)
+                     ('expand_SSymTok*' (seq_tail ss) r))))
+
+
+    // Sequence expansion
+
+    (fn expand_SList ((v SList) (r Environment) -> List)
+      (if (element_of v DotNull)
+        (lift DOTNULL List)
+        (lift ('expand_STree*' (lower v 'STree*') r) List)))
+
+    (fn expand_SSexp ((v SSexp) (r Environment) -> Sexp)
+      (if (element_of v DotNull)
+        (lift DOTNULL Sexp)
+        (lift ('expand_STree*' (lower v 'STree*') r) Sexp)))
+
+
+    // Struct expansion
+
+    (fn expand_SStruct ((v SStruct) (r Environment) -> Struct)
+      (if (element_of v DotNull)
+        (lift DOTNULL Struct)
+        (lift ('expand_SField*' (lower v 'SField*') r) Struct)))
+
+    (fn expand_SField ((sf 'SField') (r Environment) -> 'Field*')
+      (let [(t  (expand_SSymTok (SField_name sf) r)),
+            (vs (expand_STree   (SField_tree sf) r))]
+        (letrec [(mk_fields (lambda (vs1)
+                              (if (seq_is_empty vs1)
+                                  (seq 'Field*')
+                                  (seq_prepend (tuple Field t (seq_head vs1))
+                                               (mk_fields (seq_tail vs1))))))]
+          (mk_fields vs))))
+
+    (fn 'expand_SField*' ((sfs 'SField*') (r Environment) -> 'Field*')
+      (if (seq_is_empty sfs)
+        (seq 'Field*')
+        (seq_append (expand_SField (seq_head sfs) r) ('expand_SField*' (seq_tail sfs) r))))
+
+
     //==========================================================================
-    // Shared Symbol Table complation
+    // Top-level evaluation
 
-    (fn isSST ((v Value) -> B)
-      (and (element_of (Value_content v) Struct)
-           (and (not (seq_is_empty (Value_annots v)))
-              (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
+    (dom Evaluator = (-> Document Catalog 'Value*'))
 
-    (fn compile_SST ((s Struct) -> SharedModule)
-      (let [(n (normalize_name    (Struct_get1 s "name"))),
-            // Yes, SST version is normalized to 1
-            (v (normalize_version (Struct_get1 s "version")))]
-        (if (U_EQ n "")
-          (wrong "SST has invalid name")
-          (tuple SharedModule n v
-            (tuple Module IVM_1_0
-              (map 'Unicode?*' compile_SST_symbol
-                (normalize_list (Struct_get1 s "symbols")))
-              (seq 'ExportedMacro*'))))))
+    (fn mk_Evaluator ((p Parser) -> Evaluator)
+      (mk_fn Evaluator (d c)
+        (let [(p0 (p d)),
+              (r0 (tuple Environment c (systemModule IVM_1_0)
+                    EMPTY_SYMTOKS
+                    (seq 'BoundModule*' (systemModule IVM_1_0))
+                    (seq 'BoundModule*' /* No user macros installed */))),
+              (k0 (mk_fn TContinuation (r vs) vs))]
+          (TE_ParseStream p0 r0 k0))))
 
-    (fn compile_SST_symbol ((v Value) -> 'Unicode?')
-      (let [(c (Value_content v))]
-        ('hint:oneline'
-          (if (and (element_of c String) (not (element_of c DotNull)))
-            (opt 'Unicode?' (lower c String Unicode))
-            (opt 'Unicode?')))))
+
+    (dom TContinuation = (-> Environment 'Value*' 'Value*')
+      "Continuation when expanding top-level values")
+
+
+    // TODO don't overload p with two different types
+    (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
+      (let [(step (p (currentSpecVersion r)))]
+        (if (opt_is_present step)
+          (TE_TSTree (ParseStep_tree (opt_value step)) r
+            (mk_fn TContinuation (r1 vs1)
+              (TE_ParseStream (ParseStep_next (opt_value step)) r1
+                (mk_fn TContinuation (r2 vs2)
+                  (k r2 (seq_append vs1 vs2))))))
+          (k r (seq 'Value*')))))
+
+
+    (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
+      (if (element_of t IVM)
+        (k (compile_IVM (lower t IVM) r) (seq 'Value*'))
+        (let [(vs (expand_STree (lower t STree) r))]
+          ('TE_Value*' vs r k))))
+
+
+    (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
+      (if (isLocalSymbolTable v)
+        (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
+        (if (and (IVM_eq (currentSpecVersion r) IVM_1_1) (isIonLiteral v))
+          (TE_literal v r k)
+          (k r (seq 'Value*' v)))))
+
+    (fn 'TE_Value*' ((vs 'Value*') (r Environment) (k TContinuation) -> 'Value*')
+      (if (seq_is_empty vs)
+        (k r vs)
+        (TE_Value (seq_head vs) r
+          (mk_fn TContinuation (r1 vs1)
+            ('TE_Value*' (seq_tail vs) r1
+              (mk_fn TContinuation (r2 vs2)
+                (k r2 (seq_append vs1 vs2))))))))
 
 
     //==========================================================================
@@ -566,100 +490,168 @@ Spec Problems
 
 
     //==========================================================================
-    // Expansion of abstract syntax trees into values
+    // Encoding Modules
 
-    (fn expand_STree ((t STree) (r Environment) -> 'Value*')
-      (if (element_of t SValue)
-        (seq 'Value*' (expand_SValue (lower t SValue) r))
-        (expand_SEexp (lower t SEexp) r)))
+    (dom Module        = (* IVM::specVersion 'Unicode?*'::symtab 'ExportedMacro*'::mactab))
+    (dom SharedModule  = (* Unicode::name I::version Module::module))
+    (dom BoundModule   = (* Unicode::name Module::module))   // Locally-assigned name
 
-    (fn 'expand_STree*' ((ts 'STree*') (r Environment) -> 'Value*')
-      (if (seq_is_empty ts)
-        (seq 'Value*')
-        (seq_append ('expand_STree'  (seq_head ts) r)
-                    ('expand_STree*' (seq_tail ts) r))))
-
-    (fn expand_SValue ((sv SValue) (r Environment) -> Value)
-      (tuple Value ('expand_SSymTok*' (SValue_annots  sv) r)
-                   ('expand_SContent' (SValue_content sv) r)))
-
-    (fn expand_SContent ((sv SContent) (r Environment) -> Content)
-      (if (element_of sv SSymbol)
-        (lift (expand_SSymbol (lower sv SSymbol) r) Content)
-        (if (element_of sv SList)
-          (lift (expand_SList (lower sv SList) r) Content)
-          (if (element_of sv SSexp)
-            (lift (expand_SSexp (lower sv SSexp) r) Content)
-            (if (element_of sv SStruct)
-              (lift (expand_SStruct (lower sv SStruct) r) Content)
-              (if (element_of sv NullNull)
-                (lift (lower sv NullNull) Content)
-                (if (element_of sv Bool)
-                  (lift (lower sv Bool) Content)
-                  (if (element_of sv Int)
-                    (lift (lower sv Int) Content)
-                    (if (element_of sv String)
-                      (lift (lower sv String) Content)
-                      (wrong "not implemented in this model"))))))))))
+    (fn BoundModule_symtab  ((m BoundModule) -> 'SymTok*')
+      (Module_symtab (BoundModule_module m)))
+    (fn BoundModule_mactab  ((m BoundModule) -> 'ExportedMacro*')
+      (Module_mactab (BoundModule_module m)))
 
 
-    // Symbol expansion
+    //==========================================================================
+    // Catalogs
 
-    (fn expand_SSymbol ((v SSymbol) (r Environment) -> Symbol)
-      (if (element_of v DotNull)
-        (lift DOTNULL Symbol)
-        (lift (expand_SSymTok (lower v SSymTok) r) Symbol)))
+    (dom Catalog = (* 'SharedModule*'::modules))
 
-    (fn expand_SSymTok ((s SSymTok) (r Environment) -> SymTok)
-      (if (element_of s Unicode)
-        (lift (lower s Unicode) SymTok)
-        (let [(i  (lower s I)),
-              (ts (currentSymtab r))]
-          (if (< i (seq_length ts))
-            (ith ts i)
-            (wrong "Invalid symbol address " i)))))
 
-    (fn 'expand_SSymTok*' ((ss 'SSymTok*') (r Environment) -> 'SymTok*')
+    (fn exactModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule')
+      (exactModule_SMs (Catalog_modules c) n v))
+
+    (fn exactModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule')
       (if (seq_is_empty ss)
-        EMPTY_SYMTOKS
-        (seq_prepend (expand_SSymTok  (seq_head ss) r)
-                     ('expand_SSymTok*' (seq_tail ss) r))))
+        (wrong "No exact-match for " n "@" v)
+        (if (and (U_EQ (SharedModule_name (seq_head ss)) n)
+                 (EQ (SharedModule_version (seq_head ss)) v))
+          (seq_head ss)
+          (exactModule_SMs (seq_tail ss) n v))))
 
 
-    // Sequence expansion
+    (fn bestModule_Catalog ((c Catalog) (n Unicode) (v I) -> 'SharedModule?')
+      (bestModule_SMs (Catalog_modules c) n v))
 
-    (fn expand_SList ((v SList) (r Environment) -> List)
-      (if (element_of v DotNull)
-        (lift DOTNULL List)
-        (lift ('expand_STree*' (lower v 'STree*') r) List)))
+    (fn bestModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule?')
+      (if (seq_is_empty ss)
+        (opt 'SharedModule?')
+        // WARNING These variable names appear in the narrative, keep it in sync!
+        (let [(ss1 (bestModule_SMs (seq_tail ss) n v))]
+          (if (not (U_EQ (SharedModule_name (seq_head ss)) n))
+            ss1
+            (if (or (EQ (SharedModule_version (seq_head ss)) v)
+                    (not (opt_is_present ss1)))
+              // Exact match, or only match.
+              (opt 'SharedModule?' (seq_head ss))
+              // Inexact match, and the tail had a match.
+              (if (or (EQ (SharedModule_version (opt_value ss1)) v)
+                      (>  (SharedModule_version (opt_value ss1))
+                          (SharedModule_version (seq_head ss))))
+                // The tail had an exact match, or larger version.
+                ss1
+                (opt 'SharedModule?' (seq_head ss))))))))
 
-    (fn expand_SSexp ((v SSexp) (r Environment) -> Sexp)
-      (if (element_of v DotNull)
-        (lift DOTNULL Sexp)
-        (lift ('expand_STree*' (lower v 'STree*') r) Sexp)))
+    (fn Catalog_extend ((c Catalog) (s SharedModule) -> Catalog)
+      // TODO reject duplicate key
+      (tuple Catalog (seq_prepend s (Catalog_modules c))))
 
 
-    // Struct expansion
+    //==========================================================================
+    // System Modules
 
-    (fn expand_SStruct ((v SStruct) (r Environment) -> Struct)
-      (if (element_of v DotNull)
-        (lift DOTNULL Struct)
-        (lift ('expand_SField*' (lower v 'SField*') r) Struct)))
+    (const systemSymbols_1_0
+      ('hint:multiline'
+        (seq 'Unicode?*'
+          (opt 'Unicode?' "$ion")
+          (opt 'Unicode?' "$ion_1_0")
+          (opt 'Unicode?' "$ion_symbol_table")
+          (opt 'Unicode?' "name")
+          (opt 'Unicode?' "version")
+          (opt 'Unicode?' "imports")
+          (opt 'Unicode?' "symbols")
+          (opt 'Unicode?' "max_id")
+          (opt 'Unicode?' "$ion_shared_symbol_table"))))
 
-    (fn expand_SField ((sf 'SField') (r Environment) -> 'Field*')
-      (let [(t  (expand_SSymTok (SField_name sf) r)),
-            (vs (expand_STree   (SField_tree sf) r))]
-        (letrec [(mk_fields (lambda (vs1)           // TODO [FN-ADHOC] Use mk_fn
-                              (if (seq_is_empty vs1)
-                                  (seq 'Field*')
-                                  (seq_prepend (tuple Field t (seq_head vs1))
-                                               (mk_fields (seq_tail vs1))))))]
-          (mk_fields vs))))
 
-    (fn 'expand_SField*' ((sfs 'SField*') (r Environment) -> 'Field*')
-      (if (seq_is_empty sfs)
-        (seq 'Field*')
-        (seq_append (expand_SField (seq_head sfs) r) ('expand_SField*' (seq_tail sfs) r))))
+    (fn systemModule ((i IVM) -> BoundModule)
+      (if (IVM_eq i IVM_1_0)
+        (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_0 (seq 'ExportedMacro*')))
+        (if (IVM_eq i IVM_1_1)
+          (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_1 systemMacros_1_1))
+          (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1)))))
+
+
+    //==========================================================================
+    // Shared Symbol Table complation
+
+    (fn isSST ((v Value) -> B)
+      (and (element_of (Value_content v) Struct)
+           (and (not (seq_is_empty (Value_annots v)))
+              (SymTok_matches (seq_head (Value_annots v)) "$ion_shared_symbol_table"))))
+
+    (fn compile_SST ((s Struct) -> SharedModule)
+      (let [(n (normalize_name    (Struct_get1 s "name"))),
+            // Yes, SST version is normalized to 1
+            (v (normalize_version (Struct_get1 s "version")))]
+        (if (U_EQ n "")
+          (wrong "SST has invalid name")
+          (tuple SharedModule n v
+            (tuple Module IVM_1_0
+              (map 'Unicode?*' compile_SST_symbol
+                (normalize_list (Struct_get1 s "symbols")))
+              (seq 'ExportedMacro*'))))))
+
+
+    (fn compile_SST_symbol ((v Value) -> 'Unicode?')
+      (let [(c (Value_content v))]
+        ('hint:oneline'
+          (if (and (element_of c String) (not (element_of c DotNull)))
+            (opt 'Unicode?' (lower c String Unicode))
+            (opt 'Unicode?')))))
+
+
+    //==========================================================================
+    // Literals
+
+    (fn isIonLiteral ((v Value) -> B)
+      (and (not (seq_is_empty (Value_annots v)))
+           (SymTok_matches (seq_head (Value_annots v)) "$ion_literal")))
+
+    (fn TE_literal ((v Value) (r Environment) (k TContinuation) -> 'Value*')
+      (let [(v1 (tuple Value (seq_tail (Value_annots v)) (Value_content v)))]
+        (if (isLocalSymbolTable v1)
+          (wrong "Cannot use literal $ion_symbol_table struct as application data")
+          (k r (seq 'Value*' v1)))))
+
+
+    //==========================================================================
+    // Macros
+
+    (dom Macro = (* Signature::signature F::xform))
+
+    (dom Signature   = (* 'ParamSpec*'::params B::hasRest /* TODO ResultSpec */))
+    (dom ParamSpec   = (* Unicode::name ParamShape::shape))  // TODO Should name be a SymTok?
+    (dom ParamShape  = (* ParamType::type Cardinality::card /*B::grouped*/))
+    (dom ParamType   = (= ANY))
+    (dom Cardinality = (= EXACTLY_ONE ONE_OR_MORE ZERO_OR_ONE ZERO_OR_MORE))
+
+
+    (fn is_voidable ((p ParamSpec) -> B)
+      (let [(c (ParamShape_card (ParamSpec_shape p)))]
+        (or (EQ_Enum c ZERO_OR_ONE) (EQ_Enum c ZERO_OR_MORE))))
+
+
+    (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
+
+    (fn ExportedMacros_get ((ms 'ExportedMacro*') (u Unicode) -> 'Macro?')
+      (if (seq_is_empty ms)
+        (opt 'Macro?')
+        (if (and (opt_is_present  (ExportedMacro_name (seq_head ms)))
+                 (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
+          (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
+          (ExportedMacros_get (seq_tail ms) u))))
+
+    (fn BoundModules_get ((ms 'BoundModule*') (u Unicode) -> 'Macro?')
+      (if (seq_is_empty ms)
+        (opt 'Macro?')
+        (let [(m1 (ExportedMacros_get (BoundModule_mactab (seq_head ms)) u)),
+              (m2 (BoundModules_get   (seq_tail ms) u))]
+          (if (opt_is_present m1)
+            (if (opt_is_present m2)
+              (wrong "Ambiguous macroreference :" u)
+              m1)
+            m2))))
 
 
     //==========================================================================
@@ -735,82 +727,102 @@ Spec Problems
           (collateArgs (Signature_params sig) (Signature_hasRest sig) r ts))))
 
 
+    // TODO $ion_encoding compilation
+    // TODO $ion_shared_module compilation
+    // TODO Macro definitions
+    // TODO Template operators
+
+
     //==========================================================================
-    // Top-level evaluation
+    // System Module 1.1
 
-    (dom TContinuation = (-> Environment 'Value*' 'Value*')
-      "Continuation when expanding top-level values")
+    (const systemSymbols_1_1
+      (seq_append systemSymbols_1_0
+        (seq 'Unicode?*'
+          (opt 'Unicode?' "$ion_literal")
+          /* ... */)))
+
+    (const systemMacros_1_1
+      ('hint:multiline'
+        (seq 'ExportedMacro*'
+          (tuple ExportedMacro (opt 'Unicode?' "void")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (rest)
+                (seq 'Value*'))))
+          (tuple ExportedMacro (opt 'Unicode?' "values")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (rest)
+                rest)))
+          (tuple ExportedMacro (opt 'Unicode?' "make_string")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  // TODO ANY should be TEXT
+                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (content /* Value* */)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift (appendText content) String Content))))))
+          (tuple ExportedMacro (opt 'Unicode?' "make_symbol")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  // TODO ANY should be TEXT
+                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (content /* Value* */)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift (appendText content) SymTok Symbol Content))))))
+          (tuple ExportedMacro (opt 'Unicode?' "make_list")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (rest)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift_to Content (lift_to List rest)))))))
+          (tuple ExportedMacro (opt 'Unicode?' "make_sexp")
+            (tuple Macro
+              (tuple Signature
+                (seq 'ParamSpec*'
+                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
+                true)  // has rest param
+              (lambda (rest)
+                (seq 'Value*'
+                  (tuple Value (seq 'SymTok*')
+                    (lift_to Content (lift_to Sexp rest)))))))
+          /* ... */)))
 
 
-    // Evaluate parsed top-level ASTs; handle directives
-    (fn TE_TSTree ((t TSTree) (r Environment) (k TContinuation) -> 'Value*')
-      (if (element_of t IVM)
-        (k (compile_IVM (lower t IVM) r) (seq 'Value*'))
-        (let [(vs (expand_STree (lower t STree) r))]
-          ('TE_Value*' vs r k))))
-
-
-    (fn TE_Value ((v Value) (r Environment) (k TContinuation) -> 'Value*')
-      (if (isLocalSymbolTable v)
-        (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
-        (if (and (IVM_eq (currentSpecVersion r) IVM_1_1) (isIonLiteral v))
-          (TE_literal v r k)
-          (k r (seq 'Value*' v)))))
-
-    (fn 'TE_Value*' ((vs 'Value*') (r Environment) (k TContinuation) -> 'Value*')
+    (fn appendText ((vs 'Value*') -> Unicode)
       (if (seq_is_empty vs)
-        (k r vs)
-        (TE_Value (seq_head vs) r
-          (mk_fn TContinuation (r1 vs1)
-            ('TE_Value*' (seq_tail vs) r1
-              (mk_fn TContinuation (r2 vs2)
-                (k r2 (seq_append vs1 vs2))))))))
+        (inject_into Unicode "")
+        (Unicode_append (Value_unicode (seq_head vs))
+          (appendText (seq_tail vs)))))
 
-
-    (fn isIonLiteral ((v Value) -> B)
-      (and (not (seq_is_empty (Value_annots v)))
-           (SymTok_matches (seq_head (Value_annots v)) "$ion_literal")))
-
-    (fn TE_literal ((v Value) (r Environment) (k TContinuation) -> 'Value*')
-      (let [(v1 (tuple Value (seq_tail (Value_annots v)) (Value_content v)))]
-        (if (isLocalSymbolTable v1)
-          (wrong "Cannot use literal $ion_symbol_table struct as application data")
-          (k r (seq 'Value*' v1)))))
-
-
-    // Here we abstract over the parser, to show the encoding feedback loop.
-    // The parsing layer is given a subset of the expansion environment.
-    // It would be easier to just pass the Environment, but this is explicit
-    // WRT exactly what information can affect parsing.
-
-    (dom ParseStep    = (* TSTree::tree ParseStream::next))
-    (dom ParseStream  = (-> IVM 'ParseStep?'))
-
-    (dom Document  = (^ is_truthy) "Ion documents")
-    (dom Parser    = (-> Document ParseStream))
-    (dom Evaluator = (-> Document Catalog 'Value*'))
-
-
-    // TODO don't overload p with two different types
-    (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
-      (let [(step (p (currentSpecVersion r)))]
-        (if (opt_is_present step)
-          (TE_TSTree (ParseStep_tree (opt_value step)) r
-            (mk_fn TContinuation (r1 vs1)
-              (TE_ParseStream (ParseStep_next (opt_value step)) r1
-                (mk_fn TContinuation (r2 vs2)
-                  (k r2 (seq_append vs1 vs2))))))
-          (k r (seq 'Value*')))))
-
-    (fn mk_Evaluator ((p Parser) -> Evaluator)
-      (mk_fn Evaluator (d c)
-        (let [(p0 (p d)),
-              (r0 (tuple Environment c (systemModule IVM_1_0)
-                    EMPTY_SYMTOKS
-                    (seq 'BoundModule*' (systemModule IVM_1_0))
-                    (seq 'BoundModule*' /* No user macros installed */))),
-              (k0 (mk_fn TContinuation (r vs) vs))]
-          (TE_ParseStream p0 r0 k0))))
+    (fn Value_unicode ((v Value) -> Unicode)
+      (let [(c (Value_content v))]
+        (if (element_of c Symbol)
+          (if (element_of c Unicode)
+            (lower c Symbol SymTok Unicode)
+            "")
+          (if (element_of c String)
+            (if (element_of c Unicode)
+              (lower c String Unicode)
+              "")
+            (wrong "Not a text value")))))
   )
 
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
