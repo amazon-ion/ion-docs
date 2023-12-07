@@ -1930,9 +1930,6 @@ EB 05
 [[annotations]]
 === Annotations
 
-[sidebar]
-TODO: Decide whether we want an Ion 1.0-style double-length-prefixed sequence.
-
 Annotations can be encoded either <<annotations_with_symbol_addresses, as symbol addresses>>
 or <<annotations_with_flexsym_text, as ``FlexSym``s>>. In both encodings, the annotations sequence appears
 just before the value that it decorates.
