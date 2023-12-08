@@ -122,4 +122,42 @@
   (quote_top '#$ion_1_1' ('#$:$ion:make_sexp' 1 ('#$:values' 2 3) 4)))
 
 
+// annotate
+
+(check_expansion "#$?Expected grouping list"
+  (quote_top '#$ion_1_1' ('#$:annotate' () 1)))
+(check_expansion "#$?Expected grouping list"
+  (quote_top '#$ion_1_1' ('#$:annotate' ann 1)))
+
+// Existing annotations are preserved.
+(check_expansion
+  (quote_top 1 a::2 b::c::3)
+  (quote_top '#$ion_1_1'
+    ('#$:annotate' [] 1) ('#$:annotate' [] a::2) ('#$:annotate' [] b::c::3)))
+
+// Both string and symbols are accepted as annotations
+(check_expansion
+  (quote_top a::1 a::b::2 a::b::c::d::3)
+  (quote_top '#$ion_1_1'
+    ('#$:annotate' ["a"] 1) ('#$:annotate' [a] b::2) ('#$:annotate' ["a", b] c::d::3)))
+
+// But not nulls.
+(check_expansion "#$?:$ion:annotate doesn't accept null.string"
+  (quote_top '#$ion_1_1' ('#$:annotate' [null.string] 1)))
+(check_expansion "#$?:$ion:annotate doesn't accept null.symbol"
+  (quote_top '#$ion_1_1' ('#$:annotate' [null.symbol] 1)))
+
+// Or other types
+(check_expansion "#$?Not a text value"
+  (quote_top '#$ion_1_1' ('#$:annotate' [0] 1)))
+(check_expansion "#$?Not a text value"
+  (quote_top '#$ion_1_1' ('#$:annotate' [["a"]] 1)))
+
+// Annotations on the annotation-args are discarded
+(check_expansion
+  (quote_top b::1 c::e::f::2)
+  (quote_top '#$ion_1_1'
+    ('#$:annotate' [a::b] 1) ('#$:annotate' [a::b::"c", d::e] f::2)))
+
+
 "SUCCESS (macro.test)"

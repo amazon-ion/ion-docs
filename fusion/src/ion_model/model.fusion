@@ -804,16 +804,14 @@ Spec Problems
               rest))
           (export "make_string"
             (seq 'ParamSpec*')
-            // TODO ANY should be TEXT
-            ('rest...' "content" ANY)
+            ('rest...' "content" ANY)                     // TODO should be TEXT
             (lambda (content /* Value* */)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift (appendText content) String Content)))))
           (export "make_symbol"
             (seq 'ParamSpec*')
-            // TODO ANY should be TEXT
-            ('rest...' "content" ANY)
+            ('rest...' "content" ANY)                     // TODO should be TEXT
             (lambda (content /* Value* */)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
@@ -832,6 +830,29 @@ Spec Problems
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift_to Content (lift_to Sexp rest))))))
+          (export "annotate"
+            (seq 'ParamSpec*'
+              ('group*' "anns"  ANY)                      // TODO should be TEXT
+              ('param!' "value" ANY))
+            (opt 'RestSpec?')
+            (lambda (vs1 vs2)
+              (let [(ts (map 'SymTok*'
+                            (lambda (v) // Value -> SymTok
+                              (let [(c (Value_content v))]
+                                (if (element_of c Symbol)
+                                  (if (element_of c Unicode)
+                                    (lower c Symbol SymTok)
+                                    (wrong ":$ion:annotate doesn't accept null.symbol"))
+                                  (if (element_of c String)
+                                    (if (element_of c Unicode)
+                                      (lift (lower c String Unicode) SymTok)
+                                      (wrong ":$ion:annotate doesn't accept null.string"))
+                                    (wrong "Not a text value")))))
+                            vs1))]
+                (seq 'Value*'
+                  (tuple Value
+                    (seq_append ts (Value_annots (seq_head vs2)))
+                    (Value_content (seq_head vs2)))))))
           /* ... */)))
 
 
