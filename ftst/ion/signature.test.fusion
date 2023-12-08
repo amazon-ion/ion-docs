@@ -1,0 +1,21 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+(let [(s (compile_Signature (expand1 (quote_top ()))))]
+  (check_true (seq_is_empty (Signature_params s)))
+  (check_false (opt_is_present (Signature_rest s))))
+
+(let [(s (compile_Signature (expand1 (quote_top (v)))))]
+  (check_same 1 (seq_length (Signature_params s)))
+  (check_false (opt_is_present (Signature_rest s))))
+
+
+"SUCCESS (signature.test)"
