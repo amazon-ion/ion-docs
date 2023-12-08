@@ -623,16 +623,37 @@ Spec Problems
 
     (dom Macro = (* Signature::signature F::xform))
 
-    (dom Signature   = (* 'ParamSpec*'::params B::hasRest /* TODO ResultSpec */))
-    (dom ParamSpec   = (* Unicode::name ParamShape::shape))  // TODO Should name be a SymTok?
-    (dom ParamShape  = (* ParamType::type Cardinality::card /*B::grouped*/))
+    (dom Signature   = (* 'ParamSpec*'::params 'RestSpec?'::rest /* TODO ResultSpec */))
+
+    // TODO Should name be a SymTok?
+    (dom ParamSpec   = (* Unicode::name ParamShape::shape))
+    (dom RestSpec    = (* Unicode::name  RestShape::shape))
+
+    (dom ParamShape  = (+ SimpleShape GroupShape))
+    (dom SimpleShape = (* ParamType::type Cardinality::card))
+    // TODO Above works for tagged types; support tagless types
+    (dom GroupShape  = (* ParamType::type SeqCardinality::card))
+    (dom RestShape   = (* ParamType::type SeqCardinality::card))
+
     (dom ParamType   = (= ANY))
-    (dom Cardinality = (= EXACTLY_ONE ONE_OR_MORE ZERO_OR_ONE ZERO_OR_MORE))
+
+    (dom Cardinality    = (+ OptCardinality SeqCardinality))
+    (dom OptCardinality = (= ZERO_OR_ONE  EXACTLY_ONE))
+    (dom SeqCardinality = (= ZERO_OR_MORE ONE_OR_MORE))
 
 
     (fn is_voidable ((p ParamSpec) -> B)
-      (let [(c (ParamShape_card (ParamSpec_shape p)))]
-        (or (EQ_Enum c ZERO_OR_ONE) (EQ_Enum c ZERO_OR_MORE))))
+      (let [(shape (ParamSpec_shape p))]
+        (or (and (element_of shape SimpleShape)
+                 (is_voidable_Cardinality (SimpleShape_card (lower shape SimpleShape))))
+            (and (element_of shape GroupShape)
+                 (EQ_Enum (GroupShape_card (lower shape GroupShape)) ZERO_OR_MORE)))))
+
+    (fn is_voidable_Cardinality ((c Cardinality) -> B)
+      (or (and (element_of c OptCardinality)
+               (EQ_Enum (lower c OptCardinality) ZERO_OR_ONE))
+          (and (element_of c SeqCardinality)
+               (EQ_Enum (lower c SeqCardinality) ZERO_OR_MORE))))
 
 
     (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
@@ -655,6 +676,24 @@ Spec Problems
               (wrong "Ambiguous macroreference :" u)
               m1)
             m2))))
+
+
+    (fn export ((name Unicode) (params 'ParamSpec*') (rest 'RestSpec?') (xform F) -> ExportedMacro)
+      (tuple ExportedMacro (opt 'Unicode?' name)
+        (tuple Macro (tuple Signature params rest) xform)))
+
+    (const NO_REST (opt 'RestSpec?'))
+
+    (fn 'param!' ((name Unicode) (type ParamType) -> ParamSpec)
+      (tuple ParamSpec name
+        (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality EXACTLY_ONE)))))
+
+    (fn 'group*' ((name Unicode) (type ParamType) -> 'ParamSpec')
+      (tuple ParamSpec name
+        (lift_to ParamShape (tuple GroupShape type ZERO_OR_MORE))))
+
+    (fn 'rest...' ((name Unicode) (type ParamType) -> 'RestSpec?')
+      (opt 'RestSpec?' (tuple RestSpec name (tuple RestShape type ZERO_OR_MORE))))
 
 
     //==========================================================================
@@ -696,25 +735,34 @@ Spec Problems
 
     (dom 'Value**' = (** 'Value*'))
 
-    (fn collateArgs ((ps 'ParamSpec*') (isRest B) (r Environment) (ts 'STree*') -> 'Value**')
+    (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'STree*') -> 'Value**')
       (if (seq_is_empty ps)
-        (if (seq_is_empty ts)
-          (seq 'Value**')                 // All done!
-          (wrong "Too many arguments"))
+        (if (opt_is_present rest)
+          // We have a rest-parameter, so grab everything that remains.
+          // TODO ...+ arity
+          (seq 'Value**' ('expand_STree*' ts r))
+          (if (seq_is_empty ts)
+            (seq 'Value**')                 // All done!
+            (wrong "Too many arguments")))
         (let [(p (seq_head ps))]
           (if (seq_is_empty ts)
             // We hava a param, but no more arguments; param must be voidable.
             (if (is_voidable p)
               (seq_prepend (seq 'Value*')
-                (collateArgs (seq_tail ps) isRest r ts))
+                (collateArgs (seq_tail ps) rest r ts))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
-            (if (and isRest (seq_is_empty (seq_tail ps)))
-              // We're at a rest-parameter, so grab everything that remains.
-              (seq 'Value**' ('expand_STree*' ts r))
-              (let [(t  (seq_head ts)),
-                    (is (collateArgs (seq_tail ps) isRest r (seq_tail ts) ))]
-                // TODO Grouped parameters
+            (let [(t  (seq_head ts)),
+                  (is (collateArgs (seq_tail ps) rest r (seq_tail ts) ))]
+              (if (element_of (ParamSpec_shape p) GroupShape)
+                (if (and (element_of t SValue)  // not an Eexp
+                         (element_of (SValue_content (lower t SValue)) SList))
+                  // TODO reject null.list and annotations
+                  (let [(ts1 (lower (SValue_content (lower t SValue)) SList 'STree*'))]
+                    // TODO Arity checking of expanded group
+                    (seq_prepend ('expand_STree*' ts1 r) is))
+                  (wrong "Expected grouping list"))
+                // TODO Arity checking of expanded arg
                 (seq_prepend (expand_STree t r) is)))))))
 
 
@@ -723,7 +771,7 @@ Spec Problems
     (fn Macro_invoke ((m Macro) (ts 'STree*') (r Environment) -> 'Value*')
       (let [(sig (Macro_signature m))]
         (apply (Macro_xform m)
-          (collateArgs (Signature_params sig) (Signature_hasRest sig) r ts))))
+          (collateArgs (Signature_params sig) (Signature_rest sig) r ts))))
 
 
     // TODO $ion_encoding compilation
@@ -744,64 +792,46 @@ Spec Problems
     (const systemMacros_1_1
       ('hint:multiline'
         (seq 'ExportedMacro*'
-          (tuple ExportedMacro (opt 'Unicode?' "void")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                (seq 'Value*'))))
-          (tuple ExportedMacro (opt 'Unicode?' "values")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                rest)))
-          (tuple ExportedMacro (opt 'Unicode?' "make_string")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  // TODO ANY should be TEXT
-                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (content /* Value* */)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift (appendText content) String Content))))))
-          (tuple ExportedMacro (opt 'Unicode?' "make_symbol")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  // TODO ANY should be TEXT
-                  (tuple ParamSpec "content" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (content /* Value* */)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift (appendText content) SymTok Symbol Content))))))
-          (tuple ExportedMacro (opt 'Unicode?' "make_list")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift_to Content (lift_to List rest)))))))
-          (tuple ExportedMacro (opt 'Unicode?' "make_sexp")
-            (tuple Macro
-              (tuple Signature
-                (seq 'ParamSpec*'
-                  (tuple ParamSpec "args" (tuple ParamShape ANY ZERO_OR_MORE)))
-                true)  // has rest param
-              (lambda (rest)
-                (seq 'Value*'
-                  (tuple Value (seq 'SymTok*')
-                    (lift_to Content (lift_to Sexp rest)))))))
+          (export "void"
+            (seq 'ParamSpec*')
+            ('rest...' "args" ANY)
+            (lambda (rest)
+              (seq 'Value*')))
+          (export "values"
+            (seq 'ParamSpec*')
+            ('rest...' "args" ANY)
+            (lambda (rest)
+              rest))
+          (export "make_string"
+            (seq 'ParamSpec*')
+            // TODO ANY should be TEXT
+            ('rest...' "content" ANY)
+            (lambda (content /* Value* */)
+              (seq 'Value*'
+                (tuple Value (seq 'SymTok*')
+                  (lift (appendText content) String Content)))))
+          (export "make_symbol"
+            (seq 'ParamSpec*')
+            // TODO ANY should be TEXT
+            ('rest...' "content" ANY)
+            (lambda (content /* Value* */)
+              (seq 'Value*'
+                (tuple Value (seq 'SymTok*')
+                  (lift (appendText content) SymTok Symbol Content)))))
+          (export "make_list"
+            (seq 'ParamSpec*')
+            ('rest...' "args" ANY)
+            (lambda (rest)
+              (seq 'Value*'
+                (tuple Value (seq 'SymTok*')
+                  (lift_to Content (lift_to List rest))))))
+          (export "make_sexp"
+            (seq 'ParamSpec*')
+            ('rest...' "args" ANY)
+            (lambda (rest)
+              (seq 'Value*'
+                (tuple Value (seq 'SymTok*')
+                  (lift_to Content (lift_to Sexp rest))))))
           /* ... */)))
 
 

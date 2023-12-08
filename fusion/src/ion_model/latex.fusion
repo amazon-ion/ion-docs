@@ -72,6 +72,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method Value_is_symbol_matching  (pp_binary "" " \\cong " ""))
       (form_method 'Value?_is_symbol_matching' (pp_binary "" " \\cong " ""))
 
+      (form_method export (ppmod_multiline pp_fn_call))
 
       // Singletons
       (sym_image "\\mbox{\\bf dotnull}"                                DOTNULL)
