@@ -65,6 +65,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       // Singletons
       (sym_image "\\mbox{\\bf dotnull}"                                DOTNULL)
       (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.0}"                 IVM_1_0)
+      (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.1}"                 IVM_1_1)
       (sym_image "\\mbox{\\bf sym0}"                                   SYM0)
       (sym_image "\\mbox{\\bf systemSymbols}_{\\scriptsize 1.0}"       systemSymbols_1_0)
 
@@ -93,6 +94,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
 
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf STree}}"           'expand_STree')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf STree}}^{\\ast}"   'expand_STree*')
+      (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SEexp}}"           'expand_SEexp')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SValue}}"          'expand_SValue')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SContent}}"        'expand_SContent')
       (sym_image "{\\cal X}_{\\mbox{\\scriptsize\\bf SSymTok}}"         'expand_SSymTok')

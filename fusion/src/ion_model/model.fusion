@@ -143,7 +143,7 @@ Spec Problems
     // Abstract Syntax Trees, which can contain unresolved SIDs
 
     (dom TSTree     = (+ STree IVM))
-    (dom STree      = (+ SValue /* Eexp will go here */))
+    (dom STree      = (+ SValue SEexp))
     (dom SValue     = (* 'SSymTok*'::annots SContent::content))
     (dom SContent   = (+ SSymbol SList SSexp SStruct NullNull Bool Int String
                          /*Decimal Float Timestamp Blob Clob*/))
@@ -157,12 +157,15 @@ Spec Problems
     (dom SField    = (* SSymTok::name STree::tree))
     (dom SStruct   = (+ 'SField*' DotNull))
 
+    (dom SEexp     = (^ (always false)) "Placeholder for 1.1")
+
 
     // Ion Version Markers
 
     (dom IVM = (* I I) "Ion version markers")
 
     (const IVM_1_0 (tuple IVM 1 0))
+    (const IVM_1_1 (tuple IVM 1 1))
 
     (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
       (and (EQ (ith i1 0) (ith i2 0))
@@ -191,6 +194,9 @@ Spec Problems
     // docSymbols does not include $0 or system symbols
 
 
+    (fn currentSpecVersion ((r Environment) -> IVM)
+      (Module_specVersion (Environment_sysModule r)))
+
     (fn currentSymtab ((r Environment) -> 'SymTok*')
       (let [(ss (Module_symtab (Environment_sysModule r)))]
         (seq_prepend (lift_to SymTok SYM0)
@@ -199,7 +205,9 @@ Spec Problems
 
 
     (fn expand_STree ((t STree) (r Environment) -> 'Value*')
-      (seq 'Value*' (expand_SValue (lower t SValue) r)))
+      (if (element_of t SValue)
+        (seq 'Value*' (expand_SValue (lower t SValue) r))
+        (expand_SEexp (lower t SEexp) r)))
 
     (fn 'expand_STree*' ((ts 'STree*') (r Environment) -> 'Value*')
       (if (seq_is_empty ts)
@@ -309,7 +317,7 @@ Spec Problems
 
     // TODO don't overload p with two different types
     (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
-      (let [(step (p (Module_specVersion (Environment_sysModule r))))]
+      (let [(step (p (currentSpecVersion r)))]
         (if (opt_is_present step)
           (TE_TSTree (ParseStep_tree (opt_value step)) r
             (mk_fn TContinuation (r1 vs1)
@@ -566,7 +574,18 @@ Spec Problems
             (opt 'Unicode?')))))
 
 
-    // TODO Macros, macro expansion
+    //==========================================================================
+    // Ion 1.1
+
+    //==========================================================================
+    // Macro Expansion
+
+    (fn expand_SEexp ((v SEexp) (r Environment) -> 'Value*')
+      (if (IVM_eq (currentSpecVersion r) IVM_1_0)
+        (wrong "Eexp not allowed in Ion 1.0")
+        (wrong "Eexp not implemented")))
+
+
     // TODO $ion_encoding compilation
     // TODO $ion_shared_module compilation
     // TODO Macro definitions

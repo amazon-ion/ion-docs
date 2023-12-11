@@ -12,6 +12,7 @@
 (check_true (eject (IVM_eq IVM_1_0 (tuple IVM 1 0))))
 
 (check_true (eject (IVM_eq IVM_1_0 (mk_IVM (quote '#$ion_1_0')))))
+(check_true (eject (IVM_eq IVM_1_1 (mk_IVM (quote '#$ion_1_1')))))
 
 
 (check_expansion
