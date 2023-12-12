@@ -4,12 +4,12 @@
 
 TODOs
 -----
-* [EQ] Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
+* [EQ] (+1) Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
 * [FN-ADHOC] Extend `mk_fn` to allow ad-hoc domains, not just named ones.
   It should work like the `fn` and `define_fn' forms, basically.
 * [ACCESSORS] Auto-configure printer for tuple field accessors.
   * Requires a factory method, Model x Printer:super -> Printer
-* [SEQ-INJECT] `seq` should auto-inject arguments.
+* [SEQ-INJECT] (+1) `seq` should auto-inject arguments.
 * [TOP] TOP domain
 * Predefined domains, perhaps replacing base domains?
   * Z = integers

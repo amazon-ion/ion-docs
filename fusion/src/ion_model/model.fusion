@@ -196,19 +196,34 @@ Spec Problems
     //==========================================================================
     // Expansion of abstract syntax trees into values
 
-    (dom Environment = (* Catalog::catalog BoundModule::sysModule 'SymTok*'::docSymbols
-                          'BoundModule*'::modules 'BoundModule*'::mactab))
+    (dom Environment = (* Catalog::catalog
+                          Module::sysModule
+                          ModuleMap::modules
+                          'SymTok*'::docSymbols
+                          'Unicode*'::mactab))
     // docSymbols does not include $0 or system symbols
 
 
     (fn currentSpecVersion ((r Environment) -> IVM)
-      (Module_specVersion (BoundModule_module (Environment_sysModule r))))
+      (Module_specVersion (Environment_sysModule r)))
 
     (fn currentSymtab ((r Environment) -> 'SymTok*')
-      (let [(ss (Module_symtab (BoundModule_module (Environment_sysModule r))))]
+      (let [(ss (Module_symtab (Environment_sysModule r)))]
         (seq_prepend (lift_to SymTok SYM0)
                      (seq_append (compile_symtab ss "$ion" (seq_length ss))
                                  (Environment_docSymbols r)))))
+
+
+    (dom ModuleMap = (-> Unicode Module))
+
+    (fn emptyModuleMap ModuleMap (u)
+      (wrong "Module not in scope: " u))
+
+    (fn currentModuleMap ((r Environment) -> ModuleMap)
+      (mk_fn ModuleMap (u)
+        (if (U_EQ u "$ion")
+          (Environment_sysModule r)
+          ((Environment_modules r) u))))
 
 
     (fn expand_STree ((t STree) (r Environment) -> 'Value*')
@@ -314,9 +329,9 @@ Spec Problems
       (mk_fn Evaluator (d c)
         (let [(p0 (p d)),
               (r0 (tuple Environment c (systemModule IVM_1_0)
+                    emptyModuleMap
                     EMPTY_SYMTOKS
-                    (seq 'BoundModule*' (systemModule IVM_1_0))
-                    (seq 'BoundModule*' /* No user macros installed */))),
+                    (seq 'Unicode*' /* No user macros installed */))),
               (k0 (mk_fn TContinuation (r vs) vs))]
           (TE_ParseStream p0 r0 k0))))
 
@@ -368,9 +383,9 @@ Spec Problems
       (tuple Environment
         (Environment_catalog r)
         (systemModule i)
+        emptyModuleMap
         EMPTY_SYMTOKS
-        (seq 'BoundModule*' (systemModule i))
-        (seq 'BoundModule*' /* No user macros installed */)))
+        (seq 'Unicode*' /* No user macros installed */)))
 
 
     //==========================================================================
@@ -394,9 +409,9 @@ Spec Problems
           (tuple Environment
             (Environment_catalog r)
             (Environment_sysModule r)
+            emptyModuleMap
             (seq_append is ss)
-            (seq 'BoundModule*' (Environment_sysModule r))
-            (seq 'BoundModule*')))))
+            (seq 'Unicode*')))))
 
 
     // LST symbols field
@@ -494,12 +509,6 @@ Spec Problems
 
     (dom Module        = (* IVM::specVersion 'Unicode?*'::symtab 'ExportedMacro*'::mactab))
     (dom SharedModule  = (* Unicode::name I::version Module::module))
-    (dom BoundModule   = (* Unicode::name Module::module))   // Locally-assigned name
-
-    (fn BoundModule_symtab  ((m BoundModule) -> 'SymTok*')
-      (Module_symtab (BoundModule_module m)))
-    (fn BoundModule_mactab  ((m BoundModule) -> 'ExportedMacro*')
-      (Module_mactab (BoundModule_module m)))
 
 
     //==========================================================================
@@ -564,11 +573,11 @@ Spec Problems
           (opt 'Unicode?' "$ion_shared_symbol_table"))))
 
 
-    (fn systemModule ((i IVM) -> BoundModule)
+    (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
-        (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_0 (seq 'ExportedMacro*')))
+        (tuple Module i systemSymbols_1_0 (seq 'ExportedMacro*'))
         (if (IVM_eq i IVM_1_1)
-          (tuple BoundModule "$ion" (tuple Module i systemSymbols_1_1 systemMacros_1_1))
+          (tuple Module i systemSymbols_1_1 systemMacros_1_1)
           (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1)))))
 
 
@@ -658,25 +667,6 @@ Spec Problems
 
     (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
 
-    (fn ExportedMacros_get ((ms 'ExportedMacro*') (u Unicode) -> 'Macro?')
-      (if (seq_is_empty ms)
-        (opt 'Macro?')
-        (if (and (opt_is_present  (ExportedMacro_name (seq_head ms)))
-                 (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
-          (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
-          (ExportedMacros_get (seq_tail ms) u))))
-
-    (fn BoundModules_get ((ms 'BoundModule*') (u Unicode) -> 'Macro?')
-      (if (seq_is_empty ms)
-        (opt 'Macro?')
-        (let [(m1 (ExportedMacros_get (BoundModule_mactab (seq_head ms)) u)),
-              (m2 (BoundModules_get   (seq_tail ms) u))]
-          (if (opt_is_present m1)
-            (if (opt_is_present m2)
-              (wrong "Ambiguous macroreference :" u)
-              m1)
-            m2))))
-
 
     (fn export ((name Unicode) (params 'ParamSpec*') (rest 'RestSpec?') (xform F) -> ExportedMacro)
       (tuple ExportedMacro (opt 'Unicode?' name)
@@ -697,34 +687,61 @@ Spec Problems
 
 
     //==========================================================================
-    // Macro Expansion
+    // Macro Reference Resolution
 
     (fn resolve_MacroRef ((m MacroRef) (r Environment) -> Macro)
       (let [(mod (MacroRef_module m)),
             (mac (MacroRef_macro  m)),
-            (sysMod (Environment_sysModule r))]
+            (mm  (currentModuleMap r))]
         (if (opt_is_present mod)
           // Quailified reference
-          (if (U_EQ (opt_value mod) "$ion")
-            (if (element_of mac Unicode)
-              (let [(m (ExportedMacros_get (BoundModule_mactab sysMod) (lower_to Unicode mac)))]
-                (if (opt_is_present m)
-                  (opt_value m)
-                  (wrong "No such macro: :$ion:" (lower_to Unicode mac))))
+          (if (element_of mac Unicode)
+            (let [(m (resolve_qualifiedName (opt_value mod) (lower_to Unicode mac) mm))]
+              (if (opt_is_present m)
+                (opt_value m)
+                (wrong "No such macro: :" (opt_value mod) ":" (lower_to Unicode mac))))
               // TODO handle qualified ints
-              (wrong "Qualified macro addresses not implemented"))
-            // TODO Find other modules
-            (wrong "Module not in scope: " (opt_value mod)))
+            (wrong "Qualified macro addresses not implemented"))
           // Named or local-offset
           (if (element_of mac Unicode)
-            (let [(ms (seq_prepend sysMod (Environment_mactab r)))]
-              (let [(m (BoundModules_get ms (lower_to Unicode mac)))]
-                (if (opt_is_present m)
-                  (opt_value m)
-                  (wrong "No such macro: :" (lower_to Unicode mac)))))
+            (resolve_unqualifiedName (lower_to Unicode mac) r)
             // TODO handle unqualified ints
             (wrong "Unqualified macro addresses not implemented")))))
 
+
+    (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (mm ModuleMap) -> 'Macro?')
+      (resolve_ExportedMacros (Module_mactab (mm u1)) u2))
+
+    (fn resolve_ExportedMacros ((ms 'ExportedMacro*') (u Unicode) -> 'Macro?')
+      (if (seq_is_empty ms)
+        (opt 'Macro?')
+        (if (and (opt_is_present  (ExportedMacro_name (seq_head ms)))
+                 (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
+          (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
+          (resolve_ExportedMacros (seq_tail ms) u))))
+
+
+    (fn resolve_unqualifiedName ((u Unicode) (r Environment) -> Macro)
+      (let [(ns (seq_prepend (inject_into Unicode "$ion") (Environment_mactab r)))]
+        (let [(m (resolve_ModuleNames ns u (currentModuleMap r)))]
+          (if (opt_is_present m)
+            (opt_value m)
+            (wrong "No such macro: :" u)))))
+
+    (fn resolve_ModuleNames ((ms 'Unicode*') (u Unicode) (mm ModuleMap) -> 'Macro?')
+      (if (seq_is_empty ms)
+        (opt 'Macro?')
+        (let [(m1 (resolve_qualifiedName (seq_head ms) u mm)),
+              (m2 (resolve_ModuleNames   (seq_tail ms) u mm))]
+          (if (opt_is_present m1)
+            (if (opt_is_present m2)
+              (wrong "Ambiguous macroreference :" u)
+              m1)
+            m2))))
+
+
+    //==========================================================================
+    // Macro Expansion
 
     (fn expand_SEexp ((v SEexp) (r Environment) -> 'Value*')
       (if (IVM_eq (currentSpecVersion r) IVM_1_0)
