@@ -85,8 +85,7 @@
 
 // Out-of-bounds SID
 //  At present, the model doesn't support partial expansion of the front of stream.
-(check_expansion
-  (quote "#$?Invalid symbol address 10")
+(check_eval_fail "Invalid symbol address 10"
   (quote_top '#$10'))
 (check_expansion_and_bounds 10
   (quote_top a)
@@ -293,22 +292,17 @@
   (quote_top a m)
   (quote_top $ion_symbol_table::{imports:[{name:"abcs", max_id:"2"}, {name:"mnop"}]} '#$10' '#$11'))
 
-(check_expansion
-  (quote "#$?Repeated field: imports")
+(check_eval_fail "Repeated field: imports"
   (quote_top $ion_symbol_table::{imports:[], imports:null}))
-(check_expansion
-  (quote "#$?Repeated field: symbols")
+(check_eval_fail "Repeated field: symbols"
   (quote_top $ion_symbol_table::{symbols:[], symbols:null}))
 
-(check_expansion
-  (quote "#$?Repeated field: name")
+(check_eval_fail "Repeated field: name"
   (quote_top $ion_symbol_table::{imports:[{name:"empty", name:"empty"}]}))
-(check_expansion
-  (quote "#$?Repeated field: version")
+(check_eval_fail "Repeated field: version"
   (quote_top $ion_symbol_table::{imports:[{name:"empty", version:1, version:1}]}))
 
-(check_expansion
-  (quote "#$?Repeated field: max_id")
+(check_eval_fail "Repeated field: max_id"
   (quote_top $ion_symbol_table::{imports:[{name:"empty", max_id:1, max_id:1}]}))
 
 
