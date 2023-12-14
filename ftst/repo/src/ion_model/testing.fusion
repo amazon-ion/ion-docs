@@ -287,6 +287,14 @@ We "tunnel" special tokens as follows:
         (quote_syntax context)
         stx)))
 
+  (define_syntax quote11
+    (lambda (stx)
+      (datum_to_syntax
+        (quasiquote (quote (unquote (pair (quote '#$ion_1_1')
+                                          (tail (syntax_unwrap stx))))))
+        (quote_syntax context)
+        stx)))
+
 
   (define (mk_stream tlvs)
     (mk_fn ParseStream (parse_env)

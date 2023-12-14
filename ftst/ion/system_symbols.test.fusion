@@ -32,6 +32,6 @@
 
 // Ion 1.1 recognizes the 1.0 system symbols at the same SIDs.
 (check_expansion_and_bounds (size SYSTEM_SYMBOLS_1_1) SYSTEM_SYMBOLS_1_1
-  (quote_top '#$ion_1_1'
+  (quote11
     '#$1' '#$2' '#$3' '#$4' '#$5' '#$6' '#$7' '#$8' '#$9'
     '#$10'))

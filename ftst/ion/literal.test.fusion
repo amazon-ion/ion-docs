@@ -12,17 +12,17 @@
 // Ion 1.1 uses $ion_literal as a top-level `quote`.
 (check_expansion
   (quote_top $ion_literal $ion_literal 1)
-  (quote_top '#$ion_1_1' '#$10' '#$10'::'#$10' '#$10'::1))
+  (quote11 '#$10' '#$10'::'#$10' '#$10'::1))
 
 // It also works in text.
 (check_expansion
   (quote_top $ion_literal $ion_literal 1)
-  (quote_top '#$ion_1_1' $ion_literal $ion_literal::$ion_literal $ion_literal::1))
+  (quote11 $ion_literal $ion_literal::$ion_literal $ion_literal::1))
 
 // But literals are _only_ recognized at top level.
 (check_expansion
   (quote_top [$ion_literal, $ion_literal::$ion_literal, $ion_literal::1])
-  (quote_top '#$ion_1_1' ['#$10', '#$10'::'#$10', $ion_literal::1]))
+  (quote11 ['#$10', '#$10'::'#$10', $ion_literal::1]))
 
 // No such effects in 1.0, even with the same SID.
 (check_expansion
@@ -34,11 +34,11 @@
 
 // Top-level `$ion_literal::$ion_symbol_table::{}` is an error.
 (check_eval_fail "Cannot use literal $ion_symbol_table struct as application data"
-  (quote_top '#$ion_1_1' $ion_literal::$ion_symbol_table::{}))
+  (quote11 $ion_literal::$ion_symbol_table::{}))
 
 (check_expansion
   (quote_top [$ion_literal::$ion_symbol_table::{}])
-  (quote_top '#$ion_1_1' [$ion_literal::$ion_symbol_table::{}]))
+  (quote11 [$ion_literal::$ion_symbol_table::{}]))
 
 
 "SUCCESS (literal.test)"
