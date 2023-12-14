@@ -1,0 +1,34 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+// Non-sexps pass through
+(check_expansion
+  (quote_top first $ion_encoding::[] second)
+  (quote11   first $ion_encoding::[] second))
+
+(check_expansion
+  (quote_top first $ion_encoding::{} second)
+  (quote11   first $ion_encoding::{} second))
+
+// Encoding directives are elided from app view
+(check_expansion
+  (quote_top first second)
+  (quote11   first $ion_encoding::() $ion_encoding::null.sexp second))
+
+
+// Local symbols
+
+(check_expansion_and_bounds 12
+  (quote_top a b)
+  (quote11   $ion_encoding::((symbol_table ["a"] ["b"])) '#$11' '#$12'))
+
+
+"SUCCESS (encoding.test)"

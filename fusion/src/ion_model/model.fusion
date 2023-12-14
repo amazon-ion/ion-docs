@@ -19,6 +19,10 @@ Terminology/Readability:
 
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
+* $ion_encoding
+  * `load` clauses to make modules available.
+  * Accept module names in `symbol_table`.
+  * Accept symbols in `symbol_table` inner lists.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
     Isn't (:values V) == V ?
@@ -364,7 +368,9 @@ Spec Problems
         (k (compile_LST (lower (Value_content v) Struct) r) (seq 'Value*'))
         (if (and (IVM_eq (currentSpecVersion r) IVM_1_1) (isIonLiteral v))
           (TE_literal v r k)
-          (k r (seq 'Value*' v)))))
+          (if (and (IVM_eq (currentSpecVersion r) IVM_1_1) (isEncodingDirective v))
+            (k (compile_ED (lower (Value_content v) Sexp) r) (seq 'Value*'))
+            (k r (seq 'Value*' v))))))
 
     (fn 'TE_Value*' ((vs 'Value*') (r Environment) (k TContinuation) -> 'Value*')
       (if (seq_is_empty vs)
@@ -791,7 +797,69 @@ Spec Problems
           (collateArgs (Signature_params sig) (Signature_rest sig) r ts))))
 
 
-    // TODO $ion_encoding compilation
+    //==========================================================================
+    // $ion_encoding compilation
+
+    (fn isEncodingDirective ((v Value) -> B)
+      (and (element_of (Value_content v) Sexp)
+           (and (not (seq_is_empty (Value_annots v)))
+                (SymTok_matches (seq_head (Value_annots v)) "$ion_encoding"))))
+
+    (fn compile_ED ((s Sexp) (r Environment) -> Environment)
+      (if (element_of s DotNull)
+        (compile_ED (lift (seq 'Value*') Sexp) r)
+        (compile_ED_symtab (lower s 'Value*') emptyModuleMap r)))
+
+    // Same logic should be used for modules
+    (fn compile_ED_symtab ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
+      (if (and (not (seq_is_empty vs))
+               (isClause (seq_head vs) "symbol_table"))
+        (compile_ED_mactab (seq_tail vs) avail
+          (compile_module_symtab (clauseBody (seq_head vs)) avail)
+          r)
+        (compile_ED_mactab vs avail (seq 'SymTok*') r)))
+
+    (fn compile_ED_mactab ((vs 'Value*')
+                           (avail ModuleMap)
+                           (ts 'SymTok*')
+                           (r Environment) -> Environment)
+      // TODO macro_table
+      (if (not (seq_is_empty vs))
+        (wrong "Unexpected encoding clause: " (seq_head vs))
+        (tuple Environment
+          (Environment_catalog r)
+          (Environment_sysModule r)
+          avail
+          ts
+          (seq 'Unicode*'))))
+
+  
+    (fn compile_module_symtab ((vs 'Value*') (avail ModuleMap) -> 'SymTok*')
+      (if (seq_is_empty vs)
+        (seq 'SymTok*')
+        (seq_append (compile_module_symtab_elt (seq_head vs) avail)
+          (compile_module_symtab (seq_tail vs) avail))))
+
+    (fn compile_module_symtab_elt ((v Value) (avail ModuleMap) -> 'SymTok*')
+      // TODO check for module-name vs text-list
+      (map 'SymTok*' compile_module_symtab_text
+        (lower (Value_content v) List 'Value*')))
+
+    (fn compile_module_symtab_text ((v Value) -> SymTok)
+      // TODO typecheck, nullcheck
+      (lift_to SymTok (lower (Value_content v) String Unicode)))
+
+
+    (fn isClause ((v Value) (u Unicode) -> B)
+      (and (element_of (Value_content v) Sexp)
+        // TODO Null check
+        (and (not (seq_is_empty (lower (Value_content v) Sexp 'Value*')))
+          (Value_is_symbol_matching (seq_head (lower (Value_content v) Sexp 'Value*')) u))))
+
+    (fn clauseBody ((v Value) -> 'Value*')
+      (seq_tail (lower (Value_content v) Sexp 'Value*')))
+
+
     // TODO $ion_shared_module compilation
     // TODO Macro definitions
     // TODO Template operators
