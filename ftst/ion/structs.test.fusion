@@ -8,6 +8,5 @@
   "/ion_model/testing"
 )
 
-(check_Value
-  (quote "#$?Repeated field: a")
+(check_bottom "Repeated field: a"
   (Struct_get1 (lower (Value_content (expand1 (quote_top {a:[], a:null}))) Struct) "a"))

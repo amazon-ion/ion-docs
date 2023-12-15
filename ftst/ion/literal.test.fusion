@@ -33,7 +33,7 @@
 
 
 // Top-level `$ion_literal::$ion_symbol_table::{}` is an error.
-(check_expansion "#$?Cannot use literal $ion_symbol_table struct as application data"
+(check_eval_fail "Cannot use literal $ion_symbol_table struct as application data"
   (quote_top '#$ion_1_1' $ion_literal::$ion_symbol_table::{}))
 
 (check_expansion

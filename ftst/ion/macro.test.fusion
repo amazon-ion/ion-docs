@@ -9,13 +9,13 @@
 )
 
 
-(check_expansion "#$?Eexp not allowed in Ion 1.0"
+(check_eval_fail "Eexp not allowed in Ion 1.0"
   (quote_top '#$ion_1_0' ('#$:nomod:mac')))
 
-(check_expansion "#$?Module not in scope: nomod"
+(check_eval_fail "Module not in scope: nomod"
   (quote_top '#$ion_1_1' ('#$:nomod:mac')))
 
-(check_expansion "#$?No such macro: :$ion:mac"
+(check_eval_fail "No such macro: :$ion:mac"
   (quote_top '#$ion_1_1' ('#$:$ion:mac')))
 
 
@@ -124,9 +124,9 @@
 
 // annotate
 
-(check_expansion "#$?Expected grouping list"
+(check_eval_fail "Expected grouping list"
   (quote_top '#$ion_1_1' ('#$:annotate' () 1)))
-(check_expansion "#$?Expected grouping list"
+(check_eval_fail "Expected grouping list"
   (quote_top '#$ion_1_1' ('#$:annotate' ann 1)))
 
 // Existing annotations are preserved.
@@ -142,15 +142,15 @@
     ('#$:annotate' ["a"] 1) ('#$:annotate' [a] b::2) ('#$:annotate' ["a", b] c::d::3)))
 
 // But not nulls.
-(check_expansion "#$?:$ion:annotate doesn't accept null.string"
+(check_eval_fail ":$ion:annotate doesn't accept null.string"
   (quote_top '#$ion_1_1' ('#$:annotate' [null.string] 1)))
-(check_expansion "#$?:$ion:annotate doesn't accept null.symbol"
+(check_eval_fail ":$ion:annotate doesn't accept null.symbol"
   (quote_top '#$ion_1_1' ('#$:annotate' [null.symbol] 1)))
 
 // Or other types
-(check_expansion "#$?Not a text value"
+(check_eval_fail "Not a text value"
   (quote_top '#$ion_1_1' ('#$:annotate' [0] 1)))
-(check_expansion "#$?Not a text value"
+(check_eval_fail "Not a text value"
   (quote_top '#$ion_1_1' ('#$:annotate' [["a"]] 1)))
 
 // Annotations on the annotation-args are discarded

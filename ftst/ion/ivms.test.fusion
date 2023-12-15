@@ -20,12 +20,10 @@
   (quote_top '#$ion_1_0' true '#$ion_1_1' true))
 
 
-(check_expansion
-  (quote "#$?Unsupported Ion version: 1.2")
+(check_eval_fail "Unsupported Ion version: 1.2"
   (quote_top '#$ion_1_0' true '#$ion_1_2' true))
 
-(check_expansion
-  (quote "#$?Unsupported Ion version: 2.0")
+(check_eval_fail "Unsupported Ion version: 2.0"
   (quote_top '#$ion_1_0' true '#$ion_2_0' true))
 
 
