@@ -447,6 +447,7 @@ Spec Problems
 
     (fn compile_LST_imports ((vs 'Value*') (r Environment) -> 'SymTok*')
       // Would be nice to `map`, but this has two args and appends, not cons'es.
+      // [FOLD] might do the trick.
       (if (seq_is_empty vs)
         EMPTY_SYMTOKS
         (let [(c (Value_content (seq_head vs)))]

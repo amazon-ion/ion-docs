@@ -372,7 +372,10 @@ We "tunnel" special tokens as follows:
     (check_eqv expected (eject_Values values)))
 
   (define_check (check_expansion expected input)
-    (check_Values expected (expand_doc input)))
+    (let [(actual (expand_doc input))]
+      (if (is_bottom actual)
+        (fail (display_to_string "Unexpected bottom: " (bottom_message actual)))
+        (check_Values expected actual))))
 
   (define_check (check_expansion_and_bounds max_sid expected input)
     (check_expansion expected input)
