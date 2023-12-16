@@ -31,4 +31,20 @@
   (quote11   $ion_encoding::((symbol_table ["a"] ["b"])) '#$11' '#$12'))
 
 
+// Exact-match imports
+
+(check_expansion_and_bounds 11
+  (quote_top a)
+  (quote11 $ion_encoding::((load abc "abcs" 1)
+                           (symbol_table abc))
+    '#$11'))
+
+(check_expansion_and_bounds 14
+  (quote_top a m o)
+  (quote11 $ion_encoding::((load mno "mnop" 3)
+                           (load abc "abcs" 1)
+                           (symbol_table abc mno))
+    '#$11' '#$12' '#$14'))
+
+
 "SUCCESS (encoding.test)"

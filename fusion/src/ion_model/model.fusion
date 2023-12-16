@@ -20,8 +20,10 @@ Terminology/Readability:
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * $ion_encoding
-  * `load` clauses to make modules available.
-  * Accept module names in `symbol_table`.
+  * `load` clause with max-id.
+    * Unclear how to wire the exact/inexact match and max-id to later clauses.
+      * Perhaps add LoadedModule to track that data, and return from ModuleMap.
+    * Accept non-exact-match modules in `symbol_table`.
   * Accept symbols in `symbol_table` inner lists.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
@@ -223,11 +225,13 @@ Spec Problems
     (fn emptyModuleMap ModuleMap (u)
       (wrong "Module not in scope: " u))
 
+    (fn ModuleMap_extend ((mm ModuleMap) (u Unicode) (m Module) -> ModuleMap)
+      (mk_fn ModuleMap (u1)
+        (if (U_EQ u1 u) m
+          (mm u1))))
+
     (fn currentModuleMap ((r Environment) -> ModuleMap)
-      (mk_fn ModuleMap (u)
-        (if (U_EQ u "$ion")
-          (Environment_sysModule r)
-          ((Environment_modules r) u))))
+      (ModuleMap_extend (Environment_modules r) "$ion" (Environment_sysModule r)))
 
 
     (fn expand_STree ((t STree) (r Environment) -> 'Value*')
@@ -808,7 +812,15 @@ Spec Problems
     (fn compile_ED ((s Sexp) (r Environment) -> Environment)
       (if (element_of s DotNull)
         (compile_ED (lift (seq 'Value*') Sexp) r)
-        (compile_ED_symtab (lower s 'Value*') emptyModuleMap r)))
+        (compile_ED_modules (lower s 'Value*') emptyModuleMap r)))
+
+    (fn compile_ED_modules ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
+      (if (and (not (seq_is_empty vs))
+               (isClause (seq_head vs) "load"))
+        (compile_ED_modules (seq_tail vs)
+          (compile_ED_load (clauseBody (seq_head vs)) avail (Environment_catalog r))
+          r)
+        (compile_ED_symtab vs avail r)))
 
     // Same logic should be used for modules
     (fn compile_ED_symtab ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
@@ -823,7 +835,18 @@ Spec Problems
                            (avail ModuleMap)
                            (ts 'SymTok*')
                            (r Environment) -> Environment)
-      // TODO macro_table
+      (if (and (not (seq_is_empty vs))
+               (isClause (seq_head vs) "macro_table"))
+        (compile_ED_final (seq_tail vs) avail ts
+          (compile_module_mactab (clauseBody (seq_head vs)) avail)
+          r)
+        (compile_ED_final vs avail ts (seq 'Unicode*') r)))
+
+    (fn compile_ED_final ((vs 'Value*')
+                          (avail ModuleMap)
+                          (ts 'SymTok*')
+                          (us 'Unicode*')
+                          (r Environment) -> Environment)
       (if (not (seq_is_empty vs))
         (wrong "Unexpected encoding clause: " (seq_head vs))
         (tuple Environment
@@ -831,9 +854,24 @@ Spec Problems
           (Environment_sysModule r)
           avail
           ts
-          (seq 'Unicode*'))))
+          us)))
 
-  
+
+    (fn Value_strtext ((v Value) -> Unicode)  (lower (Value_content v) String Unicode))
+    (fn Value_symtext ((v Value) -> Unicode)  (lower (Value_content v) Symbol SymTok Unicode))
+    (fn Value_int     ((v Value) -> I      )  (lower (Value_content v) Int I))
+
+
+    (fn compile_ED_load ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
+      (let [(name    (Value_symtext (ith vs 0))),
+            (catname (Value_strtext (ith vs 1))),
+            (version (Value_int     (ith vs 2)))
+            // TODO maxid
+           ]
+        (ModuleMap_extend avail name
+          (SharedModule_module (exactModule_Catalog c catname version)))))
+
+
     (fn compile_module_symtab ((vs 'Value*') (avail ModuleMap) -> 'SymTok*')
       (if (seq_is_empty vs)
         (seq 'SymTok*')
@@ -841,13 +879,25 @@ Spec Problems
           (compile_module_symtab (seq_tail vs) avail))))
 
     (fn compile_module_symtab_elt ((v Value) (avail ModuleMap) -> 'SymTok*')
-      // TODO check for module-name vs text-list
-      (map 'SymTok*' compile_module_symtab_text
-        (lower (Value_content v) List 'Value*')))
+      (if (element_of (Value_content v) Symbol)
+        // TODO copied from compile_import
+        // TODO this assumes exact match acquired
+        (let [(symtab (Module_symtab (avail (Value_symtext v))))]
+          (compile_symtab symtab (Value_symtext v) (seq_length symtab)))
+        (map 'SymTok*' compile_module_symtab_text
+          (lower (Value_content v) List 'Value*'))))
 
     (fn compile_module_symtab_text ((v Value) -> SymTok)
       // TODO typecheck, nullcheck
-      (lift_to SymTok (lower (Value_content v) String Unicode)))
+      (lift_to SymTok (Value_strtext v)))
+
+
+    (fn compile_module_mactab ((vs 'Value*') (avail ModuleMap) -> 'Unicode*')
+      (if (seq_is_empty vs)
+        (seq 'Unicode*')
+        // TODO check presence in avail.
+        (seq_prepend (lower (Value_content (seq_head vs)) Symbol Unicode)
+          (compile_module_mactab (seq_tail vs) avail))))
 
 
     (fn isClause ((v Value) (u Unicode) -> B)
