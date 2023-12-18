@@ -46,5 +46,28 @@
                            (symbol_table abc mno))
     '#$11' '#$12' '#$14'))
 
+// Absent shared symbol
+(check_expansion_and_bounds 14
+  (quote_top '#$mno#1' n)       // FIXME should be mnop!
+  (quote11 $ion_encoding::((load mno "mnop" 4) (symbol_table mno)) '#$11' '#$12'))
+
+
+// Name shadowing
+(check_expansion_and_bounds 14
+  (quote_top m n o x)
+  (quote11 $ion_encoding::((load m "mnop" 4)
+                           (load m "mnop" 3)
+                           (symbol_table m ["x"]))
+    '#$11' '#$12' '#$13' '#$14'))
+
+// Mix and match imported and local symbols
+
+(check_expansion_and_bounds 18
+  (quote_top l1 l2 a l3 m n o l4)
+  (quote11 $ion_encoding::((load mno "mnop" 3)
+                           (load abc "abcs" 1)
+                           (symbol_table ["l1", "l2"] abc ["l3"] mno ["l4"]))
+    '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18'))
+
 
 "SUCCESS (encoding.test)"

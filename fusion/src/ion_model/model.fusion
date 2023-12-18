@@ -20,11 +20,18 @@ Terminology/Readability:
 Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * $ion_encoding
+  * `retain`
+  * `module`
+  * `macro_table`
   * `load` clause with max-id.
     * Unclear how to wire the exact/inexact match and max-id to later clauses.
       * Perhaps add LoadedModule to track that data, and return from ModuleMap.
     * Accept non-exact-match modules in `symbol_table`.
   * Accept symbols in `symbol_table` inner lists.
+  * `use` clauses at directive-level; more wiring challenges.
+  * Spec says various encoding-directive elements are unannotated, but the
+    model doesn't enforce that.
+  * Spec says `symbol_table` rejects duplicate module names, and `$ion`.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
     Isn't (:values V) == V ?
@@ -863,15 +870,20 @@ Spec Problems
     (fn Value_int     ((v Value) -> I      )  (lower (Value_content v) Int I))
 
 
+    // $ion_encoding load
+
     (fn compile_ED_load ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
       (let [(name    (Value_symtext (ith vs 0))),
             (catname (Value_strtext (ith vs 1))),
             (version (Value_int     (ith vs 2)))
             // TODO maxid
+            // TODO ensure no extra arguments
            ]
         (ModuleMap_extend avail name
           (SharedModule_module (exactModule_Catalog c catname version)))))
 
+
+    // $ion_encoding symbol_table
 
     (fn compile_module_symtab ((vs 'Value*') (avail ModuleMap) -> 'SymTok*')
       (if (seq_is_empty vs)
@@ -884,6 +896,9 @@ Spec Problems
         // TODO copied from compile_import
         // TODO this assumes exact match acquired
         (let [(symtab (Module_symtab (avail (Value_symtext v))))]
+          // Convert Module's Unicode* to SymTok*
+          // FIXME This uses the local name, not the catalog name.
+          // Absent-symbol equality is therefore incorrect.
           (compile_symtab symtab (Value_symtext v) (seq_length symtab)))
         (map 'SymTok*' compile_module_symtab_text
           (lower (Value_content v) List 'Value*'))))
