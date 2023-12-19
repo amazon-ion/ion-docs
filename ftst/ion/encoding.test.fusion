@@ -95,6 +95,24 @@
            '#$11' '#$12'))
 
 
+// Encoding macro_table
+
+(check_expansion
+  (quote_top aoeui dhtns)
+  (quote11   $ion_encoding::((macro_table))
+             ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
+
+// FIXME [MAC-ID] These shouldn't fail, the unqualified reference is unambiguous.
+(check_eval_fail "Ambiguous macroreference :values"
+//(quote_top aoeui dhtns)
+  (quote11   $ion_encoding::((macro_table $ion))
+             ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
+(check_eval_fail "Ambiguous macroreference :values"
+//(quote_top aoeui dhtns)
+  (quote11   $ion_encoding::((macro_table $ion $ion))
+             ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
+
+
 // Inline modules
 
 (check_expansion_and_bounds 10
@@ -137,6 +155,24 @@
                                (symbol_table N))
                              (symbol_table M))
              '#$11'))
+
+
+// Inline module macro_table
+
+(check_expansion
+  (quote_top)
+  (quote11   $ion_encoding::((module M (macro_table)))))
+
+(check_eval_fail "No such macro: :M:mac"
+  (quote11   $ion_encoding::((module M (macro_table))
+                             (macro_table M))
+             ('#$:M:mac')))
+
+(check_expansion
+  (quote_top sahweet)
+  (quote11   $ion_encoding::((module M (macro_table $ion))
+                             (macro_table M))
+             ('#$:M:make_symbol' "sah" weet)))
 
 
 "SUCCESS (encoding.test)"

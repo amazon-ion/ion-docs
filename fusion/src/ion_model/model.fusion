@@ -21,7 +21,9 @@ Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
-  * `macro_table`
+  * Macro references by-address.
+  * Export from.
+  * Export by macro reference.  Requires Unicode_split, digit detection/parse.
   * `load` clause with max-id.
     * Unclear how to wire the exact/inexact match and max-id to later clauses.
       * Perhaps add LoadedModule to track that data, and return from ModuleMap.
@@ -34,6 +36,7 @@ Features:
   * Spec says `symbol_table` rejects duplicate module names, and `$ion`.
     * I'm not sure the duplicate filter achieves anything; the same module can
       still appear under different names, with no difference in outcome.
+* [MAC-ID] Macro identity and proper ambiguity detection
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
     Isn't (:values V) == V ?
@@ -762,6 +765,7 @@ Spec Issues: 1.0
         (let [(m1 (resolve_qualifiedName (seq_head ms) u mm)),
               (m2 (resolve_ModuleNames   (seq_tail ms) u mm))]
           (if (opt_is_present m1)
+            // TODO [MAC-ID] Compare macro identities to allow benign duplicates.
             (if (opt_is_present m2)
               (wrong "Ambiguous macroreference :" u)
               m1)
@@ -879,7 +883,7 @@ Spec Issues: 1.0
                            (r Environment) -> Environment)
       (if (nextClauseIs vs "macro_table")
         (compile_ED_final (seq_tail vs) avail ts
-          (compile_module_mactab (clauseBody (seq_head vs)) avail)
+          (compile_ED_mactab_body (clauseBody (seq_head vs)) avail)
           r)
         (compile_ED_final vs avail ts (seq 'Unicode*') r)))
 
@@ -950,12 +954,13 @@ Spec Issues: 1.0
       (lift_to SymTok (Value_strtext v)))
 
 
-    (fn compile_module_mactab ((vs 'Value*') (avail ModuleMap) -> 'Unicode*')
+    (fn compile_ED_mactab_body ((vs 'Value*') (avail ModuleMap) -> 'Unicode*')
+      // TODO Use `map`
       (if (seq_is_empty vs)
         (seq 'Unicode*')
         // TODO check presence in avail.
-        (seq_prepend (lower (Value_content (seq_head vs)) Symbol Unicode)
-          (compile_module_mactab (seq_tail vs) avail))))
+        (seq_prepend (Value_symtext (seq_head vs))
+          (compile_ED_mactab_body (seq_tail vs) avail))))
 
 
     (fn nextClauseIs ((vs 'Value*') (u Unicode) -> B)
@@ -986,20 +991,44 @@ Spec Issues: 1.0
 
     (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) -> Module)
       (if (nextClauseIs vs "symbol_table")
-        (compile_IM_final (seq_tail vs) avail
+        (compile_IM_mactab (seq_tail vs) avail
+          // TODO This doesn't handle absent symbols or their equality.
           (compile_module_symtab (clauseBody (seq_head vs)) avail))
-        (compile_IM_final vs avail (seq 'SymTok*'))))
+        (compile_IM_mactab vs avail (seq 'SymTok*'))))
+
+    (fn compile_IM_mactab ((vs 'Value*')
+                           (avail ModuleMap)
+                           (ts 'SymTok*') -> Module)
+      (if (nextClauseIs vs "macro_table")
+        (compile_IM_final (seq_tail vs) avail ts
+          (compile_module_mactab (clauseBody (seq_head vs)) avail (seq 'ExportedMacro*')))
+        (compile_IM_final vs avail ts (seq 'ExportedMacro*'))))
 
     (fn compile_IM_final ((vs 'Value*')
                           (avail ModuleMap)
-                          (ts 'SymTok*') -> Module)
+                          (ts 'SymTok*')
+                          (ms 'ExportedMacro*') -> Module)
       (if (not (seq_is_empty vs))
         (wrong "Unexpected clause in module: " (seq_head vs))
         (tuple Module
           (Module_specVersion (avail "$ion"))
-          // TODO This doesn't handle absent symbols or their equality.
           (map 'Unicode?*' (|t| (opt 'Unicode?' (lower t Unicode))) ts)
-          (seq 'ExportedMacro*'))))
+          ms)))
+
+
+    (fn compile_module_mactab ((vs   'Value*')
+                               (mods ModuleMap)
+                               (macs 'ExportedMacro*') -> 'ExportedMacro*')
+      (if (seq_is_empty vs)
+        macs
+        (compile_module_mactab (seq_tail vs) mods
+          (compile_IM_mactab_elt (seq_head vs) mods macs))))
+
+    (fn compile_IM_mactab_elt ((v    Value)
+                               (mods ModuleMap)
+                               (macs 'ExportedMacro*') -> 'ExportedMacro*')
+      (let [(mod (mods (Value_symtext v)))]
+        (seq_append macs (Module_mactab mod))))
 
 
     // TODO $ion_shared_module compilation
