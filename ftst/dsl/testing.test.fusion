@@ -1,0 +1,18 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+)
+
+
+(check_bottom "oops" (wrong "oops"))
+(expect_check_error (check_bottom "ignored" (inject_into B true)))
+
+
+(check_not_bottom (inject_into B true))
+(expect_check_error (check_not_bottom (wrong "oops")))
+
+
+"SUCCESS (testing.test)"
