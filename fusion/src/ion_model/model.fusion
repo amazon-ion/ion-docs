@@ -21,7 +21,7 @@ Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
-  * `retain`
+  * `retain` with names
   * `macro_table`
   * `load` clause with max-id.
     * Unclear how to wire the exact/inexact match and max-id to later clauses.
@@ -56,8 +56,15 @@ Cleanup:
 * `lambda`s should instead use `mk_fn` with ad-hoc signature.
 
 
-Spec Problems
--------------
+Spec Issues: 1.1
+----------------
+* Consider replacing `(retain *)` with just `(retain)`.  It eliminates some
+  failure modes and reads nicely.  However, it may be surprisingly inconsistent
+  compared to the non-empty behavior.
+
+
+Spec Issues: 1.0
+----------------
 * No mention of possible annotations on imports field or its entries.
 * "A version marker can also occur at non-initial positions at the top level,
   and it will have the same effect; when encountered below top-level, it has no
@@ -824,11 +831,20 @@ Spec Problems
     (fn compile_ED ((s Sexp) (r Environment) -> Environment)
       (if (element_of s DotNull)
         (compile_ED (lift (seq 'Value*') Sexp) r)
-        (compile_ED_modules (lower s 'Value*')
+        (compile_ED_retain (lower s 'Value*')
           // TODO This is inconsistent with other cases where $ion isn't present
           //   ATM we only need it as a way to determine the specVersion.
           (ModuleMap_extend emptyModuleMap "$ion" (Environment_sysModule r))
           r)))
+
+    (fn compile_ED_retain ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
+      (if (nextClauseIs vs "retain")
+        (let [(args (clauseBody (seq_head vs)))]
+          (if (and (EQ (seq_length args) 1)
+                   (Value_is_symbol_matching (seq_head args) "*"))
+            (compile_ED_modules (seq_tail vs) (Environment_modules r) r)
+            (wrong "selective retain not implemented")))
+        (compile_ED_modules vs avail r)))
 
     (fn compile_ED_modules ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
       (if (nextClauseIs vs "load")

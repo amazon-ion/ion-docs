@@ -70,6 +70,20 @@
     '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18'))
 
 
+// Retention
+
+(check_eval_fail "Module not in scope: A"
+  (quote11 $ion_encoding::((load A "abcs" 1)
+                           (symbol_table ["l1"] A))
+           $ion_encoding::((symbol_table ["l2"] A))))
+
+(check_expansion_and_bounds 12
+  (quote_top l2 a)
+  (quote11 $ion_encoding::((load A "abcs" 1) (symbol_table ["l1"] A))
+           $ion_encoding::((retain *)        (symbol_table ["l2"] A))
+           '#$11' '#$12'))
+
+
 // Inline modules
 
 (check_expansion_and_bounds 10
