@@ -70,4 +70,23 @@
     '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18'))
 
 
+// Local modules
+
+(check_expansion_and_bounds 10
+  (quote_top)
+  (quote11   $ion_encoding::((module h))))
+
+(check_expansion_and_bounds 11
+  (quote_top h1)
+  (quote11   $ion_encoding::((module h (symbol_table ["h1"]))
+                             (symbol_table h))
+             '#$11'))
+
+(check_expansion_and_bounds 12
+  (quote_top h1 h1)
+  (quote11   $ion_encoding::((module h (symbol_table ["h1"]))
+                             (symbol_table h h))
+             '#$11' '#$12'))
+
+
 "SUCCESS (encoding.test)"
