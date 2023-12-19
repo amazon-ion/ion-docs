@@ -83,6 +83,17 @@
            $ion_encoding::((retain *)        (symbol_table ["l2"] A))
            '#$11' '#$12'))
 
+(check_expansion_and_bounds 12
+  (quote_top a i a)
+  (quote11 $ion_encoding::((load A "abcs" 1))
+           $ion_encoding::((retain A)
+                           (module I (symbol_table ["i"]))
+                           (symbol_table A))
+           '#$11'
+           $ion_encoding::((retain I A A)
+                           (symbol_table I A))
+           '#$11' '#$12'))
+
 
 // Inline modules
 
