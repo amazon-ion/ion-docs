@@ -831,23 +831,20 @@ Spec Problems
           r)))
 
     (fn compile_ED_modules ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
-      (if (seq_is_empty vs)
-        (compile_ED_symtab vs avail r)
-        (if (isClause (seq_head vs) "load")
+      (if (nextClauseIs vs "load")
+        (compile_ED_modules (seq_tail vs)
+          (compile_ED_load (clauseBody (seq_head vs)) avail (Environment_catalog r))
+          r)
+        (if (nextClauseIs vs "module")
           (compile_ED_modules (seq_tail vs)
-            (compile_ED_load (clauseBody (seq_head vs)) avail (Environment_catalog r))
+            (compile_ED_module (clauseBody (seq_head vs)) avail (Environment_catalog r))
             r)
-          (if (isClause (seq_head vs) "module")
-            (compile_ED_modules (seq_tail vs)
-              (compile_ED_module (clauseBody (seq_head vs)) avail (Environment_catalog r))
-              r)
-            // End of module-decls
-            (compile_ED_symtab vs avail r)))))
+          // End of module-decls
+          (compile_ED_symtab vs avail r))))
 
     // Same logic should be used for modules
     (fn compile_ED_symtab ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
-      (if (and (not (seq_is_empty vs))
-               (isClause (seq_head vs) "symbol_table"))
+      (if (nextClauseIs vs "symbol_table")
         (compile_ED_mactab (seq_tail vs) avail
           (compile_module_symtab (clauseBody (seq_head vs)) avail)
           r)
@@ -857,8 +854,7 @@ Spec Problems
                            (avail ModuleMap)
                            (ts 'SymTok*')
                            (r Environment) -> Environment)
-      (if (and (not (seq_is_empty vs))
-               (isClause (seq_head vs) "macro_table"))
+      (if (nextClauseIs vs "macro_table")
         (compile_ED_final (seq_tail vs) avail ts
           (compile_module_mactab (clauseBody (seq_head vs)) avail)
           r)
@@ -966,8 +962,7 @@ Spec Problems
         (compile_IM_symtab vs avail)))
 
     (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) -> Module)
-      (if (and (not (seq_is_empty vs))
-               (isClause (seq_head vs) "symbol_table"))
+      (if (nextClauseIs vs "symbol_table")
         (compile_IM_final (seq_tail vs) avail
           (compile_module_symtab (clauseBody (seq_head vs)) avail))
         (compile_IM_final vs avail (seq 'SymTok*'))))
