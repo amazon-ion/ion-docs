@@ -70,7 +70,7 @@
     '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18'))
 
 
-// Local modules
+// Inline modules
 
 (check_expansion_and_bounds 10
   (quote_top)
@@ -87,6 +87,31 @@
   (quote11   $ion_encoding::((module h (symbol_table ["h1"]))
                              (symbol_table h h))
              '#$11' '#$12'))
+
+(check_expansion_and_bounds 13
+  (quote_top m b)
+  (quote11   $ion_encoding::((module M
+                               (load N "abcs" 2)
+                               (symbol_table ["m"] N))
+                             (symbol_table M))
+             '#$11' '#$13'))
+
+(check_expansion_and_bounds 13
+  (quote_top m b)
+  (quote11   $ion_encoding::((module M
+                               (load M "abcs" 2)        // Note same name
+                               (symbol_table ["m"] M))
+                             (symbol_table M))
+             '#$11' '#$13'))
+
+(check_expansion_and_bounds 11
+  (quote_top m)
+  (quote11   $ion_encoding::((module M
+                               (load N "abcs" 1)
+                               (load N "mnop" 1)        // Shadows previous
+                               (symbol_table N))
+                             (symbol_table M))
+             '#$11'))
 
 
 "SUCCESS (encoding.test)"

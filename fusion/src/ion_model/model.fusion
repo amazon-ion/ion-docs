@@ -22,7 +22,6 @@ Features:
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
   * `retain`
-  * `module`
   * `macro_table`
   * `load` clause with max-id.
     * Unclear how to wire the exact/inexact match and max-id to later clauses.
@@ -32,7 +31,10 @@ Features:
   * `use` clauses at directive-level; more wiring challenges.
   * Spec says various encoding-directive elements are unannotated, but the
     model doesn't enforce that.
+  * Spec should ban the name $ion in load and import.
   * Spec says `symbol_table` rejects duplicate module names, and `$ion`.
+    * I'm not sure the duplicate filter achieves anything; the same module can
+      still appear under different names, with no difference in outcome.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
     Isn't (:values V) == V ?
@@ -884,8 +886,9 @@ Spec Problems
 
     // $ion_encoding load
 
+    // TODO Rename; this is also used by inner modules.
     (fn compile_ED_load ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
-      (let [(name    (Value_symtext (ith vs 0))),
+      (let [(name    (Value_symtext (ith vs 0))),   // TODO validate module name
             (catname (Value_strtext (ith vs 1))),
             (version (Value_int     (ith vs 2)))
             // TODO maxid
@@ -898,27 +901,9 @@ Spec Problems
     // $ion_encoding module
 
     (fn compile_ED_module ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
-      (let [(name (Value_symtext (ith vs 0)))]
+      (let [(name (Value_symtext (ith vs 0)))]      // TODO validate module name
         (ModuleMap_extend avail name
-          (compile_LM_symtab (seq_tail vs) avail))))
-
-    (fn compile_LM_symtab ((vs 'Value*') (avail ModuleMap) -> Module)
-      (if (and (not (seq_is_empty vs))
-               (isClause (seq_head vs) "symbol_table"))
-        (compile_LM_final (seq_tail vs) avail
-          (compile_module_symtab (clauseBody (seq_head vs)) avail))
-        (compile_LM_final vs avail (seq 'SymTok*'))))
-
-    (fn compile_LM_final ((vs 'Value*')
-                          (avail ModuleMap)
-                          (ts 'SymTok*') -> Module)
-      (if (not (seq_is_empty vs))
-        (wrong "Unexpected clause in module: " (seq_head vs))
-        (tuple Module
-          (Module_specVersion (avail "$ion"))
-          // TODO This doesn't handle absent symbols or their equality.
-          (map 'Unicode?*' (|t| (opt 'Unicode?' (lower t Unicode))) ts)
-          (seq 'ExportedMacro*'))))
+          (compile_IM_body (seq_tail vs) avail c))))
 
 
     // $ion_encoding symbol_table
@@ -935,7 +920,7 @@ Spec Problems
         // TODO this assumes exact match acquired
         (let [(symtab (Module_symtab (avail (Value_symtext v))))]
           // Convert Module's Unicode* to SymTok*
-          // FIXME This uses the local name, not the catalog name.
+          // FIXME This uses the defined name, not the catalog name.
           // Absent-symbol equality is therefore incorrect.
           (compile_symtab symtab (Value_symtext v) (seq_length symtab)))
         (map 'SymTok*' compile_module_symtab_text
@@ -954,6 +939,10 @@ Spec Problems
           (compile_module_mactab (seq_tail vs) avail))))
 
 
+    (fn nextClauseIs ((vs 'Value*') (u Unicode) -> B)
+      (and (not (seq_is_empty vs))
+           (isClause (seq_head vs) u)))
+
     (fn isClause ((v Value) (u Unicode) -> B)
       (and (element_of (Value_content v) Sexp)
         // TODO Null check
@@ -962,6 +951,37 @@ Spec Problems
 
     (fn clauseBody ((v Value) -> 'Value*')
       (seq_tail (lower (Value_content v) Sexp 'Value*')))
+
+
+    //==========================================================================
+    // Inline module compilation
+
+    (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (c Catalog) -> Module)
+      (if (nextClauseIs vs "load")
+        // Recurse to find more dependencies
+        (compile_IM_body (seq_tail vs)
+          (compile_ED_load (clauseBody (seq_head vs)) avail c)
+          c)
+        // No more dependencies
+        (compile_IM_symtab vs avail)))
+
+    (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) -> Module)
+      (if (and (not (seq_is_empty vs))
+               (isClause (seq_head vs) "symbol_table"))
+        (compile_IM_final (seq_tail vs) avail
+          (compile_module_symtab (clauseBody (seq_head vs)) avail))
+        (compile_IM_final vs avail (seq 'SymTok*'))))
+
+    (fn compile_IM_final ((vs 'Value*')
+                          (avail ModuleMap)
+                          (ts 'SymTok*') -> Module)
+      (if (not (seq_is_empty vs))
+        (wrong "Unexpected clause in module: " (seq_head vs))
+        (tuple Module
+          (Module_specVersion (avail "$ion"))
+          // TODO This doesn't handle absent symbols or their equality.
+          (map 'Unicode?*' (|t| (opt 'Unicode?' (lower t Unicode))) ts)
+          (seq 'ExportedMacro*'))))
 
 
     // TODO $ion_shared_module compilation
