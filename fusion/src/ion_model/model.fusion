@@ -21,7 +21,7 @@ Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
-  * Macro references by-address.
+  * Macro references qualified and by-address.
   * Export from.
   * Export by macro reference.  Requires Unicode_split, digit detection/parse.
   * `load` clause with max-id.
@@ -63,6 +63,11 @@ Spec Issues: 1.1
 * Consider replacing `(retain *)` with just `(retain)`.  It eliminates some
   failure modes and reads nicely.  However, it may be surprisingly inconsistent
   compared to the non-empty behavior.
+* Rationalize whether $ion can be in a `macro_table`.
+  * Perhaps not a problem in $ion_encoding/macro_table since its version is
+    implied.
+  * If exported in-full from a shared module, it must be tied to that module's
+    spec-version.  Which means diff exports can use diff system-module versions.
 
 
 Spec Issues: 1.0
@@ -736,8 +741,7 @@ Spec Issues: 1.0
           // Named or local-offset
           (if (element_of mac Unicode)
             (resolve_unqualifiedName (lower_to Unicode mac) r)
-            // TODO handle unqualified ints
-            (wrong "Unqualified macro addresses not implemented")))))
+            (resolve_unqualifiedAddr (Environment_mactab r) (- (lower_to I mac) 1) (lower_to I mac) r)))))
 
 
     (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (mm ModuleMap) -> 'Macro?')
@@ -751,6 +755,14 @@ Spec Issues: 1.0
           (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
           (resolve_ExportedMacros (seq_tail ms) u))))
 
+    // index is zero-based; i0 is the original value
+    (fn resolve_unqualifiedAddr ((ns 'Unicode*') (i I) (i0 I) (r Environment) -> Macro)
+      (if (seq_is_empty ns)
+        (wrong "Invalid macro address: :" i0)
+        (let [(ms (Module_mactab ((currentModuleMap r) (seq_head ns))))]
+          (if (< i (seq_length ms))
+            (ExportedMacro_macro (ith ms i))
+            (resolve_unqualifiedAddr (seq_tail ns) (- i (seq_length ms)) i0 r)))))
 
     (fn resolve_unqualifiedName ((u Unicode) (r Environment) -> Macro)
       (let [(ns (seq_prepend (inject_into Unicode "$ion") (Environment_mactab r)))]

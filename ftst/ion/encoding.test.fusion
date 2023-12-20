@@ -174,5 +174,16 @@
                              (macro_table M))
              ('#$:M:make_symbol' "sah" weet)))
 
+// Local macro addresses
+(check_expansion
+  (quote_top abc)
+  (quote11   $ion_encoding::((module M (macro_table $ion))
+                             (macro_table M))
+//           ('#$:make_symbol' ('#$:values' "a" b) ('#$:void' x) c)  // TODO [MAC-ID]
+             ('#$:4'           ('#$:2'      "a" b) ('#$:1'    x) c)))
+
+// TODO test addresses when there's multiple modules.
+// TODO test out-of-bounds macro address
+
 
 "SUCCESS (encoding.test)"
