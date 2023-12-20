@@ -21,7 +21,7 @@ Features:
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
-  * Macro references qualified and by-address.
+  * Aliases would allow better testing without macro-definitions implemented.
   * Export from.
   * Export by macro reference.  Requires Unicode_split, digit detection/parse.
   * `load` clause with max-id.
@@ -730,19 +730,25 @@ Spec Issues: 1.0
             (mac (MacroRef_macro  m)),
             (mm  (currentModuleMap r))]
         (if (opt_is_present mod)
-          // Quailified reference
+          // Qualified reference
           (if (element_of mac Unicode)
             (let [(m (resolve_qualifiedName (opt_value mod) (lower_to Unicode mac) mm))]
               (if (opt_is_present m)
                 (opt_value m)
                 (wrong "No such macro: :" (opt_value mod) ":" (lower_to Unicode mac))))
-              // TODO handle qualified ints
-            (wrong "Qualified macro addresses not implemented"))
-          // Named or local-offset
+            (resolve_qualifiedAddr (opt_value mod) (- (lower mac I) 1) mm))
+          // Unqualified name or local-offset
           (if (element_of mac Unicode)
             (resolve_unqualifiedName (lower_to Unicode mac) r)
             (resolve_unqualifiedAddr (Environment_mactab r) (- (lower_to I mac) 1) (lower_to I mac) r)))))
 
+
+    // index is zero-based
+    (fn resolve_qualifiedAddr ((u Unicode) (i I) (mm ModuleMap) -> Macro)
+      (let [(ms (Module_mactab (mm u)))]
+        (if (< i (seq_length ms))
+          (ExportedMacro_macro (ith ms i))
+          (wrong "Invalid macro address: :" u ":" (+ 1 i)))))
 
     (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (mm ModuleMap) -> 'Macro?')
       (resolve_ExportedMacros (Module_mactab (mm u1)) u2))
@@ -754,6 +760,7 @@ Spec Issues: 1.0
                  (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
           (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
           (resolve_ExportedMacros (seq_tail ms) u))))
+
 
     // index is zero-based; i0 is the original value
     (fn resolve_unqualifiedAddr ((ns 'Unicode*') (i I) (i0 I) (r Environment) -> Macro)

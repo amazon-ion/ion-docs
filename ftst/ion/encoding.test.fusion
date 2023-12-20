@@ -169,17 +169,19 @@
              ('#$:M:mac')))
 
 (check_expansion
-  (quote_top sahweet)
+  (quote_top sahweet sahweet)
   (quote11   $ion_encoding::((module M (macro_table $ion))
                              (macro_table M))
-             ('#$:M:make_symbol' "sah" weet)))
+             ('#$:M:make_symbol' "sah" weet)
+             ('#$:M:4'           "sah" weet)))
 
-// Local macro addresses
+// Macro addresses
 (check_expansion
-  (quote_top abc)
+  (quote_top abc abc)
   (quote11   $ion_encoding::((module M (macro_table $ion))
                              (macro_table M))
 //           ('#$:make_symbol' ('#$:values' "a" b) ('#$:void' x) c)  // TODO [MAC-ID]
+             ('#$:M:4'         ('#$:M:2'    "a" b) ('#$:M:1'  x) c)
              ('#$:4'           ('#$:2'      "a" b) ('#$:1'    x) c)))
 
 // TODO test addresses when there's multiple modules.
