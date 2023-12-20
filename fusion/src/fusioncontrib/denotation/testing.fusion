@@ -18,6 +18,7 @@ Utilities for testing denotational models.
 
   (provide
     check_bottom
+    check_not_bottom
     check_eqv
     check_is_seq_of
     check_lower
@@ -76,4 +77,9 @@ A check error is raised if any step fails type-checking.
     // TODO Accept a Bottom as expected value, comparing messages.
     (check_pred is_bottom v)
     (check_eqv message (bottom_message v)))
+
+  (define_check (check_not_bottom v)
+    "Check that `v` is not a bottom value."
+    (when (is_bottom v)
+      (fail (display_to_string "Unexpected bottom: " (bottom_message v)))))
 )

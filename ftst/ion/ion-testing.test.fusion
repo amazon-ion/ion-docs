@@ -1,0 +1,27 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+(check_eval_success (quote_top '#$1'))
+(expect_check_error
+  (check_eval_success (quote_top '#$99')))
+
+(expect_check_error
+  (check_eval_fail "ignored" (quote_top '#$1')))
+
+
+(expect_check_error
+  (check_expansion_and_bounds 99  // Expected bounds is too high
+    (quote_top)
+    (quote_top $ion_symbol_table::{symbols:["a"]})))
+
+
+
+"SUCCESS (ion-testing.test)"
