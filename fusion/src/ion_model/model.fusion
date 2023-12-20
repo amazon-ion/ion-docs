@@ -22,6 +22,7 @@ Features:
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
   * Aliases would allow better testing without macro-definitions implemented.
+    * Requires a MacroMap (MacroBindings?) = Unicode -> Macro
   * Export from.
   * Export by macro reference.  Requires Unicode_split, digit detection/parse.
   * `load` clause with max-id.
@@ -1046,13 +1047,10 @@ Spec Issues: 1.0
     (fn compile_IM_mactab_elt ((v    Value)
                                (mods ModuleMap)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
-      (let [(mod (mods (Value_symtext v)))]
-        (seq_append macs (Module_mactab mod))))
-
-
-    // TODO $ion_shared_module compilation
-    // TODO Macro definitions
-    // TODO Template operators
+      (if (isClause v "macro")
+        (compile_macro_defn (clauseBody v) mods macs)
+        (let [(mod (mods (Value_symtext v)))]
+          (seq_append macs (Module_mactab mod)))))
 
 
     //==========================================================================
@@ -1071,6 +1069,22 @@ Spec Issues: 1.0
     (fn compile_paramName ((v Value) -> Unicode)
       // TODO typecheck
       (lower (Value_content v) Symbol SymTok Unicode))
+
+
+    //==========================================================================
+    // Macro definition compilation
+
+    (fn compile_macro_defn ((vs   'Value*')
+                            (mods ModuleMap)
+                            (macs 'ExportedMacro*') -> 'ExportedMacro*')
+      (let [(name  (Value_symtext (ith vs 0))),   // TODO validate macro name
+            (sig   (compile_Signature (ith vs 1))),
+            (xform (compile_template (ith vs 2)))]
+        (seq_prepend (tuple ExportedMacro (opt 'Unicode?' name) (tuple Macro sig xform))
+                     macs)))
+
+    (fn compile_template ((v Value) -> F)
+      (lambda () (seq 'Value*' v)))
 
 
     //==========================================================================
