@@ -111,11 +111,6 @@
 
 // annotate
 
-(check_eval_fail "Expected grouping list"
-  (quote11 ('#$:annotate' () 1)))
-(check_eval_fail "Expected grouping list"
-  (quote11 ('#$:annotate' ann 1)))
-
 // Existing annotations are preserved.
 (check_expansion
   (quote_top 1 a::2 b::c::3)

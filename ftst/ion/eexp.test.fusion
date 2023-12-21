@@ -22,4 +22,28 @@
   (quote11 ('#$:$ion:99')))
 
 
+// Sequence inlining
+
+(check_expansion
+  (quote_top [1, 2, 3, 4])
+  (quote11   [ 1, ('#$:$ion:values' 2 3), ('#$:$ion:values'), 4]))
+
+(check_expansion
+  (quote_top (1 2 3 4))
+  (quote11   (1 ('#$:$ion:values' 2 3) ('#$:$ion:values') 4)))
+
+
+// Argument group shapes
+
+(check_eval_fail "Expected grouping list"
+  (quote11 ('#$:annotate' () 1)))
+(check_eval_fail "Expected grouping list"
+  (quote11 ('#$:annotate' ann 1)))
+
+// Inlining into a group
+(check_expansion
+  (quote_top a::b::1)
+  (quote11 ('#$:annotate' [('#$:values' a b)] 1)))
+
+
 "SUCCESS (macro.test)"

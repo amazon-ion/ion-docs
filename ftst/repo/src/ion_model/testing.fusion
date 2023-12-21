@@ -305,7 +305,7 @@ We "tunnel" special tokens as follows:
                            (mk_stream (tail tlvs)))))))
 
   (define parser
-    (mk_fn Parser (doc)
+    (mk_fn Parser (doc)         // Document -> ParseStream
       (mk_stream (eject doc))))
 
   (define evaluator
@@ -315,10 +315,12 @@ We "tunnel" special tokens as follows:
   (define (evaluate input catalog)
     (evaluator (inject_into Document input) catalog))
 
+  // FIXME should be evaluate_doc
   (define (expand_doc input)
     "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
     (evaluate input testing_catalog))
 
+  // FIXME should be evaluate1
   (define (expand1 input)
     (ith (expand_doc input) 0))
 

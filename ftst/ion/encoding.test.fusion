@@ -95,7 +95,7 @@
            '#$11' '#$12'))
 
 
-// Encoding macro_table
+// Top-level macro_table
 
 (check_expansion
   (quote_top aoeui dhtns)
@@ -155,6 +155,13 @@
                                (symbol_table N))
                              (symbol_table M))
              '#$11'))
+
+// Inner `load` not visible to top-level.
+(check_eval_fail "Module not in scope: N"
+  (quote11   $ion_encoding::((module M
+                               (load N "abcs" 1)
+                               (symbol_table N))
+                             (symbol_table N))))
 
 
 // Inline module macro_table
