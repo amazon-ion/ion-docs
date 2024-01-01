@@ -156,7 +156,7 @@ one value, otherwise expands _template~else~_.
 [{nrm}]
 ----
 (*macro* decimal_constraint
-    [(precision *int{asterisk}*), (exponent *int{asterisk}*)]
+    (*int*::precision* *int*::exponent*)
     {
         precision: (*if_many* precision range::[precision] precision),
         exponent:  (*if_many* exponent  range::[exponent]  exponent),

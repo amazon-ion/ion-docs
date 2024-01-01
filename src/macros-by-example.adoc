@@ -9,6 +9,9 @@ familiar with the _use_ of macros.  We’ll step through increasingly sophistica
 admittedly synthetic for illustrative purposes, with the intent of teaching the core concepts and
 moving parts without getting into the weeds of more formal specification.
 
+IMPORTANT: This document does not fully reflect the changes described in https://github.com/amazon-ion/ion-docs/issues/287
+
+
 Ion macros are defined using a domain-specific language that is in turn expressed via the Ion
 data model. That is, macro definitions are Ion data, and use Ion features like S-expressions and
 symbols to represent code in a LISP-like fashion.  In this document, the fundamental construct we
@@ -85,7 +88,7 @@ Most macros are not constant, they accept inputs that determine their results.
 [{nrm}]
 ----
 (*macro* price
-  [a, c]                          // signature
+  (a c)                           // signature
   { amount: a, currency: c })     // template
 ----
 
@@ -115,7 +118,7 @@ expression.  Here’s a silly macro to illustrate:
 
 [{nrm}]
 ----
-(*macro* reverse [a, b] [b, a])
+(*macro* reverse (a b) [b, a])
 ----
 ----
 (:reverse first 1990) ⇒ [1990, first]
@@ -156,7 +159,7 @@ either macros or _special forms_.  We start with the former:
 [{nrm}]
 ----
 (*macro* website_url
-  [path]
+  (path)
   (make_string "https://www.amazon.com/" path))
 ----
 
@@ -172,7 +175,7 @@ In the template language, macro invocations can appear almost anywhere:
 [{nrm}]
 ----
 (*macro* detail_page_url
-  [asin]
+  (asin)
   (website_url (make_string "dp/" asin)))
 ----
 ----
@@ -188,7 +191,7 @@ structs, but `(…)` doesn't construct S-expressions.  This gap is filled by the
 
 [{nrm}]
 ----
-(*macro* double_sexp [val] (make_sexp val val))
+(*macro* double_sexp (val) (make_sexp val val))
 ----
 ----
 (:make_sexp true 19.3 null) ⇒ (true 19.3 null)
@@ -233,7 +236,7 @@ always the case. The `*literal*` form makes this clear:
 
 [{nrm}]
 ----
-(*macro* USD_price [dollars] (price dollars (*literal* USD)))
+(*macro* USD_price (dollars) (price dollars (*literal* USD)))
 ----
 ----
 (:USD_price 12.99) ⇒ { amount: 12.99, currency: USD }
@@ -283,7 +286,7 @@ To detect problems close to their source, macro signatures can declare type cons
 [{nrm}]
 ----
 (*macro* detail_page_url
-  [(asin *string*)]
+  (*string*::asin)
   (website_url (make_string "dp/" asin)))
 ----
 
@@ -299,7 +302,7 @@ The intended input domain is now clear and the Ion parser can emit an error soon
 
 In this context the types include all the normal “concrete” Ion types, abstract
 supertypes like `*number*`, `*text*`, and `*lob*`, and the unconstrained “top type” `*any*`.
-The latter is the default type, and the signature `[foo]` is equivalent to `[(foo *any*)]`
+The latter is the default type, and the signature `(foo)` is equivalent to `(*any*::foo)`
 meaning that the parameter `foo` accepts one value of any type.
 
 TIP: These types also serve a second purpose: they can allow the binary encoding to be more compact by
@@ -315,7 +318,7 @@ single string:
 ----
 (:make_string)                 ⇒ ""
 (:make_string "a")             ⇒ "a"
-(:make_string "a" "b"    )     ⇒ "ab"
+(:make_string "a" "b")         ⇒ "ab"
 (:make_string "a" "b" "c")     ⇒ "abc"
 (:make_string "a" "b" "c" "d") ⇒ "abcd"
 ----
@@ -324,7 +327,7 @@ To make this work, the definition of make_string is effectively:
 
 [{nrm}]
 ----
-(*macro* make_string [(parts *text \...*)] …)
+(*macro* make_string (*text*::parts\...) …)
 ----
 
 This says that `parts` is a _rest parameter_ accepting zero or more arguments of type `*text*`.
@@ -355,22 +358,23 @@ elements produced by its stream, and is verified by the macro expansion system.
 More generally, the results of all template expressions are streams.  While most expressions
 produce a single value, various macros and special forms can produce zero or more values.
 
-We have everything we need to illustrate this, via another system macro, `values`:
+In Ion text, streams are indicated by the syntax `[:` ... `]`.
 
 [{nrm}]
 ----
-(*macro* values [(vals *any\...*)] vals)
+[:1]             ⇒ 1
+[:1, true, null] ⇒ 1 true null
+[:]              ⇒ _nothing_
 ----
 
-[{nrm}]
-----
-(:values 1)           ⇒ 1
-(:values 1 true null) ⇒ 1 true null
-(:values)             ⇒ _nothing_
-----
+Even though the syntax `[:]` looks like a list, it is not because colons
+cannot appear unquoted in that context.  Ion 1.1 makes use of syntax that is not valid in Ion
+1.0—specifically, the `[:` digraph—to denote streams.
 
-The `values` macro accepts any number of arguments and returns their values, effectively a
-multi-value identity function.  We can use this to explore how streams combine in E-expressions.
+NOTE: We also call this digraph the “robot smiley” when we’re feeling particularly casual.
+
+
+
 
 
 [#eg:splicing]
@@ -380,15 +384,15 @@ When an E-expression occurs at top-level or within a list or S-expression, the r
 spliced into the surrounding container:
 
 ----
-[first, (:values), last]          ⇒ [first, last]
-[first, (:values "middle"), last] ⇒ [first, "middle", last]
-(first (:values left right) last) ⇒ (first left right last)
+[first, [:], last]          ⇒ [first, last]
+[first, [:"middle"], last]  ⇒ [first, "middle", last]
+(first [:left, right] last) ⇒ (first left right last)
 ----
 
 This also applies wherever a <<tagless,tagged type>> can appear inside an E-expression:
 
 ----
-(first (:values (:values left right) (:values)) last) ⇒ (first left right last)
+(first [:[:left, right], [:]] last) ⇒ (first left right last)
 ----
 
 Note that each argument-expression always maps to one parameter, even when that expression
@@ -396,15 +400,15 @@ returns too-few or too-many values.
 
 [{nrm}]
 ----
-(*macro* reverse [(a *any*), (b *any*)]
+(*macro* reverse (*any*::a *any*::b)
   [b, a])
 ----
 
 [{nrm}]
 ----
-(:reverse (:values 5 USD))   ⇒ _**error**: 'reverse' expects 2 arguments, given 1_
-(:reverse 5 (:values) USD)   ⇒ _**error**: 'reverse' expects 2 arguments, given 3_
-(:reverse (:values 5 6) USD) ⇒ _**error**: argument 'a' expects 1 value, given 2_
+(:reverse [:5, USD])   ⇒ _**error**: 'reverse' expects 2 arguments, given 1_
+(:reverse 5 [:] USD)   ⇒ _**error**: 'reverse' expects 2 arguments, given 3_
+(:reverse [:5, 6] USD) ⇒ _**error**: argument 'a' expects 1 value, given 2_
 ----
 
 In this example, the parameters expect exactly one argument, producing exactly one value.  When
@@ -413,9 +417,9 @@ this (rather subtly) above in the nested use of `values`, but can also illustrat
 rest-parameter to `make_string`, which we'll expand here in steps:
 
 ----
-(:make_string (:values) a (:values b (:values c) d) e)
-  ⇒ (:make_string a (:values b (:values c) d) e)
-  ⇒ (:make_string a (:values b c d) e)
+(:make_string [:] a [:b [:c] d] e]
+  ⇒ (:make_string a [:b [:c] d] e)
+  ⇒ (:make_string a [:b, c, d] e)
   ⇒ (:make_string a b c d e)
   ⇒ "abcde"
 ----
@@ -425,9 +429,9 @@ nature.  When used in field-value position, each result from a macro is bound to
 independently, leading to the field being repeated or even absent:
 
 ----
-{ name: (:values) }          ⇒ { }
-{ name: (:values v) }        ⇒ { name: v }
-{ name: (:values v ann::w) } ⇒ { name: v, name: ann::w }
+{ name: [:] }          ⇒ { }
+{ name: [:v] }         ⇒ { name: v }
+{ name: [:v, ann::w] } ⇒ { name: v, name: ann::w }
 ----
 
 An E-expression can even be used in place of a key-value pair, in which case it must return
@@ -435,12 +439,12 @@ structs, which are merged into the surrounding container:
 
 [{nrm}]
 ----
-{ a:1, (:values), z:3 }             ⇒ { a:1, z:3 }
-{ a:1, (:values {}), z:3 }          ⇒ { a:1, z:3 }
-{ a:1, (:values {b:2}), z:3 }       ⇒ { a:1, b:2, z:3 }
-{ a:1, (:values {b:2} {z:3}), z:3 } ⇒ { a:1, b:2, z:3, z:3 }
+{ a:1, [:], z:3 }            ⇒ { a:1, z:3 }
+{ a:1, [:{}], z:3 }          ⇒ { a:1, z:3 }
+{ a:1, [:{b:2}], z:3 }       ⇒ { a:1, b:2, z:3 }
+{ a:1, [:{b:2},{z:3}], z:3 } ⇒ { a:1, b:2, z:3, z:3 }
 
-{ a:1, (:values key "value") } ⇒ _**error**: struct expected for splicing into struct_
+{ a:1, [:key "value"] } ⇒ _**error**: struct expected for splicing into struct_
 ----
 
 
@@ -453,10 +457,10 @@ list:
 [{nrm}]
 ----
 (*macro* int_list
-  [(vals **int\...**)]
+  (**int::**vals\...)
   [ vals ])
 (*macro* clumsy_bag
-  [(elts **any\...**)]
+  (**any::**elts\...)
   { '': elts })
 ----
 ----
@@ -487,7 +491,7 @@ created and bound to the next value on the stream.
 [{nrm}]
 ----
 (*macro* prices
-  [(currency *symbol*), (amounts *number\...*)]
+  (**symbol::**currency **number::**amounts\...)]
   (*for* [(amt amounts)]                          // <1>
     (price amt currency)))
 ----
@@ -507,17 +511,17 @@ becomes empty.
 
 [{nrm}]
 ----
-(*macro* zip [(front *any{asterisk}*), (back *any{asterisk}*)]  // <1>
+(*macro* zip (**[any::**front**]** **[any::**back**]**)  // <1>
   (*for* [(f front),
         (b back)]
     [f, b]))
 ----
 
-<1> The `*{asterisk}*` means that the parameter accepts any number of values; see
+<1> The `[]` means that the parameter accepts any number of values; see
 <<eg:zero-or-more>>.
 
 ----
-(:zip (:values 1 2 3) (:values a b))
+(:zip [:1, 2, 3] [:a, b])
   ⇒ [1, a] [2, b]
 ----
 
@@ -534,10 +538,10 @@ describe parameters that can accept empty streams, like the ``*\...*``s above.
 Correspondingly, the built-in macro `void` accepts no values and produces an empty stream:
 
 ----
-(:int_list (:void)) ⇒ []
-(:int_list 1 (:void) 2) ⇒ [1, 2]
-[(:void)]   ⇒ []
-{a:(:void)} ⇒ {}
+(:int_list [:]) ⇒ []
+(:int_list 1 [:] 2) ⇒ [1, 2]
+[[:]]   ⇒ []
+{a:[:]} ⇒ {}
 ----
 
 When used as a macro argument, a `void` invocation (like any other expression) counts as one
@@ -545,20 +549,8 @@ argument:
 
 [{nrm}]
 ----
-(:pi (:void)) ⇒ _**error**: 'pi' expects 0 arguments, given 1_
+(:pi [:]) ⇒ _**error**: 'pi' expects 0 arguments, given 1_
 ----
-
-The special-case E-expression `(:)` is synonymous with `(:void)` and is useful as a more succinct
-expression of absent arguments:
-
-----
-(:int_list (:)) ⇒ []
-(:int_list 1 (:) 2) ⇒ [1, 2]
-----
-
-TIP: While `void` and `values` both produce the empty stream, the former is preferred for
-clarity of intent and terminology.
-
 
 === Cardinality
 
@@ -598,7 +590,7 @@ argument as a way to denote an absent parameter.
 [{nrm}]
 ----
 (*macro* temperature
-  [(degrees *decimal*), (scale *symbol?*)]
+  (*decimal*::degrees *symbol*::scale?)
   {degrees: degrees, scale: scale})
 ----
 
@@ -606,7 +598,7 @@ Since the scale is voidable, we can pass it void:
 
 ----
 (:temperature 96 F)    ⇒ {degrees:96, scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283}
+(:temperature 283 [:]) ⇒ {degrees:283}
 ----
 
 Note that the result’s `scale` field has disappeared because no value was provided.  It would be
@@ -616,12 +608,12 @@ detect void:
 [{nrm}]
 ----
 (*macro* temperature
-  [(degrees *decimal*), (scale *symbol?*)]
+  (*decimal*::degrees *symbol*::scale)
   {degrees: degrees, scale: (*if_void* scale (*literal* K) scale)})
 ----
 ----
 (:temperature 96 F)    ⇒ {degrees:96,  scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283, scale:K}
+(:temperature 283 [:]) ⇒ {degrees:283, scale:K}
 ----
 
 The `*if_void*` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
@@ -649,7 +641,7 @@ just last place.
 [{nrm}]
 ----
 (*macro* prices
-  [(amount *number{asterisk}*), (currency *symbol*)]
+  (*number*::amount{asterisk} *symbol*::currency)
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -660,9 +652,9 @@ expression that produces the desired values:
 
 [{nrm}]
 ----
-(:prices (:) JPY)               ⇒ _void_
-(:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
-(:prices (:values 10 9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices [:] JPY)         ⇒ _void_
+(:prices 54 CAD)          ⇒ {amount:54, currency:CAD}
+(:prices [:10, 9.99] GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
 
@@ -674,16 +666,16 @@ the resulting stream must produce at least one value.  To continue using our `pr
 [{nrm}]
 ----
 (*macro* prices
-  [(amount *number+*), (currency *symbol*)]
+  (*number*::amount+ *symbol*::currency)
   (*for* [(amt amount)]
     (price amt currency)))
 ----
 
 [{nrm}]
 ----
-(:prices (:) JPY) ⇒ _**error**: at least one value expected for + parameter_
-(:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
-(:prices (:values 10 9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices [:] JPY)         ⇒ _**error**: at least one value expected for + parameter_
+(:prices 54 CAD)          ⇒ {amount:54, currency:CAD}
+(:prices [:10, 9.99] GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
 A macro's final parameter can use a variant of rest parameters with one-or-more cardinality,
@@ -691,7 +683,7 @@ denoted by the `*\...+*` modifier:
 
 [{nrm}]
 ----
-(*macro* thanks [(names *text\...+*)]
+(*macro* thanks (*text*::names\...+)
   (make_string "Thank you to my Patreon supporters:\n"
     (for [(n names)]
       (make_string "  * " n "\n"))))
@@ -722,8 +714,8 @@ applicable sub-expressions.  This is denoted by wrapping the parameter's type in
 [{nrm}]
 ----
 (*macro* prices
-  [(amount [*number*]),      // <1>
-   (currency *symbol*)]
+  ([*number*::amount]      // <1>
+   *symbol*::currency)
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -734,9 +726,9 @@ This is referred to as a _grouped parameter_, and at invocation it requires a li
 _argument group_:
 
 ----
-(:prices [1, 2, 3] GBP) ⇒ {amount:1, currency:GBP}
-                          {amount:2, currency:GBP}
-                          {amount:3, currency:GBP}
+(:prices [:1, 2, 3] GBP) ⇒ {amount:1, currency:GBP}
+                           {amount:2, currency:GBP}
+                           {amount:3, currency:GBP}
 ----
 
 Within the group, the invocation can have any number of arguments, including macro invocations.
@@ -745,31 +737,31 @@ single stream, and the expander verifies that each value on that stream is accep
 parameter’s declared type.
 
 ----
-(:prices [1, (:values 2 3), 4] GBP) ⇒ {amount:1, currency:GBP}
-                                      {amount:2, currency:GBP}
-                                      {amount:3, currency:GBP}
-                                      {amount:4, currency:GBP}
+(:prices [:1, [:2, 3], 4] GBP) ⇒ {amount:1, currency:GBP}
+                                 {amount:2, currency:GBP}
+                                 {amount:3, currency:GBP}
+                                 {amount:4, currency:GBP}
 ----
 
 [IMPORTANT]
 ====
-To avoid ambiguity, the delimiter is required even for singleton values.  Consider this
-macro:
 
 [{nrm}]
 ----
-(*macro* ouch [(stuff [*list*])] …)
+(*macro* ouch ([*list*::stuff]) …)
 ----
 
-Without this rule, the E-expression `(:ouch [])` would be ambiguous whether the parameter was
-intended to be void or a singleton empty-list value.
+The E-expression `(:ouch [])` has a singleton empty-list value as its argument.
+
+The E-expression `(:ouch [:])` has an empty stream (or _void_) as its argument.
+
 ====
 
 Grouping says whether multiple _arguments_ can be provided, while cardinality describes the
 number of _values_ those argument(s) must produce.
-The parameter declaration `(amount [*number*])` makes grouping explicit, with a default
+The parameter declaration `[*number*::amount]` makes grouping explicit, with a default
 cardinality of zero-or-more.
-The declaration `(amount *[number]+*)` is also valid,
+The declaration `[*number*::amount]+` is also valid,
 indicating that the sequence of arguments must produce at least one value.
 
 TIP: Grouped parameters cannot use the `*?*` and `*!*` modifiers; there's no point in
@@ -782,8 +774,8 @@ of values, but they are not interchangeable:
 
 [{nrm}]
 ----
-(:prices (:values 10 9.99 12.) GBP) ⇒ _**error**: delimiting list or sexp expected_
-(:prices (:) GBP)                   ⇒ _**error**: delimiting list or sexp expected_
+(:prices [:10, 9.99, 12.] GBP) ⇒ _**error**: delimiting list or sexp expected_
+(:prices [:] GBP)              ⇒ _**error**: delimiting list or sexp expected_
 ----
 
 That’s because the binary representation of these parameters uses a tagless format for these
@@ -793,7 +785,7 @@ type allows (see <<tagless>>), you can call a macro inside the delimiter, with n
 generality:
 
 ----
-(:prices [(:values 10)] GBP) ⇒ {amount:10, currency:GBP}
+(:prices [[:10]] GBP) ⇒ {amount:10, currency:GBP}
 ----
 
 
@@ -807,7 +799,7 @@ parameters, with or without groups:
 [{nrm}]
 ----
 (*macro* optionals
-  [(a [*any*]), (b *any?*), (c *any!*), (d [*any*]), (e *any?*), (f *any\...*)]
+  ([*any*::a] *any*::b *any*::c [*any*::d] *any*::e *any*::d\...)
   (make_list a b c d e f))
 ----
 
@@ -815,14 +807,14 @@ Since `d`, `e`, and `f` are all voidable, they can be omitted by invokers.  But 
 `a` and `b` must always be present, at least as an empty group:
 
 ----
-(:optionals [] (:) "value for c") ⇒ ["value for c"]
+(:optionals [] [:] "value for c") ⇒ ["value for c"]
 ----
 
 Now `c` receives the symbol `for_c` while the other parameters are all void.  If we want to provide
 just `e`, then we must also provide a group for `d`:
 
 ----
-(:optionals [] (:) "value for c" [] "value for e")
+(:optionals [] [:] "value for c" [] "value for e")
   ⇒ ["value for c", "value for e"]
 ----
 
@@ -871,7 +863,7 @@ To define a tagless parameter, just declare one of the primitive types:
 [{nrm}]
 ----
 (*macro* point
-  [(x *var_int*), (y *var_int*)]
+  (*var_int*::x *var_int*::y)
   {x: x, y: y})
 ----
 ----
@@ -888,7 +880,7 @@ arguments cannot be expressed using macros, like we’ve done before:
 ----
 (:point null.int 17)   ⇒ _**error**: primitive var_int does not accept nulls_
 (:point a::3 17)       ⇒ _**error**: primitive var_int does not accept annotations_
-(:point (:values 1) 2) ⇒ _**error**: cannot use macro for a primitive argument_
+(:point [:1] 2)        ⇒ _**error**: cannot use macro for a primitive argument_
 ----
 
 While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
@@ -905,7 +897,7 @@ overhead.
 [{nrm}]
 ----
 (*macro* byte_array
-  [(bytes *uint8\...*)]
+  (*uint8*::bytes\...)
   [bytes])
 ----
 
@@ -951,7 +943,7 @@ can go is `*struct*`, and things aren’t really any better:
 
 [{nrm}]
 ----
-(*macro* scatterplot [(points *struct\...*)]
+(*macro* scatterplot (*struct*::points\...)
   [points])
 ----
 ----
@@ -970,7 +962,7 @@ pseudo-type:
 
 [{nrm}]
 ----
-(*macro* scatterplot [(points point**\...**)]  // <1>
+(*macro* scatterplot (**point**::points**\...**)  // <1>
   [points])
 ----
 
@@ -1000,7 +992,7 @@ each macro instance:
 [{nrm}]
 ----
 (*macro* scatterplot
-  [(points [point] *+*), (x_label *string*), (y_label *string*)]
+  ([*point*::points] *string*::x_label *string*::y_label)
   { points: [points], x_label: x_label, y_label: y_label })
 ----
 ----
