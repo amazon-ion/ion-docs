@@ -838,9 +838,9 @@ Spec Issues: 1.0
     // Collate, validate the arguments based on the Macro's signature, then
     // invoke the macro
     (fn Macro_invoke ((m Macro) (ts 'STree*') (r Environment) -> 'Value*')
-      (let [(sig (Macro_signature m))]
-        (apply (Macro_xform m)
-          (collateArgs (Signature_params sig) (Signature_rest sig) r ts))))
+      (let [(f (Macro_xform     m)),
+            (s (Macro_signature m))]
+        (f (collateArgs (Signature_params s) (Signature_rest s) r ts))))
 
 
     //==========================================================================
@@ -1084,7 +1084,7 @@ Spec Issues: 1.0
                      macs)))
 
     (fn compile_template ((v Value) -> F)
-      (lambda () (seq 'Value*' v)))
+      (lambda (args) (seq 'Value*' v)))
 
 
     //==========================================================================
@@ -1107,42 +1107,42 @@ Spec Issues: 1.0
           (export "values"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (rest)
-              rest))
+            (lambda (args)
+              (ith args 0)))
           (export "make_string"
             (seq 'ParamSpec*')
             ('rest...' "content" ANY)                     // TODO should be TEXT
-            (lambda (content /* Value* */)
+            (lambda (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
-                  (lift (appendText content) String Content)))))
+                  (lift (appendText (ith args 0)) String Content)))))
           (export "make_symbol"
             (seq 'ParamSpec*')
             ('rest...' "content" ANY)                     // TODO should be TEXT
-            (lambda (content /* Value* */)
+            (lambda (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
-                  (lift (appendText content) SymTok Symbol Content)))))
+                  (lift (appendText (ith args 0)) SymTok Symbol Content)))))
           (export "make_list"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (rest)
+            (lambda (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
-                  (lift_to Content (lift_to List rest))))))
+                  (lift_to Content (lift_to List (ith args 0)))))))
           (export "make_sexp"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (rest)
+            (lambda (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
-                  (lift_to Content (lift_to Sexp rest))))))
+                  (lift_to Content (lift_to Sexp (ith args 0)))))))
           (export "annotate"
             (seq 'ParamSpec*'
               ('group*' "anns"  ANY)                      // TODO should be TEXT
               ('param!' "value" ANY))
             (opt 'RestSpec?')
-            (lambda (vs1 vs2)
+            (lambda (args)
               (let [(ts (map 'SymTok*'
                             (lambda (v) // Value -> SymTok
                               (let [(c (Value_content v))]
@@ -1155,11 +1155,11 @@ Spec Issues: 1.0
                                       (lift (lower c String Unicode) SymTok)
                                       (wrong ":$ion:annotate doesn't accept null.string"))
                                     (wrong "Not a text value")))))
-                            vs1))]
+                            (ith args 0)))]
                 (seq 'Value*'
                   (tuple Value
-                    (seq_append ts (Value_annots (seq_head vs2)))
-                    (Value_content (seq_head vs2)))))))
+                    (seq_append ts (Value_annots (seq_head (ith args 1))))
+                    (Value_content (seq_head (ith args 1))))))))
           /* ... */)))
 
 
