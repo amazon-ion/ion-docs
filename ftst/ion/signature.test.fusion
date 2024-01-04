@@ -9,13 +9,42 @@
 )
 
 
-(let [(s (compile_Signature (expand1 (quote_top ()))))]
-  (check_true (seq_is_empty (Signature_params s)))
-  (check_false (opt_is_present (Signature_rest s))))
 
-(let [(s (compile_Signature (expand1 (quote_top (v)))))]
-  (check_same 1 (seq_length (Signature_params s)))
-  (check_false (opt_is_present (Signature_rest s))))
+(define_check (check_Cardinality e a)
+  (check_same (subdomain e) (subdomain a))
+  (if (element_of e OptCardinality)
+    (check_same (lower e OptCardinality) (lower a OptCardinality))
+    (check_same (lower e SeqCardinality) (lower a SeqCardinality))))
+
+(define_check (check_SimpleShape e a)
+  (check_same        (SimpleShape_type e) (SimpleShape_type a))
+  (check_Cardinality (SimpleShape_card e) (SimpleShape_card a)))
+
+(define_check (check_ParamSpec e a)
+  (check_eqv (eject (ParamSpec_name e)) (eject (ParamSpec_name a)))
+  (let [(e_shape (ParamSpec_shape e)),
+        (a_shape (ParamSpec_shape a))]
+    (check_same (subdomain e_shape) (subdomain a_shape))
+    (if (element_of e_shape SimpleShape)
+      (check_SimpleShape (lower e_shape SimpleShape) (lower a_shape SimpleShape))
+      (fail "testing groups not implemented"))))
+
+(define_check (check_Signature params rest data)
+  (let [(s (compile_Signature (expand1 (sexp data))))]
+    (check_same (size params) (seq_length (Signature_params s)))
+    (for [(e params), (a (seq_to_sexp (Signature_params s)))]
+      (check_ParamSpec e a))
+    (if rest
+      (fail "testing rest not implemented")
+      (check_false (opt_is_present (Signature_rest s))))))
+
+
+(check_Signature [] null
+  (quote ()))
+(check_Signature [('param!' "v" ANY)] null
+  (quote (v)))
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] null
+  (quote (v w)))
 
 
 "SUCCESS (signature.test)"

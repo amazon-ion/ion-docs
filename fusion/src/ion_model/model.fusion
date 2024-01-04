@@ -38,6 +38,7 @@ Features:
     * I'm not sure the duplicate filter achieves anything; the same module can
       still appear under different names, with no difference in outcome.
 * [MAC-ID] Macro identity and proper ambiguity detection
+* [VALID-NAME] Validate module, macro, and parameter names.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
     Isn't (:values V) == V ?
@@ -1069,12 +1070,17 @@ Spec Issues: 1.0
     (fn compile_Signature_params ((ps 'Value*') -> Signature)
       (if (seq_is_empty ps)
         (tuple Signature (seq 'ParamSpec*') NO_REST)
-        (tuple Signature (seq 'ParamSpec*'
-                           ('param!' (compile_paramName (seq_head ps)) ANY))
-                         NO_REST)))
+        (let [(s (compile_Signature_params (seq_tail ps)))]
+          (tuple Signature
+            (seq_prepend (compile_paramSpec (seq_head ps)) (Signature_params s))
+            (Signature_rest s)))))
+
+
+    (fn compile_paramSpec ((v Value) -> ParamSpec)
+      ('param!' (compile_paramName v) ANY))
 
     (fn compile_paramName ((v Value) -> Unicode)
-      // TODO typecheck
+      // TODO [VALID-NAME]
       (lower (Value_content v) Symbol SymTok Unicode))
 
 

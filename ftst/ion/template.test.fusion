@@ -59,4 +59,38 @@
            ('#$:one_param' 1 2)))
 
 
+// Multiple parameters
+
+(check_expansion
+  (quote_top a "d")
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro first  (v w) v)
+                                 (macro second (v w) w)))
+                             (macro_table M))
+             ('#$:first'  a "b")
+             ('#$:second' c "d")))
+
+(check_eval_fail "Too few arguments"
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro first (v w) v)))
+                             (macro_table M))
+             ('#$:first')))
+
+(check_eval_fail "Too few arguments"
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro first (v w) v)))
+                             (macro_table M))
+             ('#$:first' 1)))
+
+(check_eval_fail "Too many arguments"
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro first (v w) v)))
+                             (macro_table M))
+             ('#$:first' 1 2 3)))
+
+
 "SUCCESS (template.test)"
