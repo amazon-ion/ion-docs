@@ -829,7 +829,7 @@ Spec Issues: 1.0
               (wrong "Too few arguments"))
             // We have both a param and more arguments
             (let [(t  (seq_head ts)),
-                  (is (collateArgs (seq_tail ps) rest r (seq_tail ts) ))]
+                  (is (collateArgs (seq_tail ps) rest r (seq_tail ts)))]
               (if (element_of (ParamSpec_shape p) GroupShape)
                 (if (and (element_of t SValue)  // not an Eexp
                          (element_of (SValue_content (lower t SValue)) SList))

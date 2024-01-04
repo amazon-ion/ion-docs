@@ -193,6 +193,7 @@
 
 // TODO test addresses when there's multiple modules.
 // TODO test out-of-bounds macro address
+// TODO test Eexp invokes macro defined but not installed
 
 
 "SUCCESS (encoding.test)"

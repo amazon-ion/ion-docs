@@ -9,7 +9,7 @@
 )
 
 
-// Literals of various types
+// Contant macros; Literals of various types
 
 (check_expansion
   (quote_top "string" null.string a::"string" b::c::null.string)
@@ -24,8 +24,13 @@
 
 // TODO null bool int float decimal timestap blob clob
 
+(check_eval_fail "Too many arguments"
+  (quote11 $ion_encoding::((module M (macro_table (macro no_param () "")))
+                           (macro_table M))
+           ('#$:no_param' oops)))
 
-// Simple parameter references
+
+// Single-parameter macros; variable references
 
 (check_expansion
   (quote_top 9983)
@@ -40,9 +45,18 @@
                                (macro_table
                                  (macro val (v) x)))
                              (macro_table M))
+  // TODO Remove the macro invocation; the above should fail at compile time.
              ('#$:val' null)))
 
-// TODO test arity mismatch
+(check_eval_fail "Too few arguments"
+  (quote11 $ion_encoding::((module M (macro_table (macro one_param (v) "")))
+                           (macro_table M))
+           ('#$:one_param')))
+
+(check_eval_fail "Too many arguments"
+  (quote11 $ion_encoding::((module M (macro_table (macro one_param (v) "")))
+                           (macro_table M))
+           ('#$:one_param' 1 2)))
 
 
 "SUCCESS (template.test)"
