@@ -1,0 +1,48 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+// Literals of various types
+
+(check_expansion
+  (quote_top "string" null.string a::"string" b::c::null.string)
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro str          () "string")
+                                 (macro str_null     () null.string)
+                                 (macro str_ann      () a::"string")
+                                 (macro str_ann_null () b::c::null.string)))
+                             (macro_table M))
+             ('#$:str') ('#$:str_null') ('#$:str_ann') ('#$:str_ann_null')))
+
+// TODO null bool int float decimal timestap blob clob
+
+
+// Simple parameter references
+
+(check_expansion
+  (quote_top 9983)
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro val (v) v)))
+                             (macro_table M))
+             ('#$:val' 9983)))
+
+(check_eval_fail "Unbound variable: x"
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro val (v) x)))
+                             (macro_table M))
+             ('#$:val' null)))
+
+// TODO test arity mismatch
+
+
+"SUCCESS (template.test)"

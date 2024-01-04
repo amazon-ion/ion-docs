@@ -195,13 +195,4 @@
 // TODO test out-of-bounds macro address
 
 
-// Trivial macro definitions
-(check_expansion
-  (quote_top "val")
-  (quote11   $ion_encoding::((module M
-                               (macro_table
-                                 (macro const () "val")))
-                             (macro_table M))
-             ('#$:const')))
-
 "SUCCESS (encoding.test)"

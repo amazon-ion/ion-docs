@@ -687,6 +687,13 @@ Spec Issues: 1.0
     (dom OptCardinality = (= ZERO_OR_ONE  EXACTLY_ONE))
     (dom SeqCardinality = (= ZERO_OR_MORE ONE_OR_MORE))
 
+    (fn Signature_vars ((s Signature) -> 'Unicode*')
+      (seq_append
+        (map 'Unicode*' ParamSpec_name (Signature_params s))
+        (if (opt_is_present (Signature_rest s))
+          (seq 'Unicode*' (opt_value (Signature_rest s)))
+          (seq 'Unicode*'))))
+
 
     (fn is_voidable ((p ParamSpec) -> B)
       (let [(shape (ParamSpec_shape p))]
@@ -1074,17 +1081,65 @@ Spec Issues: 1.0
     //==========================================================================
     // Macro definition compilation
 
+    (dom IEnv = (-> Unicode 'Value*'))
+    (dom Interpreter = (-> IEnv 'Value*'))
+
+
     (fn compile_macro_defn ((vs   'Value*')
                             (mods ModuleMap)
                             (macs 'ExportedMacro*') -> 'ExportedMacro*')
-      (let [(name  (Value_symtext (ith vs 0))),   // TODO validate macro name
-            (sig   (compile_Signature (ith vs 1))),
-            (xform (compile_template (ith vs 2)))]
-        (seq_prepend (tuple ExportedMacro (opt 'Unicode?' name) (tuple Macro sig xform))
-                     macs)))
+      // TODO arity check
+      (let [(name  (Value_symtext (ith vs 0))),   // TODO [VALID-NAME]
+            (sig   (compile_Signature (ith vs 1)))]
+        (seq_prepend
+          (tuple ExportedMacro (opt 'Unicode?' name)
+            (tuple Macro sig (compile_xform (ith vs 2) sig)))
+          macs)))
 
-    (fn compile_template ((v Value) -> F)
-      (lambda (args) (seq 'Value*' v)))
+    (fn compile_xform ((v Value) (s Signature) -> F)
+      // These functions are invoked after arity checking and grouping, so we
+      // can assume the correct number of args (per the Signature) are given.
+      (let [(i (interp_template v (Signature_vars s)))]
+        (lambda (args)
+          (let [(e ('IEnv_extend*' emptyIEnv (Signature_vars s)  args))]
+            (i e)))))
+
+    // We assume all parameter names are unique
+
+    (fn emptyIEnv IEnv (u)
+      (wrong "Unbound variable: " u))
+
+    (fn IEnv_extend ((e IEnv) (u Unicode) (v 'Value*') -> IEnv)
+      (mk_fn IEnv (u1)
+        (if (U_EQ u u1) v (e u1))))
+
+    (fn 'IEnv_extend*' ((e IEnv) (us 'Unicode*') (vs 'Value**') -> IEnv)
+      (if (seq_is_empty us)
+        e
+        (IEnv_extend ('IEnv_extend*' e (seq_tail us) (seq_tail vs))
+          (seq_head us) (seq_head vs))))
+
+
+
+    (fn interp_template ((v Value) (scope 'Unicode*') -> Interpreter)
+      // These functions are invoked after arity checking and grouping applied.
+      // We can assume the correct number of groups (per the Signature) are given.
+      (if (element_of (Value_content v) Symbol)
+        (interp_ref v)
+        (if (element_of (Value_content v) String)
+          (interp_literal v)
+          (wrong "Unsupported template form: " v))))
+
+
+    (fn interp_literal ((v Value) -> Interpreter)
+      (mk_fn Interpreter (env)
+        (seq 'Value*' v)))
+
+    (fn interp_ref ((v Value) -> Interpreter)
+      (let [(u (Value_symtext v))]  // Rejects $0, null, unknown
+        // TODO statically ensure symbol is bound
+        (mk_fn Interpreter (env)
+          (env u))))
 
 
     //==========================================================================
