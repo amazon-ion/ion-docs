@@ -1158,9 +1158,13 @@ Spec Issues: 1.0
       // We can assume the correct number of groups (per the Signature) are given.
       (if (element_of (Value_content v) Symbol)
         (interp_ref v)
-        (if (element_of (Value_content v) String)
-          (interp_literal v)
-          (wrong "Unsupported template form: " v))))
+        (if (element_of (Value_content v) List)
+          (wrong "List quasi-literals not implemented")
+          (if (element_of (Value_content v) Struct)
+            (wrong "Struct quasi-literals not implemented")
+            (if (element_of (Value_content v) Sexp)
+              (wrong "Sexp forms not implemented")
+              (interp_literal v))))))
 
 
     (fn interp_literal ((v Value) -> Interpreter)
