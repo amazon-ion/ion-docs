@@ -73,10 +73,16 @@ A check error is raised if any step fails type-checking.
 
 
   (define_check (check_bottom message v)
-    "Check that `v` is a bottom value with the given `message`."
+    '''
+Check that `v` is a bottom value with the given `message`.
+If the `message` ends with `":"` then it is treated as an expected prefix of
+`v`'s message.
+    '''
     // TODO Accept a Bottom as expected value, comparing messages.
     (check_pred is_bottom v)
-    (check_eqv message (bottom_message v)))
+    (unless (and (string_ends_with message ":")
+                 (string_starts_with (bottom_message v) message))
+      (check_eqv message (bottom_message v))))
 
   (define_check (check_not_bottom v)
     "Check that `v` is not a bottom value."

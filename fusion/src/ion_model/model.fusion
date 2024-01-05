@@ -1077,7 +1077,16 @@ Spec Issues: 1.0
 
 
     (fn compile_paramSpec ((v Value) -> ParamSpec)
-      ('param!' (compile_paramName v) ANY))
+      (if (element_of (Value_content v) Symbol)
+        ('param!' (compile_paramName v) ANY)
+        (let [(vs (lower (Value_content v) Sexp 'Value*'))]
+          (compile_paramShape (seq_tail vs) (compile_paramName (seq_head vs))))))
+
+    (fn compile_paramShape ((vs 'Value*') (u Unicode) -> ParamSpec)
+      // TODO type and cardinality
+      (if (seq_is_empty vs)
+        ('param!' u ANY)
+        (wrong "Unexpected elements in param-spec: " vs)))
 
     (fn compile_paramName ((v Value) -> Unicode)
       // TODO [VALID-NAME]
