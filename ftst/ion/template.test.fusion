@@ -130,4 +130,22 @@
   (quote11 $ion_encoding::((module M (macro_table (macro vals ((v ...) w) ""))))))
 
 
+// List quasi-literals
+
+(check_expansion
+  (quote_top c0::[] [1] [1, 2] a1::[1, a, 2]
+             [1, [a], 2, 3] [1, [[a]], 2, r1, r2, 3])
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro c0  ()         c0::[])
+                                 (macro c1  ()         [1])
+                                 (macro c2  ()         [1, 2])
+                                 (macro a1  (v)        a1::[1, v, 2])
+                                 (macro a1r (v (r...)) [1, [v], 2, r, 3])))
+                             (macro_table M))
+             ('#$:c0') ('#$:c1') ('#$:c2')
+             ('#$:a1' a)
+             ('#$:a1r' a) ('#$:a1r' [a] r1 r2)))
+
+
 "SUCCESS (template.test)"

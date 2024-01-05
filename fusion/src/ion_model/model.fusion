@@ -1159,7 +1159,7 @@ Spec Issues: 1.0
       (if (element_of (Value_content v) Symbol)
         (interp_ref v)
         (if (element_of (Value_content v) List)
-          (wrong "List quasi-literals not implemented")
+          (interp_list v scope)
           (if (element_of (Value_content v) Struct)
             (wrong "Struct quasi-literals not implemented")
             (if (element_of (Value_content v) Sexp)
@@ -1176,6 +1176,22 @@ Spec Issues: 1.0
         // TODO statically ensure symbol is bound
         (mk_fn Interpreter (env)
           (env u))))
+
+
+    (fn 'interp_template*' ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+      (if (seq_is_empty vs)
+        (mk_fn Interpreter (env) (seq 'Value*'))
+        (let [(i0 (interp_template    (seq_head vs) scope)),
+              (i1 ('interp_template*' (seq_tail vs) scope))]
+          (mk_fn Interpreter (env)
+            (seq_append (i0 env) (i1 env))))))
+
+    (fn interp_list ((v Value) (scope 'Unicode*') -> Interpreter)
+      (let [(us (Value_annots v)),
+            (i ('interp_template*' (lower (Value_content v) List 'Value*') scope))]
+        (mk_fn Interpreter (env)
+          (seq 'Value*' (tuple Value us (lift (i env) List Content))))))
+
 
 
     //==========================================================================
