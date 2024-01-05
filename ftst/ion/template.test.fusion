@@ -33,12 +33,10 @@
 // Single-parameter macros; variable references
 
 (check_expansion
-  (quote_top 9983)
-  (quote11   $ion_encoding::((module M
-                               (macro_table
-                                 (macro val (v) v)))
+  (quote_top a b)
+  (quote11   $ion_encoding::((module M (macro_table (macro val (v) v)))
                              (macro_table M))
-             ('#$:val' 9983)))
+             ('#$:val' a) ('#$:val' b)))
 
 (check_eval_fail "Unbound variable: x"
   (quote11   $ion_encoding::((module M
@@ -103,6 +101,21 @@
 
 (check_eval_fail "Unexpected elements in param-spec:"
   (quote11 $ion_encoding::((module M (macro_table (macro vals ((v null)) ""))))))
+
+
+// Rest parameters
+
+(check_expansion
+  (quote_top a b 1 c 2 3 d)
+  (quote11   $ion_encoding::((module M
+                               (macro_table
+                                 (macro vals ((v ...)) v)))
+                             (macro_table M))
+             a ('#$:vals') b ('#$:vals' 1) c ('#$:vals' 2 3) d))
+
+// rest-spec is not in final position
+(check_eval_fail "Unexpected elements in param-spec:"
+  (quote11 $ion_encoding::((module M (macro_table (macro vals ((v ...) w) ""))))))
 
 
 "SUCCESS (template.test)"

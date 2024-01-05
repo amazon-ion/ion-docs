@@ -692,7 +692,7 @@ Spec Issues: 1.0
       (seq_append
         (map 'Unicode*' ParamSpec_name (Signature_params s))
         (if (opt_is_present (Signature_rest s))
-          (seq 'Unicode*' (opt_value (Signature_rest s)))
+          (seq 'Unicode*' (RestSpec_name (opt_value (Signature_rest s))))
           (seq 'Unicode*'))))
 
 
@@ -1070,11 +1070,23 @@ Spec Issues: 1.0
     (fn compile_Signature_params ((ps 'Value*') -> Signature)
       (if (seq_is_empty ps)
         (tuple Signature (seq 'ParamSpec*') NO_REST)
-        (let [(s (compile_Signature_params (seq_tail ps)))]
-          (tuple Signature
-            (seq_prepend (compile_paramSpec (seq_head ps)) (Signature_params s))
-            (Signature_rest s)))))
+        (if (seq_is_empty (seq_tail ps))
+          // Last entry, so it can be a rest-spec
+          (if (isRestSpec (seq_head ps))
+            (tuple Signature (seq 'ParamSpec*') (compile_restSpec (seq_head ps)))
+            (tuple Signature (seq 'ParamSpec*' (compile_paramSpec (seq_head ps))) NO_REST))
+          // ELSE there are >1 entries to handle, head cannot be rest-spec
+          (let [(s (compile_Signature_params (seq_tail ps)))]
+            (tuple Signature
+              (seq_prepend (compile_paramSpec (seq_head ps)) (Signature_params s))
+              (Signature_rest s))))))
 
+    (fn isRestSpec ((v Value) -> B)
+      (and (element_of (Value_content v) Sexp)
+        (let [(vs (lower (Value_content v) Sexp 'Value*'))]
+          (and (> (seq_length vs) 1)
+            (or (Value_is_symbol_matching (ith vs 1) "...")
+                (Value_is_symbol_matching (ith vs 1) "...+"))))))
 
     (fn compile_paramSpec ((v Value) -> ParamSpec)
       (if (element_of (Value_content v) Symbol)
@@ -1087,6 +1099,11 @@ Spec Issues: 1.0
       (if (seq_is_empty vs)
         ('param!' u ANY)
         (wrong "Unexpected elements in param-spec: " vs)))
+
+    (fn compile_restSpec ((v Value) -> 'RestSpec?')
+      // TODO type and cardinality; check arity of this form.
+      (let [(vs (lower (Value_content v) Sexp 'Value*'))]
+        ('rest...' (compile_paramName (ith vs 0)) ANY)))
 
     (fn compile_paramName ((v Value) -> Unicode)
       // TODO [VALID-NAME]
