@@ -50,4 +50,8 @@
   (fn forward ((a In) -> Out) OUT))
 
 
+(expect_syntax_error
+  (define_fn badspec ((is I*) -> I) 1))          // Malformed: 'I*' needs quotes
+
+
 "SUCCESS (function.test)"

@@ -10,7 +10,7 @@ TODOs
 * [ACCESSORS] Auto-configure printer for tuple field accessors.
   * Requires a factory method, Model x Printer:super -> Printer
 * [SEQ-INJECT] (+1) `seq` should auto-inject arguments.
-* [BOTTOM-STACK] (+1) Bottoms should have a stack trace like test checks do.
+* [BOTTOM-STACK] (+3) Bottoms should have a stack trace like test checks do.
   * I wish I could override `#%app`!
 * [FOLD] Similar to map, `fold` would reduce boilerplate.
 * [TOP] TOP domain
@@ -27,7 +27,7 @@ TODOs
 * For union types `U = A+B`, autogenerate:
   * lifting function `inU()` -- part of [CTORS]
   * lowering functions `U->A()` and `U->B()`
-* Typecase to safely and completely lower a union domain value
+* [TYPECASE] (+1) Safely and completely lower a union domain value
   * Similar seqcase to traverse sequences
 * Ensure Union domains are fully disjoint, even when inlining nested Unions.
   * This makes indirect lowering unambiguous.
