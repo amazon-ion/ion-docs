@@ -244,18 +244,20 @@ Returns:
         (if (= "->" (syntax_unwrap entry_stx))
           (values arg_domains arg_names "->")  // Signal next round to grab codomain
           (if (is_identifier entry_stx)
-            (values (pair null arg_domains) // TODO use TOP domain
+            (values (pair null arg_domains) // TODO [TOP] instead of null domain
               (pair entry_stx arg_names)
               codomain)
             (if (is_pair (syntax_unwrap entry_stx))
-              (let [(name (syntax_get entry_stx 0)),
-                    (dom  (syntax_get entry_stx 1))]
-                // TODO typecheck name
-                // TODO typecheck dom
-                (values
-                  (pair dom  arg_domains)
-                  (pair name arg_names)
-                  codomain))
+              (if (= 2 (syntax_size entry_stx))
+                (let [(name (syntax_get entry_stx 0)),
+                      (dom  (syntax_get entry_stx 1))]
+                  // TODO typecheck name
+                  // TODO typecheck dom
+                  (values
+                    (pair dom  arg_domains)
+                    (pair name arg_names)
+                    codomain))
+                (wrong_syntax entry_stx "Malformed argument declaration"))
               (wrong_syntax entry_stx "Expected identifier, sexp, or ->"))))
         // Time to find the codomain
         // TODO assert codomain === "->"
