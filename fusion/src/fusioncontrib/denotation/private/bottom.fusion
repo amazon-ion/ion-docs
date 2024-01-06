@@ -1,10 +1,12 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module bottom "/fusion"
 
   (require
     "/fusion/exception"
     "/fusion/experimental/syntax"
+    "/fusion/list"
+    "/fusion/private/continuation"
     "/fusion/private/record"
     "/fusioncontrib/denotation/private/base"
     "/fusioncontrib/denotation/private/domain"
@@ -14,10 +16,26 @@
 
   (provide
     bottom_message
+    bottom_stack
     define_strict
+    frame_line
+    frame_column
+    frame_expr
     is_bottom
+    make_frame
+    stack_mark_key
     wrong
   )
+
+
+  (define stack_mark_key
+    // This should be a continuation-mark-key, not a parameter.
+    (make_parameter null))
+
+  (record frame (line column expr))
+
+  (define (make_frame stx)
+    (frame (syntax_line stx) (syntax_column stx) (syntax_to_datum stx)))
 
 
   (define BottomDomain
@@ -29,7 +47,7 @@
       "The error domain"
       null))
 
-  (define_values ('record:bottom' bottom_ctor is_bottom ignored_getter)
+  (define_values ('record:bottom' bottom_ctor is_bottom bottom_element)
     [
       "private record type",
       "private Bottom constructor",
@@ -40,15 +58,21 @@ Determines whether `v` is a bottom value, which denotes an error condition.
     ''',
       "private field accessor",
     ]
-    (make_record_type (quote 'record:bottom') 'record:domain_value' 1 0))
+    (make_record_type (quote 'record:bottom') 'record:domain_value' 2 0))
     // The inherited domain_value_rep field holds the Bottom message.
-    // The the one new field in this subtype is the procedure to apply.
+    // The added fields in this subtype are:
+    //  * the procedure to apply
+    //  * a sexp holding the stack frames at the time of creation
 
 
   (define (bottom_message v)
     (unless (is_bottom v)
       (raise_argument_error "bottom_message" "bottom value" 0 v))
     (domain_value_rep v))
+
+  (define (bottom_stack v)
+    (bottom_element v 1))
+
 
   (define wrong
     '''
@@ -65,7 +89,9 @@ The result's message is constructed as per `display_to_string`.
                      (map (|m| (if (is_base_domain_value m) (eject m) m))
                           msgs))
                    // Here's the record-proc implementation: return ourself
-                   (lambda args bottom_val)))]
+                   (lambda args bottom_val)
+                   // PRIVATE API!
+                   (current_continuation_mark_sexp stack_mark_key)))]
         bottom_val)))
 
 

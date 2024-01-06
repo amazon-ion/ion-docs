@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module function "/fusion"
 
@@ -154,17 +154,18 @@ The `domain` must be a func_domain, the `impl` a Fusion procedure.
     (lets [(where (or (desyntax name)
                       (string_append "local " (or (domain_name domain) "function")))),
            (applier (lambda rest
-                      (lets [(in_doms (apply sexp (func_domain_inputs domain))),
-                             (args    (typecheck_args where in_doms rest 0))]
-                        // Strictness check
-                        (if (is_bottom args)
-                          args                         // Don't invoke the function w/ bottom.
-                          (let [(r (apply impl args)),
-                                (out_dom (func_domain_output domain))]
-                            // Bottom result will be returned as-is.
-                            (typecheck_arg out_dom r
-                              (|| (raise_result_error (string_append "result of " where)
-                                    (symbol_to_string (domain_name out_dom)) r))))))))]
+                      (parameterize [(stack_mark_key (make_frame code_stx))]
+                        (lets [(in_doms (apply sexp (func_domain_inputs domain))),
+                               (args    (typecheck_args where in_doms rest 0))]
+                          // Strictness check
+                          (if (is_bottom args)
+                            args                         // Don't invoke the function w/ bottom.
+                            (let [(r (apply impl args)),
+                                  (out_dom (func_domain_output domain))]
+                              // Bottom result will be returned as-is.
+                              (typecheck_arg out_dom r
+                                (|| (raise_result_error (string_append "result of " where)
+                                      (symbol_to_string (domain_name out_dom)) r)))))))))]
       (fn_ctor domain name applier arg_stxs code_stx)))
 
 
