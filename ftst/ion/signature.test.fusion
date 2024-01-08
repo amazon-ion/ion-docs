@@ -9,6 +9,10 @@
 )
 
 
+(define_fn 'param?' ((name Unicode) (type ParamType) -> ParamSpec)
+  (tuple ParamSpec name
+    (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality ZERO_OR_ONE)))))
+
 
 (define_check (check_SeqCardinality e a)
   (check_same e a))
@@ -88,6 +92,12 @@
   (quote [(v!)]))
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
   (quote [v, (w !)]))
+
+// Zero-or-one
+(check_Signature [('param?' "v" ANY)] NO_REST
+  (quote [(v?)]))
+(check_Signature [('param!' "v" ANY), ('param?' "w" ANY)] NO_REST
+  (quote [v, (w ?)]))
 
 
 // Rest parameters

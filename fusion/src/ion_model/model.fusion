@@ -1121,7 +1121,9 @@ Spec Issues: 1.0
         (finishParamSpec vs u t (lift EXACTLY_ONE Cardinality))
         (if (Value_is_symbol_matching (seq_head vs) "!")
           (finishParamSpec (seq_tail vs) u t (lift EXACTLY_ONE Cardinality))
-          (wrong "Unexpected element in param-spec: " (seq_head vs)))))
+          (if (Value_is_symbol_matching (seq_head vs) "?")
+            (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_ONE Cardinality))
+            (wrong "Unexpected element in param-spec: " (seq_head vs))))))
 
     (fn finishParamSpec ((vs 'Value*') (u Unicode) (t ParamType) (c Cardinality) -> ParamSpec)
       (if (seq_is_empty vs)
