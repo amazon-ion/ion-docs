@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -113,6 +113,16 @@
 
 (check_eval_fail "Unexpected elements in param-spec:"
   (quote11 $ion_encoding::((module M (macro_table (macro vals ((v null)) ""))))))
+
+
+// Cardinality checks
+
+(check_eval_fail "No value provided for parameter"
+  (quote11 $ion_encoding::((module M (macro_table (macro i (v) v))) (macro_table M))
+           ('#$:i' ('#$:values'))))
+(check_eval_fail "More than one value provided for parameter"
+  (quote11 $ion_encoding::((module M (macro_table (macro i (v) v))) (macro_table M))
+           ('#$:i' ('#$:values' 1 2))))
 
 
 // Rest parameters

@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module ion_semantic_model "/fusion"
   '''
@@ -839,9 +839,21 @@ Spec Issues: 1.0
                     // TODO Arity checking of expanded group
                     (seq_prepend ('expand_STree*' ts1 r) is))
                   (wrong "Expected grouping list"))
-                // TODO Arity checking of expanded arg
-                (seq_prepend (expand_STree t r) is)))))))
+                // Non-grouped argument expected
+                (let [(vs (expand_STree t r))]
+                  (seq_prepend (validateShape (lower (ParamSpec_shape p) SimpleShape) vs) is))))))))
 
+    (fn validateShape ((s SimpleShape) (vs 'Value*') -> 'Value*')
+      // TODO type
+      (let [(c (SimpleShape_card s))]
+        (if (element_of c OptCardinality)
+          (if (> (seq_length vs) 1)
+            (wrong "More than one value provided for parameter")
+            (if (and (EQ_Enum (lower c OptCardinality) EXACTLY_ONE)
+                     (EQ (seq_length vs) 0))
+              (wrong "No value provided for parameter")
+              vs))
+          (wrong "SeqCardinality not implemented"))))
 
     // Collate, validate the arguments based on the Macro's signature, then
     // invoke the macro
