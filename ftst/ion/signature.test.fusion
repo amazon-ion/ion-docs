@@ -77,6 +77,12 @@
   (quote [v, w]))
 
 
+// A param-spec can be a sexp.
+(check_Signature [('param!' "v" ANY)] NO_REST
+  (quote [(v)]))
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+  (quote [v, (w)]))
+
 
 // Rest parameters
 
