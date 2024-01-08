@@ -1108,15 +1108,27 @@ Spec Issues: 1.0
 
     (fn compile_paramSpec ((v Value) -> ParamSpec)
       (if (element_of (Value_content v) Symbol)
-        ('param!' (compile_paramName v) ANY)
+        (compile_paramType (seq 'Value*') (compile_paramName v))
         (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-          (compile_paramShape (seq_tail vs) (compile_paramName (seq_head vs))))))
+          (compile_paramType (seq_tail vs) (compile_paramName (seq_head vs))))))
 
-    (fn compile_paramShape ((vs 'Value*') (u Unicode) -> ParamSpec)
-      // TODO type and cardinality
+    (fn compile_paramType ((vs 'Value*') (u Unicode) -> ParamSpec)
+      // TODO type
+      (compile_cardinality vs u ANY))
+
+    (fn compile_cardinality ((vs 'Value*') (u Unicode) (t ParamType) -> ParamSpec)
       (if (seq_is_empty vs)
-        ('param!' u ANY)
-        (wrong "Unexpected elements in param-spec: " vs)))
+        (finishParamSpec vs u t (lift EXACTLY_ONE Cardinality))
+        (if (Value_is_symbol_matching (seq_head vs) "!")
+          (finishParamSpec (seq_tail vs) u t (lift EXACTLY_ONE Cardinality))
+          (wrong "Unexpected element in param-spec: " (seq_head vs)))))
+
+    (fn finishParamSpec ((vs 'Value*') (u Unicode) (t ParamType) (c Cardinality) -> ParamSpec)
+      (if (seq_is_empty vs)
+        (tuple ParamSpec u
+          (lift_to ParamShape (tuple SimpleShape t c)))
+        (wrong "Unexpected element in param-spec: " (seq_head vs))))
+
 
     (fn compile_restSpec ((v Value) -> 'RestSpec?')
       // TODO type and cardinality; check arity of this form.

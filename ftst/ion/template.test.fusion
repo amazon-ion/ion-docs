@@ -111,7 +111,7 @@
                              (macro_table M))
              ('#$:val' a)))
 
-(check_eval_fail "Unexpected elements in param-spec:"
+(check_eval_fail "Unexpected element in param-spec:"
   (quote11 $ion_encoding::((module M (macro_table (macro vals ((v null)) ""))))))
 
 
@@ -136,7 +136,7 @@
              a ('#$:vals') b ('#$:vals' 1) c ('#$:vals' 2 3) d))
 
 // rest-spec is not in final position
-(check_eval_fail "Unexpected elements in param-spec:"
+(check_eval_fail "Unexpected element in param-spec:"
   (quote11 $ion_encoding::((module M (macro_table (macro vals ((v ...) w) ""))))))
 
 

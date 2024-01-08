@@ -83,6 +83,12 @@
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
   (quote [v, (w)]))
 
+// Explicit exactly-one cardinality
+(check_Signature [('param!' "v" ANY)] NO_REST
+  (quote [(v!)]))
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+  (quote [v, (w !)]))
+
 
 // Rest parameters
 
