@@ -29,8 +29,8 @@ Features:
     * Unclear how to wire the exact/inexact match and max-id to later clauses.
       * Perhaps add LoadedModule to track that data, and return from ModuleMap.
     * Accept non-exact-match modules in `symbol_table`.
-  * Accept symbols in `symbol_table` inner lists.
   * `use` clauses at directive-level; more wiring challenges.
+  * Accept symbols in `symbol_table` inner lists.
   * Spec says various encoding-directive elements are unannotated, but the
     model doesn't enforce that.
   * Spec should ban the name $ion in load and import.
@@ -152,6 +152,12 @@ Spec Issues: 1.0
     (dom Sexp     = (+ 'Value*' DotNull))
     (dom Struct   = (+ 'Field*' DotNull))
     (dom Field    = (* SymTok::name Value::value))
+
+
+    (fn Value_seqElements ((v Value) -> 'Value*')
+      (if (element_of (Value_content v) Sexp)
+        (lower (Value_content v) Sexp 'Value*')
+        (lower (Value_content v) List 'Value*')))
 
 
     (fn Fields_get ((fs 'Field*') (u Unicode) -> 'Value*')
@@ -1076,8 +1082,8 @@ Spec Issues: 1.0
     //==========================================================================
     // Signature compilation
 
-    (fn compile_Signature ((sig Value) -> Signature)
-      (compile_Signature_params (lower (Value_content sig) Sexp 'Value*')))
+    (fn compile_Signature ((v Value) -> Signature)
+      (compile_Signature_params (Value_seqElements v)))
 
     (fn compile_Signature_params ((ps 'Value*') -> Signature)
       (if (seq_is_empty ps)

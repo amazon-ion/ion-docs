@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -60,12 +60,23 @@
 
 //==============================================================================
 
+// Defaulting of simple param-specs
+
 (check_Signature [] NO_REST
   (quote ()))
 (check_Signature [('param!' "v" ANY)] NO_REST
   (quote (v)))
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
   (quote (v w)))
+
+(check_Signature [] NO_REST
+  (quote []))
+(check_Signature [('param!' "v" ANY)] NO_REST
+  (quote [v]))
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+  (quote [v, w]))
+
+
 
 // Rest parameters
 
