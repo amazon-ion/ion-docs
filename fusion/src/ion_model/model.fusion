@@ -1095,7 +1095,7 @@ Spec Issues: 1.0
         (if (seq_is_empty (seq_tail ps))
           // Last entry, so it can be a rest-spec
           (if (isRestSpec (seq_head ps))
-            (tuple Signature (seq 'ParamSpec*') (compile_restSpec (seq_head ps)))
+            (tuple Signature (seq 'ParamSpec*') (opt 'RestSpec?' (compile_restSpec (seq_head ps))))
             (tuple Signature (seq 'ParamSpec*' (compile_paramSpec (seq_head ps))) NO_REST))
           // ELSE there are >1 entries to handle, head cannot be rest-spec
           (let [(s (compile_Signature_params (seq_tail ps)))]
@@ -1140,10 +1140,25 @@ Spec Issues: 1.0
         (wrong "Unexpected element in param-spec: " (seq_head vs))))
 
 
-    (fn compile_restSpec ((v Value) -> 'RestSpec?')
-      // TODO type and cardinality; check arity of this form.
+    (fn compile_restSpec ((v Value) -> RestSpec)
       (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-        ('rest...' (compile_paramName (ith vs 0)) ANY)))
+        (compile_restType (seq_tail vs) (compile_paramName (seq_head vs)))))
+
+    (fn compile_restType ((vs 'Value*') (u Unicode) -> RestSpec)
+      // TODO type
+      (compile_restCard vs u ANY))
+
+    (fn compile_restCard ((vs 'Value*') (u Unicode) (t ParamType) -> RestSpec)
+      (if (Value_is_symbol_matching (seq_head vs) "...")
+        (finishRestSpec (seq_tail vs) u t ZERO_OR_MORE)
+        // TODO ...+
+        (wrong "Unexpected element in rest-spec: " (seq_head vs))))
+
+    (fn finishRestSpec ((vs 'Value*') (u Unicode) (t ParamType) (c SeqCardinality) -> RestSpec)
+      (if (seq_is_empty vs)
+        (tuple RestSpec u (tuple RestShape t c))
+        (wrong "Unexpected element in rest-spec: " (seq_head vs))))
+
 
     (fn compile_paramName ((v Value) -> Unicode)
       // TODO [VALID-NAME]

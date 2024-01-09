@@ -67,6 +67,10 @@
       (check_ParamSpec e a))
     (check_RestSpec rest (Signature_rest s))))
 
+(define_check (check_Signature_fail msg data)
+  (let [(s (compile_Signature (expand1 (sexp data))))]
+    (check_bottom msg s)))
+
 
 //==============================================================================
 
@@ -92,6 +96,10 @@
   (quote [(v)]))
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
   (quote [v, (w)]))
+
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v null))))
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v! int))))
+
 
 // Explicit exactly-one cardinality
 (check_Signature [('param!' "v" ANY)] NO_REST
@@ -123,6 +131,12 @@
   (quote ((r ...))))
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] ('rest...' "r" ANY)
   (quote (v w (r ...))))
+
+(check_Signature_fail "Unexpected element in rest-spec:" (quote ((v ... int))))
+
+// Attempted rest-spec is non-final position
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... ) w)))
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ...+) w)))
 
 
 "SUCCESS (signature.test)"
