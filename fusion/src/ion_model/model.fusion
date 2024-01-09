@@ -862,6 +862,7 @@ Spec Issues: 1.0
           (if (and (EQ_Enum (lower c SeqCardinality) ONE_OR_MORE)
                    (EQ (seq_length vs) 0))
             (wrong "No value provided for parameter")
+            // ZERO_OR_MORE is handled implicitly; it always passes.
             vs))))
 
     // Collate, validate the arguments based on the Macro's signature, then
@@ -1128,7 +1129,9 @@ Spec Issues: 1.0
             (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_ONE Cardinality))
             (if (Value_is_symbol_matching (seq_head vs) "+")
               (finishParamSpec (seq_tail vs) u t (lift ONE_OR_MORE Cardinality))
-              (wrong "Unexpected element in param-spec: " (seq_head vs)))))))
+              (if (Value_is_symbol_matching (seq_head vs) "*")
+                (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_MORE Cardinality))
+                (wrong "Unexpected element in param-spec: " (seq_head vs))))))))
 
     (fn finishParamSpec ((vs 'Value*') (u Unicode) (t ParamType) (c Cardinality) -> ParamSpec)
       (if (seq_is_empty vs)

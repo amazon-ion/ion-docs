@@ -184,6 +184,37 @@
            ('#$:m' 1 ('#$:values'))))
 
 
+// Zero-or-more cardinality
+
+(check_expansion
+  (quote_top a b 1 c d 2 e 3 4)
+  (quote11 $ion_encoding::((module M (macro_table (macro m [(v*)] v)))
+                           (macro_table M))
+           a ('#$:m')
+           b ('#$:m' 1)
+           c ('#$:m' ('#$:values'))
+           d ('#$:m' ('#$:values' 2))
+           e ('#$:m' ('#$:values' 3 4))))
+
+(check_expansion
+  (quote_top a [1] b [2, 3] c [4, 5, 6])
+  (quote11 $ion_encoding::((module M (macro_table (macro m [(v*), w] [v, w])))
+                           (macro_table M))
+           a ('#$:m' ('#$:values') 1)
+           b ('#$:m' ('#$:values' 2) 3)
+           c ('#$:m' ('#$:values' 4 5) 6)))
+
+(check_eval_fail "Too few arguments"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [(v*), w] [v, w])))
+                           (macro_table M))
+           ('#$:m' 1)))
+
+(check_eval_fail "No value provided for parameter" // for w
+  (quote11 $ion_encoding::((module M (macro_table (macro m [(v*), w] [v, w])))
+                           (macro_table M))
+           ('#$:m' 1 ('#$:values'))))
+
+
 // Rest parameters
 
 (check_expansion
