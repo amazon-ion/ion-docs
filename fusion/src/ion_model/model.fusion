@@ -822,8 +822,10 @@ Spec Issues: 1.0
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
           // We have a rest-parameter, so grab everything that remains.
-          // TODO ...+ arity
-          (seq 'Value**' ('expand_STree*' ts r))
+          (let [(vs ('expand_STree*' ts r)),
+                (t (RestShape_type (RestSpec_shape (opt_value rest)))),
+                (c (RestShape_card (RestSpec_shape (opt_value rest))))]
+            (seq 'Value**' (validateShape t (lift c Cardinality) vs)))
           (if (seq_is_empty ts)
             (seq 'Value**')                 // All done!
             (wrong "Too many arguments")))
@@ -846,24 +848,25 @@ Spec Issues: 1.0
                     (seq_prepend ('expand_STree*' ts1 r) is))
                   (wrong "Expected grouping list"))
                 // Non-grouped argument expected
-                (let [(vs (expand_STree t r))]
-                  (seq_prepend (validateShape (lower (ParamSpec_shape p) SimpleShape) vs) is))))))))
+                (let [(vs (expand_STree t r)),
+                      (t (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
+                      (c (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
+                  (seq_prepend (validateShape t c vs) is))))))))
 
-    (fn validateShape ((s SimpleShape) (vs 'Value*') -> 'Value*')
+    (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
       // TODO type
-      (let [(c (SimpleShape_card s))]
-        (if (element_of c OptCardinality)
-          (if (> (seq_length vs) 1)
-            (wrong "More than one value provided for parameter")
-            (if (and (EQ_Enum (lower c OptCardinality) EXACTLY_ONE)
-                     (EQ (seq_length vs) 0))
-              (wrong "No value provided for parameter")
-              vs))
-          (if (and (EQ_Enum (lower c SeqCardinality) ONE_OR_MORE)
+      (if (element_of c OptCardinality)
+        (if (> (seq_length vs) 1)
+          (wrong "More than one value provided for parameter")
+          (if (and (EQ_Enum (lower c OptCardinality) EXACTLY_ONE)
                    (EQ (seq_length vs) 0))
             (wrong "No value provided for parameter")
-            // ZERO_OR_MORE is handled implicitly; it always passes.
-            vs))))
+            vs))
+        (if (and (EQ_Enum (lower c SeqCardinality) ONE_OR_MORE)
+                 (EQ (seq_length vs) 0))
+          (wrong "No value provided for parameter")
+          // ZERO_OR_MORE is handled implicitly; it always passes.
+          vs)))
 
     // Collate, validate the arguments based on the Macro's signature, then
     // invoke the macro
@@ -1151,8 +1154,9 @@ Spec Issues: 1.0
     (fn compile_restCard ((vs 'Value*') (u Unicode) (t ParamType) -> RestSpec)
       (if (Value_is_symbol_matching (seq_head vs) "...")
         (finishRestSpec (seq_tail vs) u t ZERO_OR_MORE)
-        // TODO ...+
-        (wrong "Unexpected element in rest-spec: " (seq_head vs))))
+        (if (Value_is_symbol_matching (seq_head vs) "...+")
+          (finishRestSpec (seq_tail vs) u t ONE_OR_MORE)
+          (wrong "Unexpected element in rest-spec: " (seq_head vs)))))
 
     (fn finishRestSpec ((vs 'Value*') (u Unicode) (t ParamType) (c SeqCardinality) -> RestSpec)
       (if (seq_is_empty vs)

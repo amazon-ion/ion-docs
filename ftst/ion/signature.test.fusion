@@ -18,6 +18,8 @@
 (define_fn 'param*' ((name Unicode) (type ParamType) -> ParamSpec)
   (tuple ParamSpec name
     (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality ZERO_OR_MORE)))))
+(define_fn 'rest...+' ((name Unicode) (type ParamType) -> 'RestSpec?')
+  (opt 'RestSpec?' (tuple RestSpec name (tuple RestShape type ONE_OR_MORE))))
 
 
 (define_check (check_SeqCardinality e a)
@@ -132,7 +134,12 @@
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] ('rest...' "r" ANY)
   (quote (v w (r ...))))
 
-(check_Signature_fail "Unexpected element in rest-spec:" (quote ((v ... int))))
+(check_Signature [] ('rest...+' "r" ANY)
+  (quote ((r ...+))))
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] ('rest...+' "r" ANY)
+  (quote (v w (r ...+))))
+
+(check_Signature_fail "Unexpected element in rest-spec:" (quote ((v ... +))))
 
 // Attempted rest-spec is non-final position
 (check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... ) w)))

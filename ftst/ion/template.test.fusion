@@ -205,11 +205,27 @@
 // Rest parameters
 
 (check_expansion
-  (quote_top a b 1 c 2 3 d)
+  (quote_top a b 1 c 2 3)
   (quote11   $ion_encoding::((module M (macro_table (macro vals ((v ...)) v)))
                              (macro_table M))
-             a ('#$:vals') b ('#$:vals' 1) c ('#$:vals' 2 3) d))
+             a ('#$:vals')
+             b ('#$:vals' 1)
+             c ('#$:vals' 2 3)))
+(check_expansion
+  (quote_top b 1 c 2 3)
+  (quote11   $ion_encoding::((module M (macro_table (macro vals ((v ...+)) v)))
+                             (macro_table M))
+             b ('#$:vals' 1)
+             c ('#$:vals' 2 3)))
 
+(check_eval_fail "No value provided for parameter"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [(v...+)] v)))
+                           (macro_table M))
+           ('#$:m')))
+(check_eval_fail "No value provided for parameter"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [x, (v...+)] v)))
+                           (macro_table M))
+           ('#$:m' 1)))
 
 
 // List quasi-literals
