@@ -253,32 +253,16 @@
 
 // Special form: if_void
 
-(check_expansion
-  (quote_top false
-             true true false
-             true true false false
-             false false)
-  (quote11 $ion_encoding::((module M
-                             (macro_table (macro m [(v!)] (if_void v true false))
-                                          (macro n [(v?)] (if_void v true false))
-                                          (macro o [(v*)] (if_void v true false))
-                                          (macro p [(v+)] (if_void v true false))
-                                          ))
-                           (macro_table M))
-           ('#$:m' something)
-           ('#$:n') ('#$:n' ('#$:void')) ('#$:n' true)
-           ('#$:o') ('#$:o' ('#$:void')) ('#$:o' 1) ('#$:o' ('#$:values' 1 2 3))
-           ('#$:p' 1) ('#$:p' ('#$:values' 1 2 3))))
-
-(with_mactab ((macro m [(v!)] (if_void v true false)))
-  (document ('#$:m' something)) (produces false)
-  (document ('#$:m'))           (signals "Too few arguments"))
-
+(with_mactab ((macro m [(v...)]
+                (if_void v true false)))
+  (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
+  (produces true     false      false        false))
 
 // TODO Ensure that the unselected clause isn't evaluated.
 //  Needs a way to force an expansion-time error from the TDL.
 //  An invalid dynamic invocation like (make_string false) would work.
 
+// Try new testing forms; still awkward.
 (with_mactab ((macro m [] (if_void)))
   (document)
   (signals "Malformed if_void form"))
