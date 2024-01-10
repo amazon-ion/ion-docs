@@ -57,10 +57,7 @@
              ('#$:val' a) ('#$:val' b)))
 
 (check_eval_fail "Unbound variable: x"
-  (quote11   $ion_encoding::((module M (macro_table (macro val (v) x)))
-                             (macro_table M))
-  // TODO Remove the macro invocation; the above should fail at compile time.
-             ('#$:val' null)))
+  (quote11 $ion_encoding::((module M (macro_table (macro val (v) x))))))
 
 (check_eval_fail "Too few arguments"
   (quote11 $ion_encoding::((module M (macro_table (macro one_param (v) "")))

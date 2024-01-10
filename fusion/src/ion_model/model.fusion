@@ -1225,7 +1225,7 @@ Spec Issues: 1.0
       // These functions are invoked after arity checking and grouping applied.
       // We can assume the correct number of groups (per the Signature) are given.
       (if (element_of (Value_content v) Symbol)
-        (interp_ref v)
+        (interp_ref v scope)
         (if (element_of (Value_content v) List)
           (interp_list v scope)
           (if (element_of (Value_content v) Struct)
@@ -1239,11 +1239,14 @@ Spec Issues: 1.0
       (mk_fn Interpreter (env)
         (seq 'Value*' v)))
 
-    (fn interp_ref ((v Value) -> Interpreter)
+    (fn interp_ref ((v Value) (scope 'Unicode*') -> Interpreter)
       (let [(u (Value_symtext v))]  // Rejects $0, null, unknown
-        // TODO statically ensure symbol is bound
-        (mk_fn Interpreter (env)
-          (env u))))
+       (if (seq_is_empty scope)
+         (wrong "Unbound variable: " u)
+         (if (U_EQ (seq_head scope) u)
+           (mk_fn Interpreter (env)
+             (env u))
+           (interp_ref v (seq_tail scope))))))
 
 
     (fn 'interp_template*' ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
