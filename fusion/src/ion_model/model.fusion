@@ -1268,7 +1268,9 @@ Spec Issues: 1.0
     (fn interp_sexp ((v Value) (scope 'Unicode*') -> Interpreter)
       (if (isClause v "literal")
         (interpSF_literal (clauseBody v) scope)
-        (wrong "Malformed template: " v)))
+        (if (isClause v "if_void")
+          (interpSF_if_void (clauseBody v) scope)
+          (wrong "Malformed template: " v))))
 
 
     // Special forms
@@ -1277,6 +1279,16 @@ Spec Issues: 1.0
       (if (EQ (seq_length vs) 1)
         (mk_fn Interpreter (env) (seq 'Value*' (seq_head vs)))
         (wrong "Malformed literal clause")))
+
+    (fn interpSF_if_void ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+      (if (EQ (seq_length vs) 3)
+        (let [(is ('interp_template*' vs scope))]  // TODO [LET] strictness
+          (if (is_bottom is) is
+            (mk_fn Interpreter (env)
+              (if (seq_is_empty ((ith is 0) env))
+               ((ith is 1) env)
+                ((ith is 2) env)))))
+        (wrong "Malformed if_void form")))
 
 
     //==========================================================================
