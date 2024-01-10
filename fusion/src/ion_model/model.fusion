@@ -1231,7 +1231,7 @@ Spec Issues: 1.0
           (if (element_of (Value_content v) Struct)
             (wrong "Struct quasi-literals not implemented")
             (if (element_of (Value_content v) Sexp)
-              (wrong "Malformed template:" v)
+              (interp_sexp v scope)
               (interp_literal v))))))
 
 
@@ -1260,6 +1260,18 @@ Spec Issues: 1.0
         (mk_fn Interpreter (env)
           (seq 'Value*' (tuple Value us (lift (i env) List Content))))))
 
+    (fn interp_sexp ((v Value) (scope 'Unicode*') -> Interpreter)
+      (if (isClause v "literal")
+        (interpSF_literal (clauseBody v) scope)
+        (wrong "Malformed template: " v)))
+
+
+    // Special forms
+
+    (fn interpSF_literal ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+      (if (EQ (seq_length vs) 1)
+        (mk_fn Interpreter (env) (seq 'Value*' (seq_head vs)))
+        (wrong "Malformed literal clause")))
 
 
     //==========================================================================
