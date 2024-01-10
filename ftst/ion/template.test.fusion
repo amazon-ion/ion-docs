@@ -9,6 +9,12 @@
 )
 
 
+// Ensure that malformed templates are signaled when they are encountered,
+// not delayed until the module is installed or macro is invoked.
+(check_eval_fail "Malformed template:"
+  (quote11 $ion_encoding::((module M (macro_table (macro m () ()))))))
+
+
 // Contant macros; Literals of various types
 
 (check_expansion

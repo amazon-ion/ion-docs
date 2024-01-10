@@ -18,6 +18,7 @@ Terminology/Readability:
   * Should have a way to detect when a domain element is forgotten.
 
 Features:
+* Optional macro names; can streamline some tests
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
 * $ion_encoding
@@ -62,6 +63,8 @@ Cleanup:
 
 Spec Issues: 1.1
 ----------------
+* Spec doesn't describe how ungrouped tagless ZERO_OR_ONE is invoked without a
+  value in either Text Eexps or TDL.
 * Consider replacing `(retain *)` with just `(retain)`.  It eliminates some
   failure modes and reads nicely.  However, it may be surprisingly inconsistent
   compared to the non-empty behavior.
@@ -674,7 +677,9 @@ Spec Issues: 1.0
     //==========================================================================
     // Macros
 
-    (dom Macro = (* Signature::signature F::xform))
+    (dom Macro = (* Signature::signature Transform::xform))
+
+    (dom Transform = (-> 'Value**' 'Value*'))
 
     (dom Signature   = (* 'ParamSpec*'::params 'RestSpec?'::rest /* TODO ResultSpec */))
 
@@ -1191,9 +1196,13 @@ Spec Issues: 1.0
       // These functions are invoked after arity checking and grouping, so we
       // can assume the correct number of args (per the Signature) are given.
       (let [(i (interp_template v (Signature_vars s)))]
-        (lambda (args)
-          (let [(e ('IEnv_extend*' emptyIEnv (Signature_vars s)  args))]
-            (i e)))))
+        // [LET] is not strict on its bound values, so we must explicitly check
+        // for, and propagate, compile-time failures.
+        (if (is_bottom i)
+          i
+          (mk_fn Transform (args)
+            (let [(e ('IEnv_extend*' emptyIEnv (Signature_vars s)  args))]
+              (i e))))))
 
     // We assume all parameter names are unique
 
@@ -1222,7 +1231,7 @@ Spec Issues: 1.0
           (if (element_of (Value_content v) Struct)
             (wrong "Struct quasi-literals not implemented")
             (if (element_of (Value_content v) Sexp)
-              (wrong "Sexp forms not implemented")
+              (wrong "Malformed template:" v)
               (interp_literal v))))))
 
 
@@ -1268,38 +1277,38 @@ Spec Issues: 1.0
           (export "void"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (rest)
+            (mk_fn Transform (rest)
               (seq 'Value*')))
           (export "values"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (args)
+            (mk_fn Transform (args)
               (ith args 0)))
           (export "make_string"
             (seq 'ParamSpec*')
             ('rest...' "content" ANY)                     // TODO should be TEXT
-            (lambda (args)
+            (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift (appendText (ith args 0)) String Content)))))
           (export "make_symbol"
             (seq 'ParamSpec*')
             ('rest...' "content" ANY)                     // TODO should be TEXT
-            (lambda (args)
+            (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift (appendText (ith args 0)) SymTok Symbol Content)))))
           (export "make_list"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (args)
+            (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift_to Content (lift_to List (ith args 0)))))))
           (export "make_sexp"
             (seq 'ParamSpec*')
             ('rest...' "args" ANY)
-            (lambda (args)
+            (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift_to Content (lift_to Sexp (ith args 0)))))))
@@ -1308,7 +1317,7 @@ Spec Issues: 1.0
               ('group*' "anns"  ANY)                      // TODO should be TEXT
               ('param!' "value" ANY))
             (opt 'RestSpec?')
-            (lambda (args)
+            (mk_fn Transform (args)
               (let [(ts (map 'SymTok*'
                             (lambda (v) // Value -> SymTok
                               (let [(c (Value_content v))]

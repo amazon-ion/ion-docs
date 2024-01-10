@@ -2,6 +2,8 @@
 
 '''
 
+Each +1 represents 15m of lost time.
+
 TODOs
 -----
 * [EQ] (+1) Add generic `=` to DSL to unify EQ, U_EQ, EQ_F.
@@ -58,7 +60,7 @@ Requires Fusion features:
 DSL Dialect
 -----------
 * [PROVIDE] `define_model` should `provide` the things it defines.
-* [LET] Functional, strict let and letrec forms. (See L.I.S.P. p172)
+* [LET] (+4) Functional, strict let and letrec forms. (See L.I.S.P. p172)
   * Would trap Bottom as soon as it arises, even if the variable is usused.
 
 
