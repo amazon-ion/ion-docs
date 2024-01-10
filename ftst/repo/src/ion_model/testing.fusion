@@ -403,28 +403,36 @@ We "tunnel" special tokens as follows:
     "Returns sexp of syntax-able objects"
     (if (is_empty cases) (sexp)
       (let [(content (head cases)),
-            (result  (head (tail cases)))]
-        (pair (gen_case (gen_doc directive content) result)
+            (expect_stx  (head (tail cases)))]
+        (pair (gen_doc_case directive content (gen_checker expect_stx))
               (gen_cases directive (tail (tail cases)))))))
 
-  (define (gen_doc directive content_stx)
+  (define (gen_doc_case directive content_stx checker_stx)
     (if (free_identifier_equal (head (syntax_unwrap content_stx)) (QS document))
-      (pair (quote '#$ion_1_1') (pair directive (tail (syntax_unwrap content_stx))))
-      (wrong_syntax content_stx "Only `doc` is supported")))
+      (let [(doc (pair (quote '#$ion_1_1') (pair directive (tail (syntax_unwrap content_stx)))))]
+        (datum_to_syntax
+          // This code ensures the context_stx location is in the stack when
+          // the checker fails.
+          (QQ (lets [(actual (expand_doc (quote (UQ doc)))),
+                     (check  ((UQ checker_stx) actual))]
+                check))
+          (QS context)
+          content_stx))
+      (wrong_syntax content_stx "Only `document` is supported")))
 
-  (define (gen_case document expectation_stx)
+  (define (gen_checker expectation_stx)
+    // Produces (code for) a function that accepts the results of evaluation.
     (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS produces))
       (datum_to_syntax
-        (QQ (check_expansion
-              (quote (UQ (syntax_subseq expectation_stx 1)))
-              (quote (UQ document))))
+        (QQ (lambda (actual)
+              (check_not_bottom actual)
+              (check_eqv (quote (UQ (syntax_subseq expectation_stx 1))) (eject_Values actual))))
         (QS context)
         expectation_stx)
     (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS signals))
       (datum_to_syntax
-        (QQ (check_eval_fail
-              (quote (UQ (element (syntax_unwrap expectation_stx) 1)))
-              (quote (UQ document))))
+        (QQ (lambda (actual)
+              (check_bottom (UQ (element (syntax_unwrap expectation_stx) 1)) actual)))
         (QS context)
         expectation_stx)
       (wrong_syntax expectation_stx "Unrecognized clause"))))
