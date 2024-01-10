@@ -390,4 +390,64 @@ We "tunnel" special tokens as follows:
     (check_eval_fail
       (display_to_string "Invalid symbol address " (+ 1 max_sid))
       (append input (sexp (symbol_append "#$" (int_to_string (+ 1 max_sid)))))))
+
+
+  //============================================================================
+  // Streamlined macro testing
+
+  // Might be nice if the various bits of data could use `unquote`.
+
+  (provide with_mactab document produces signals)
+
+  (define (gen_cases directive cases)
+    "Returns sexp of syntax-able objects"
+    (if (is_empty cases) (sexp)
+      (let [(content (head cases)),
+            (result  (head (tail cases)))]
+        (pair (gen_case (gen_doc directive content) result)
+              (gen_cases directive (tail (tail cases)))))))
+
+  (define (gen_doc directive content_stx)
+    (if (free_identifier_equal (head (syntax_unwrap content_stx)) (QS document))
+      (pair (quote '#$ion_1_1') (pair directive (tail (syntax_unwrap content_stx))))
+      (wrong_syntax content_stx "Only `doc` is supported")))
+
+  (define (gen_case document expectation_stx)
+    (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS produces))
+      (datum_to_syntax
+        (QQ (check_expansion
+              (quote (UQ (syntax_subseq expectation_stx 1)))
+              (quote (UQ document))))
+        (QS context)
+        expectation_stx)
+    (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS signals))
+      (datum_to_syntax
+        (QQ (check_eval_fail
+              (quote (UQ (element (syntax_unwrap expectation_stx) 1)))
+              (quote (UQ document))))
+        (QS context)
+        expectation_stx)
+      (wrong_syntax expectation_stx "Unrecognized clause"))))
+
+  (define_syntax document
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside `with_mactab`")))
+  (define_syntax produces
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside `with_mactab`")))
+  (define_syntax signals
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside `with_mactab`")))
+
+  (define_syntax with_mactab
+    (lambda (stx)
+      (lets [(macros (syntax_get stx 1)),
+             (cases (tail (tail (syntax_unwrap stx)))),
+             (mactab (pair (quote macro_table) macros)),
+             (directive (QQ $ion_encoding::((module M (UQ mactab)) (macro_table M)))),]
+        (datum_to_syntax
+          (pair (QS begin) (gen_cases directive cases))
+          (QS context)
+          stx))))
+
 )

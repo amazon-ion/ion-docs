@@ -42,58 +42,43 @@
 
 // TODO float decimal timestap blob clob
 
-(check_eval_fail "Too many arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro no_param () "")))
-                           (macro_table M))
-           ('#$:no_param' oops)))
+(with_mactab ((macro m () 0))
+  (document ('#$:m'))
+  (produces 0)
+  (document ('#$:m' 1))
+  (signals "Too many arguments")
+  (document ('#$:m' 1 2))
+  (signals "Too many arguments"))
 
 
 // Single-parameter macros; variable references
 
-(check_expansion
-  (quote_top a b)
-  (quote11   $ion_encoding::((module M (macro_table (macro val (v) v)))
-                             (macro_table M))
-             ('#$:val' a) ('#$:val' b)))
+(with_mactab ((macro val (v) v))
+  (document ('#$:val' a) ('#$:val' b))
+  (produces a b)
+  (document ('#$:val'))
+  (signals "Too few arguments")
+  (document ('#$:val' 1 2))
+  (signals "Too many arguments"))
 
-(check_eval_fail "Unbound variable: x"
-  (quote11 $ion_encoding::((module M (macro_table (macro val (v) x))))))
-
-(check_eval_fail "Too few arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro one_param (v) "")))
-                           (macro_table M))
-           ('#$:one_param')))
-
-(check_eval_fail "Too many arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro one_param (v) "")))
-                           (macro_table M))
-           ('#$:one_param' 1 2)))
+(with_mactab ((macro _ (v) x))
+  (document)
+  (signals "Unbound variable: x"))
 
 
 // Multiple parameters
 
-(check_expansion
-  (quote_top a "d")
-  (quote11   $ion_encoding::((module M (macro_table (macro first  (v w) v)
-                                                    (macro second (v w) w)))
-                             (macro_table M))
-             ('#$:first'  a "b")
-             ('#$:second' c "d")))
-
-(check_eval_fail "Too few arguments"
-  (quote11   $ion_encoding::((module M (macro_table (macro first (v w) v)))
-                             (macro_table M))
-             ('#$:first')))
-
-(check_eval_fail "Too few arguments"
-  (quote11   $ion_encoding::((module M (macro_table (macro first (v w) v)))
-                             (macro_table M))
-             ('#$:first' 1)))
-
-(check_eval_fail "Too many arguments"
-  (quote11   $ion_encoding::((module M (macro_table (macro first (v w) v)))
-                             (macro_table M))
-             ('#$:first' 1 2 3)))
+(with_mactab ((macro first  (v w) v)
+              (macro second (v w) w))
+  (document ('#$:first'  a "b")
+            ('#$:second' c "d"))
+  (produces a "d")
+  (document ('#$:first'))
+  (signals "Too few arguments")
+  (document ('#$:first' 1))
+  (signals "Too few arguments")
+  (document ('#$:first' 1 2 3))
+  (signals "Too many arguments"))
 
 
 // Nontrivial parameter specs
@@ -285,9 +270,18 @@
            ('#$:o') ('#$:o' ('#$:void')) ('#$:o' 1) ('#$:o' ('#$:values' 1 2 3))
            ('#$:p' 1) ('#$:p' ('#$:values' 1 2 3))))
 
+(with_mactab ((macro m [(v!)] (if_void v true false)))
+  (document ('#$:m' something)) (produces false)
+  (document ('#$:m'))           (signals "Too few arguments"))
+
+
 // TODO Ensure that the unselected clause isn't evaluated.
 //  Needs a way to force an expansion-time error from the TDL.
 //  An invalid dynamic invocation like (make_string false) would work.
+
+(with_mactab ((macro m [] (if_void)))
+  (document)
+  (signals "Malformed if_void form"))
 
 (check_eval_fail "Malformed if_void form"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void)))))))
