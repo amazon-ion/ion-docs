@@ -312,4 +312,31 @@
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single 1 2 (literal))))))))
 
 
+// Special form: if_multi
+
+(with_mactab ((macro m [(v...)]
+                (if_multi v true false)))
+  (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
+  (produces false    false      true         true))
+
+// TODO Ensure that the unselected clause isn't evaluated.
+
+(check_eval_fail "Malformed if_multi form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi)))))))
+(check_eval_fail "Malformed if_multi form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1)))))))
+(check_eval_fail "Malformed if_multi form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2)))))))
+(check_eval_fail "Malformed if_multi form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2 3 4)))))))
+
+// Ensure malformed subforms are cought at compile-time.
+(check_eval_fail "Malformed literal clause"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi (literal) 2 3)))))))
+(check_eval_fail "Malformed literal clause"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 (literal) 3)))))))
+(check_eval_fail "Malformed literal clause"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2 (literal))))))))
+
+
 "SUCCESS (template.test)"

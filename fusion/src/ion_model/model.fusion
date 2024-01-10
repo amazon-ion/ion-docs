@@ -1272,7 +1272,9 @@ Spec Issues: 1.0
           (interpSF_if_void (clauseBody v) scope)
           (if (isClause v "if_single")
             (interpSF_if_single (clauseBody v) scope)
-            (wrong "Malformed template: " v)))))
+            (if (isClause v "if_multi")
+              (interpSF_if_multi (clauseBody v) scope)
+              (wrong "Malformed template: " v))))))
 
 
     // Special forms
@@ -1301,6 +1303,16 @@ Spec Issues: 1.0
                ((ith is 1) env)
                ((ith is 2) env)))))
         (wrong "Malformed if_single form")))
+
+    (fn interpSF_if_multi ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+      (if (EQ (seq_length vs) 3)
+        (let [(is ('interp_template*' vs scope))]  // TODO [LET] strictness
+          (if (is_bottom is) is
+            (mk_fn Interpreter (env)
+              (if (> (seq_length ((ith is 0) env)) 1)
+               ((ith is 1) env)
+               ((ith is 2) env)))))
+        (wrong "Malformed if_multi form")))
 
 
     //==========================================================================
