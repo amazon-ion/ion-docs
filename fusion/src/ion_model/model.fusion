@@ -39,6 +39,7 @@ Features:
     * I'm not sure the duplicate filter achieves anything; the same module can
       still appear under different names, with no difference in outcome.
 * [MAC-ID] Macro identity and proper ambiguity detection
+* [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
 * [VALID-NAME] Validate module, macro, and parameter names.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
@@ -162,6 +163,9 @@ Spec Issues: 1.0
     (dom Struct   = (+ 'Field*' DotNull))
     (dom Field    = (* SymTok::name Value::value))
 
+
+    (fn Value_listElements ((v Value) -> 'Value*')
+      (lower (Value_content v) List 'Value*'))
 
     (fn Value_seqElements ((v Value) -> 'Value*')
       (if (element_of (Value_content v) Sexp)
@@ -1262,7 +1266,9 @@ Spec Issues: 1.0
             (interpSF_if_single (clauseBody v) scope)
             (if (isClause v "if_multi")
               (interpSF_if_multi (clauseBody v) scope)
-              (wrong "Malformed template: " v))))))
+              (if (isClause v "for")
+                (interpSF_for (clauseBody v) scope)
+                (wrong "Malformed template: " v)))))))
 
 
     // Special forms
@@ -1301,6 +1307,43 @@ Spec Issues: 1.0
                ((ith is 1) env)
                ((ith is 2) env)))))
         (wrong "Malformed if_multi form")))
+
+    (fn interpSF_for ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+      (if (EQ (seq_length vs) 2)
+        (let [(bindings (Value_listElements (ith vs 0)))]
+          (let [(us (map 'Unicode*' (lambda (b)
+                                      (let [(vs1 (Value_seqElements b))]
+                                        (if (EQ (seq_length vs1) 2)
+                                          (Value_symtext (ith vs1 0))
+                                          (wrong "Malformed `for` binding pair"))))
+                      bindings)),
+                (is ('interp_template*' (map 'Value*' (|b| (ith (Value_seqElements b) 1))
+                                                      bindings)
+                                        scope))]
+            (if (is_bottom us) us
+              (if (is_bottom is) is
+                (let [(i_body (interp_template (ith vs 1) (seq_append us scope)))]
+                  (if (is_bottom i_body) i_body
+                    (mk_fn Interpreter (env)
+                      (let [(as (map 'Value**' (lambda (i) (i env)) is))] // TODO bottom check
+                        (letrec [(loop (lambda (streams)
+                                         (let [(next (for_next_bindings streams))]
+                                           (if (seq_is_empty next)
+                                             (seq 'Value*')
+                                             (seq_append (i_body (seq_append next env))
+                                                         (loop (map 'Value**' seq_tail streams)))))))]
+                          (loop as))))))))))
+        (wrong "Malformed `for` form")))
+
+    (fn any_is_empty ((vss 'Value**') -> B)
+      (if (seq_is_empty vss) false
+        (or (seq_is_empty (seq_head vss))
+            (any_is_empty (seq_tail vss)))))
+
+    (fn for_next_bindings ((vss 'Value**') -> 'Value**')
+      (if (any_is_empty vss)
+        (seq 'Value**')
+        (map 'Value**' (|s| (seq 'Value*' (seq_head s))) vss)))
 
 
     //==========================================================================

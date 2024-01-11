@@ -339,4 +339,103 @@
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2 (literal))))))))
 
 
+// Special form: for
+
+// No bindings, no iteration
+(with_mactab ((macro m [(as ...)]
+                (for []
+                  as)))
+  (document ('#$:m'))
+  (produces)
+  (document ('#$:m' 1 2))
+  (produces))
+
+// Single binding
+(with_mactab ((macro m [(as ...)]
+                (for [(a as)]
+                  [a])))
+  (document ('#$:m'))
+  (produces)
+  (document ('#$:m' 1 2))
+  (produces [1] [2]))
+
+// Multiple bindings
+(with_mactab ((macro m [(as *), (bs *)]
+                (for [(a as), (b bs)]
+                  [a, b])))
+  (document ('#$:m'))
+  (produces)
+  (document ('#$:m' 1))
+  (produces)
+  (document ('#$:m' 1 2))
+  (produces [1, 2])
+  (document ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
+  (produces [1, 3] [2, 4])
+  // Uneven lengths
+  (document ('#$:m' 1 ('#$:values' 2 3)) ('#$:m' ('#$:values' 1 2) 3))
+  (produces [1, 2]                       [1, 3])
+  // sequences are not decomposed
+  (document ('#$:m' [1, 2] (3 4)))
+  (produces [[1, 2], (3 4)]))
+
+// Shadowing parameter names
+(with_mactab ((macro m [(a *), (b *)]
+                (for [(a a)]
+                  [a, b])))  // b is inlined!
+  (document ('#$:m' 1))
+  (produces [1])
+  (document ('#$:m' 1 2))
+  (produces [1, 2])
+  (document ('#$:m' 1 ('#$:values' 2 3)))
+  (produces [1, 2, 3])
+  (document ('#$:m' ('#$:values' 1 2) 3))
+  (produces [1, 3] [2, 3])
+  (document ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
+  (produces [1, 3, 4] [2, 3, 4]))
+
+// TODO [DUPE-NAME] reject duplicate variable names
+
+// Bound streams do not need to be parameter references
+(with_mactab ((macro m [(a ...)] (for [(f "f1")] [f, a])))
+  (document ('#$:m') ('#$:m' 1 2))
+  (produces ["f1"]   ["f1", 1, 2]))
+
+(with_mactab ((macro m [(a ...)] (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
+  (document ('#$:m' 1 2))
+  (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
+
+// Enable when invocations are supported.
+//(with_mactab ((macro m [(a ...)] (for [(f (void))] [f, a])))
+//  (document ('#$:m') ('#$:m' 1 2))
+//  (produces))
+
+//(with_mactab ((macro m [(a ...)] (for [(f (values "f1" a "f2"))] [f, a])))
+//  (document ('#$:m')  ('#$:m' 1))
+//  (produces ["f1"]    ["f1", 1] [1, 1] ["f2", 1])
+//)
+
+// TODO reject too many/few parts to binding pain
+
+(check_eval_fail "Malformed `for` form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for)))))))
+(check_eval_fail "Malformed `for` form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [])))))))
+(check_eval_fail "Malformed `for` form"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [] 1 2)))))))
+
+(check_eval_fail "Malformed `for` binding pair"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [()] 1)))))))
+(check_eval_fail "Malformed `for` binding pair"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v)] 1)))))))
+(check_eval_fail "Malformed `for` binding pair"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1 2)] 1)))))))
+
+(check_eval_fail "Unbound variable: x"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v x)] 1)))))))
+(check_eval_fail "Unbound variable: x"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1)] x)))))))
+
+// TODO test handling of runtime failure in bound-expression and body-expression
+
+
 "SUCCESS (template.test)"
