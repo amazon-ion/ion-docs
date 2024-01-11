@@ -1176,8 +1176,8 @@ Spec Issues: 1.0
     //==========================================================================
     // Macro definition compilation
 
-    (dom IEnv = (-> Unicode 'Value*'))
-    (dom Interpreter = (-> IEnv 'Value*'))
+    // Same signature as Transform; perhaps we don't need both.
+    (dom Interpreter = (-> 'Value**' 'Value*'))
 
 
     (fn compile_macro_defn ((vs   'Value*')
@@ -1191,7 +1191,7 @@ Spec Issues: 1.0
             (tuple Macro sig (compile_xform (ith vs 2) sig)))
           macs)))
 
-    (fn compile_xform ((v Value) (s Signature) -> F)
+    (fn compile_xform ((v Value) (s Signature) -> Transform)
       // These functions are invoked after arity checking and grouping, so we
       // can assume the correct number of args (per the Signature) are given.
       (let [(i (interp_template v (Signature_vars s)))]
@@ -1200,24 +1200,9 @@ Spec Issues: 1.0
         (if (is_bottom i)
           i
           (mk_fn Transform (args)
-            (let [(e ('IEnv_extend*' emptyIEnv (Signature_vars s)  args))]
-              (i e))))))
+            (i args)))))
 
     // We assume all parameter names are unique
-
-    (fn emptyIEnv IEnv (u)
-      (wrong "Unbound variable: " u))
-
-    (fn IEnv_extend ((e IEnv) (u Unicode) (v 'Value*') -> IEnv)
-      (mk_fn IEnv (u1)
-        (if (U_EQ u u1) v (e u1))))
-
-    (fn 'IEnv_extend*' ((e IEnv) (us 'Unicode*') (vs 'Value**') -> IEnv)
-      (if (seq_is_empty us)
-        e
-        (IEnv_extend ('IEnv_extend*' e (seq_tail us) (seq_tail vs))
-          (seq_head us) (seq_head vs))))
-
 
 
     (fn interp_template ((v Value) (scope 'Unicode*') -> Interpreter)
@@ -1244,14 +1229,18 @@ Spec Issues: 1.0
       (mk_fn Interpreter (env)
         (seq 'Value*' v)))
 
-    (fn interp_ref ((v Value) (scope 'Unicode*') -> Interpreter)
+    (fn resolve_ref ((v Value) (scope 'Unicode*') -> I)
       (let [(u (Value_symtext v))]  // Rejects $0, null, unknown
-       (if (seq_is_empty scope)
+        (if (seq_is_empty scope)
          (wrong "Unbound variable: " u)
-         (if (U_EQ (seq_head scope) u)
-           (mk_fn Interpreter (env)
-             (env u))
-           (interp_ref v (seq_tail scope))))))
+         (if (U_EQ (seq_head scope) u) 0
+           (+ 1 (resolve_ref v (seq_tail scope)))))))
+
+    (fn interp_ref ((v Value) (scope 'Unicode*') -> Interpreter)
+      (let [(i (resolve_ref v scope))]                           // [LET] strict
+        (if (is_bottom i) i
+          (mk_fn Interpreter (env)
+            (ith env i)))))
 
 
     (fn interp_list ((v Value) (scope 'Unicode*') -> Interpreter)
