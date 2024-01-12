@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -120,7 +120,7 @@
     (fn add  ((i0 I) (i1 I)   -> I)    (+ i0 i1))
     (fn sub  ((i0 I) (i1 I)   -> I)    (- i0 i1))
     (fn lt   ((i0 I) (i1 I)   -> I)    (< i0 i1))
-    (fn eq   ((i0 I) (i1 I)   -> I)    (EQ i0 i1))
+    (fn eq   ((i0 I) (i1 I)   -> I)    (= i0 i1))
     (fn gt   ((i0 I) (i1 I)   -> I)    (> i0 i1))
     (fn len  ((us 'U*')       -> I)    (seq_length us))
     (fn cons ((u U) (us 'U*') -> 'U*') (seq_prepend u us))

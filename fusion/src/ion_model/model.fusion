@@ -138,7 +138,7 @@ Spec Issues: 1.0
 
     (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
       (and (element_of s Unicode)
-           (U_EQ (lower s Unicode) u)))
+           (= (lower s Unicode) u)))
 
     (fn Symbol_matches ((s Symbol) (u Unicode) -> B)
       (and (element_of s SymTok)
@@ -187,9 +187,9 @@ Spec Issues: 1.0
 
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value?')
       (let [(vs (Struct_get s u))]
-        (if (EQ (seq_length vs) 0)
+        (if (= (seq_length vs) 0)
           (opt 'Value?')
-          (if (EQ (seq_length vs) 1)
+          (if (= (seq_length vs) 1)
             (opt 'Value?' (ith vs 0))
             (wrong "Repeated field: " u)))))
 
@@ -225,8 +225,8 @@ Spec Issues: 1.0
     (const IVM_1_1 (tuple IVM 1 1))
 
     (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
-      (and (EQ (ith i1 0) (ith i2 0))
-           (EQ (ith i1 1) (ith i2 1))))
+      (and (= (ith i1 0) (ith i2 0))
+           (= (ith i1 1) (ith i2 1))))
 
 
     //==========================================================================
@@ -272,7 +272,7 @@ Spec Issues: 1.0
 
     (fn ModuleMap_extend ((mm ModuleMap) (u Unicode) (m Module) -> ModuleMap)
       (mk_fn ModuleMap (u1)
-        (if (U_EQ u1 u) m
+        (if (= u1 u) m
           (mm u1))))
 
     (fn currentModuleMap ((r Environment) -> ModuleMap)
@@ -507,8 +507,7 @@ Spec Issues: 1.0
       (let [(n (normalize_name    (Struct_get1 s "name"   ))),
             (v (normalize_version (Struct_get1 s "version"))),
             (m (normalize_max_id  (Struct_get1 s "max_id" )))]
-        (if (or (U_EQ n "")
-                (U_EQ n "$ion"))
+        (if (or (= n "") (= n "$ion"))
           (seq 'SymTok*')
           (if (opt_is_present m)
             // We have max_id, find best-match and adjust the length
@@ -528,7 +527,7 @@ Spec Issues: 1.0
 
     (fn compile_symtab_loop ((us 'Unicode?*') (moduleName Unicode) (maxId I) (i I) -> 'SymTok*')
       // i = number of elements collected so far; index of next elt
-      (if (EQ i maxId)
+      (if (= i maxId)
         (seq 'SymTok*')
         (let [(s (if (and (< i (seq_length us))
                           (opt_is_present (ith us i)))
@@ -580,8 +579,8 @@ Spec Issues: 1.0
     (fn exactModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule')
       (if (seq_is_empty ss)
         (wrong "No exact-match for " n "@" v)
-        (if (and (U_EQ (SharedModule_name (seq_head ss)) n)
-                 (EQ (SharedModule_version (seq_head ss)) v))
+        (if (and (= (SharedModule_name    (seq_head ss)) n)
+                 (= (SharedModule_version (seq_head ss)) v))
           (seq_head ss)
           (exactModule_SMs (seq_tail ss) n v))))
 
@@ -594,14 +593,14 @@ Spec Issues: 1.0
         (opt 'SharedModule?')
         // WARNING These variable names appear in the narrative, keep it in sync!
         (let [(ss1 (bestModule_SMs (seq_tail ss) n v))]
-          (if (not (U_EQ (SharedModule_name (seq_head ss)) n))
+          (if (not (= (SharedModule_name (seq_head ss)) n))
             ss1
-            (if (or (EQ (SharedModule_version (seq_head ss)) v)
+            (if (or (= (SharedModule_version (seq_head ss)) v)
                     (not (opt_is_present ss1)))
               // Exact match, or only match.
               (opt 'SharedModule?' (seq_head ss))
               // Inexact match, and the tail had a match.
-              (if (or (EQ (SharedModule_version (opt_value ss1)) v)
+              (if (or (= (SharedModule_version (opt_value ss1)) v)
                       (>  (SharedModule_version (opt_value ss1))
                           (SharedModule_version (seq_head ss))))
                 // The tail had an exact match, or larger version.
@@ -650,7 +649,7 @@ Spec Issues: 1.0
       (let [(n (normalize_name    (Struct_get1 s "name"))),
             // Yes, SST version is normalized to 1
             (v (normalize_version (Struct_get1 s "version")))]
-        (if (U_EQ n "")
+        (if (= n "")
           (wrong "SST has invalid name")
           (tuple SharedModule n v
             (tuple Module IVM_1_0
@@ -722,13 +721,13 @@ Spec Issues: 1.0
         (or (and (element_of shape SimpleShape)
                  (is_voidable_Cardinality (SimpleShape_card (lower shape SimpleShape))))
             (and (element_of shape GroupShape)
-                 (EQ_Enum (GroupShape_card (lower shape GroupShape)) ZERO_OR_MORE)))))
+                 (= (GroupShape_card (lower shape GroupShape)) ZERO_OR_MORE)))))
 
     (fn is_voidable_Cardinality ((c Cardinality) -> B)
       (or (and (element_of c OptCardinality)
-               (EQ_Enum (lower c OptCardinality) ZERO_OR_ONE))
+               (= (lower c OptCardinality) ZERO_OR_ONE))
           (and (element_of c SeqCardinality)
-               (EQ_Enum (lower c SeqCardinality) ZERO_OR_MORE))))
+               (= (lower c SeqCardinality) ZERO_OR_MORE))))
 
 
     (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
@@ -787,7 +786,7 @@ Spec Issues: 1.0
       (if (seq_is_empty ms)
         (opt 'Macro?')
         (if (and (opt_is_present  (ExportedMacro_name (seq_head ms)))
-                 (U_EQ (opt_value (ExportedMacro_name (seq_head ms))) u))
+                 (= (opt_value (ExportedMacro_name (seq_head ms))) u))
           (opt 'Macro?' (ExportedMacro_macro (seq_head ms)))
           (resolve_ExportedMacros (seq_tail ms) u))))
 
@@ -871,12 +870,12 @@ Spec Issues: 1.0
       (if (element_of c OptCardinality)
         (if (> (seq_length vs) 1)
           (wrong "More than one value provided for parameter")
-          (if (and (EQ_Enum (lower c OptCardinality) EXACTLY_ONE)
-                   (EQ (seq_length vs) 0))
+          (if (and (= (lower c OptCardinality) EXACTLY_ONE)
+                   (= (seq_length vs) 0))
             (wrong "No value provided for parameter")
             vs))
-        (if (and (EQ_Enum (lower c SeqCardinality) ONE_OR_MORE)
-                 (EQ (seq_length vs) 0))
+        (if (and (= (lower c SeqCardinality) ONE_OR_MORE)
+                 (= (seq_length vs) 0))
           (wrong "No value provided for parameter")
           // ZERO_OR_MORE is handled implicitly; it always passes.
           vs)))
@@ -910,7 +909,7 @@ Spec Issues: 1.0
         (if (nextClauseIs vs "retain")
           (let [(args (clauseBody (seq_head vs))),
                 (mm0  (Environment_modules r))]
-            (if (and (EQ (seq_length args) 1)
+            (if (and (= (seq_length args) 1)
                      (Value_is_symbol_matching (seq_head args) "*"))
               (compile_ED_modules (seq_tail vs) mm0 r)
               // TODO [FOLD]
@@ -1233,7 +1232,7 @@ Spec Issues: 1.0
       (let [(u (Value_symtext v))]  // Rejects $0, null, unknown
         (if (seq_is_empty scope)
          (wrong "Unbound variable: " u)
-         (if (U_EQ (seq_head scope) u) 0
+         (if (= (seq_head scope) u) 0
            (+ 1 (resolve_ref v (seq_tail scope)))))))
 
     (fn interp_ref ((v Value) (scope 'Unicode*') -> Interpreter)
@@ -1269,12 +1268,12 @@ Spec Issues: 1.0
     // Special forms
 
     (fn interpSF_literal ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
-      (if (EQ (seq_length vs) 1)
+      (if (= (seq_length vs) 1)
         (mk_fn Interpreter (env) (seq 'Value*' (seq_head vs)))
         (wrong "Malformed literal clause")))
 
     (fn interpSF_if_void ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
-      (if (EQ (seq_length vs) 3)
+      (if (= (seq_length vs) 3)
         (let [(is ('interp_template*' vs scope))]
           (mk_fn Interpreter (env)
             (if (seq_is_empty ((ith is 0) env))
@@ -1283,16 +1282,16 @@ Spec Issues: 1.0
         (wrong "Malformed if_void form")))
 
     (fn interpSF_if_single ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
-      (if (EQ (seq_length vs) 3)
+      (if (= (seq_length vs) 3)
         (let [(is ('interp_template*' vs scope))]
           (mk_fn Interpreter (env)
-            (if (EQ (seq_length ((ith is 0) env)) 1)
+            (if (= (seq_length ((ith is 0) env)) 1)
              ((ith is 1) env)
              ((ith is 2) env))))
         (wrong "Malformed if_single form")))
 
     (fn interpSF_if_multi ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
-      (if (EQ (seq_length vs) 3)
+      (if (= (seq_length vs) 3)
         (let [(is ('interp_template*' vs scope))]
           (mk_fn Interpreter (env)
             (if (> (seq_length ((ith is 0) env)) 1)
@@ -1301,11 +1300,11 @@ Spec Issues: 1.0
         (wrong "Malformed if_multi form")))
 
     (fn interpSF_for ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
-      (if (EQ (seq_length vs) 2)
+      (if (= (seq_length vs) 2)
         (let [(bindings (Value_listElements (ith vs 0)))]
           (let [(us (map 'Unicode*' (lambda (b)
                                       (let [(vs1 (Value_seqElements b))]
-                                        (if (EQ (seq_length vs1) 2)
+                                        (if (= (seq_length vs1) 2)
                                           (Value_symtext (ith vs1 0))
                                           (wrong "Malformed `for` binding pair"))))
                       bindings)),

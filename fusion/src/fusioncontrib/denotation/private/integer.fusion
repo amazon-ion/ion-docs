@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module integer "/fusion"
 
@@ -17,7 +17,7 @@ Predefined denotational model of Integer values and related functions.
 
   (provide
     I
-    EQ
+    EQ_I
     eject_I
     GT
     GTE
@@ -30,7 +30,7 @@ Predefined denotational model of Integer values and related functions.
 
   (define_base_domain I "Integers" is_int)
 
-  (define_fn EQ    ((a I) (b I) -> B)  (same (eject a) (eject b)))
+  (define_fn EQ_I  ((a I) (b I) -> B)  (same (eject a) (eject b)))
   (define_fn GT    ((a I) (b I) -> B)  (>    (eject a) (eject b)))
   (define_fn GTE   ((a I) (b I) -> B)  (>=   (eject a) (eject b)))
   (define_fn LT    ((a I) (b I) -> B)  (<    (eject a) (eject b)))

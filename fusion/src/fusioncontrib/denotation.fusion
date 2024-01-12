@@ -105,7 +105,7 @@ Domains come in several types:
     APPLY
     B 'B?' 'B*'
     bottom_message
-    EQ EQ_Enum
+    EQ
     F 'F?' 'F*'
     GT
     GTE
@@ -124,7 +124,6 @@ Domains come in several types:
     PLUS
     Unicode 'Unicode?' 'Unicode*'
     Unicode_append
-    U_EQ
     wrong
   )
 
@@ -169,4 +168,18 @@ Domains come in several types:
       (if (is_seq v)
         (seq_ith v i)
         (raise_argument_error "ith" "tuple or seq value" 0 v i))))
+
+  (define (intish v)
+    (or (is_int v) (domain_is v I)))
+
+  (define (unicodeish v)
+    (or (is_string v) (domain_is v Unicode)))
+
+  (define_strict (EQ v1 v2)
+    (cond
+      ((and (intish        v1) (intish        v2))     (EQ_I       v1 v2))
+      ((and (unicodeish    v1) (unicodeish    v2))     (EQ_Unicode v1 v2))
+      ((and (is_enum_value v1) (is_enum_value v2))     (EQ_Enum    v1 v2))
+      (true (raise_argument_error EQ "comparable values" -1 v1 v2))))
+
 )
