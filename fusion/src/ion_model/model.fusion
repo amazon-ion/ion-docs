@@ -96,7 +96,7 @@ Spec Problems
 
     (fn SymTok_matches ((s SymTok) (u Unicode) -> B)
       (and (element_of s Unicode)
-           (U_EQ (lower s Unicode) u)))
+           (= (lower s Unicode) u)))
 
     (fn Symbol_matches ((s Symbol) (u Unicode) -> B)
       (and (element_of s SymTok)
@@ -132,9 +132,9 @@ Spec Problems
 
     (fn Struct_get1 ((s Struct) (u Unicode) -> 'Value?')
       (let [(vs (Struct_get s u))]
-        (if (EQ (seq_length vs) 0)
+        (if (= (seq_length vs) 0)
           (opt 'Value?')
-          (if (EQ (seq_length vs) 1)
+          (if (= (seq_length vs) 1)
             (opt 'Value?' (ith vs 0))
             (wrong "Repeated field: " u)))))
 
@@ -168,8 +168,8 @@ Spec Problems
     (const IVM_1_1 (tuple IVM 1 1))
 
     (fn IVM_eq ((i1 IVM) (i2 IVM)-> B)
-      (and (EQ (ith i1 0) (ith i2 0))
-           (EQ (ith i1 1) (ith i2 1))))
+      (and (= (ith i1 0) (ith i2 0))
+           (= (ith i1 1) (ith i2 1))))
 
 
     //==========================================================================
@@ -420,8 +420,7 @@ Spec Problems
       (let [(n (normalize_name    (Struct_get1 s "name"   ))),
             (v (normalize_version (Struct_get1 s "version"))),
             (m (normalize_max_id  (Struct_get1 s "max_id" )))]
-        (if (or (U_EQ n "")
-                (U_EQ n "$ion"))
+        (if (or (= n "") (= n "$ion"))
           (seq 'SymTok*')
           (if (opt_is_present m)
             // We have max_id, find best-match and adjust the length
@@ -441,7 +440,7 @@ Spec Problems
 
     (fn compile_symtab_loop ((us 'Unicode?*') (moduleName Unicode) (maxId I) (i I) -> 'SymTok*')
       // i = number of elements collected so far; index of next elt
-      (if (EQ i maxId)
+      (if (= i maxId)
         (seq 'SymTok*')
         (let [(s (if (and (< i (seq_length us))
                           (opt_is_present (ith us i)))
@@ -493,8 +492,8 @@ Spec Problems
     (fn exactModule_SMs ((ss 'SharedModule*') (n Unicode) (v I) -> 'SharedModule')
       (if (seq_is_empty ss)
         (wrong "No exact-match for " n "@" v)
-        (if (and (U_EQ (SharedModule_name (seq_head ss)) n)
-                 (EQ (SharedModule_version (seq_head ss)) v))
+        (if (and (= (SharedModule_name    (seq_head ss)) n)
+                 (= (SharedModule_version (seq_head ss)) v))
           (seq_head ss)
           (exactModule_SMs (seq_tail ss) n v))))
 
@@ -507,14 +506,14 @@ Spec Problems
         (opt 'SharedModule?')
         // WARNING These variable names appear in the narrative, keep it in sync!
         (let [(ss1 (bestModule_SMs (seq_tail ss) n v))]
-          (if (not (U_EQ (SharedModule_name (seq_head ss)) n))
+          (if (not (= (SharedModule_name (seq_head ss)) n))
             ss1
-            (if (or (EQ (SharedModule_version (seq_head ss)) v)
+            (if (or (= (SharedModule_version (seq_head ss)) v)
                     (not (opt_is_present ss1)))
               // Exact match, or only match.
               (opt 'SharedModule?' (seq_head ss))
               // Inexact match, and the tail had a match.
-              (if (or (EQ (SharedModule_version (opt_value ss1)) v)
+              (if (or (= (SharedModule_version (opt_value ss1)) v)
                       (>  (SharedModule_version (opt_value ss1))
                           (SharedModule_version (seq_head ss))))
                 // The tail had an exact match, or larger version.
@@ -560,7 +559,7 @@ Spec Problems
       (let [(n (normalize_name    (Struct_get1 s "name"))),
             // Yes, SST version is normalized to 1
             (v (normalize_version (Struct_get1 s "version")))]
-        (if (U_EQ n "")
+        (if (= n "")
           (wrong "SST has invalid name")
           (tuple SharedModule n v
             (tuple Module IVM_1_0

@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module unicode "/fusion"
 
@@ -18,7 +18,7 @@ Predefined denotational model of Unicode code-point sequences and related functi
   (provide
     Unicode
     Unicode_append
-    U_EQ
+    EQ_Unicode
   )
 
 
@@ -28,6 +28,6 @@ Predefined denotational model of Unicode code-point sequences and related functi
   (define_fn Unicode_append ((a Unicode) (b Unicode) -> Unicode)
     (string_append (eject a) (eject b)))
 
-  (define_fn U_EQ ((a Unicode) (b Unicode) -> B)
+  (define_fn EQ_Unicode ((a Unicode) (b Unicode) -> B)
     (=== (eject a) (eject b)))
 )

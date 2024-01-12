@@ -58,15 +58,13 @@ semantics DSL.
     wrong
 
     // Pre-defined domains and functions
-    EQ
-    EQ_Enum
     IF
-    U_EQ
     Unicode_append
 
     (rename_out
       (AND    and)
       (APPLY  apply)
+      (EQ     =)
       (GT     >)
       (GTE    >=)
       (IF1    if)
