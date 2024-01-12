@@ -1199,12 +1199,8 @@ Spec Issues: 1.0
       // These functions are invoked after arity checking and grouping, so we
       // can assume the correct number of args (per the Signature) are given.
       (let [(i (interp_template v (Signature_vars s)))]
-        // [LET] is not strict on its bound values, so we must explicitly check
-        // for, and propagate, compile-time failures.
-        (if (is_bottom i)
-          i
-          (mk_fn Transform (args)
-            (i args)))))
+        (mk_fn Transform (args)
+          (i args))))
 
     // We assume all parameter names are unique
 
@@ -1241,10 +1237,9 @@ Spec Issues: 1.0
            (+ 1 (resolve_ref v (seq_tail scope)))))))
 
     (fn interp_ref ((v Value) (scope 'Unicode*') -> Interpreter)
-      (let [(i (resolve_ref v scope))]                           // [LET] strict
-        (if (is_bottom i) i
-          (mk_fn Interpreter (env)
-            (ith env i)))))
+      (let [(i (resolve_ref v scope))]
+        (mk_fn Interpreter (env)
+          (ith env i))))
 
 
     (fn interp_list ((v Value) (scope 'Unicode*') -> Interpreter)
@@ -1280,32 +1275,29 @@ Spec Issues: 1.0
 
     (fn interpSF_if_void ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
       (if (EQ (seq_length vs) 3)
-        (let [(is ('interp_template*' vs scope))]  // TODO [LET] strictness
-          (if (is_bottom is) is
-            (mk_fn Interpreter (env)
-              (if (seq_is_empty ((ith is 0) env))
-               ((ith is 1) env)
-               ((ith is 2) env)))))
+        (let [(is ('interp_template*' vs scope))]
+          (mk_fn Interpreter (env)
+            (if (seq_is_empty ((ith is 0) env))
+             ((ith is 1) env)
+             ((ith is 2) env))))
         (wrong "Malformed if_void form")))
 
     (fn interpSF_if_single ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
       (if (EQ (seq_length vs) 3)
-        (let [(is ('interp_template*' vs scope))]  // TODO [LET] strictness
-          (if (is_bottom is) is
-            (mk_fn Interpreter (env)
-              (if (EQ (seq_length ((ith is 0) env)) 1)
-               ((ith is 1) env)
-               ((ith is 2) env)))))
+        (let [(is ('interp_template*' vs scope))]
+          (mk_fn Interpreter (env)
+            (if (EQ (seq_length ((ith is 0) env)) 1)
+             ((ith is 1) env)
+             ((ith is 2) env))))
         (wrong "Malformed if_single form")))
 
     (fn interpSF_if_multi ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
       (if (EQ (seq_length vs) 3)
-        (let [(is ('interp_template*' vs scope))]  // TODO [LET] strictness
-          (if (is_bottom is) is
-            (mk_fn Interpreter (env)
-              (if (> (seq_length ((ith is 0) env)) 1)
-               ((ith is 1) env)
-               ((ith is 2) env)))))
+        (let [(is ('interp_template*' vs scope))]
+          (mk_fn Interpreter (env)
+            (if (> (seq_length ((ith is 0) env)) 1)
+             ((ith is 1) env)
+             ((ith is 2) env))))
         (wrong "Malformed if_multi form")))
 
     (fn interpSF_for ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
@@ -1320,19 +1312,16 @@ Spec Issues: 1.0
                 (is ('interp_template*' (map 'Value*' (|b| (ith (Value_seqElements b) 1))
                                                       bindings)
                                         scope))]
-            (if (is_bottom us) us
-              (if (is_bottom is) is
-                (let [(i_body (interp_template (ith vs 1) (seq_append us scope)))]
-                  (if (is_bottom i_body) i_body
-                    (mk_fn Interpreter (env)
-                      (let [(as (map 'Value**' (lambda (i) (i env)) is))] // TODO bottom check
-                        (letrec [(loop (lambda (streams)
-                                         (let [(next (for_next_bindings streams))]
-                                           (if (seq_is_empty next)
-                                             (seq 'Value*')
-                                             (seq_append (i_body (seq_append next env))
-                                                         (loop (map 'Value**' seq_tail streams)))))))]
-                          (loop as))))))))))
+            (let [(i_body (interp_template (ith vs 1) (seq_append us scope)))]
+              (mk_fn Interpreter (env)
+                (let [(as (map 'Value**' (lambda (i) (i env)) is))] // TODO bottom check
+                  (letrec [(loop (lambda (streams)
+                                   (let [(next (for_next_bindings streams))]
+                                     (if (seq_is_empty next)
+                                       (seq 'Value*')
+                                       (seq_append (i_body (seq_append next env))
+                                                   (loop (map 'Value**' seq_tail streams)))))))]
+                    (loop as)))))))
         (wrong "Malformed `for` form")))
 
     (fn any_is_empty ((vss 'Value**') -> B)

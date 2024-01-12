@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module densem "/fusion"
   '''
@@ -34,6 +34,7 @@ Domains come in several types:
   (require
     "/fusion/exception"
     "/fusioncontrib/denotation/private/base"
+    "/fusioncontrib/denotation/private/bind"
     "/fusioncontrib/denotation/private/bottom"
     "/fusioncontrib/denotation/private/domain"
     "/fusioncontrib/denotation/private/enum"
@@ -112,6 +113,8 @@ Domains come in several types:
     IF
     IF1
     is_bottom
+    LET
+    LETREC
     LT
     LTE
     MAP
@@ -132,7 +135,7 @@ Domains come in several types:
   (define_seq_domain 'I*'       "Sequence of I"               I)
   (define_opt_domain 'F?'       "Optional F"                  F)
   (define_seq_domain 'F*'       "Sequence of F"               F)
-  (define_opt_domain 'Unicode?' "Optional Unicode strings"    Unicode)
+  (define_opt_domain 'Unicode?' "Optional Unicode string"     Unicode)
   (define_seq_domain 'Unicode*' "Sequence of Unicode strings" Unicode)
 
   (define_strict (APPLY fn seq)

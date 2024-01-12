@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module densem "/fusion"
   '''
@@ -70,6 +70,8 @@ semantics DSL.
       (GT     >)
       (GTE    >=)
       (IF1    if)
+      (LET    let)
+      (LETREC letrec)
       (LT     <)
       (LTE    <=)
       (MAP    map)

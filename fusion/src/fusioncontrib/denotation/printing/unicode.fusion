@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module uniprinter "/fusion"
 
@@ -156,6 +156,7 @@ A model printer that renders in Unicode plain-text.
       (form_method inject_into     (|s e| (pp_lift_to (. s 1) (. s 2) e)))
       (form_method ith             (pp_binary "" "↓" ""))
       (form_method let             pp_let)
+      (form_method LET             pp_let)
       (form_method lift            pp_lift)
       (form_method lift_to         (|s e| (pp_lift_to (. s 1) (. s 2) e)))
       (form_method lower           (|s e| (pp_print (. s 1) e)

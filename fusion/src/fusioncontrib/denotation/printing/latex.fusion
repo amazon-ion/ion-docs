@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module latex "/fusion"
 
@@ -474,7 +474,9 @@ A model printer that renders in Unicode plain-text.
       (form_method ith             pp_ith)
       (form_method lambda          pp_lambda)
       (form_method let             pp_let)
+      (form_method LET             pp_let)
       (form_method letrec          pp_letrec)
+      (form_method LETREC          pp_letrec)
       (form_method lift            pp_lift)
       (form_method lift_to         pp_lift_to)
       (form_method lower           pp_lower)
