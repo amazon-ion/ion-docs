@@ -1,0 +1,53 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+(module bind "/fusion"
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation/private/bottom"
+    "/fusioncontrib/denotation/private/util"
+  )
+
+  (provide LET LETREC)
+
+
+  (define (binding_id stx binding)
+    "Returns void when given malformed binding pair."
+    (when (and (is_sequence (syntax_unwrap binding))
+               (= 2 (syntax_size binding))
+               (is_identifier (syntax_get binding 0)))
+      (syntax_get binding 0)))
+
+  (define (wrap_body stx bindings body)
+    (if (is_sequence bindings)
+      (fold_left (lambda (body bind)
+                   (let [(id (binding_id stx bind))]
+                     (if id
+                       (QQ (if (is_bottom (UQ id)) (UQ id) (UQ body)))
+                       // Skip malformed binding pairs.
+                       body)))
+        body
+        // Ensure resulting body checks the ids in left-to-right order.
+        (reverse (apply sexp bindings)))
+      // Malformed bindings; allow the standard `let` to flag this error.
+      body))
+
+  (define (rewrite std_form_id stx)
+    (unless (= (syntax_size stx) 3)
+      (wrong_syntax stx "expected bindings and body"))
+    (lets [(bindings (syntax_get stx 1)),
+           (body     (syntax_get stx 2)),
+           (new_body (wrap_body stx (syntax_unwrap bindings) body))]
+      (datum_to_syntax (sexp std_form_id bindings new_body)
+          (QS context) stx)))
+
+  (define_syntax LET
+    (lambda (stx)
+      (rewrite (QS let) stx)))
+
+  (define_syntax LETREC
+    (lambda (stx)
+      (rewrite (QS letrec) stx)))
+
+)

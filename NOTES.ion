@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 '''
 
@@ -55,8 +55,6 @@ Requires Fusion features:
 DSL Dialect
 -----------
 * [PROVIDE] `define_model` should `provide` the things it defines.
-* [LET] Functional, strict let and letrec forms. (See L.I.S.P. p172)
-  * Would trap Bottom as soon as it arises, even if the variable is usused.
 
 
 Printer
