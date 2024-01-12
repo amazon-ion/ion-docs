@@ -94,6 +94,12 @@
                            (symbol_table I A))
            '#$11' '#$12'))
 
+(check_eval_fail "Module not in scope: M"
+  (quote11 $ion_encoding::((load A "abcs" 1)
+                           (load M "mnop" 3))
+           $ion_encoding::((retain A)
+                           (symbol_table M))))
+
 
 // Top-level macro_table
 
