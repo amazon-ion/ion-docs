@@ -16,6 +16,7 @@ Miscellaneous things that should really be provided by Fusion.
   (provide
     desyntax
     flatten_to_sexp
+    in_naturals
     is_sexp_of_ids
     is_syntax_pair
     is_text
@@ -72,5 +73,12 @@ Miscellaneous things that should really be provided by Fusion.
   (define (desyntax v)
     "If `v` is a syntax object, unwrap it, otherwise return it as is."
     (if (is_syntax v) (syntax_unwrap v) v))
+
+
+  (define (in_naturals n)
+    "Returns an endless iterator counting up from `n`."
+    // TODO ensure n is int.
+    (make_iterator (always true) (lambda () (set n (+ 1 n)) // [BEGIN0]
+                                            (- 1 n))))
 
 )
