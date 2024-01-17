@@ -48,6 +48,7 @@ Features:
 
 
 Defects:
+* Macro lookup is treading 1 as first address, not zero
 * [VALID-MACTAB-MOD] $ion_encoding macro_table module-names are not validated
   WRT available modules.
 * Spec says various encoding-directive elements are unannotated, but the
@@ -1091,7 +1092,7 @@ Spec Issues: 1.0
                                (mods ModuleMap)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (isClause v "macro")
-        (compile_macro_defn (clauseBody v) mods macs)
+          (seq_append macs (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macs)))
         (let [(mod (mods (Value_symtext v)))]
           (seq_append macs (Module_mactab mod)))))
 
@@ -1188,15 +1189,13 @@ Spec Issues: 1.0
 
     (fn compile_macro_defn ((vs   'Value*')
                             (mods ModuleMap)
-                            (macs 'ExportedMacro*') -> 'ExportedMacro*')
+                            (macs 'ExportedMacro*') -> ExportedMacro)
       // TODO arity check
       // TODO [OPT-NAME] [VALID-NAME]
       (let [(name  (Value_symtext (ith vs 0))),
             (sig   (compile_Signature (ith vs 1)))]
-        (seq_prepend
-          (tuple ExportedMacro (opt 'Unicode?' name)
-            (tuple Macro sig (compile_xform (ith vs 2) sig)))
-          macs)))
+        (tuple ExportedMacro (opt 'Unicode?' name)
+          (tuple Macro sig (compile_xform (ith vs 2) sig)))))
 
     (fn compile_xform ((v Value) (s Signature) -> Transform)
       // These functions are invoked after arity checking and grouping, so we

@@ -192,7 +192,10 @@
              ('#$:M:make_symbol' "sah" weet)
              ('#$:M:4'           "sah" weet)))
 
+
 // Macro addresses
+// FIXME addresses should start at zero!
+
 (check_expansion
   (quote_top abc abc)
   (quote11   $ion_encoding::((module M (macro_table $ion))
@@ -200,6 +203,12 @@
 //           ('#$:make_symbol' ('#$:values' "a" b) ('#$:void' x) c)  // TODO [MAC-ID]
              ('#$:M:4'         ('#$:M:2'    "a" b) ('#$:M:1'  x) c)
              ('#$:4'           ('#$:2'      "a" b) ('#$:1'    x) c)))
+
+(with_mactab ((macro M1 () "M1")
+              (macro M2 () "M2")
+              $ion)
+  (document ('#$:1') ('#$:2') ('#$:M:1') ('#$:M:2') [('#$:3'), ('#$:M:3')])
+  (produces "M1"     "M2"     "M1"       "M2"       [/*void*/   /*void*/ ]))
 
 // TODO test addresses when there's multiple modules.
 // TODO test out-of-bounds macro address
