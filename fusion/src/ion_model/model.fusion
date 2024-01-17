@@ -18,35 +18,40 @@ Terminology/Readability:
   * Should have a way to detect when a domain element is forgotten.
 
 Features:
-* Optional macro names; can streamline some tests
-* Implement Decimal, Float, Timestamp, Blob/Clob
-* To handle 1.1 composite module symtabs, Module needs SymTok* not Unicode*
-* $ion_encoding
-  * Aliases would allow better testing without macro-definitions implemented.
-    * Requires a MacroMap (MacroBindings?) = Unicode -> Macro
-  * Export from.
-  * Export by macro reference.  Requires Unicode_split, digit detection/parse.
-  * `load` clause with max-id.
-    * Unclear how to wire the exact/inexact match and max-id to later clauses.
-      * Perhaps add LoadedModule to track that data, and return from ModuleMap.
-    * Accept non-exact-match modules in `symbol_table`.
-  * `use` clauses at directive-level; more wiring challenges.
-  * Accept symbols in `symbol_table` inner lists.
-  * Spec says various encoding-directive elements are unannotated, but the
-    model doesn't enforce that.
-  * Spec should ban the name $ion in load and import.
-  * Spec says `symbol_table` rejects duplicate module names, and `$ion`.
-    * I'm not sure the duplicate filter achieves anything; the same module can
-      still appear under different names, with no difference in outcome.
-* [MAC-ID] Macro identity and proper ambiguity detection
+* [OPT-NAME] Optional macro names; can streamline some tests
+* [PARAM-CARD] Validate cardinality of grouped parameters
+* [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
+* [LOAD-MAXID]`load` clause with max-id.
+  * Unclear how to wire the exact/inexact match and max-id to later clauses.
+    * Perhaps add LoadedModule to track that data, and return from ModuleMap.
+  * Accept non-exact-match modules in `symbol_table`.
+* Accept symbols in `symbol_table` inner lists: (symbol_table [sym1, "sym2"])
+* [SYMTAB-COMPOSE] Module-level symtabs don't handle non-exact-match modules.
+  For Module to handle symtab composition, it needs SymTok* not Unicode*
+* [SHARED-MOD] Shared modules
+* [ALIAS] Macro aliases
+    * Requires a MacroMap (MacroBindings?) = Unicode -> Macro
+* [MAC-ID] Macro identity and proper ambiguity detection
+* [EXPORT-FROM]
+* [EXPORT-REF] Export by macro reference.
+  * Requires Unicode_split, digit detection/parse.
+* [TUNNEL-MOD] Shared modules "tunneled" in shared symtabs
 * [VALID-NAME] Validate module, macro, and parameter names.
+* [USE-MODULE] `use` clauses at directive-level; more wiring challenges.
+* [ERRMSG] Some 1.1 code relies on implicit type checking to reject erroneous
+  forms, leading to unhelpful error messages.
 * Eexpr in field-position (struct inlining)
   * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
     Isn't (:values V) == V ?
-* Macro argument type-checking
+* Implement Decimal, Float, Timestamp, Blob/Clob
+
 
 Defects:
+* [VALID-MACTAB-MOD] $ion_encoding macro_table module-names are not validated
+  WRT available modules.
+* Spec says various encoding-directive elements are unannotated, but the
+  model doesn't enforce that.
 * SIDs should be non-negative.
 * The spec doesn't say that SST must have its annotation as the first one.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
@@ -58,12 +63,13 @@ Defects:
   about selection criteria.
 * Struct denotations should be order-agnostic. See L.I.S.P. §5.5
 
-Cleanup:
-* `lambda`s should instead use `mk_fn` with ad-hoc signature.
-
 
 Spec Issues: 1.1
 ----------------
+* Spec should ban the name $ion in load and import.
+* Spec says `symbol_table` rejects duplicate module names, and `$ion`.
+  * I'm not sure the duplicate filter achieves anything; the same module can
+    still appear under different names, with no difference in outcome.
 * Spec doesn't describe how ungrouped tagless ZERO_OR_ONE is invoked without a
   value in either Text Eexps or TDL.
 * Consider replacing `(retain *)` with just `(retain)`.  It eliminates some
@@ -394,7 +400,6 @@ Spec Issues: 1.0
       "Continuation when expanding top-level values")
 
 
-    // TODO don't overload p with two different types
     (fn TE_ParseStream ((p ParseStream) (r Environment) (k TContinuation) -> 'Value*')
       (let [(step (p (currentSpecVersion r)))]
         (if (opt_is_present step)
@@ -813,7 +818,7 @@ Spec Issues: 1.0
         (let [(m1 (resolve_qualifiedName (seq_head ms) u mm)),
               (m2 (resolve_ModuleNames   (seq_tail ms) u mm))]
           (if (opt_is_present m1)
-            // TODO [MAC-ID] Compare macro identities to allow benign duplicates.
+            // [MAC-ID] Compare macro identities to allow benign duplicates.
             (if (opt_is_present m2)
               (wrong "Ambiguous macroreference :" u)
               m1)
@@ -856,7 +861,7 @@ Spec Issues: 1.0
                          (element_of (SValue_content (lower t SValue)) SList))
                   // TODO reject null.list and annotations
                   (let [(ts1 (lower (SValue_content (lower t SValue)) SList 'STree*'))]
-                    // TODO Arity checking of expanded group
+                    // [PARAM-CARD] Cardinality checking of expanded group
                     (seq_prepend ('expand_STree*' ts1 r) is))
                   (wrong "Expected grouping list"))
                 // Non-grouped argument expected
@@ -866,7 +871,7 @@ Spec Issues: 1.0
                   (seq_prepend (validateShape t c vs) is))))))))
 
     (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
-      // TODO type
+      // [PARAM-TYPE]
       (if (element_of c OptCardinality)
         (if (> (seq_length vs) 1)
           (wrong "More than one value provided for parameter")
@@ -903,7 +908,7 @@ Spec Issues: 1.0
         (compile_ED_retain (lower s 'Value*') r)))
 
     (fn compile_ED_retain ((vs 'Value*') (r Environment) -> Environment)
-      // TODO This is inconsistent with other cases where $ion isn't present
+      // FIXME This is inconsistent with other cases where $ion isn't present
       //   ATM we only need it as a way to determine the specVersion.
       (let [(mm0 (ModuleMap_extend emptyModuleMap "$ion" (Environment_sysModule r)))]
         (if (nextClauseIs vs "retain")
@@ -971,11 +976,10 @@ Spec Issues: 1.0
 
     // TODO Rename; this is also used by inner modules.
     (fn compile_ED_load ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
-      (let [(name    (Value_symtext (ith vs 0))),   // TODO validate module name
+      (let [(name    (Value_symtext (ith vs 0))),                // [VALID-NAME]
             (catname (Value_strtext (ith vs 1))),
-            (version (Value_int     (ith vs 2)))
-            // TODO maxid
-            // TODO ensure no extra arguments
+            (version (Value_int     (ith vs 2))),                // [LOAD-MAXID]
+            // FIXME ensure no extra arguments
            ]
         (ModuleMap_extend avail name
           (SharedModule_module (exactModule_Catalog c catname version)))))
@@ -984,7 +988,7 @@ Spec Issues: 1.0
     // $ion_encoding module
 
     (fn compile_ED_module ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
-      (let [(name (Value_symtext (ith vs 0)))]      // TODO validate module name
+      (let [(name (Value_symtext (ith vs 0)))]                   // [VALID-NAME]
         (ModuleMap_extend avail name
           (compile_IM_body (seq_tail vs) avail c))))
 
@@ -1018,7 +1022,7 @@ Spec Issues: 1.0
       // TODO Use `map`
       (if (seq_is_empty vs)
         (seq 'Unicode*')
-        // TODO check presence in avail.
+        // FIXME [VALID-MACTAB-MOD] verify presence in avail
         (seq_prepend (Value_symtext (seq_head vs))
           (compile_ED_mactab_body (seq_tail vs) avail))))
 
@@ -1028,8 +1032,7 @@ Spec Issues: 1.0
            (isClause (seq_head vs) u)))
 
     (fn isClause ((v Value) (u Unicode) -> B)
-      (and (element_of (Value_content v) Sexp)
-        // TODO Null check
+      (and (element_of (Value_content v) Sexp)          // [ERRMSG] Null check v
         (and (not (seq_is_empty (lower (Value_content v) Sexp 'Value*')))
           (Value_is_symbol_matching (seq_head (lower (Value_content v) Sexp 'Value*')) u))))
 
@@ -1052,7 +1055,7 @@ Spec Issues: 1.0
     (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) -> Module)
       (if (nextClauseIs vs "symbol_table")
         (compile_IM_mactab (seq_tail vs) avail
-          // TODO This doesn't handle absent symbols or their equality.
+          // [SYMTAB-COMPOSE] This doesn't handle absent symbols or their equality.
           (compile_module_symtab (clauseBody (seq_head vs)) avail))
         (compile_IM_mactab vs avail (seq 'SymTok*'))))
 
@@ -1155,7 +1158,7 @@ Spec Issues: 1.0
         (compile_restType (seq_tail vs) (compile_paramName (seq_head vs)))))
 
     (fn compile_restType ((vs 'Value*') (u Unicode) -> RestSpec)
-      // TODO type
+      // [PARAM-TYPE]
       (compile_restCard vs u ANY))
 
     (fn compile_restCard ((vs 'Value*') (u Unicode) (t ParamType) -> RestSpec)
@@ -1172,7 +1175,7 @@ Spec Issues: 1.0
 
 
     (fn compile_paramName ((v Value) -> Unicode)
-      // TODO [VALID-NAME]
+      // [VALID-NAME]
       (lower (Value_content v) Symbol SymTok Unicode))
 
 
@@ -1187,7 +1190,8 @@ Spec Issues: 1.0
                             (mods ModuleMap)
                             (macs 'ExportedMacro*') -> 'ExportedMacro*')
       // TODO arity check
-      (let [(name  (Value_symtext (ith vs 0))),   // TODO [VALID-NAME]
+      // TODO [OPT-NAME] [VALID-NAME]
+      (let [(name  (Value_symtext (ith vs 0))),
             (sig   (compile_Signature (ith vs 1)))]
         (seq_prepend
           (tuple ExportedMacro (opt 'Unicode?' name)
@@ -1313,7 +1317,7 @@ Spec Issues: 1.0
                                         scope))]
             (let [(i_body (interp_template (ith vs 1) (seq_append us scope)))]
               (mk_fn Interpreter (env)
-                (let [(as (map 'Value**' (lambda (i) (i env)) is))] // TODO bottom check
+                (let [(as (map 'Value**' (lambda (i) (i env)) is))]
                   (letrec [(loop (lambda (streams)
                                    (let [(next (for_next_bindings streams))]
                                      (if (seq_is_empty next)
@@ -1358,14 +1362,14 @@ Spec Issues: 1.0
               (ith args 0)))
           (export "make_string"
             (seq 'ParamSpec*')
-            ('rest...' "content" ANY)                     // TODO should be TEXT
+            ('rest...' "content" ANY)
             (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift (appendText (ith args 0)) String Content)))))
           (export "make_symbol"
             (seq 'ParamSpec*')
-            ('rest...' "content" ANY)                     // TODO should be TEXT
+            ('rest...' "content" ANY)
             (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
@@ -1386,7 +1390,7 @@ Spec Issues: 1.0
                   (lift_to Content (lift_to Sexp (ith args 0)))))))
           (export "annotate"
             (seq 'ParamSpec*'
-              ('group*' "anns"  ANY)                      // TODO should be TEXT
+              ('group*' "anns"  ANY)
               ('param!' "value" ANY))
             (opt 'RestSpec?')
             (mk_fn Transform (args)

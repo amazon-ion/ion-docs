@@ -118,6 +118,10 @@
   (quote11   $ion_encoding::((macro_table $ion $ion))
              ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
 
+// FIXME [VALID-MACTAB-MOD]
+//(check_eval_fail "Module not in scope: M"
+//  (quote11 $ion_encoding::((macro_table M))))
+
 
 // Inline modules
 

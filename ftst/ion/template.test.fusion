@@ -414,7 +414,6 @@
 //  (produces ["f1"]    ["f1", 1] [1, 1] ["f2", 1])
 //)
 
-// TODO reject too many/few parts to binding pain
 
 (check_eval_fail "Malformed `for` form"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (for)))))))
