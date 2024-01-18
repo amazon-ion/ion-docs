@@ -828,13 +828,15 @@ Spec Issues: 1.0
 
 
     //==========================================================================
-    // Macro Expansion
+    // Eexp Expansion
 
     (fn expand_SEexp ((v SEexp) (r Environment) -> 'Value*')
       (if (IVM_eq (currentSpecVersion r) IVM_1_0)
         (wrong "Eexp not allowed in Ion 1.0")
         (let [(m (resolve_MacroRef (SEexp_ref v) r))]
-          (Macro_invoke m (SEexp_args v) r))))
+          (let [(x (Macro_xform     m)),
+                (s (Macro_signature m))]
+            (x (collateArgs (Signature_params s) (Signature_rest s) r (SEexp_args v)))))))
 
 
     (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'STree*') -> 'Value**')
@@ -886,13 +888,6 @@ Spec Issues: 1.0
           (wrong "No value provided for parameter")
           // ZERO_OR_MORE is handled implicitly; it always passes.
           vs)))
-
-    // Collate, validate the arguments based on the Macro's signature, then
-    // invoke the macro
-    (fn Macro_invoke ((m Macro) (ts 'STree*') (r Environment) -> 'Value*')
-      (let [(f (Macro_xform     m)),
-            (s (Macro_signature m))]
-        (f (collateArgs (Signature_params s) (Signature_rest s) r ts))))
 
 
     //==========================================================================
@@ -1094,10 +1089,22 @@ Spec Issues: 1.0
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (isClause v "macro")
         (let [(macroEnv (mk_fn MacroEnv (modName nameAddr)
-                          (wrong "No such macro: " (lower nameAddr Unicode))))]
+                          // This only supports locol names
+                          // TODO Support qualified refs, non-local names.
+                          // [DUPE-NAME] We assume no duplicate names in `macs`
+                          (letrec [(seek (lambda (macs1)
+                                           (if (seq_is_empty macs1)
+                                             (wrong "No such macro: " (lower nameAddr Unicode))
+                                             // [OPT-NAME]
+                                             (if (= (opt_value (ExportedMacro_name (seq_head macs1)))
+                                                    (lower_to Unicode nameAddr))
+                                               (ExportedMacro_macro (seq_head macs1))
+                                               (seek (seq_tail macs1))))))]
+                            (seek macs))))]
           (seq_append macs
             (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macroEnv))))
         (let [(mod (mods (Value_symtext v)))]
+          // [DUPE-NAME] Check for duplicates
           (seq_append macs (Module_mactab mod)))))
 
 
@@ -1275,7 +1282,9 @@ Spec Issues: 1.0
               (interpSF_if_multi (clauseBody v) scope macroEnv)
               (if (isClause v "for")
                 (interpSF_for (clauseBody v) scope macroEnv)
-                (wrong "Malformed template: " v)))))))
+                (if (not (seq_is_empty (Value_seqElements v)))
+                  (interp_macro (Value_seqElements v) scope macroEnv)
+                  (wrong "Malformed template: " v))))))))
 
 
     // Special forms
@@ -1348,6 +1357,57 @@ Spec Issues: 1.0
         (seq 'Value**')
         (map 'Value**' (|s| (seq 'Value*' (seq_head s))) vss)))
 
+
+    //==========================================================================
+    // TL Macro invocation
+
+    (fn interp_macro ((vs 'Value*') (scope 'Unicode*') (r MacroEnv) -> Interpreter)
+      (let [(m (r (opt 'Unicode?' "") (lift_to NameOrAddr (Value_symtext (seq_head vs)))))]
+        (let [(f (Macro_xform     m)),
+              (s (Macro_signature m))]
+          (let [(is (interp_args (Signature_params s) (Signature_rest s) scope r (seq_tail vs)))]
+            (mk_fn Interpreter (env)
+              (let [(as (map 'Value**' (lambda (i) (i env)) is))]
+                (f as)))))))
+
+    // Returns one Interpreter per parameter
+    (fn interp_args ((ps 'ParamSpec*') (rest 'RestSpec?') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
+      (if (seq_is_empty ps)
+        (if (opt_is_present rest)
+          // We have a rest-parameter, so grab everything that remains.
+          (wrong "rest params not supported in TL")
+//          (let [(vs ('expand_STree*' ts r)),
+//                (t (RestShape_type (RestSpec_shape (opt_value rest)))),
+//                (c (RestShape_card (RestSpec_shape (opt_value rest))))]
+//            (seq 'Value**' (validateShape t (lift c Cardinality) vs)))
+          (if (seq_is_empty vs)
+            (seq 'Interpreter*')                 // All done!
+            (wrong "Too many arguments")))
+        (wrong "params not supported in TL")
+//        (let [(p (seq_head ps))]
+//          (if (seq_is_empty ts)
+//            // We hava a param, but no more arguments; param must be voidable.
+//            (if (is_voidable p)
+//              (seq_prepend (seq 'Value*')
+//                (collateArgs (seq_tail ps) rest r ts))
+//              (wrong "Too few arguments"))
+//            // We have both a param and more arguments
+//            (let [(t  (seq_head ts)),
+//                  (is (collateArgs (seq_tail ps) rest r (seq_tail ts)))]
+//              (if (element_of (ParamSpec_shape p) GroupShape)
+//                (if (and (element_of t SValue)  // not an Eexp
+//                         (element_of (SValue_content (lower t SValue)) SList))
+//                  // TODO reject null.list and annotations
+//                  (let [(ts1 (lower (SValue_content (lower t SValue)) SList 'STree*'))]
+//                    // [PARAM-CARD] Cardinality checking of expanded group
+//                    (seq_prepend ('expand_STree*' ts1 r) is))
+//                  (wrong "Expected grouping list"))
+//                // Non-grouped argument expected
+//                (let [(vs (expand_STree t r)),
+//                      (t (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
+//                      (c (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
+//                  (seq_prepend (validateShape t c vs) is))))))
+))
 
     //==========================================================================
     // System Module 1.1

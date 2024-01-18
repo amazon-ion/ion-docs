@@ -437,4 +437,15 @@
 // TODO test handling of runtime failure in bound-expression and body-expression
 
 
+// Macro invocations
+
+(check_eval_fail "No such macro: noSuchMacro"
+  (quote11 $ion_encoding::((module M (macro_table (macro m [] (noSuchMacro)))))))
+
+(with_mactab ((macro m      [] "m")
+              (macro m_wrap [] (m)))
+  (document ('#$:m_wrap'))
+  (produces "m"))
+
+
 "SUCCESS (template.test)"
