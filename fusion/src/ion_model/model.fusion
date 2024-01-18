@@ -838,7 +838,7 @@ Spec Issues: 1.0
                 (s (Macro_signature m))]
             (x (collateArgs (Signature_params s) (Signature_rest s) r (SEexp_args v)))))))
 
-
+    // Returns one Value* per parameter.
     (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'STree*') -> 'Value**')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
@@ -1243,6 +1243,17 @@ Spec Issues: 1.0
         (seq_prepend (interp_template    (seq_head vs) scope macroEnv)
                      ('interp_template*' (seq_tail vs) scope macroEnv))))
 
+    // Interpret multiple templates whose expansions are concatenated.
+    (fn 'interp_template...' ((vs 'Value*') (scope 'Unicode*') (r MacroEnv) -> Interpreter)
+      (let [(is ('interp_template*' vs scope r))]
+        (mk_fn Interpreter (env)
+          (letrec [(combine (lambda (is1)                              // [FOLD]
+                              (if (seq_is_empty is1)
+                                (seq 'Value*')
+                                (seq_append ((seq_head is1) env)
+                                            (combine (seq_tail is1))))))]
+             (combine is)))))
+
 
     (fn interp_literal ((v Value) -> Interpreter)
       (mk_fn Interpreter (env)
@@ -1263,13 +1274,9 @@ Spec Issues: 1.0
 
     (fn interp_list ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (let [(us (Value_annots v)),
-            (is ('interp_template*' (lower (Value_content v) List 'Value*') scope macroEnv))]
+            (i ('interp_template...' (lower (Value_content v) List 'Value*') scope macroEnv))]
         (mk_fn Interpreter (env)
-          (letrec [(combine (lambda (is1)                              // [FOLD]
-                              (if (seq_is_empty is1) (seq 'Value*')
-                                (seq_append ((seq_head is1) env)
-                                            (combine (seq_tail is1))))))]
-            (seq 'Value*' (tuple Value us (lift (combine is) List Content)))))))
+          (seq 'Value*' (tuple Value us (lift (i env) List Content))))))
 
     (fn interp_sexp ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (isClause v "literal")
@@ -1370,16 +1377,18 @@ Spec Issues: 1.0
               (let [(as (map 'Value**' (lambda (i) (i env)) is))]
                 (f as)))))))
 
-    // Returns one Interpreter per parameter
+    // Returns one Interpreter per parameter.
     (fn interp_args ((ps 'ParamSpec*') (rest 'RestSpec?') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
-          // We have a rest-parameter, so grab everything that remains.
-          (wrong "rest params not supported in TL")
-//          (let [(vs ('expand_STree*' ts r)),
-//                (t (RestShape_type (RestSpec_shape (opt_value rest)))),
-//                (c (RestShape_card (RestSpec_shape (opt_value rest))))]
-//            (seq 'Value**' (validateShape t (lift c Cardinality) vs)))
+          // We have a rest-parameter, so grab all remaining templates.
+          (let [(i ('interp_template...' vs scope r)),
+                (t (RestShape_type (RestSpec_shape (opt_value rest)))),
+                (c (RestShape_card (RestSpec_shape (opt_value rest))))]
+            (seq 'Interpreter*'
+              (mk_fn Interpreter (env)
+                // TODO Maybe push validation into `interp_template...`?
+                (validateShape t (lift c Cardinality) (i env)))))
           (if (seq_is_empty vs)
             (seq 'Interpreter*')                 // All done!
             (wrong "Too many arguments")))

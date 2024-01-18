@@ -447,5 +447,15 @@
   (document ('#$:m_wrap'))
   (produces "m"))
 
+(with_mactab ((macro m  [(v...)] ["m", v])
+              (macro m0 []       (m))
+              (macro m1 [p]      (m p))
+              (macro m2 [p]      (m p 2))
+              (macro mr [(r...)] (m 1 r 2)))
+  (document ('#$:m0') ('#$:m1' a) ('#$:m2' a))
+  (produces ["m"]     ["m", a]    ["m", a, 2] )
+  (document ('#$:mr')   ('#$:mr' a)    ('#$:mr' a b))
+  (produces ["m", 1, 2] ["m", 1, a, 2] ["m", 1, a, b, 2]))
+
 
 "SUCCESS (template.test)"
