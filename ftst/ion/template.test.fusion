@@ -447,6 +447,16 @@
   (document ('#$:m_wrap'))
   (produces "m"))
 
+(with_mactab ((macro m  [(p?)] ["m", p])
+              (macro m0 []     (m)))
+  (document ('#$:m0'))
+  (produces ["m"]))
+
+(with_mactab ((macro m  [(p*)] ["m", p])
+              (macro m0 []     (m)))
+  (document ('#$:m0'))
+  (produces ["m"]))
+
 (with_mactab ((macro m  [(v...)] ["m", v])
               (macro m0 []       (m))
               (macro m1 [p]      (m p))
