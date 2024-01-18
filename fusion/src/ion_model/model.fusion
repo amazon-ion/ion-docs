@@ -839,6 +839,7 @@ Spec Issues: 1.0
             (x (collateArgs (Signature_params s) (Signature_rest s) r (SEexp_args v)))))))
 
     // Returns one Value* per parameter.
+    // This should stay in sync with interp_args
     (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'STree*') -> 'Value**')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
@@ -1368,6 +1369,12 @@ Spec Issues: 1.0
     //==========================================================================
     // TL Macro invocation
 
+    // TODO Reconsider where parameter-shape validation happens.
+    // Currently it's happening at the macro call-site, but probably should
+    // happen inside the macro-level Interpreter.
+    //   * The call site needs to know some aspects, notably template-shapes
+    //     (I think!) and optional/rest arguments for arity checkyng
+
     (fn Interpret_void Interpreter (env)
       (seq 'Value*'))
 
@@ -1381,6 +1388,7 @@ Spec Issues: 1.0
                 (f as)))))))
 
     // Returns one Interpreter per parameter.
+    // This should stay in sync with collateArgs
     (fn interp_args ((ps 'ParamSpec*') (rest 'RestSpec?') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
@@ -1397,16 +1405,16 @@ Spec Issues: 1.0
             (wrong "Too many arguments")))
         (let [(p (seq_head ps))]
           (if (seq_is_empty vs)
-//            // We hava a param, but no more arguments; param must be voidable.
+            // We hava a param, but no more arguments; param must be voidable.
             (if (is_voidable p)
               (seq_prepend Interpret_void
                 (interp_args (seq_tail ps) rest scope r vs))
               (wrong "Too few arguments"))
-            (wrong "Cannot allocate argument to non-rest parameter")))
 //            // We have both a param and more arguments
-//            (let [(t  (seq_head ts)),
-//                  (is (collateArgs (seq_tail ps) rest r (seq_tail ts)))]
-//              (if (element_of (ParamSpec_shape p) GroupShape)
+            (let [(v  (seq_head vs)),
+                  (is (interp_args (seq_tail ps) rest scope r (seq_tail vs)))]
+              (if (element_of (ParamSpec_shape p) GroupShape)
+                (wrong "Grouped params not implemented")
 //                (if (and (element_of t SValue)  // not an Eexp
 //                         (element_of (SValue_content (lower t SValue)) SList))
 //                  // TODO reject null.list and annotations
@@ -1414,12 +1422,16 @@ Spec Issues: 1.0
 //                    // [PARAM-CARD] Cardinality checking of expanded group
 //                    (seq_prepend ('expand_STree*' ts1 r) is))
 //                  (wrong "Expected grouping list"))
-//                // Non-grouped argument expected
-//                (let [(vs (expand_STree t r)),
-//                      (t (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
-//                      (c (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
-//                  (seq_prepend (validateShape t c vs) is))))))
-))
+                // Non-grouped argument expected
+                (let [(i (interp_template v scope r)),
+                      (t (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
+                      (c (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
+                  (seq_prepend
+                    (mk_fn Interpreter (env)
+                      // TODO Maybe push validation into `interp_template`?
+                      (validateShape t c (i env)))
+                    is))))))))
+
 
     //==========================================================================
     // System Module 1.1
