@@ -22,6 +22,7 @@ Features:
 * [PARAM-CARD] Validate cardinality of grouped parameters
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
+* [STRUCT-TEMPL] Struct quasi-literals in template language.
 * [LOAD-MAXID]`load` clause with max-id.
   * Unclear how to wire the exact/inexact match and max-id to later clauses.
     * Perhaps add LoadedModule to track that data, and return from ModuleMap.
@@ -1092,7 +1093,10 @@ Spec Issues: 1.0
                                (mods ModuleMap)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (isClause v "macro")
-          (seq_append macs (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macs)))
+        (let [(macroEnv (mk_fn MacroEnv (modName nameAddr)
+                          (wrong "No such macro: " (lower nameAddr Unicode))))]
+          (seq_append macs
+            (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macroEnv))))
         (let [(mod (mods (Value_symtext v)))]
           (seq_append macs (Module_mactab mod)))))
 
@@ -1183,48 +1187,54 @@ Spec Issues: 1.0
     //==========================================================================
     // Macro definition compilation
 
+    // Need ModuleMap, Environment_mactab module names, local and use'd macro map
+    // TODO Distinguish unqualified names (foo ...) and named locals (':foo' ...)
+    //    Perhaps inject the name of the current module?
+    //       No... that name isn't in-scope and could shadow a real module!
+    //    Empty name might work.
+    (dom MacroEnv = (-> 'Unicode?' NameOrAddr Macro))
+
     // Same signature as Transform; perhaps we don't need both.
     (dom Interpreter = (-> 'Value**' 'Value*'))
 
-
     (fn compile_macro_defn ((vs   'Value*')
                             (mods ModuleMap)
-                            (macs 'ExportedMacro*') -> ExportedMacro)
-      // TODO arity check
-      // TODO [OPT-NAME] [VALID-NAME]
+                            (macroEnv MacroEnv) -> ExportedMacro)
+      // TODO check arity of this (macro ...) clause
+      // TODO [OPT-NAME] [VALID-NAME] [DUPE-NAME]
       (let [(name  (Value_symtext (ith vs 0))),
             (sig   (compile_Signature (ith vs 1)))]
         (tuple ExportedMacro (opt 'Unicode?' name)
-          (tuple Macro sig (compile_xform (ith vs 2) sig)))))
+          (tuple Macro sig (compile_xform (ith vs 2) sig macroEnv)))))
 
-    (fn compile_xform ((v Value) (s Signature) -> Transform)
+    (fn compile_xform ((v Value) (s Signature) (macroEnv MacroEnv) -> Transform)
       // These functions are invoked after arity checking and grouping, so we
       // can assume the correct number of args (per the Signature) are given.
-      (let [(i (interp_template v (Signature_vars s)))]
+      (let [(i (interp_template v (Signature_vars s) macroEnv))]
         (mk_fn Transform (args)
           (i args))))
 
     // We assume all parameter names are unique
 
 
-    (fn interp_template ((v Value) (scope 'Unicode*') -> Interpreter)
+    (fn interp_template ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       // These functions are invoked after arity checking and grouping applied.
       // We can assume the correct number of groups (per the Signature) are given.
       (if (element_of (Value_content v) Symbol)
         (interp_ref v scope)
         (if (element_of (Value_content v) List)
-          (interp_list v scope)
+          (interp_list v scope macroEnv)
           (if (element_of (Value_content v) Struct)
             (wrong "Struct quasi-literals not implemented")
             (if (element_of (Value_content v) Sexp)
-              (interp_sexp v scope)
+              (interp_sexp v scope macroEnv)
               (interp_literal v))))))
 
-    (fn 'interp_template*' ((vs 'Value*') (scope 'Unicode*') -> 'Interpreter*')
+    (fn 'interp_template*' ((vs 'Value*') (scope 'Unicode*') (macroEnv MacroEnv) -> 'Interpreter*')
       (if (seq_is_empty vs)
         (seq 'Interpreter*')
-        (seq_prepend (interp_template    (seq_head vs) scope)
-                     ('interp_template*' (seq_tail vs) scope))))
+        (seq_prepend (interp_template    (seq_head vs) scope macroEnv)
+                     ('interp_template*' (seq_tail vs) scope macroEnv))))
 
 
     (fn interp_literal ((v Value) -> Interpreter)
@@ -1244,9 +1254,9 @@ Spec Issues: 1.0
           (ith env i))))
 
 
-    (fn interp_list ((v Value) (scope 'Unicode*') -> Interpreter)
+    (fn interp_list ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (let [(us (Value_annots v)),
-            (is ('interp_template*' (lower (Value_content v) List 'Value*') scope))]
+            (is ('interp_template*' (lower (Value_content v) List 'Value*') scope macroEnv))]
         (mk_fn Interpreter (env)
           (letrec [(combine (lambda (is1)                              // [FOLD]
                               (if (seq_is_empty is1) (seq 'Value*')
@@ -1254,17 +1264,17 @@ Spec Issues: 1.0
                                             (combine (seq_tail is1))))))]
             (seq 'Value*' (tuple Value us (lift (combine is) List Content)))))))
 
-    (fn interp_sexp ((v Value) (scope 'Unicode*') -> Interpreter)
+    (fn interp_sexp ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (isClause v "literal")
         (interpSF_literal (clauseBody v) scope)
         (if (isClause v "if_void")
-          (interpSF_if_void (clauseBody v) scope)
+          (interpSF_if_void (clauseBody v) scope macroEnv)
           (if (isClause v "if_single")
-            (interpSF_if_single (clauseBody v) scope)
+            (interpSF_if_single (clauseBody v) scope macroEnv)
             (if (isClause v "if_multi")
-              (interpSF_if_multi (clauseBody v) scope)
+              (interpSF_if_multi (clauseBody v) scope macroEnv)
               (if (isClause v "for")
-                (interpSF_for (clauseBody v) scope)
+                (interpSF_for (clauseBody v) scope macroEnv)
                 (wrong "Malformed template: " v)))))))
 
 
@@ -1275,34 +1285,34 @@ Spec Issues: 1.0
         (mk_fn Interpreter (env) (seq 'Value*' (seq_head vs)))
         (wrong "Malformed literal clause")))
 
-    (fn interpSF_if_void ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+    (fn interpSF_if_void ((vs 'Value*') (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (= (seq_length vs) 3)
-        (let [(is ('interp_template*' vs scope))]
+        (let [(is ('interp_template*' vs scope macroEnv))]
           (mk_fn Interpreter (env)
             (if (seq_is_empty ((ith is 0) env))
              ((ith is 1) env)
              ((ith is 2) env))))
         (wrong "Malformed if_void form")))
 
-    (fn interpSF_if_single ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+    (fn interpSF_if_single ((vs 'Value*') (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (= (seq_length vs) 3)
-        (let [(is ('interp_template*' vs scope))]
+        (let [(is ('interp_template*' vs scope macroEnv))]
           (mk_fn Interpreter (env)
             (if (= (seq_length ((ith is 0) env)) 1)
              ((ith is 1) env)
              ((ith is 2) env))))
         (wrong "Malformed if_single form")))
 
-    (fn interpSF_if_multi ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+    (fn interpSF_if_multi ((vs 'Value*') (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (= (seq_length vs) 3)
-        (let [(is ('interp_template*' vs scope))]
+        (let [(is ('interp_template*' vs scope macroEnv))]
           (mk_fn Interpreter (env)
             (if (> (seq_length ((ith is 0) env)) 1)
              ((ith is 1) env)
              ((ith is 2) env))))
         (wrong "Malformed if_multi form")))
 
-    (fn interpSF_for ((vs 'Value*') (scope 'Unicode*') -> Interpreter)
+    (fn interpSF_for ((vs 'Value*') (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (= (seq_length vs) 2)
         (let [(bindings (Value_listElements (ith vs 0)))]
           (let [(us (map 'Unicode*' (lambda (b)
@@ -1313,8 +1323,10 @@ Spec Issues: 1.0
                       bindings)),
                 (is ('interp_template*' (map 'Value*' (|b| (ith (Value_seqElements b) 1))
                                                       bindings)
-                                        scope))]
-            (let [(i_body (interp_template (ith vs 1) (seq_append us scope)))]
+                                        scope
+                                        macroEnv))]
+            // [DUPE-NAME] Reject duplicate entries in `us`
+            (let [(i_body (interp_template (ith vs 1) (seq_append us scope) macroEnv))]
               (mk_fn Interpreter (env)
                 (let [(as (map 'Value**' (lambda (i) (i env)) is))]
                   (letrec [(loop (lambda (streams)
