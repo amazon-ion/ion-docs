@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -109,11 +109,11 @@
              ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
 
 // FIXME [MAC-ID] These shouldn't fail, the unqualified reference is unambiguous.
-(check_eval_fail "Ambiguous macroreference :values"
+(check_eval_fail "Ambiguous macro-ref: :values"
 //(quote_top aoeui dhtns)
   (quote11   $ion_encoding::((macro_table $ion))
              ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
-(check_eval_fail "Ambiguous macroreference :values"
+(check_eval_fail "Ambiguous macro-ref: :values"
 //(quote_top aoeui dhtns)
   (quote11   $ion_encoding::((macro_table $ion $ion))
              ('#$:$ion:values' aoeui) ('#$:values' dhtns)))

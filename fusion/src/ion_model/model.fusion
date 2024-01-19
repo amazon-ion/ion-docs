@@ -822,7 +822,7 @@ Spec Issues: 1.0
           (if (opt_is_present m1)
             // [MAC-ID] Compare macro identities to allow benign duplicates.
             (if (opt_is_present m2)
-              (wrong "Ambiguous macroreference :" u)
+              (wrong "Ambiguous macro-ref: :" u)
               m1)
             m2))))
 
