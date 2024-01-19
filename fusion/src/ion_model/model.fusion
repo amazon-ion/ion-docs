@@ -49,7 +49,7 @@ Features:
 
 
 Defects:
-* Macro lookup is treading 1 as first address, not zero
+* [MACRO-ZERO] Macro lookup is treading 1 as first address, not zero
 * [VALID-MACTAB-MOD] $ion_encoding macro_table module-names are not validated
   WRT available modules.
 * Spec says various encoding-directive elements are unannotated, but the
@@ -763,31 +763,39 @@ Spec Issues: 1.0
 
     (fn resolve_MacroRef ((m MacroRef) (r Environment) -> Macro)
       (let [(mod (MacroRef_module m)),
-            (mac (MacroRef_macro  m)),
-            (mm  (currentModuleMap r))]
+            (mac (MacroRef_macro  m))]
         (if (opt_is_present mod)
           // Qualified reference
           (if (element_of mac Unicode)
-            (let [(m (resolve_qualifiedName (opt_value mod) (lower_to Unicode mac) mm))]
-              (if (opt_is_present m)
-                (opt_value m)
-                (wrong "No such macro: :" (opt_value mod) ":" (lower_to Unicode mac))))
-            (resolve_qualifiedAddr (opt_value mod) (- (lower mac I) 1) mm))
+            (resolve_qualifiedName (opt_value mod) (lower_to Unicode mac) r)
+            (resolve_qualifiedAddr (opt_value mod) (- (lower mac I) 1) r))
           // Unqualified name or local-offset
           (if (element_of mac Unicode)
             (resolve_unqualifiedName (lower_to Unicode mac) r)
             (resolve_unqualifiedAddr (Environment_mactab r) (- (lower_to I mac) 1) (lower_to I mac) r)))))
 
+    (fn resolveInstalledModule ((u Unicode) (r Environment) -> Module)
+      (letrec [(seek (lambda (modNames)
+                       (if (seq_is_empty modNames)
+                         (wrong "Module not in scope: " u)
+                         (if (= (seq_head modNames) u)
+                           ((currentModuleMap r) u)
+                           (seek (seq_tail modNames))))))]
+        // FIXME this dumb prepending again
+        (seek (seq_prepend (inject_into Unicode "$ion") (Environment_mactab r)))))
 
     // index is zero-based
-    (fn resolve_qualifiedAddr ((u Unicode) (i I) (mm ModuleMap) -> Macro)
-      (let [(ms (Module_mactab (mm u)))]
+    (fn resolve_qualifiedAddr ((u Unicode) (i I) (r Environment) -> Macro)
+      (let [(ms (Module_mactab (resolveInstalledModule u r)))]
         (if (< i (seq_length ms))
           (ExportedMacro_macro (ith ms i))
           (wrong "Invalid macro address: :" u ":" (+ 1 i)))))
 
-    (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (mm ModuleMap) -> 'Macro?')
-      (resolve_ExportedMacros (Module_mactab (mm u1)) u2))
+    (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (r Environment) -> Macro)
+      (let [(m (resolve_ExportedMacros (Module_mactab (resolveInstalledModule u1 r)) u2))]
+        (if (opt_is_present m)
+          (opt_value m)
+          (wrong "No such macro: :" u1 ":" u2))))
 
     (fn resolve_ExportedMacros ((ms 'ExportedMacro*') (u Unicode) -> 'Macro?')
       (if (seq_is_empty ms)
@@ -809,16 +817,17 @@ Spec Issues: 1.0
 
     (fn resolve_unqualifiedName ((u Unicode) (r Environment) -> Macro)
       (let [(ns (seq_prepend (inject_into Unicode "$ion") (Environment_mactab r)))]
-        (let [(m (resolve_ModuleNames ns u (currentModuleMap r)))]
-          (if (opt_is_present m)
-            (opt_value m)
-            (wrong "No such macro: :" u)))))
+        (let [(mods (map 'Module*' (currentModuleMap r) ns))]
+          (let [(m ('resolve_Module*' mods u))]
+            (if (opt_is_present m)
+              (opt_value m)
+              (wrong "No such macro: :" u))))))
 
-    (fn resolve_ModuleNames ((ms 'Unicode*') (u Unicode) (mm ModuleMap) -> 'Macro?')
-      (if (seq_is_empty ms)
+    (fn 'resolve_Module*' ((mods 'Module*') (u Unicode) -> 'Macro?')
+      (if (seq_is_empty mods)
         (opt 'Macro?')
-        (let [(m1 (resolve_qualifiedName (seq_head ms) u mm)),
-              (m2 (resolve_ModuleNames   (seq_tail ms) u mm))]
+        (let [(m1 (resolve_ExportedMacros (Module_mactab (seq_head mods)) u)),
+              (m2 ('resolve_Module*'      (seq_tail mods) u))]
           (if (opt_is_present m1)
             // [MAC-ID] Compare macro identities to allow benign duplicates.
             (if (opt_is_present m2)
@@ -1096,7 +1105,8 @@ Spec Issues: 1.0
                           (letrec [(seek (lambda (macs1)
                                            (if (seq_is_empty macs1)
                                              // Not a local, check `use`d macros.
-                                             (let [(mac (resolve_qualifiedName "$ion" (lower_to Unicode nameAddr) mods))]
+                                             (let [(mac (resolve_ExportedMacros (Module_mactab (mods "$ion"))
+                                                                                (lower_to Unicode nameAddr)))]
                                                (if (opt_is_present mac)
                                                  (opt_value mac)
                                                  (wrong "No such macro: " (lower nameAddr Unicode))))

@@ -48,7 +48,8 @@
 
 // Absent shared symbol
 (check_expansion_and_bounds 14
-  (quote_top '#$mno#1' n)       // FIXME should be mnop!
+  // FIXME [SYMTAB-COMPOSE] symbol identity should be mnop#1
+  (quote_top '#$mno#1' n)
   (quote11 $ion_encoding::((load mno "mnop" 4) (symbol_table mno)) '#$11' '#$12'))
 
 
@@ -194,7 +195,7 @@
 
 
 // Macro addresses
-// FIXME addresses should start at zero!
+// FIXME [MACRO-ZERO] addresses should start at zero!
 
 (check_expansion
   (quote_top abc abc)
@@ -210,9 +211,31 @@
   (document ('#$:1') ('#$:2') ('#$:M:1') ('#$:M:2') [('#$:3'), ('#$:M:3')])
   (produces "M1"     "M2"     "M1"       "M2"       [/*void*/   /*void*/ ]))
 
+
+// Modules not in macro_table are not accessible
+
+(check_eval_fail "Module not in scope: M"
+  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+                             (macro_table))
+             ('#$:M:mac')))
+
+(check_eval_fail "Module not in scope: M"
+  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+                             (macro_table))
+             ('#$:M:1')))   // TODO [MACRO-ZERO] change to 0
+
+(check_eval_fail "No such macro: :mac"
+  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+                             (macro_table))
+             ('#$:mac')))
+
+(check_eval_fail "Invalid macro address: :1"
+  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+                             (macro_table))
+             ('#$:1')))  // TODO [MACRO-ZERO] change to 0
+
 // TODO test addresses when there's multiple modules.
-// TODO test out-of-bounds macro address
-// TODO test Eexp invokes macro defined but not installed
+// TODO more tests for out-of-bounds macro addresses
 
 
 "SUCCESS (encoding.test)"
