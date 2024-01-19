@@ -759,7 +759,7 @@ Spec Issues: 1.0
 
 
     //==========================================================================
-    // Macro Reference Resolution
+    // Macro Reference Resolution for Eexprs
 
     (fn resolve_MacroRef ((m MacroRef) (r Environment) -> Macro)
       (let [(mod (MacroRef_module m)),
@@ -1095,7 +1095,11 @@ Spec Issues: 1.0
                           // [DUPE-NAME] We assume no duplicate names in `macs`
                           (letrec [(seek (lambda (macs1)
                                            (if (seq_is_empty macs1)
-                                             (wrong "No such macro: " (lower nameAddr Unicode))
+                                             // Not a local, check `use`d macros.
+                                             (let [(mac (resolve_qualifiedName "$ion" (lower_to Unicode nameAddr) mods))]
+                                               (if (opt_is_present mac)
+                                                 (opt_value mac)
+                                                 (wrong "No such macro: " (lower nameAddr Unicode))))
                                              // [OPT-NAME]
                                              (if (= (opt_value (ExportedMacro_name (seq_head macs1)))
                                                     (lower_to Unicode nameAddr))

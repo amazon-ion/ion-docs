@@ -258,9 +258,18 @@
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces true     false      false        false))
 
-// TODO Ensure that the unselected clause isn't evaluated.
-//  Needs a way to force an expansion-time error from the TDL.
-//  An invalid dynamic invocation like (make_string false) would work.
+// Ensure that the unselected clause isn't evaluated.
+(with_mactab ((macro m [(p...)] (if_void p true (make_string null))))
+  (document ('#$:m'))
+  (produces true)
+  (document ('#$:m' 1))
+  (signals "Not a text value"))
+(with_mactab ((macro m [(p...)] (if_void p (make_string null) false)))
+  (document ('#$:m'))
+  (signals "Not a text value")
+  (document ('#$:m' 1))
+  (produces false))
+
 
 // Try new testing forms; still awkward.
 (with_mactab ((macro m [] (if_void)))
@@ -292,7 +301,17 @@
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces false    true       false        false))
 
-// TODO Ensure that the unselected clause isn't evaluated.
+// Ensure that the unselected clause isn't evaluated.
+(with_mactab ((macro m [(p...)] (if_single p true (make_string null))))
+  (document ('#$:m'))
+  (signals "Not a text value")
+  (document ('#$:m' 1))
+  (produces true))
+(with_mactab ((macro m [(p...)] (if_single p (make_string null) false)))
+  (document ('#$:m'))
+  (produces false)
+  (document ('#$:m' 1))
+  (signals "Not a text value"))
 
 (check_eval_fail "Malformed if_single form"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single)))))))
@@ -319,7 +338,17 @@
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces false    false      true         true))
 
-// TODO Ensure that the unselected clause isn't evaluated.
+// Ensure that the unselected clause isn't evaluated.
+(with_mactab ((macro m [(p...)] (if_multi p true (make_string null))))
+  (document ('#$:m'))
+  (signals "Not a text value")
+  (document ('#$:m' 1 2))
+  (produces true))
+(with_mactab ((macro m [(p...)] (if_multi p (make_string null) false)))
+  (document ('#$:m'))
+  (produces false)
+  (document ('#$:m' 1 2))
+  (signals "Not a text value"))
 
 (check_eval_fail "Malformed if_multi form"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi)))))))
@@ -404,15 +433,13 @@
   (document ('#$:m' 1 2))
   (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
 
-// Enable when invocations are supported.
-//(with_mactab ((macro m [(a ...)] (for [(f (void))] [f, a])))
-//  (document ('#$:m') ('#$:m' 1 2))
-//  (produces))
+(with_mactab ((macro m [(a ...)] (for [(f (void))] [f, a])))
+  (document ('#$:m') ('#$:m' 1 2))
+  (produces))
 
-//(with_mactab ((macro m [(a ...)] (for [(f (values "f1" a "f2"))] [f, a])))
-//  (document ('#$:m')  ('#$:m' 1))
-//  (produces ["f1"]    ["f1", 1] [1, 1] ["f2", 1])
-//)
+(with_mactab ((macro m [(a ...)] (for [(f (values "f1" a "f2"))] [f, a])))
+  (document ('#$:m')       ('#$:m' 1))
+  (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
 
 
 (check_eval_fail "Malformed `for` form"
@@ -429,12 +456,21 @@
 (check_eval_fail "Malformed `for` binding pair"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1 2)] 1)))))))
 
+// Malformed sub-templates are detected at compile-time.
 (check_eval_fail "Unbound variable: x"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v x)] 1)))))))
 (check_eval_fail "Unbound variable: x"
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1)] x)))))))
 
-// TODO test handling of runtime failure in bound-expression and body-expression
+// Propagate runtime failure in bound-expression
+(with_mactab ((macro m [(p...)] (for [(f (values 1 (make_symbol p) 2))] f)))
+  (document ('#$:m' "a" null "b"))
+  (signals "Not a text value"))    // for null
+
+// Propagate runtime failure in body-expression
+(with_mactab ((macro m [(p...)] (for [(f p)] (make_symbol p))))
+  (document ('#$:m' "a" null "b"))
+  (signals "Not a text value"))    // for null
 
 
 // Macro invocations
