@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module ion_testing "/fusion"
 
@@ -447,14 +447,26 @@ We "tunnel" special tokens as follows:
     (lambda (stx)
       (wrong_syntax stx "Must be inside `with_mactab`")))
 
+  (define_syntax with_encoding
+    (lambda (stx)
+      (lets [(enc (syntax_get stx 1)),
+             (cases (tail (tail (syntax_unwrap stx)))),
+             (directive (annotate (syntax_unwrap enc) "$ion_encoding"))]
+        (datum_to_syntax
+          (pair (QS begin) (gen_cases directive (if (is_empty cases)
+                                                  (sexp (QS (document)) (QS (produces)))
+                                                  cases)))
+          (QS context)
+          stx))))
+
   (define_syntax with_mactab
     (lambda (stx)
       (lets [(macros (syntax_get stx 1)),
              (cases (tail (tail (syntax_unwrap stx)))),
              (mactab (pair (quote macro_table) macros)),
-             (directive (QQ $ion_encoding::((module M (UQ mactab)) (macro_table M)))),]
+             (enc  (QQ ((module M (UQ mactab)) (macro_table M))))]
         (datum_to_syntax
-          (pair (QS begin) (gen_cases directive cases))
+          (pair (QS with_encoding) (pair enc cases))
           (QS context)
           stx))))
 
