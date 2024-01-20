@@ -1002,7 +1002,28 @@ Spec Issues: 1.0
     (fn compile_ED_module ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
       (let [(name (Value_symtext (ith vs 0)))]                   // [VALID-NAME]
         (ModuleMap_extend avail name
-          (compile_IM_body (seq_tail vs) avail c))))
+          (compile_IM_body (seq_tail vs) avail (outerMacroEnv avail) c))))
+
+    // The macro environment at the outside of a module.
+    // Includes retained or loaded modules and used macro names.
+    (fn outerMacroEnv ((mm ModuleMap) -> MacroEnv)
+      (mk_fn MacroEnv (mod mac)
+        (if (opt_is_present mod)
+          // Qualified reference
+          (wrong "Qualified and local macro-ref not supported in TL")
+//          (if (element_of mac Unicode)
+//            (resolve_qualifiedName (opt_value mod) (lower mac Unicode) r)
+//            (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) r))
+          // Unqualified name or local-offset
+          (if (element_of mac Unicode)
+            // $ion is implicitly `use`d
+            (let [(m1 (resolve_ExportedMacros (Module_mactab (mm "$ion"))
+                                              (lower mac Unicode)))]
+              (if (opt_is_present m1)
+                (opt_value m1)
+                (wrong "No such macro: " (lower mac Unicode))))
+            // No reaching "outside" the module with unqualified addresses
+            (wrong "SHOULD NOT GET HERE")))))
 
 
     // $ion_encoding symbol_table
@@ -1055,28 +1076,30 @@ Spec Issues: 1.0
     //==========================================================================
     // Inline module compilation
 
-    (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (c Catalog) -> Module)
+    (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (r MacroEnv) (c Catalog) -> Module)
       (if (nextClauseIs vs "load")
         // Recurse to find more dependencies
         (compile_IM_body (seq_tail vs)
           (compile_ED_load (clauseBody (seq_head vs)) avail c)
+          r  // FIXME loaded module needs to be visibile in this MacroEnv
           c)
         // No more dependencies
-        (compile_IM_symtab vs avail)))
+        (compile_IM_symtab vs avail r)))
 
-    (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) -> Module)
+    (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) (r MacroEnv) -> Module)
       (if (nextClauseIs vs "symbol_table")
-        (compile_IM_mactab (seq_tail vs) avail
+        (compile_IM_mactab (seq_tail vs) avail r
           // [SYMTAB-COMPOSE] This doesn't handle absent symbols or their equality.
           (compile_module_symtab (clauseBody (seq_head vs)) avail))
-        (compile_IM_mactab vs avail (seq 'SymTok*'))))
+        (compile_IM_mactab vs avail r (seq 'SymTok*'))))
 
     (fn compile_IM_mactab ((vs 'Value*')
                            (avail ModuleMap)
+                           (r     MacroEnv)
                            (ts 'SymTok*') -> Module)
       (if (nextClauseIs vs "macro_table")
         (compile_IM_final (seq_tail vs) avail ts
-          (compile_module_mactab (clauseBody (seq_head vs)) avail (seq 'ExportedMacro*')))
+          (compile_module_mactab (clauseBody (seq_head vs)) avail r (seq 'ExportedMacro*')))
         (compile_IM_final vs avail ts (seq 'ExportedMacro*'))))
 
     (fn compile_IM_final ((vs 'Value*')
@@ -1093,39 +1116,47 @@ Spec Issues: 1.0
 
     (fn compile_module_mactab ((vs   'Value*')
                                (mods ModuleMap)
+                               (r    MacroEnv)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (seq_is_empty vs)
         macs
-        (compile_module_mactab (seq_tail vs) mods
-          (compile_IM_mactab_elt (seq_head vs) mods macs))))
+        (compile_module_mactab (seq_tail vs) mods r
+          (compile_IM_mactab_elt (seq_head vs) mods r macs))))
 
     (fn compile_IM_mactab_elt ((v    Value)
                                (mods ModuleMap)
+                               (r    MacroEnv)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (isClause v "macro")
-        (let [(macroEnv (mk_fn MacroEnv (modName nameAddr)
-                          // This only supports locol names
-                          // TODO Support qualified refs, non-local names.
-                          // [DUPE-NAME] We assume no duplicate names in `macs`
-                          (letrec [(seek (lambda (macs1)
-                                           (if (seq_is_empty macs1)
-                                             // Not a local, check `use`d macros.
-                                             (let [(mac (resolve_ExportedMacros (Module_mactab (mods "$ion"))
-                                                                                (lower_to Unicode nameAddr)))]
-                                               (if (opt_is_present mac)
-                                                 (opt_value mac)
-                                                 (wrong "No such macro: " (lower nameAddr Unicode))))
-                                             // [OPT-NAME]
-                                             (if (= (opt_value (ExportedMacro_name (seq_head macs1)))
-                                                    (lower_to Unicode nameAddr))
-                                               (ExportedMacro_macro (seq_head macs1))
-                                               (seek (seq_tail macs1))))))]
-                            (seek macs))))]
+        (let [(macroEnv (localMacroEnv r macs))]
           (seq_append macs
             (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macroEnv))))
         (let [(mod (mods (Value_symtext v)))]
           // [DUPE-NAME] Check for duplicates
           (seq_append macs (Module_mactab mod)))))
+
+    // Create a MacroEnv that can resolve local names/addrs within a module.
+    // Note that local macros shadow imported names.
+    (fn localMacroEnv ((r MacroEnv) (ms 'ExportedMacro*') -> MacroEnv)
+      // This only supports locol names
+      // TODO Support qualified refs, non-local names.
+      // [DUPE-NAME] We assume no duplicate names in `ms`
+      (mk_fn MacroEnv (mod mac)
+        (if (opt_is_present mod)
+          (if (= (opt_value mod) "")
+            // Template uses a bare macro name, eg (make_string ...)
+            (let [(m (resolve_ExportedMacros ms (lower mac Unicode)))]
+               (if (opt_is_present m)
+                 // Found the name locally; this shadows any import.
+                 (opt_value m)
+                 // Delegate to outer environment.
+                 (r (opt 'Unicode?') mac)))
+          // Qualified reference
+          (wrong "Qualified macro-ref not supported in TL"))
+          // Unqualified name or local-offset
+          (if (element_of mac Unicode)
+            (wrong "Unqualified name not supported in TL")
+            (wrong "Unqualified address not supported in TL")))))
 
 
     //==========================================================================
