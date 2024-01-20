@@ -1,0 +1,50 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/fusioncontrib/denotation"
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+  "/ion_model/testing"
+)
+
+
+// Trivial happy cases.
+(with_encoding ((module M (use))))
+(with_encoding ((module M (use $ion))))
+(with_encoding ((module M (use) (use) (use $ion))))
+
+
+(with_encoding ((module M (use 15)))
+  (document)
+  (signals "Expected a symbol:"))
+
+(with_encoding ((module M (use foo)))
+  (document)
+  (signals "Module not in scope: foo"))
+
+(with_encoding ((module M (use M)))
+  (document)
+  (signals "Module not in scope: M"))
+
+// Use must precede symbol_table, macro_table    // TODO and `alias`
+(with_encoding ((module M (symbol_table) (use)))
+  (document)
+  (signals "Unexpected clause in module:"))
+
+(with_encoding ((module M (macro_table) (use)))
+  (document)
+  (signals "Unexpected clause in module:"))
+
+
+(with_encoding ((module M (macro_table (macro m1 [] "m1")
+                                       (macro m2 [] "m2")))
+                (module U (use M)
+                          (macro_table (macro u1 [] [(m1), (m2)])))
+                (macro_table U))
+  (document ('#$:u1'))
+  (produces ["m1", "m2"]))
+
+// TODO `use`d names should not shadow.
+
+"SUCCESS (use.test)"

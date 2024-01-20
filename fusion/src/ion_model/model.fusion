@@ -160,7 +160,12 @@ Spec Issues: 1.0
       (and (opt_is_present v) (Value_is_symbol_matching (opt_value v) u)))
 
     (fn Value_strtext ((v Value) -> Unicode)  (lower (Value_content v) String Unicode))
-    (fn Value_symtext ((v Value) -> Unicode)  (lower (Value_content v) Symbol SymTok Unicode))
+
+    (fn Value_symtext ((v Value) -> Unicode)
+      (if (element_of (Value_content v) Symbol)
+        (lower (Value_content v) Symbol SymTok Unicode)
+        (wrong "Expected a symbol: " v)))
+
     (fn Value_int     ((v Value) -> I      )  (lower (Value_content v) Int I))
 
 
@@ -781,6 +786,19 @@ Spec Issues: 1.0
                              (seek (seq_tail modNames))))))]
           (seek (Environment_mactab r)))))
 
+    (fn currentInstalledModuleMap ((r Environment) -> ModuleMap)
+      (mk_fn ModuleMap (u)
+        (if (= u "$ion")
+          (Environment_sysModule r)
+          (letrec [(seek (lambda (modNames)
+                           (if (seq_is_empty modNames)
+                             (wrong "Module not in scope: " u)
+                             (if (= (seq_head modNames) u)
+                               ((Environment_modules r) u)
+                               (seek (seq_tail modNames))))))]
+            (seek (Environment_mactab r))))))
+
+
     // index is zero-based
     (fn resolve_qualifiedAddr ((u Unicode) (i0 I) (r Environment) -> Macro)
       (let [(i (- i0 1)),                                  // FIXME [MACRO-ZERO]
@@ -1083,8 +1101,32 @@ Spec Issues: 1.0
           (compile_ED_load (clauseBody (seq_head vs)) avail c)
           r  // FIXME loaded module needs to be visibile in this MacroEnv
           c)
-        // No more dependencies
-        (compile_IM_symtab vs avail r)))
+        (if (nextClauseIs vs "use")
+          (compile_IM_use (clauseBody (seq_head vs)) (seq_tail vs) c avail r)
+          // No more dependencies
+          (compile_IM_symtab vs avail r))))
+
+    (fn compile_IM_use ((vs 'Value*')     // The rest of this `use` clause
+                        (vs1 'Value*')    // The rest of the IM body
+                        (c Catalog)
+                        (avail ModuleMap)
+                        (r MacroEnv) -> Module)
+      (if (seq_is_empty vs)
+        (compile_IM_body vs1 avail r c)
+        // Resolve the module reference immediately
+        (let [(mod0 (avail (Value_symtext (seq_head vs))))]
+          (compile_IM_use (seq_tail vs) vs1 c avail
+            (mk_fn MacroEnv (mod1 mac)
+              (if (or (opt_is_present mod1) (not (element_of mac Unicode)))
+                // Qualified reference, or unqualified address; pass through.
+                (r mod1 mac)
+                // Unqualified name
+                (let [(m1 (resolve_ExportedMacros (Module_mactab mod0)
+                                                  (lower mac Unicode)))]
+                  (if (opt_is_present m1)
+                    (opt_value m1)
+                    // TODO [MAC-ID] don't shadow; detect ambiguity
+                    (r mod1 mac)))))))))
 
     (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) (r MacroEnv) -> Module)
       (if (nextClauseIs vs "symbol_table")
