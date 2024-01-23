@@ -18,6 +18,7 @@ Terminology/Readability:
   * Should have a way to detect when a domain element is forgotten.
 
 Features:
+* [TL-QUAL] TL qualified macro-refs like (':$ion:values' ...) or (':M:m')
 * [OPT-NAME] Optional macro names; can streamline some tests
 * [PARAM-CARD] Validate cardinality of grouped parameters
 * [PARAM-TYPE] Declare and validate parameter types
@@ -1124,8 +1125,10 @@ Spec Issues: 1.0
                 (let [(m1 (resolve_ExportedMacros (Module_mactab mod0)
                                                   (lower mac Unicode)))]
                   (if (opt_is_present m1)
-                    (opt_value m1)
-                    // TODO [MAC-ID] don't shadow; detect ambiguity
+                    (if (is_bottom (r mod1 mac))
+                      (opt_value m1)
+                      // [MAC-ID] Compare macro identities to allow benign duplicates.
+                     (wrong "Ambiguous macro-ref: " (lower mac Unicode)))
                     (r mod1 mac)))))))))
 
     (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) (r MacroEnv) -> Module)
