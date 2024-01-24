@@ -191,24 +191,23 @@
   (quote11   $ion_encoding::((module M (macro_table $ion))
                              (macro_table M))
              ('#$:M:make_symbol' "sah" weet)
-             ('#$:M:4'           "sah" weet)))
+             ('#$:M:3'           "sah" weet)))
 
 
 // Macro addresses
-// FIXME [MACRO-ZERO] addresses should start at zero!
 
 (check_expansion
   (quote_top abc abc)
   (quote11   $ion_encoding::((module M (macro_table $ion))
                              (macro_table M))
 //           ('#$:make_symbol' ('#$:values' "a" b) ('#$:void' x) c)  // TODO [MAC-ID]
-             ('#$:M:4'         ('#$:M:2'    "a" b) ('#$:M:1'  x) c)
-             ('#$:4'           ('#$:2'      "a" b) ('#$:1'    x) c)))
+             ('#$:M:3'         ('#$:M:1'    "a" b) ('#$:M:0'  x) c)
+             ('#$:3'           ('#$:1'      "a" b) ('#$:0'    x) c)))
 
 (with_mactab ((macro M1 () "M1")
               (macro M2 () "M2")
               $ion)
-  (document ('#$:1') ('#$:2') ('#$:M:1') ('#$:M:2') [('#$:3'), ('#$:M:3')])
+  (document ('#$:0') ('#$:1') ('#$:M:0') ('#$:M:1') [('#$:2'), ('#$:M:2')])
   (produces "M1"     "M2"     "M1"       "M2"       [/*void*/   /*void*/ ]))
 
 
@@ -222,17 +221,17 @@
 (check_eval_fail "Module not in scope: M"
   (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
                              (macro_table))
-             ('#$:M:1')))   // TODO [MACRO-ZERO] change to 0
+             ('#$:M:0')))
 
 (check_eval_fail "No such macro: :mac"
   (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
                              (macro_table))
              ('#$:mac')))
 
-(check_eval_fail "Invalid macro address: :1"
+(check_eval_fail "Invalid macro address: :0"
   (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
                              (macro_table))
-             ('#$:1')))  // TODO [MACRO-ZERO] change to 0
+             ('#$:0')))
 
 // TODO test addresses when there's multiple modules.
 // TODO more tests for out-of-bounds macro addresses

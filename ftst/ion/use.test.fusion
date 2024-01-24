@@ -77,7 +77,7 @@
 (with_encoding ((module M (macro_table (macro m1 [] "m1")))
                 (module N (macro_table (macro n1 [] "n1")))
                 (module U (use M N M)
-                          (macro_table (macro u1 [] (values (':M:m1') (':M:1'))))
+                          (macro_table (macro u1 [] (values (':M:m1') (':M:0'))))
 //                        (macro_table (macro u2 [] (m1)))     // FIXME [MAC-ID]
                 )
                 (macro_table U))

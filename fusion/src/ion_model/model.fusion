@@ -49,12 +49,11 @@ Features:
 
 
 Defects:
-* [MACRO-ZERO] Macro lookup is treading 1 as first address, not zero
 * [VALID-MACTAB-MOD] $ion_encoding macro_table module-names are not validated
   WRT available modules.
 * Spec says various encoding-directive elements are unannotated, but the
   model doesn't enforce that.
-* SIDs should be non-negative.
+* SIDs and Macro addresses should be non-negative.
 * The spec doesn't say that SST must have its annotation as the first one.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
   associated IDs (the same string could appear twice as children of the symbols
@@ -790,12 +789,11 @@ Spec Issues: 1.0
 
 
     // index is zero-based
-    (fn resolve_qualifiedAddr ((u Unicode) (i0 I) (mm ModuleMap) -> Macro)
-      (let [(i (- i0 1)),                                  // FIXME [MACRO-ZERO]
-            (ms (Module_mactab (mm u)))]
+    (fn resolve_qualifiedAddr ((u Unicode) (i I) (mm ModuleMap) -> Macro)
+      (let [(ms (Module_mactab (mm u)))]
         (if (< i (seq_length ms))
           (ExportedMacro_macro (ith ms i))
-          (wrong "Invalid macro address: :" u ":" (+ 1 i)))))
+          (wrong "Invalid macro address: :" u ":" i))))
 
     (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (mm ModuleMap) -> Macro)
       (let [(m (resolve_ExportedMacros (Module_mactab (mm u1)) u2))]
@@ -822,12 +820,11 @@ Spec Issues: 1.0
         (join (map 'Module*' (Environment_modules r) (Environment_mactab r)))))
 
     // index is zero-based; i0 is the original value
-    (fn resolve_unqualifiedAddr ((i0 I) (r Environment) -> Macro)
-      (let [(i (- i0 1)),                                  // FIXME [MACRO-ZERO]
-            (ms (currentMacroStore r))]
+    (fn resolve_unqualifiedAddr ((i I) (r Environment) -> Macro)
+      (let [(ms (currentMacroStore r))]
         (if (< i (seq_length ms))
           (ExportedMacro_macro (ith ms i))
-          (wrong "Invalid macro address: :" i0))))
+          (wrong "Invalid macro address: :" i))))
 
     (fn resolve_unqualifiedName ((u Unicode) (r Environment) -> Macro)
       (let [(mods (map 'Module*' (Environment_modules r) (Environment_mactab r)))]
@@ -1192,11 +1189,10 @@ Spec Issues: 1.0
                (if (opt_is_present m)
                  (opt_value m)
                  (wrong "No such macro declared in this module: :" (lower mac Unicode))))
-            // FIXME [MACRO-ZERO]
-            (let [(i (- (lower mac I) 1))]
+            (let [(i (lower mac I))]
               (if (< i (seq_length ms))
                 (ExportedMacro_macro (ith ms i))
-                (wrong "Invalid macro address: :" (lower mac I))))))))
+                (wrong "Invalid macro address: :" i)))))))
 
 
     //==========================================================================
