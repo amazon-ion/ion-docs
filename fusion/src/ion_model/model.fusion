@@ -18,7 +18,7 @@ Terminology/Readability:
   * Should have a way to detect when a domain element is forgotten.
 
 Features:
-* [TL-QUAL] TL qualified macro-refs like (':$ion:values' ...) or (':M:m')
+* [TL-LOCAL_REF] TL local macro-refs like (':m' ...) or (':1')
 * [OPT-NAME] Optional macro names; can streamline some tests
 * [PARAM-CARD] Validate cardinality of grouped parameters
 * [PARAM-TYPE] Declare and validate parameter types
@@ -769,23 +769,13 @@ Spec Issues: 1.0
         (if (opt_is_present mod)
           // Qualified reference
           (if (element_of mac Unicode)
-            (resolve_qualifiedName (opt_value mod) (lower mac Unicode) r)
-            (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) r))
+            (resolve_qualifiedName (opt_value mod) (lower mac Unicode) (currentInstalledModuleMap r))
+            (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) (currentInstalledModuleMap r)))
           // Unqualified name or local-offset
           (if (element_of mac Unicode)
             (resolve_unqualifiedName (lower mac Unicode) r)
             (resolve_unqualifiedAddr (lower mac I      ) r)))))
 
-    (fn resolveInstalledModule ((u Unicode) (r Environment) -> Module)
-      (if (= u "$ion")
-        (Environment_sysModule r)
-        (letrec [(seek (lambda (modNames)
-                         (if (seq_is_empty modNames)
-                           (wrong "Module not in scope: " u)
-                           (if (= (seq_head modNames) u)
-                             ((Environment_modules r) u)
-                             (seek (seq_tail modNames))))))]
-          (seek (Environment_mactab r)))))
 
     (fn currentInstalledModuleMap ((r Environment) -> ModuleMap)
       (mk_fn ModuleMap (u)
@@ -801,15 +791,15 @@ Spec Issues: 1.0
 
 
     // index is zero-based
-    (fn resolve_qualifiedAddr ((u Unicode) (i0 I) (r Environment) -> Macro)
+    (fn resolve_qualifiedAddr ((u Unicode) (i0 I) (mm ModuleMap) -> Macro)
       (let [(i (- i0 1)),                                  // FIXME [MACRO-ZERO]
-            (ms (Module_mactab (resolveInstalledModule u r)))]
+            (ms (Module_mactab (mm u)))]
         (if (< i (seq_length ms))
           (ExportedMacro_macro (ith ms i))
           (wrong "Invalid macro address: :" u ":" (+ 1 i)))))
 
-    (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (r Environment) -> Macro)
-      (let [(m (resolve_ExportedMacros (Module_mactab (resolveInstalledModule u1 r)) u2))]
+    (fn resolve_qualifiedName ((u1 Unicode) (u2 Unicode) (mm ModuleMap) -> Macro)
+      (let [(m (resolve_ExportedMacros (Module_mactab (mm u1)) u2))]
         (if (opt_is_present m)
           (opt_value m)
           (wrong "No such macro: :" u1 ":" u2))))
@@ -1029,10 +1019,9 @@ Spec Issues: 1.0
       (mk_fn MacroEnv (mod mac)
         (if (opt_is_present mod)
           // Qualified reference
-          (wrong "Qualified and local macro-ref not supported in TL")
-//          (if (element_of mac Unicode)
-//            (resolve_qualifiedName (opt_value mod) (lower mac Unicode) r)
-//            (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) r))
+          (if (element_of mac Unicode)
+            (resolve_qualifiedName (opt_value mod) (lower mac Unicode) mm)
+            (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) mm))
           // Unqualified name or local-offset
           (if (element_of mac Unicode)
             // $ion is implicitly `use`d
@@ -1196,12 +1185,12 @@ Spec Issues: 1.0
                  (opt_value m)
                  // Delegate to outer environment.
                  (r (opt 'Unicode?') mac)))
-          // Qualified reference
-          (wrong "Qualified macro-ref not supported in TL"))
+            // Qualified reference with real module name; pass through to outer env.
+            (r mod mac))
           // Unqualified name or local-offset
           (if (element_of mac Unicode)
-            (wrong "Unqualified name not supported in TL")
-            (wrong "Unqualified address not supported in TL")))))
+            (wrong "Unqualified name not supported in TL: :" (lower mac Unicode))
+            (wrong "Unqualified addr not supported in TL: :" (lower mac I))))))
 
 
     //==========================================================================
@@ -1474,13 +1463,19 @@ Spec Issues: 1.0
       (seq 'Value*'))
 
     (fn interp_macro ((vs 'Value*') (scope 'Unicode*') (r MacroEnv) -> Interpreter)
-      (let [(m (r (opt 'Unicode?' "") (lift_to NameOrAddr (Value_symtext (seq_head vs)))))]
+      (let [(m (interp_macroref (seq_head vs) r))]
         (let [(f (Macro_xform     m)),
               (s (Macro_signature m))]
           (let [(is (interp_args (Signature_params s) (Signature_rest s) scope r (seq_tail vs)))]
             (mk_fn Interpreter (env)
               (let [(as (map 'Value**' (lambda (i) (i env)) is))]
                 (f as)))))))
+
+    (fn interp_macroref ((v Value) (r MacroEnv) -> Macro)
+      (let [(m (parseMacroRef (Value_symtext v)))]
+        (let [(mod (MacroRef_module m)),
+              (mac (MacroRef_macro  m))]
+          (r mod mac))))
 
     // Returns one Interpreter per parameter.
     // This should stay in sync with collateArgs
@@ -1624,4 +1619,27 @@ Spec Issues: 1.0
   )
 
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
+
+
+  (require (only_in "/fusioncontrib/denotation" eject))
+
+  (define_fn parseMacroRef ((c Unicode) -> MacroRef)
+    (if (string_starts_with (eject c) ":")
+      (let [(parts (string_split (eject c) ":"))]
+        (if (= 1 (size parts))
+          (tuple MacroRef
+            (opt 'Unicode?')
+            (parseNameOrAddr (. parts 0)))
+          (tuple MacroRef
+            (opt 'Unicode?' (inject_into Unicode (. parts 0)))
+            (parseNameOrAddr (. parts 1)))))
+      (tuple MacroRef (opt 'Unicode?' "") (lift_to NameOrAddr c))))
+
+  (define (parseNameOrAddr /*string::*/ str)
+    (let [(val (with_ion_from_string str read))]
+      (lift_to NameOrAddr
+        (if (is_symbol val)
+          (inject_into Unicode (symbol_to_string val))
+          (inject_into I val)))))
+
 )

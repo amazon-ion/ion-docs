@@ -77,12 +77,12 @@
 (with_encoding ((module M (macro_table (macro m1 [] "m1")))
                 (module N (macro_table (macro n1 [] "n1")))
                 (module U (use M N M)
-//                        (macro_table (macro u1 [] ('M:m1'))) // FIXME [TL-QUAL]
+                          (macro_table (macro u1 [] (values (':M:m1') (':M:1'))))
 //                        (macro_table (macro u2 [] (m1)))     // FIXME [MAC-ID]
                 )
-                (macro_table U)))
-//  (document ('#$:u1'))
-//  (produces "m1"))
+                (macro_table U))
+  (document ('#$:u1'))
+  (produces "m1" "m1"))
 
 
 // Local macro defn can shadow the same `use`d name.

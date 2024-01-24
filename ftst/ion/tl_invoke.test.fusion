@@ -59,6 +59,23 @@
   (produces ["m", 1, 2] ["m", 1, a, 2] ["m", 1, a, b, 2]))
 
 
+// Qualified references
+
+(with_mactab ((macro m [(p...)] (':$ion:values' 1 p 2))
+              (macro n [(p...)] (':$ion:2'      3 p 4)))
+  (document ('#$:m' a b) ('#$:n' c d))
+  (produces 1 a b 2      3 c d 4))
+
+(with_encoding ((module M (macro_table (macro m [] "m")))
+                (module U (macro_table (macro u [] [(':M:m'), (':M:1')])))  // No `use` needed!
+                (module V (use M)
+                          (macro_table (macro v [] [(':M:m'), (':M:1')])))  // But it's allowed.
+                (macro_table U V))
+  (document ('#$:u')   ('#$:v'))
+  (produces ["m", "m"] ["m", "m"]))
+
+
+
 // Arity checking
 
 (check_eval_fail "Too few arguments"

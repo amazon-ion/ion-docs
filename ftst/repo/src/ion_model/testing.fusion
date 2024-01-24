@@ -133,23 +133,14 @@ We "tunnel" special tokens as follows:
          (is_symbol (head c))
          (string_starts_with (symbol_to_string (head c)) "#$:")))
 
-  (define (mk_NameOrAddr c)
-    (let [(val (with_ion_from_string c read))]
-      (lift_to NameOrAddr
-        (cond
-          ((is_symbol val) (inject_into Unicode (symbol_to_string val)))
-          ((is_int    val) (inject_into I val))
-          (true raise_argument_error "mk_NameOrAddr" "text of symbol/int" 0 c)))))
-
   (define (mk_MacroRef c)
-    (let [(parts (string_split (symbol_to_string c) ":"))]
-      (if (= 2 (size parts))
-        (tuple MacroRef
-          (opt 'Unicode?')
-          (mk_NameOrAddr (. parts 1)))
-        (tuple MacroRef
-          (opt 'Unicode?' (inject_into Unicode (. parts 1)))
-          (mk_NameOrAddr (. parts 2))))))
+    (lets [(parts (string_split (symbol_to_string c) ":")),
+           // Drop the "#$" prefix
+           (sym   (apply string_join ":" "" (subseq parts 1 (size parts)))),
+           (ref   (parseMacroRef sym))]
+      (when (is_bottom ref)
+        (raise_argument_error mk_MacroRef "valid macro-ref" 0 c))
+      ref))
 
   (define (mk_SEexp c)
     (let [(ref (mk_MacroRef (head c)))]
