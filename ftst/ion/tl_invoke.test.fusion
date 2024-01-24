@@ -75,6 +75,39 @@
   (produces ["m", "m"] ["m", "m"]))
 
 
+// Local references
+
+(with_mactab ((macro m [] "m")
+              (macro n [] (':m')))
+  (document ('#$:n'))
+  (produces "m"))
+
+// Local names shodow `use`d names.
+(with_encoding ((module M1 (macro_table (macro m [] "M1")))
+                (module M2 (use M1)
+                           (macro_table (macro m [] "M2")
+                                        (macro n [] (':m'))))
+                (macro_table M2))
+  (document ('#$:n'))
+  (produces "M2"))
+
+// Can't self-reference
+(with_mactab ((macro m [] (':m')))
+  (document)
+  (signals "No such macro declared in this module: :m"))
+
+// Can't reference system macros this way.
+(with_mactab ((macro _ [] (':values')))
+  (document)
+  (signals "No such macro declared in this module: :values"))
+
+// Can't reference `use`d names this way.
+(with_encoding ((module M1 (macro_table (macro m [] "M1")))
+                (module M2 (use M1)
+                           (macro_table (macro _ [] (':m')))))
+  (document)
+  (signals "No such macro declared in this module: :m"))
+
 
 // Arity checking
 

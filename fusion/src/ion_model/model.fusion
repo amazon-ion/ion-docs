@@ -1189,7 +1189,10 @@ Spec Issues: 1.0
             (r mod mac))
           // Unqualified name or local-offset
           (if (element_of mac Unicode)
-            (wrong "Unqualified name not supported in TL: :" (lower mac Unicode))
+            (let [(m (resolve_ExportedMacros ms (lower mac Unicode)))]
+               (if (opt_is_present m)
+                 (opt_value m)
+                 (wrong "No such macro declared in this module: :" (lower mac Unicode))))
             (wrong "Unqualified addr not supported in TL: :" (lower mac I))))))
 
 
