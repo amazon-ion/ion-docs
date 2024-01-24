@@ -78,9 +78,9 @@
 // Local references
 
 (with_mactab ((macro m [] "m")
-              (macro n [] (':m')))
+              (macro n [] [(':m'), (':1')]))
   (document ('#$:n'))
-  (produces "m"))
+  (produces ["m", "m"]))
 
 // Local names shodow `use`d names.
 (with_encoding ((module M1 (macro_table (macro m [] "M1")))
@@ -95,6 +95,16 @@
 (with_mactab ((macro m [] (':m')))
   (document)
   (signals "No such macro declared in this module: :m"))
+(with_mactab ((macro m [] (':1')))                         // FIXME [MACRO-ZERO]
+  (document)
+  (signals "Invalid macro address: :1"))
+
+// Can't forward-reference
+(with_mactab ((macro m [] (':2'))
+              (macro n [] "n")
+              (macro o [] "o"))
+  (document)
+  (signals "Invalid macro address: :2"))
 
 // Can't reference system macros this way.
 (with_mactab ((macro _ [] (':values')))
