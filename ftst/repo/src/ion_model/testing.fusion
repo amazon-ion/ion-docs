@@ -32,25 +32,6 @@ We "tunnel" special tokens as follows:
   (provide (all_defined_out))
 
 
-
-  (define (remove_first pred sequence)
-    (choose (let [(looking true)]
-              (lambda (e)
-                (if (and looking (pred e))
-                  (begin (set looking false) false)
-                  true)))
-       sequence))
-
-  (define (bag_equal equal list1 list2)
-    (and (same_size list1 list2)
-      (let loop [(i 0), (list2 list2)]
-        (if (== i (size list1))
-           (is_empty list2)
-           (let [(v1 (element list1 i))]
-             (loop (+ i 1)
-               (remove_first (|v2| (equal v1 v2)) list2)))))))
-
-
   //============================================================================
   // Creating abstract syntax trees
 
