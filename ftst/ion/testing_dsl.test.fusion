@@ -1,0 +1,20 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusion/experimental/check"
+  "/ion_model/testing/dsl"
+)
+
+(check_void ((after (toplevel)) [(sexp)]))
+// TODO ensure at least one case in `after`
+
+(check_void (in11 (toplevel)         (produces)))
+(check_void (in11 (toplevel '#$1' 1) (produces $ion 1)))
+(check_void (in11 (toplevel '#$999') (signals "Invalid symbol address 999")))
+
+(check_void (in11 (toplevel)         (produces)
+                  (toplevel '#$1' 1) (produces $ion 1)
+                  (toplevel '#$999') (signals "Invalid symbol address 999")))
+
+
+"SUCCESS (testing_dsl.test)"

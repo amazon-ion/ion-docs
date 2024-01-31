@@ -246,6 +246,8 @@ We "tunnel" special tokens as follows:
       (apply annotate (eject_Content content) (eject_SymToks annots))))
 
   (define (eject_Values values)
+    (unless (element_of values 'Value*')
+      (raise_argument_error eject_Values "Value*" 0 values))
     (map eject_Value (seq_to_sexp values)))
 
 

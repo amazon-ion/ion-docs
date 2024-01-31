@@ -1,0 +1,311 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+(module ion_testing_dsl "/fusion"
+
+  '''
+A DSL for testing the Ion denotational model.
+
+Our testing strategy uses normal Fusion data to represent input documents for
+the model to expand, and to represent the expected results of expansion.
+This allows us to use built-in Fusion equality to validate the results.
+
+We "tunnel" special tokens as follows:
+  * Both input and output documents use symbols of the form `'#$ddd'` to represent
+    SIDS.
+  * On input, `'#$ion_d_d'` represents an IVM.
+  * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
+    an E-expression.  The text starting with : is parsed as a macro reference.
+  * On output, `'#$name#ddd'` represents absent symbol at index `ddd` of SST `name`.
+  '''
+
+  (require
+    "/fusion/exception"
+    "/fusion/experimental/check"
+    "/fusion/experimental/syntax"
+    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/testing"
+    "/fusioncontrib/denotation/private/util"
+    "/ion_model/model"
+
+    (only_in "/ion_model/testing"
+      eject_Values
+      expand_doc
+    )
+  )
+
+  (provide
+    after
+    in11
+    produces
+    signals
+    toplevel
+  )
+
+
+
+  //============================================================================
+  // Streamlined macro testing
+
+  '''
+TODOs
+-----
+  * Might be nice if the various bits of data could use `unquote`.
+  * Fanout at encoding/mactab/document level
+
+
+(with_mactab ((macro ...) ...)
+  (each_content [( ... ), ...]
+    (produces ...))
+  (document ( ... )
+    (signals))
+)
+
+Nesting the expectation-clause inside the content clause is structurally clear,
+but the extra delimeter in `document` may be annoying.
+Plus we should also have one in `produces` for consistency.
+
+Could also be nice to allow nesting of encoding/mactab/document for hierarchical
+fanout.  Extension of encoding directives.
+
+- encoding
+  - module
+    - mactab
+      - segment
+        - expectation
+      - segment
+        - expectation
+
+Expectation clause can appear at any level, to test the preceding document.
+  * Is there any reason to allow continuing with more content and expectation?
+
+
+<content> := (encoding ___)
+           | (mactab   ___)
+           | (toplevel ___)
+           | (<content> ...)
+           | (each <content> ...+)
+
+<cases> := (check <expect>)
+         | <content> <expect>                     // => (after <content> (check <expect>))
+         | (after <content> <cases> ...+)         // One prefix, multiple suffixes
+
+<test>  := (in_11 <cases> ...+)                   // => (after '#$ion_1_1' <cases> ...)
+
+
+gen_content : STX -> (Document* -> Document*)  // Extends each document with new content(s)
+gen_cases   : STX -> (Document* -> Void)
+gen_expect  : STX -> (Document  -> Void)
+
+
+(gen_case (after CONTENT CASE...))
+  =>
+  (do_after (gen_content CONTENT) (gen_cases CASE...))
+(define (do_after extender cases)
+  (lambda (docs)
+    (cases (extender docs))))
+
+(gen_case (check EXPECT))
+  =>
+  (do_check (gen_expect EXPECT))
+(define (do_check expect)
+  (lambda (docs)
+    (for [(d docs)]
+      (expect d))))
+
+
+(gen_cases CASE0 CASE...)
+  =>
+  (do_cases (list (gen_case CASE) ...))
+(define (do_cases cases)
+  (lambda (docs)
+    (for [(case cases)]
+      (case docs))))
+
+
+(gen_content (toplevel DAT...))
+  =>
+  (do_toplevel (quote (DAT...)))
+(define (do_toplevel content)
+  (lambda (docs)
+    (map (|d| (append d content)))))
+
+(gen_content (each CONTENT...))
+  =>
+  (do_each (list (gen_content CONTENT) ...))
+(define (do_each contents)
+  (lambda (docs)
+    (fors_list [(d docs), (c contents))]
+      (c d))))
+
+(gen_content (CONTENT...))
+  =>
+  (do_concat (list (gen_content CONTENT) ...))
+(define (do_concat contents)
+  (lambda (docs)
+    (fors_list [(d docs)]
+      (for_fold [(d d), (c contents))]
+        (c d)))))
+
+
+(gen_expect (produces val...))
+  =>
+  (do_produces (quote (val...)))
+(define (do_produces doc)
+  (lambda (actual)
+    (check_not_bottom actual)
+    (check_eqv doc (eject_Values actual))))
+
+(gen_expect (signals  msg))
+  =>
+  (do_signals msg)
+(define (do_signals msg)
+  (lambda (actual)
+    (check_bottom msg actual)))
+  '''
+
+
+  (define (do_produces doc)
+    (unless (is_sexp doc)
+      (raise_argument_error do_produces "doc sexp" doc))
+    (lambda (actual)
+      (check_not_bottom actual)
+      (check_eqv doc (eject_Values actual))))
+
+  (define (do_signals msg)
+    (lambda (actual)
+      (check_bottom msg actual)))
+
+
+  (define_syntax gen_expect
+    (lambda (stx)
+      (let [(expectation_stx (syntax_get stx 1))]
+        // Produces (code for) a function that accepts the results of evaluation.
+        (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS produces))
+          (datum_to_syntax
+            (QQ (do_produces (quote (UQ (syntax_subseq expectation_stx 1)))))
+            (QS context)
+            expectation_stx)
+          (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS signals))
+            (datum_to_syntax
+              // TODO validate the argument is a literal string.
+              (QQ (do_signals (UQ (element (syntax_unwrap expectation_stx) 1))))
+              (QS context)
+              expectation_stx)
+            (wrong_syntax expectation_stx "Unrecognized expectation clause"))))))
+
+  (define_syntax toplevel
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside a test case")))
+  (define_syntax produces
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside a test case")))
+  (define_syntax signals
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside a test case")))
+
+
+  (define (do_toplevel content)
+    (lambda (docs)
+      (map (|d| (append d content)) docs)))
+
+  (define (is_content_clause stx)
+    // TODO type, size checks
+    (free_identifier_equal (head (syntax_unwrap stx)) (QS toplevel)))
+
+  (define_syntax gen_content
+    (lambda (stx)
+      (let [(content (syntax_get stx 1))]
+        (if (free_identifier_equal (head (syntax_unwrap content)) (QS toplevel))
+          (let [(fragment (tail (syntax_unwrap content)))]
+            /*
+              (gen_content (toplevel DAT...))
+              =>
+              (do_toplevel (quote (DAT...)))
+            */
+            (datum_to_syntax
+              (QQ (do_toplevel (quote (UQ fragment))))
+              (QS context)
+              content))
+          (wrong_syntax content "Only `toplevel` is supported")))))
+
+
+  (define (do_case extender checker)
+    (lambda (docs)
+      (assert (not (is_empty docs)) "do_case got no docs")
+      // TODO Annoying that we have to extend docs here.
+      (for [(doc (extender docs))]
+        (let [(actual (expand_doc doc))]
+          (checker actual)))))
+
+  (define (gen_case content_stx expect_stx)
+    (datum_to_syntax
+      (QQ (do_case (gen_content (UQ content_stx))
+                   (gen_expect  (UQ expect_stx))))
+      (QS context)
+      content_stx))
+
+
+  (define (do_cases cases)
+    (lambda (docs)
+      (for [(case cases)]
+        (case docs))))
+
+  (define_syntax gen_cases // TODO accept cases inside sexp?
+    (lambda (stx)
+      '''
+      (gen_cases CLAUSE ...)
+      '''
+      (lets [(clauses (tail (syntax_unwrap stx))),
+             (cases (let loop [(clauses clauses)]
+                      (if (is_empty clauses)
+                        (sexp)
+                        (if (is_content_clause (head clauses))
+                          (let [(content_stx (head clauses)),
+                                (expect_stx  (head (tail clauses)))]
+                            (pair (gen_case content_stx expect_stx)
+                                  (loop (tail (tail clauses)))))
+                          (wrong_syntax (head clauses) "Expected content-producing clause")))))]
+        /*
+          (gen_cases CASE0 CASE...)
+          =>
+          (do_cases (list (gen_case CASE) ...))
+        */
+        (datum_to_syntax
+          (QQ (do_cases (UQ (pair (QS list) cases))))
+          (QS context)
+          stx))))
+
+
+  (define (do_after extender cases)
+    (lambda (docs)
+      (cases (extender docs))))
+
+  (define_syntax after
+    (lambda (stx)
+      (let [(content (syntax_get stx 1)),
+            (cases   (tail (tail (syntax_unwrap stx))))]
+        /*
+          (gen_case (after CONTENT CASE...))
+          =>
+          (do_after (gen_content CONTENT) (gen_cases CASE...))
+        */
+        (datum_to_syntax
+          (QQ (do_after (gen_content (UQ content))
+                        (UQ (pair (QS gen_cases) cases))))
+          (QS context)
+          stx))))
+
+
+  (define (do_in11 cases)
+    // Bootstrap the cases with one document that's just the 1.1 IVM
+    (cases (quote [('#$ion_1_1')])))
+
+  (define_syntax in11
+    (lambda (stx)
+      (let [(cases (tail (syntax_unwrap stx)))]
+        (datum_to_syntax
+          (QQ (do_in11 (UQ (pair (QS gen_cases) cases))))
+          (QS context)
+          stx))))
+
+)
