@@ -250,21 +250,20 @@ gen_expect  : STX -> (Document  -> Void)
       (for [(case cases)]
         (case docs))))
 
-  (define_syntax gen_cases // TODO accept cases inside sexp?
+  (define_syntax gen_cases
     (lambda (stx)
       '''
-      (gen_cases CLAUSE ...)
+      (gen_cases (CLAUSE ...))
       '''
-      (lets [(clauses (tail (syntax_unwrap stx))),
-             (cases (let loop [(clauses clauses)]
-                      (if (is_empty clauses)
-                        (sexp)
-                        (if (is_content_clause (head clauses))
-                          (let [(content_stx (head clauses)),
-                                (expect_stx  (head (tail clauses)))]
-                            (pair (gen_case content_stx expect_stx)
-                                  (loop (tail (tail clauses)))))
-                          (wrong_syntax (head clauses) "Expected content-producing clause")))))]
+      (let [(cases (let loop [(clauses (syntax_unwrap (syntax_get stx 1)))]
+                     (if (is_empty clauses)
+                       (sexp)
+                       (if (is_content_clause (head clauses))
+                         (let [(content_stx (head clauses)),
+                               (expect_stx  (head (tail clauses)))]
+                           (pair (gen_case content_stx expect_stx)
+                                 (loop (tail (tail clauses)))))
+                         (wrong_syntax (head clauses) "Expected content-producing clause")))))]
         /*
           (gen_cases CASE0 CASE...)
           =>
@@ -283,15 +282,15 @@ gen_expect  : STX -> (Document  -> Void)
   (define_syntax after
     (lambda (stx)
       (let [(content (syntax_get stx 1)),
-            (cases   (tail (tail (syntax_unwrap stx))))]
+            (clauses (tail (tail (syntax_unwrap stx))))]
         /*
-          (gen_case (after CONTENT CASE...))
+          (after CONTENT CLAUSE...))
           =>
-          (do_after (gen_content CONTENT) (gen_cases CASE...))
+          (do_after (gen_content CONTENT) (gen_cases (CLAUSE...)))
         */
         (datum_to_syntax
           (QQ (do_after (gen_content (UQ content))
-                        (UQ (pair (QS gen_cases) cases))))
+                        (gen_cases   (UQ clauses))))
           (QS context)
           stx))))
 
@@ -302,9 +301,9 @@ gen_expect  : STX -> (Document  -> Void)
 
   (define_syntax in11
     (lambda (stx)
-      (let [(cases (tail (syntax_unwrap stx)))]
+      (let [(clauses (tail (syntax_unwrap stx)))]
         (datum_to_syntax
-          (QQ (do_in11 (UQ (pair (QS gen_cases) cases))))
+          (QQ (do_in11 (gen_cases (UQ clauses))))
           (QS context)
           stx))))
 
