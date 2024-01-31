@@ -27,6 +27,9 @@ We "tunnel" special tokens as follows:
     "/fusioncontrib/denotation/private/util"
     "/ion_model/model"
 
+    (only_in "/fusion/private/io"
+      with_output_to_string
+    )
     (only_in "/ion_model/testing"
       eject_Values
       expand_doc
@@ -77,7 +80,20 @@ fanout.  Extension of encoding directives.
 
 Expectation clause can appear at any level, to test the preceding document.
   * Is there any reason to allow continuing with more content and expectation?
+    * Yes: to show that a successful doc produces content, but adding an error
+      causes a signals failure.
 
+
+<test> := (in10 <body>) | (in11 <body>)
+
+<body> := <expectation> | <extension>+
+
+// <extension> may fork but always terminates in an <expectation>
+<extension> := <after> | <finish>
+
+<after> := (after <content> <body>)
+
+<finish> := <content> <expectation>        // == (after <content> <expectation>)
 
 <content> := (encoding ___)
            | (mactab   ___)
@@ -85,83 +101,27 @@ Expectation clause can appear at any level, to test the preceding document.
            | (<content> ...)
            | (each <content> ...+)
 
-<cases> := (check <expect>)
-         | <content> <expect>                     // => (after <content> (check <expect>))
-         | (after <content> <cases> ...+)         // One prefix, multiple suffixes
-
-<test>  := (in_11 <cases> ...+)                   // => (after '#$ion_1_1' <cases> ...)
-
 
 gen_content : STX -> (Document* -> Document*)  // Extends each document with new content(s)
-gen_cases   : STX -> (Document* -> Void)
+gen_extensions   : STX -> (Document* -> Void)
 gen_expect  : STX -> (Document  -> Void)
-
-
-(gen_case (after CONTENT CASE...))
-  =>
-  (do_after (gen_content CONTENT) (gen_cases CASE...))
-(define (do_after extender cases)
-  (lambda (docs)
-    (cases (extender docs))))
-
-(gen_case (check EXPECT))
-  =>
-  (do_check (gen_expect EXPECT))
-(define (do_check expect)
-  (lambda (docs)
-    (for [(d docs)]
-      (expect d))))
-
-
-(gen_cases CASE0 CASE...)
-  =>
-  (do_cases (list (gen_case CASE) ...))
-(define (do_cases cases)
-  (lambda (docs)
-    (for [(case cases)]
-      (case docs))))
-
-
-(gen_content (toplevel DAT...))
-  =>
-  (do_toplevel (quote (DAT...)))
-(define (do_toplevel content)
-  (lambda (docs)
-    (map (|d| (append d content)))))
-
-(gen_content (each CONTENT...))
-  =>
-  (do_each (list (gen_content CONTENT) ...))
-(define (do_each contents)
-  (lambda (docs)
-    (fors_list [(d docs), (c contents))]
-      (c d))))
-
-(gen_content (CONTENT...))
-  =>
-  (do_concat (list (gen_content CONTENT) ...))
-(define (do_concat contents)
-  (lambda (docs)
-    (fors_list [(d docs)]
-      (for_fold [(d d), (c contents))]
-        (c d)))))
-
-
-(gen_expect (produces val...))
-  =>
-  (do_produces (quote (val...)))
-(define (do_produces doc)
-  (lambda (actual)
-    (check_not_bottom actual)
-    (check_eqv doc (eject_Values actual))))
-
-(gen_expect (signals  msg))
-  =>
-  (do_signals msg)
-(define (do_signals msg)
-  (lambda (actual)
-    (check_bottom msg actual)))
   '''
+
+  //============================================================================
+  // Expectations are implemented by functions accepting ejected evaluation
+  // results ie 'Value*'
+
+  (define_syntax produces
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside a test case")))
+  (define_syntax signals
+    (lambda (stx)
+      (wrong_syntax stx "Must be inside a test case")))
+
+  (define (is_expectation_clause stx)
+    // TODO type, size checks
+    (or (free_identifier_equal (head (syntax_unwrap stx)) (QS produces))
+        (free_identifier_equal (head (syntax_unwrap stx)) (QS signals))))
 
 
   (define (do_produces doc)
@@ -169,14 +129,26 @@ gen_expect  : STX -> (Document  -> Void)
       (raise_argument_error do_produces "doc sexp" doc))
     (lambda (actual)
       (check_not_bottom actual)
-      (check_eqv doc (eject_Values actual))))
+      (let [(actual_doc (eject_Values actual))]
+        (unless (=== doc actual_doc)
+          (raise_contract_error (quote produces)
+            (with_output_to_string
+              (displayln "Document didn't produce expected output.")
+              // TODO Include the complete original doc?
+//              (display "Document: ")
+//              (writeln actual)
+              (display "Expanded: ")
+              (writeln actual_doc)
+              (display "Expected: ")
+              (writeln doc)))))))
 
   (define (do_signals msg)
     (lambda (actual)
       (check_bottom msg actual)))
 
 
-  (define_syntax gen_expect
+  (define_syntax gen_expectation
+    "Returns an expression for a function that tests an output document"
     (lambda (stx)
       (let [(expectation_stx (syntax_get stx 1))]
         // Produces (code for) a function that accepts the results of evaluation.
@@ -193,24 +165,25 @@ gen_expect  : STX -> (Document  -> Void)
               expectation_stx)
             (wrong_syntax expectation_stx "Unrecognized expectation clause"))))))
 
+
+
+  //============================================================================
+  // Content producers are functions that take a list of in-progress documents
+  // and add more data to each one.
+
   (define_syntax toplevel
     (lambda (stx)
       (wrong_syntax stx "Must be inside a test case")))
-  (define_syntax produces
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside a test case")))
-  (define_syntax signals
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside a test case")))
+
+  (define (is_content_clause stx)
+    // TODO type, size checks
+    (free_identifier_equal (head (syntax_unwrap stx)) (QS toplevel)))
 
 
   (define (do_toplevel content)
     (lambda (docs)
       (map (|d| (append d content)) docs)))
 
-  (define (is_content_clause stx)
-    // TODO type, size checks
-    (free_identifier_equal (head (syntax_unwrap stx)) (QS toplevel)))
 
   (define_syntax gen_content
     (lambda (stx)
@@ -229,71 +202,74 @@ gen_expect  : STX -> (Document  -> Void)
           (wrong_syntax content "Only `toplevel` is supported")))))
 
 
-  (define (do_case extender checker)
+  (define (do_extensions extends)
     (lambda (docs)
-      (assert (not (is_empty docs)) "do_case got no docs")
-      // TODO Annoying that we have to extend docs here.
-      (for [(doc (extender docs))]
-        (let [(actual (expand_doc doc))]
-          (checker actual)))))
+      (for [(extend extends)]
+        (extend docs))))
 
-  (define (gen_case content_stx expect_stx)
-    (datum_to_syntax
-      (QQ (do_case (gen_content (UQ content_stx))
-                   (gen_expect  (UQ expect_stx))))
-      (QS context)
-      content_stx))
-
-
-  (define (do_cases cases)
-    (lambda (docs)
-      (for [(case cases)]
-        (case docs))))
-
-  (define_syntax gen_cases
+  (define_syntax gen_extensions
     (lambda (stx)
       '''
-      (gen_cases (CLAUSE ...))
+      (gen_extensions (CLAUSE ...))
       '''
       (let [(cases (let loop [(clauses (syntax_unwrap (syntax_get stx 1)))]
-                     (if (is_empty clauses)
-                       (sexp)
-                       (if (is_content_clause (head clauses))
-                         (let [(content_stx (head clauses)),
-                               (expect_stx  (head (tail clauses)))]
-                           (pair (gen_case content_stx expect_stx)
-                                 (loop (tail (tail clauses)))))
+                     (cond
+                       ((is_empty clauses)
+                        (sexp))
+                       ((is_content_clause (head clauses))
+                        (let [(content_stx (head clauses))]
+                          (if (is_empty (tail clauses))
+                            (wrong_syntax content_stx "Expected an expectation clause after this")
+                            (let [(expect_stx  (head (tail clauses)))]
+                              // TODO validate the expect-clause somewhere
+                              (pair (sexp (QS after) content_stx expect_stx)
+                                    (loop (tail (tail clauses))))))))
+                        (true
                          (wrong_syntax (head clauses) "Expected content-producing clause")))))]
-        /*
-          (gen_cases CASE0 CASE...)
-          =>
-          (do_cases (list (gen_case CASE) ...))
-        */
         (datum_to_syntax
-          (QQ (do_cases (UQ (pair (QS list) cases))))
+          (QQ (do_extensions (UQ (pair (QS list) cases))))
           (QS context)
           stx))))
 
+  (define_syntax gen_body
+    "(gen_body (CLAUSE ...))"
+    (lambda (stx)
+      (let [(clauses (syntax_unwrap (syntax_get stx 1)))]
+        (if (and (== 1 (size clauses))
+                 (is_expectation_clause (head clauses)))
+          (datum_to_syntax
+            (QQ (let [(checker (gen_expectation (UQ (head clauses))))]
+                  (lambda (docs)
+                    (for [(doc docs)]
+                      (let [(actual (expand_doc doc))]
+                        (checker actual))))))
+            (QS context)
+            // This location ensures stack traces are tied to the expectation.
+            (head clauses))
+          (datum_to_syntax
+            (QQ (gen_extensions (UQ clauses)))
+            (QS context)
+            stx)))))
 
-  (define (do_after extender cases)
+
+  (define (do_after extender body)
     (lambda (docs)
-      (cases (extender docs))))
+      (body (extender docs))))
 
   (define_syntax after
     (lambda (stx)
       (let [(content (syntax_get stx 1)),
-            (clauses (tail (tail (syntax_unwrap stx))))]
-        /*
-          (after CONTENT CLAUSE...))
-          =>
-          (do_after (gen_content CONTENT) (gen_cases (CLAUSE...)))
-        */
+            (body    (tail (tail (syntax_unwrap stx))))]
         (datum_to_syntax
           (QQ (do_after (gen_content (UQ content))
-                        (gen_cases   (UQ clauses))))
+                        (gen_body    (UQ body))))
           (QS context)
           stx))))
 
+
+  //============================================================================
+  // These outer-edge forms bootstrap the tests by feeding its body the
+  // appropriate document prologue(s).
 
   (define (do_in11 cases)
     // Bootstrap the cases with one document that's just the 1.1 IVM
@@ -303,7 +279,7 @@ gen_expect  : STX -> (Document  -> Void)
     (lambda (stx)
       (let [(clauses (tail (syntax_unwrap stx)))]
         (datum_to_syntax
-          (QQ (do_in11 (gen_cases (UQ clauses))))
+          (QQ (do_in11 (gen_body (UQ clauses))))
           (QS context)
           stx))))
 

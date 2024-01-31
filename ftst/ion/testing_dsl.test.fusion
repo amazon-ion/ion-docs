@@ -5,8 +5,10 @@
   "/ion_model/testing/dsl"
 )
 
-(check_void ((after (toplevel)) [(sexp)]))
-// TODO ensure at least one case in `after`
+//(in11 (after (toplevel)))
+// TODO ensure at least one clause in `after`
+
+(check_void (in11 (produces)))
 
 (check_void (in11 (toplevel)         (produces)))
 (check_void (in11 (toplevel '#$1' 1) (produces $ion 1)))
@@ -15,6 +17,12 @@
 (check_void (in11 (toplevel)         (produces)
                   (toplevel '#$1' 1) (produces $ion 1)
                   (toplevel '#$999') (signals "Invalid symbol address 999")))
+
+
+(expect_contract_error
+  (let [(x "outer")]
+    // DSL expressions don't access Fusion bindings
+    (in11 (toplevel x) (produces "outer"))))
 
 
 "SUCCESS (testing_dsl.test)"
