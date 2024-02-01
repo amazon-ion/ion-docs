@@ -16,6 +16,27 @@ We "tunnel" special tokens as follows:
   * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
     an E-expression.  The text starting with : is parsed as a macro reference.
   * On output, `'#$name#ddd'` represents absent symbol at index `ddd` of SST `name`.
+
+
+Here's the grammar for the DSL:
+
+    <test> := (in10 <body>) | (in11 <body>)
+
+    <body> := <expectation> | <extension>+
+
+    // <extension> may fork but always terminates in an <expectation>
+    <extension> := <after> | <finish>
+
+    <after> := (after <content> <body>)
+
+    <finish> := <content> <expectation>    // == (after <content> <expectation>)
+
+    <content> := (encoding ___)
+               | (mactab   ___)
+               | (toplevel ___)
+               | (<content> ...)
+               | (each <content> ...+)
+
   '''
 
   (require
@@ -45,23 +66,11 @@ We "tunnel" special tokens as follows:
   )
 
 
-
-  //============================================================================
-  // Streamlined macro testing
-
   '''
 TODOs
 -----
   * Might be nice if the various bits of data could use `unquote`.
   * Fanout at encoding/mactab/document level
-
-
-(with_mactab ((macro ...) ...)
-  (each_content [( ... ), ...]
-    (produces ...))
-  (document ( ... )
-    (signals))
-)
 
 Nesting the expectation-clause inside the content clause is structurally clear,
 but the extra delimeter in `document` may be annoying.
@@ -82,30 +91,14 @@ Expectation clause can appear at any level, to test the preceding document.
   * Is there any reason to allow continuing with more content and expectation?
     * Yes: to show that a successful doc produces content, but adding an error
       causes a signals failure.
-
-
-<test> := (in10 <body>) | (in11 <body>)
-
-<body> := <expectation> | <extension>+
-
-// <extension> may fork but always terminates in an <expectation>
-<extension> := <after> | <finish>
-
-<after> := (after <content> <body>)
-
-<finish> := <content> <expectation>        // == (after <content> <expectation>)
-
-<content> := (encoding ___)
-           | (mactab   ___)
-           | (toplevel ___)
-           | (<content> ...)
-           | (each <content> ...+)
-
-
-gen_content : STX -> (Document* -> Document*)  // Extends each document with new content(s)
-gen_extensions   : STX -> (Document* -> Void)
-gen_expect  : STX -> (Document  -> Void)
   '''
+
+
+  (define (is_keyword_clause stx ident)
+    (and (is_sexp (syntax_unwrap stx))
+          // TODO size checks
+          (free_identifier_equal (head (syntax_unwrap stx)) ident)))
+
 
   //============================================================================
   // Expectations are implemented by functions accepting ejected evaluation
@@ -120,8 +113,8 @@ gen_expect  : STX -> (Document  -> Void)
 
   (define (is_expectation_clause stx)
     // TODO type, size checks
-    (or (free_identifier_equal (head (syntax_unwrap stx)) (QS produces))
-        (free_identifier_equal (head (syntax_unwrap stx)) (QS signals))))
+    (or (is_keyword_clause stx (QS produces))
+        (is_keyword_clause stx (QS signals))))
 
 
   (define (do_produces doc)
@@ -152,12 +145,12 @@ gen_expect  : STX -> (Document  -> Void)
     (lambda (stx)
       (let [(expectation_stx (syntax_get stx 1))]
         // Produces (code for) a function that accepts the results of evaluation.
-        (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS produces))
+        (if (is_keyword_clause expectation_stx (QS produces))
           (datum_to_syntax
             (QQ (do_produces (quote (UQ (syntax_subseq expectation_stx 1)))))
             (QS context)
             expectation_stx)
-          (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS signals))
+          (if (is_keyword_clause expectation_stx (QS signals))
             (datum_to_syntax
               // TODO validate the argument is a literal string.
               (QQ (do_signals (UQ (element (syntax_unwrap expectation_stx) 1))))
@@ -176,8 +169,7 @@ gen_expect  : STX -> (Document  -> Void)
       (wrong_syntax stx "Must be inside a test case")))
 
   (define (is_content_clause stx)
-    // TODO type, size checks
-    (free_identifier_equal (head (syntax_unwrap stx)) (QS toplevel)))
+    (is_keyword_clause stx (QS toplevel)))
 
 
   (define (do_toplevel content)
@@ -188,18 +180,13 @@ gen_expect  : STX -> (Document  -> Void)
   (define_syntax gen_content
     (lambda (stx)
       (let [(content (syntax_get stx 1))]
-        (if (free_identifier_equal (head (syntax_unwrap content)) (QS toplevel))
+        (if (is_keyword_clause content (QS toplevel))
           (let [(fragment (tail (syntax_unwrap content)))]
-            /*
-              (gen_content (toplevel DAT...))
-              =>
-              (do_toplevel (quote (DAT...)))
-            */
             (datum_to_syntax
               (QQ (do_toplevel (quote (UQ fragment))))
               (QS context)
               content))
-          (wrong_syntax content "Only `toplevel` is supported")))))
+          (wrong_syntax content "Malformed content expression")))))
 
 
   (define (do_extensions extends)
@@ -216,6 +203,9 @@ gen_expect  : STX -> (Document  -> Void)
                      (cond
                        ((is_empty clauses)
                         (sexp))
+                       ((is_keyword_clause (head clauses) (QS after))
+                        (pair (head clauses)
+                              (loop (tail clauses))))
                        ((is_content_clause (head clauses))
                         (let [(content_stx (head clauses))]
                           (if (is_empty (tail clauses))
@@ -225,7 +215,7 @@ gen_expect  : STX -> (Document  -> Void)
                               (pair (sexp (QS after) content_stx expect_stx)
                                     (loop (tail (tail clauses))))))))
                         (true
-                         (wrong_syntax (head clauses) "Expected content-producing clause")))))]
+                         (wrong_syntax (head clauses) "Expected document extension clause")))))]
         (datum_to_syntax
           (QQ (do_extensions (UQ (pair (QS list) cases))))
           (QS context)
@@ -235,6 +225,8 @@ gen_expect  : STX -> (Document  -> Void)
     "(gen_body (CLAUSE ...))"
     (lambda (stx)
       (let [(clauses (syntax_unwrap (syntax_get stx 1)))]
+        (when (is_empty clauses)
+          (wrong_syntax stx "Expected at least one body clause"))
         (if (and (== 1 (size clauses))
                  (is_expectation_clause (head clauses)))
           (datum_to_syntax

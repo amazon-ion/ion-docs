@@ -18,11 +18,53 @@
                   (toplevel '#$1' 1) (produces $ion 1)
                   (toplevel '#$999') (signals "Invalid symbol address 999")))
 
+// after can appear as part of body.
+(check_void (in11 (after (toplevel)  (produces))))
 
+(expect_syntax_error
+  (in11 /* No body */))
+
+
+//=========================
+// toplevel
+
+// DSL expressions don't access Fusion bindings
 (expect_contract_error
   (let [(x "outer")]
-    // DSL expressions don't access Fusion bindings
     (in11 (toplevel x) (produces "outer"))))
+
+
+//=========================
+// after
+
+// after can appear as part of after-body.
+(check_void (in11 (after (toplevel)
+                    (after (toplevel)
+                      (produces)))))
+
+// abter body can be a single expectation.
+(check_void (in11 (after (toplevel 1 2)
+                    (produces 1 2))))
+
+// AFTER body can be "finisher pairs" of content+expectation
+(check_void (in11 (after (toplevel 1)
+                    (toplevel 2)
+                    (produces 1 2))))
+(check_void (in11 (after (toplevel 1)
+                    (toplevel 2)
+                    (produces 1 2)
+                    (toplevel 3)
+                    (produces 1 3))))
+
+// ...but there can't be a dangling expectation after finisher pairs.
+(expect_syntax_error (in11 (after (toplevel 1)
+                             (toplevel 2)
+                             (produces 1 2)
+                             (signals "foo"))))   // Dangling expectation
+
+(expect_syntax_error
+  (in11 (after 1              // Malformed content clause
+          (produces 1))))
 
 
 "SUCCESS (testing_dsl.test)"
