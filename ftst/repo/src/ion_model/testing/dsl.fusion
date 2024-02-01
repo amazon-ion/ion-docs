@@ -194,32 +194,27 @@ Expectation clause can appear at any level, to test the preceding document.
       (for [(extend extends)]
         (extend docs))))
 
-  (define_syntax gen_extensions
-    (lambda (stx)
-      '''
-      (gen_extensions (CLAUSE ...))
-      '''
-      (let [(cases (let loop [(clauses (syntax_unwrap (syntax_get stx 1)))]
-                     (cond
-                       ((is_empty clauses)
-                        (sexp))
-                       ((is_keyword_clause (head clauses) (QS after))
-                        (pair (head clauses)
-                              (loop (tail clauses))))
-                       ((is_content_clause (head clauses))
-                        (let [(content_stx (head clauses))]
-                          (if (is_empty (tail clauses))
-                            (wrong_syntax content_stx "Expected an expectation clause after this")
-                            (let [(expect_stx  (head (tail clauses)))]
-                              // TODO validate the expect-clause somewhere
-                              (pair (sexp (QS after) content_stx expect_stx)
-                                    (loop (tail (tail clauses))))))))
-                        (true
-                         (wrong_syntax (head clauses) "Expected document extension clause")))))]
-        (datum_to_syntax
-          (QQ (do_extensions (UQ (pair (QS list) cases))))
-          (QS context)
-          stx))))
+  (define (gen_extensions clauses)
+    "Produces sexp of Fusion expressions."
+    (cond
+      ((is_empty clauses)
+       (sexp))
+      //--
+      ((is_keyword_clause (head clauses) (QS after))
+       (pair (head clauses) (gen_extensions (tail clauses))))
+      //--
+      ((is_content_clause (head clauses))
+       (let [(content_stx (head clauses))]
+         (when (is_empty (tail clauses))
+           (wrong_syntax content_stx "Expected an expectation clause after this"))
+         // Convert content+expectation finisher pair to an `after` clause.
+         (let [(expect_stx  (head (tail clauses)))]
+           // TODO validate the expect-clause somewhere
+           (pair (sexp (QS after) content_stx expect_stx)
+                 (gen_extensions (tail (tail clauses)))))))
+      //--
+      (true
+       (wrong_syntax (head clauses) "Expected document extension clause"))))
 
   (define_syntax gen_body
     "(gen_body (CLAUSE ...))"
@@ -239,7 +234,7 @@ Expectation clause can appear at any level, to test the preceding document.
             // This location ensures stack traces are tied to the expectation.
             (head clauses))
           (datum_to_syntax
-            (QQ (gen_extensions (UQ clauses)))
+            (QQ (do_extensions (UQ (pair (QS list) (gen_extensions clauses)))))
             (QS context)
             stx)))))
 
