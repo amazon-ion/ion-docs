@@ -58,11 +58,7 @@ Here's the grammar for the DSL:
   )
 
   (provide
-    after
     in11
-    produces
-    signals
-    toplevel
   )
 
 
@@ -94,180 +90,120 @@ Expectation clause can appear at any level, to test the preceding document.
   '''
 
 
-  (define (is_keyword_clause stx ident)
+  (define (is_keyword_clause stx kw)
     (and (is_sexp (syntax_unwrap stx))
-          // TODO size checks
-          (free_identifier_equal (head (syntax_unwrap stx)) ident)))
+         // TODO size checks
+         (=== (syntax_unwrap (syntax_get stx 0)) kw)))
 
 
   //============================================================================
   // Expectations are implemented by functions accepting ejected evaluation
   // results ie 'Value*'
 
-  (define_syntax produces
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside a test case")))
-  (define_syntax signals
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside a test case")))
-
   (define (is_expectation_clause stx)
     // TODO type, size checks
-    (or (is_keyword_clause stx (QS produces))
-        (is_keyword_clause stx (QS signals))))
+    (or (is_keyword_clause stx (Q produces))
+        (is_keyword_clause stx (Q signals))))
 
 
-  (define (do_produces doc)
-    (unless (is_sexp doc)
-      (raise_argument_error do_produces "doc sexp" doc))
-    (lambda (actual)
-      (check_not_bottom actual)
-      (let [(actual_doc (eject_Values actual))]
-        (unless (=== doc actual_doc)
+  (define (interp_produces clause_stx doc Values)
+    // TODO arity and typecheck
+    (let [(expected_data (syntax_to_datum (syntax_subseq clause_stx 1)))]
+      (check_not_bottom Values)
+      (let [(actual_data (eject_Values Values))]
+        (unless (=== expected_data actual_data)
           (raise_contract_error (quote produces)
             (with_output_to_string
+              (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
               (displayln "Document didn't produce expected output.")
-              // TODO Include the complete original doc?
-//              (display "Document: ")
-//              (writeln actual)
+              (display "Document: ")
+              (writeln doc)
               (display "Expanded: ")
-              (writeln actual_doc)
+              (writeln actual_data)
               (display "Expected: ")
-              (writeln doc)))))))
+              (writeln expected_data)))))))
 
-  (define (do_signals msg)
-    (lambda (actual)
-      (check_bottom msg actual)))
+  (define (interp_signals clause_stx doc Values)
+    // TODO arity and typecheck
+    (let [(msg (syntax_unwrap (syntax_get clause_stx 1)))]
+      (check_bottom msg Values)))
 
 
-  (define_syntax gen_expectation
-    "Returns an expression for a function that tests an output document"
-    (lambda (stx)
-      (let [(expectation_stx (syntax_get stx 1))]
-        // Produces (code for) a function that accepts the results of evaluation.
-        (if (is_keyword_clause expectation_stx (QS produces))
-          (datum_to_syntax
-            (QQ (do_produces (quote (UQ (syntax_subseq expectation_stx 1)))))
-            (QS context)
-            expectation_stx)
-          (if (is_keyword_clause expectation_stx (QS signals))
-            (datum_to_syntax
-              // TODO validate the argument is a literal string.
-              (QQ (do_signals (UQ (element (syntax_unwrap expectation_stx) 1))))
-              (QS context)
-              expectation_stx)
-            (wrong_syntax expectation_stx "Unrecognized expectation clause"))))))
-
+  (define (interp_expectation clause_stx docs)
+    (lets [(kw (syntax_unwrap (syntax_get clause_stx 0))),
+           (interp (cond ((=== kw (quote produces)) interp_produces)
+                         ((=== kw (quote signals )) interp_signals )))]
+      (for [(doc docs)]
+        (let [(Values (expand_doc doc))]
+          (interp clause_stx doc Values)))))
 
 
   //============================================================================
   // Content producers are functions that take a list of in-progress documents
   // and add more data to each one.
 
-  (define_syntax toplevel
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside a test case")))
-
   (define (is_content_clause stx)
-    (is_keyword_clause stx (QS toplevel)))
+    (is_keyword_clause stx (Q toplevel)))
 
 
-  (define (do_toplevel content)
-    (lambda (docs)
-      (map (|d| (append d content)) docs)))
+  (define (interp_toplevel clause_stx docs)
+    (let [(fragment (tail (syntax_to_datum clause_stx)))]
+      (map (|d| (append d fragment)) docs)))
+
+  (define (interp_content clause docs)
+    (if (is_keyword_clause clause (Q toplevel))
+      (interp_toplevel clause docs)
+      (wrong_syntax clause "Malformed content expression")))
 
 
-  (define_syntax gen_content
-    (lambda (stx)
-      (let [(content (syntax_get stx 1))]
-        (if (is_keyword_clause content (QS toplevel))
-          (let [(fragment (tail (syntax_unwrap content)))]
-            (datum_to_syntax
-              (QQ (do_toplevel (quote (UQ fragment))))
-              (QS context)
-              content))
-          (wrong_syntax content "Malformed content expression")))))
+  (define (interp_extensions clauses docs)
+    (unless (is_empty clauses)
+      (if (is_keyword_clause (head clauses) (Q after))
+        (begin (interp_after (head clauses) docs)
+               (interp_extensions (tail clauses) docs))
+        (if (is_content_clause (head clauses))
+          (let [(content_stx (head clauses))]
+            (when (is_empty (tail clauses))
+              (wrong_syntax content_stx "Expected an expectation clause after this"))
+            (let [(expect_stx  (head (tail clauses)))]
+              // TODO validate the expect-clause somewhere
+              (interp_after2 content_stx expect_stx docs))
+            (interp_extensions (tail (tail clauses)) docs))
+          (wrong_syntax (head clauses) "Expected document extension clause")))))
 
 
-  (define (do_extensions extends)
-    (lambda (docs)
-      (for [(extend extends)]
-        (extend docs))))
-
-  (define (gen_extensions clauses)
-    "Produces sexp of Fusion expressions."
-    (cond
-      ((is_empty clauses)
-       (sexp))
-      //--
-      ((is_keyword_clause (head clauses) (QS after))
-       (pair (head clauses) (gen_extensions (tail clauses))))
-      //--
-      ((is_content_clause (head clauses))
-       (let [(content_stx (head clauses))]
-         (when (is_empty (tail clauses))
-           (wrong_syntax content_stx "Expected an expectation clause after this"))
-         // Convert content+expectation finisher pair to an `after` clause.
-         (let [(expect_stx  (head (tail clauses)))]
-           // TODO validate the expect-clause somewhere
-           (pair (sexp (QS after) content_stx expect_stx)
-                 (gen_extensions (tail (tail clauses)))))))
-      //--
-      (true
-       (wrong_syntax (head clauses) "Expected document extension clause"))))
-
-  (define_syntax gen_body
-    "(gen_body (CLAUSE ...))"
-    (lambda (stx)
-      (let [(clauses (syntax_unwrap (syntax_get stx 1)))]
-        (when (is_empty clauses)
-          (wrong_syntax stx "Expected at least one body clause"))
-        (if (and (== 1 (size clauses))
-                 (is_expectation_clause (head clauses)))
-          (datum_to_syntax
-            (QQ (let [(checker (gen_expectation (UQ (head clauses))))]
-                  (lambda (docs)
-                    (for [(doc docs)]
-                      (let [(actual (expand_doc doc))]
-                        (checker actual))))))
-            (QS context)
-            // This location ensures stack traces are tied to the expectation.
-            (head clauses))
-          (datum_to_syntax
-            (QQ (do_extensions (UQ (pair (QS list) (gen_extensions clauses)))))
-            (QS context)
-            stx)))))
+  (define (interp_body containing_stx clauses docs)
+    (when (is_empty clauses)
+      (wrong_syntax containing_stx "Expected at least one body clause"))
+    (if (and (== 1 (size clauses))
+             (is_expectation_clause (head clauses)))
+      (interp_expectation (head clauses) docs)
+      (interp_extensions clauses docs)))
 
 
-  (define (do_after extender body)
-    (lambda (docs)
-      (body (extender docs))))
+  (define (interp_after2 content_stx expect_stx docs)
+    (let [(new_docs (interp_content content_stx docs))]
+      (interp_expectation expect_stx new_docs)))
 
-  (define_syntax after
-    (lambda (stx)
-      (let [(content (syntax_get stx 1)),
-            (body    (tail (tail (syntax_unwrap stx))))]
-        (datum_to_syntax
-          (QQ (do_after (gen_content (UQ content))
-                        (gen_body    (UQ body))))
-          (QS context)
-          stx))))
+  (define (interp_after clause docs)
+    (lets [(content_stx  (syntax_get clause 1)),
+           (body_clauses (tail (tail (syntax_unwrap clause)))),
+           (new_docs     (interp_content content_stx docs))]
+      (interp_body clause body_clauses new_docs)))
 
 
   //============================================================================
   // These outer-edge forms bootstrap the tests by feeding its body the
   // appropriate document prologue(s).
 
-  (define (do_in11 cases)
-    // Bootstrap the cases with one document that's just the 1.1 IVM
-    (cases (quote [('#$ion_1_1')])))
+  (define (interp_in11 stx)
+    (interp_body stx (tail (syntax_unwrap stx)) (quote [('#$ion_1_1')])))
 
   (define_syntax in11
     (lambda (stx)
-      (let [(clauses (tail (syntax_unwrap stx)))]
-        (datum_to_syntax
-          (QQ (do_in11 (gen_body (UQ clauses))))
-          (QS context)
-          stx))))
+      (datum_to_syntax
+        (QQ (interp_in11 (quote_syntax (UQ stx))))
+        (QS context)
+        stx)))
 
 )

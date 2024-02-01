@@ -88,6 +88,7 @@ Miscellaneous things that should really be provided by Fusion.
         (string_to_symbol t)
         (raise_argument_error "text_to_symbol" "string or symbol" 0 t))))
 
+  // TODO We could use something recursive like syntax_to_datum.
   (define (desyntax v)
     "If `v` is a syntax object, unwrap it, otherwise return it as is."
     (if (is_syntax v) (syntax_unwrap v) v))
