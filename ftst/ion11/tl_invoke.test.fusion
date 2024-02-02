@@ -3,38 +3,34 @@
 // Tests covering template language (TL) macro invocations.
 
 (require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
-(check_eval_fail "No such macro: noSuchMacro"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (noSuchMacro)))))))
+(in11 (mactab (macro m [] (noSuchMacro)))
+      (signals "No such macro: noSuchMacro"))
 
-(with_mactab ((macro m      [] "m")
+(in11 (mactab (macro m      [] "m")
               (macro m_wrap [] (m)))
-  (document ('#$:m_wrap'))
-  (produces "m"))
+      (toplevel ('#$:m_wrap'))
+      (produces "m"))
 
 
-(with_mactab ((macro m  [(p!)] ["m", p])
+(in11 (mactab (macro m  [(p!)] ["m", p])
               (macro m1 [(p!)] (m p))
               (macro m2 [(p?)] (m p))
               (macro m3 [(p*)] (m p))
               (macro m4 [(p+)] (m p)))
-  (document ('#$:m1' a) ('#$:m2' b) ('#$:m3' c) ('#$:m4' d))
-  (produces ["m",    a] ["m",    b] ["m",    c] ["m",    d])
-  (document ('#$:m2'))
-  (signals "No value provided for parameter")
-  (document ('#$:m3'))
-  (signals "No value provided for parameter")
-  (document ('#$:m3' ('#$:values' a b)))
-  (signals "More than one value provided for parameter")
-  (document ('#$:m4' ('#$:values' a b)))
-  (signals "More than one value provided for parameter"))
+  (then (toplevel ('#$:m1' a) ('#$:m2' b) ('#$:m3' c) ('#$:m4' d))
+        (produces ["m",    a] ["m",    b] ["m",    c] ["m",    d]))
+  (each (toplevel ('#$:m2'))
+        (toplevel ('#$:m3'))
+        (signals "No value provided for parameter"))
+  (each (toplevel ('#$:m3' ('#$:values' a b)))
+        (toplevel ('#$:m4' ('#$:values' a b)))
+        (signals "More than one value provided for parameter")))
+
 
 (with_mactab ((macro m  [(p?)] ["m", p])
               (macro m0 []     (m))
@@ -121,14 +117,13 @@
 
 // Arity checking
 
-(check_eval_fail "Too few arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [p]    1) (macro w [] (m)))))))
-(check_eval_fail "Too few arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [p, q] 1) (macro w [] (m 1)))))))
-(check_eval_fail "Too many arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro m []     1) (macro w [] (m 1)))))))
-(check_eval_fail "Too many arguments"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [p]    1) (macro w [] (m 1 2)))))))
+(in11
+  (each (mactab (macro m [p]    1) (macro w [] (m)))
+        (mactab (macro m [p, q] 1) (macro w [] (m 1)))
+        (signals "Too few arguments"))
+  (each (mactab (macro m []     1) (macro w [] (m 1)))
+        (mactab (macro m [p]    1) (macro w [] (m 1 2)))
+        (signals "Too many arguments")))
 
 
 "SUCCESS (tl_invoke.test)"

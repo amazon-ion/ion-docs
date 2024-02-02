@@ -22,21 +22,17 @@ Here's the grammar for the DSL:
 
     <test> := (in10 <body>) | (in11 <body>)
 
-    <body> := <expectation> | <extension>+
+    <body> := <content>* <fork>
 
-    // <extension> may fork but always terminates in an <expectation>
-    <extension> := <after> | <finish>
+    <fork> := <expectation> | <extension>+
 
-    <after> := (after <content> <body>)
+    <extension> := (then <content>+ <fork>)
+                 | (each <content>+ <fork>)
 
-    <finish> := <content> <expectation>    // == (after <content> <expectation>)
-
-    <content> := (encoding ___)
+    <content> := (toplevel ___)
+               | (ivm <version>)
+               | (encoding ___)
                | (mactab   ___)
-               | (toplevel ___)
-               | (<content> ...)
-               | (each <content> ...+)
-
   '''
 
   (require
@@ -90,26 +86,57 @@ Expectation clause can appear at any level, to test the preceding document.
   '''
 
 
+  (define (is_clause stx)
+    (and (is_pair (syntax_unwrap stx))
+         (is_identifier (syntax_get stx 0))))
+
+  (define (clause_keyword clause_stx)
+    (syntax_unwrap (syntax_get clause_stx 0)))
+
+  (define (clause_args clause_stx)
+    (tail (syntax_unwrap clause_stx)))
+
   (define (is_keyword_clause stx kw)
-    (and (is_sexp (syntax_unwrap stx))
-         // TODO size checks
-         (=== (syntax_unwrap (syntax_get stx 0)) kw)))
+    (and (is_clause stx)
+         (=== (clause_keyword stx) kw)))
+
+
+  (define dispatch
+    '''
+    (dispatch vtable clause args ...)
+
+Finds a function in the vtable for the clause, the applies it to the clause and args.
+    '''
+    (lambda rest
+      (unless (<= 2 (size rest))
+        (apply raise_arity_error dispatch 2 rest))
+      (let [(vtable (. rest 0)),
+            (clause (. rest 1))]
+        (apply (. vtable (clause_keyword clause)) (tail rest)))))
+
+  (define (can_dispatch vtable clause)
+    (and (is_clause clause)
+         (is_truthy (. vtable (clause_keyword clause)))))
 
 
   //============================================================================
   // Expectations are implemented by functions accepting ejected evaluation
   // results ie 'Value*'
 
-  (define (is_expectation_clause stx)
-    // TODO type, size checks
-    (or (is_keyword_clause stx (Q produces))
-        (is_keyword_clause stx (Q signals))))
-
-
   (define (interp_produces clause_stx doc Values)
     // TODO arity and typecheck
     (let [(expected_data (syntax_to_datum (syntax_subseq clause_stx 1)))]
-      (check_not_bottom Values)
+      (when (is_bottom Values)
+        (raise_contract_error (quote produces)
+          (with_output_to_string
+            (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
+            (displayln "Unexpected bottom.")
+            (display "Document: ")
+            (writeln doc)
+            (display "Expected: ")
+            (writeln expected_data)
+            (display "Message:  ")
+            (displayln (bottom_message Values)))))
       (let [(actual_data (eject_Values Values))]
         (unless (=== expected_data actual_data)
           (raise_contract_error (quote produces)
@@ -129,67 +156,91 @@ Expectation clause can appear at any level, to test the preceding document.
       (check_bottom msg Values)))
 
 
+  (define expectation_vtable
+    { produces: interp_produces,
+      signals:  interp_signals,
+    })
+
+  (define (is_expectation_clause stx)
+    (can_dispatch expectation_vtable stx))
+
   (define (interp_expectation clause_stx docs)
-    (lets [(kw (syntax_unwrap (syntax_get clause_stx 0))),
-           (interp (cond ((=== kw (quote produces)) interp_produces)
-                         ((=== kw (quote signals )) interp_signals )))]
-      (for [(doc docs)]
-        (let [(Values (expand_doc doc))]
-          (interp clause_stx doc Values)))))
+    (unless (is_expectation_clause clause_stx)
+      (wrong_syntax clause_stx "Not an expectation"))
+    (for [(doc docs)]
+      (let [(Values (expand_doc doc))]
+        (dispatch expectation_vtable clause_stx doc Values))))
 
 
   //============================================================================
-  // Content producers are functions that take a list of in-progress documents
-  // and add more data to each one.
+  // Content producers are no-argument functions that return a sequence of top-level
+  // elements to be added to each in-progress document.
+
+  (define (interp_toplevel clause_stx args)
+    args)
+
+  (define (interp_encoding clause_stx args)
+    [(annotate args (Q $ion_encoding))])
+
+  (define (interp_mactab clause_stx macros)
+    (lets [(mactab   (pair (quote macro_table) macros)),
+           (encoding (QQ ((module M (UQ mactab)) (macro_table M))))]
+      (interp_encoding clause_stx encoding)))
+
+
+  (define content_vtable
+    { toplevel: interp_toplevel,
+      encoding: interp_encoding,
+      mactab:   interp_mactab,
+    })
 
   (define (is_content_clause stx)
-    (is_keyword_clause stx (Q toplevel)))
+    (can_dispatch content_vtable stx))
+
+  (define (interp_content stx docs)
+    (unless (is_content_clause stx)
+      (wrong_syntax stx "Expected content expression"))
+    (map (|d| (append d (dispatch content_vtable stx (tail (syntax_to_datum stx))))) docs))
 
 
-  (define (interp_toplevel clause_stx docs)
-    (let [(fragment (tail (syntax_to_datum clause_stx)))]
-      (map (|d| (append d fragment)) docs)))
+  //============================================================================
+  // Extensions are functions that take a list of in-progress documents,
+  // extend them, eventually checking expectations.
 
-  (define (interp_content clause docs)
-    (if (is_keyword_clause clause (Q toplevel))
-      (interp_toplevel clause docs)
-      (wrong_syntax clause "Malformed content expression")))
+  (define (interp_then clause_stx docs)
+    // TODO length check; ensure at least one content clause?
+    (interp_body clause_stx (clause_args clause_stx) docs))
+
+  // FIXME this is nowhere near correct
+  (define (interp_each clause_stx docs)
+    // TODO length check; ensure at least one content clause?
+    (interp_body clause_stx (clause_args clause_stx) docs))
 
 
-  (define (interp_extensions clauses docs)
-    (unless (is_empty clauses)
-      (if (is_keyword_clause (head clauses) (Q after))
-        (begin (interp_after (head clauses) docs)
-               (interp_extensions (tail clauses) docs))
-        (if (is_content_clause (head clauses))
-          (let [(content_stx (head clauses))]
-            (when (is_empty (tail clauses))
-              (wrong_syntax content_stx "Expected an expectation clause after this"))
-            (let [(expect_stx  (head (tail clauses)))]
-              // TODO validate the expect-clause somewhere
-              (interp_after2 content_stx expect_stx docs))
-            (interp_extensions (tail (tail clauses)) docs))
-          (wrong_syntax (head clauses) "Expected document extension clause")))))
+  (define extension_vtable
+    { then: interp_then,
+      each: interp_each,
+    })
+
+  (define (is_extension_clause stx)
+    (can_dispatch extension_vtable stx))
+
+  (define (interp_extension clause_stx docs)
+    (unless (is_extension_clause clause_stx)
+      (wrong_syntax clause_stx "Expected a document extension"))
+    (dispatch extension_vtable clause_stx docs))
 
 
   (define (interp_body containing_stx clauses docs)
     (when (is_empty clauses)
       (wrong_syntax containing_stx "Expected at least one body clause"))
-    (if (and (== 1 (size clauses))
-             (is_expectation_clause (head clauses)))
-      (interp_expectation (head clauses) docs)
-      (interp_extensions clauses docs)))
-
-
-  (define (interp_after2 content_stx expect_stx docs)
-    (let [(new_docs (interp_content content_stx docs))]
-      (interp_expectation expect_stx new_docs)))
-
-  (define (interp_after clause docs)
-    (lets [(content_stx  (syntax_get clause 1)),
-           (body_clauses (tail (tail (syntax_unwrap clause)))),
-           (new_docs     (interp_content content_stx docs))]
-      (interp_body clause body_clauses new_docs)))
+    (if (is_content_clause (head clauses))
+      (interp_body containing_stx (tail clauses) (interp_content (head clauses) docs))
+      (if (is_expectation_clause (head clauses))
+        (if (is_empty (tail clauses))
+          (interp_expectation (head clauses) docs)
+          (wrong_syntax (. clauses 1) "Extraneous forms after an expectation clause"))
+        (do (|c| (interp_extension c docs)) clauses))))
 
 
   //============================================================================

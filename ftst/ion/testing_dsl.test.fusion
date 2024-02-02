@@ -14,19 +14,19 @@
 (check_void (in11 (toplevel '#$1' 1) (produces $ion 1)))
 (check_void (in11 (toplevel '#$999') (signals "Invalid symbol address 999")))
 
-(check_void (in11 (toplevel)         (produces)
-                  (toplevel '#$1' 1) (produces $ion 1)
-                  (toplevel '#$999') (signals "Invalid symbol address 999")))
+(check_void (in11 (then (toplevel)         (produces))
+                  (then (toplevel '#$1' 1) (produces $ion 1))
+                  (then (toplevel '#$999') (signals "Invalid symbol address 999"))))
 
-// after can appear as part of body.
-(check_void (in11 (after (toplevel)  (produces))))
+//// after can appear as part of body.
+//(check_void (in11 (after (toplevel)  (produces))))
 
 (expect_syntax_error
   (in11 /* No body */))
 
 
 //=========================
-// toplevel
+// Content expressions
 
 // DSL expressions don't access Fusion bindings
 (expect_contract_error
@@ -34,37 +34,47 @@
     (in11 (toplevel x) (produces "outer"))))
 
 
+(in11 (encoding (symbol_table ["a"] ["b"]))
+      (toplevel '#$11' '#$12')
+      (produces a b))
+
+(in11 (mactab (macro m [] "m"))
+      (toplevel ('#$:m'))
+      (produces "m"))
+
+
 //=========================
-// after
+// then
 
-// after can appear as part of after-body.
-(check_void (in11 (after (toplevel)
-                    (after (toplevel)
-                      (produces)))))
+(check_void (in11 (then (toplevel 1 2)
+                        (produces 1 2))))
 
-// abter body can be a single expectation.
-(check_void (in11 (after (toplevel 1 2)
-                    (produces 1 2))))
+// THEN accepts multiple content clauses
+(check_void (in11 (then (toplevel 1)
+                        (toplevel 2)
+                        (produces 1 2))))
 
-// AFTER body can be "finisher pairs" of content+expectation
-(check_void (in11 (after (toplevel 1)
-                    (toplevel 2)
-                    (produces 1 2))))
-(check_void (in11 (after (toplevel 1)
-                    (toplevel 2)
-                    (produces 1 2)
-                    (toplevel 3)
-                    (produces 1 3))))
+// ...but there can't be multiple expectations
+(expect_syntax_error (in11 (then (toplevel 1)
+                                 (produces 1 2)
+                                 (signals "foo"))))   // Dangling expectation
 
-// ...but there can't be a dangling expectation after finisher pairs.
-(expect_syntax_error (in11 (after (toplevel 1)
-                             (toplevel 2)
-                             (produces 1 2)
-                             (signals "foo"))))   // Dangling expectation
+// THEN accepts nested extension clauses
+(check_void (in11 (then (toplevel 1)
+                        (then (toplevel 2)
+                              (produces 1 2)))))
 
-(expect_syntax_error
-  (in11 (after 1              // Malformed content clause
-          (produces 1))))
+// ...but extensions can't be followed by another expectation
+(expect_syntax_error (in11 (then (toplevel 1)
+                                 (then (toplevel 2)
+                                       (produces 1 2))
+                                 (produces 1))))   // Dangling expectation
+
+
+(expect_syntax_error (in11 (then ()                  // Malformed content clause
+                                 (produces))))
+(expect_syntax_error (in11 (then 1                   // Malformed content clause
+                                 (produces 1))))
 
 
 "SUCCESS (testing_dsl.test)"
