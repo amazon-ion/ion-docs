@@ -26,11 +26,13 @@ Here's the grammar for the DSL:
 
     <fork> := <expectation> | <extension>+
 
+    // TODO Why not <fork>+ at the end of an extension?
     <extension> := (then <content>+ <fork>)
                  | (each <content>+ <fork>)
 
+    // TODO Rename to <fragment>
     <content> := (toplevel ___)
-               | (ivm <version>)
+               | (ivm <version>)   // TODO not implemented
                | (encoding ___)
                | (mactab   ___)
   '''
@@ -194,10 +196,21 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
     // TODO length check; ensure at least one content clause?
     (interp_body clause_stx (clause_args clause_stx) docs))
 
-  // FIXME this is nowhere near correct
-  (define (interp_each clause_stx docs)
-    // TODO length check; ensure at least one content clause?
-    (interp_body clause_stx (clause_args clause_stx) docs))
+
+  (define (interp_each each_stx docs)
+    (let [(clauses (clause_args each_stx))]
+      (when (is_empty clauses)
+        (wrong_syntax each_stx "Expected a document fragment in `each`"))
+      (unless (is_content_clause (head clauses))
+        (wrong_syntax (head clauses) "Expected a document fragment in `each`"))
+      (let [(fork (last clauses))]
+        (unless (or (is_expectation_clause fork)
+                    (is_extension_clause   fork))
+          (wrong_syntax each_stx "Expected an expectation or extension at end of `each` clause"))
+        (for [(fragment (tail (reverse clauses)))]    // Drop the fork
+          (if (is_expectation_clause fork)
+            (interp_expectation fork (interp_content fragment docs))
+            (interp_extension   fork (interp_content fragment docs)))))))
 
 
   (define extension_vtable

@@ -27,17 +27,12 @@
 
 // Argument group shapes
 
-// TODO Use `each`
-//(in11 (each (toplevel ('#$:annotate' ()  1))
-//            (toplevel ('#$:annotate' ann 1)))
-//      (signals "Expected grouping list"))
-
-(in11 (toplevel ('#$:annotate' () 1))
-      (signals "Expected grouping list"))
-(in11 (toplevel ('#$:annotate' ann 1))
-      (signals "Expected grouping list"))
+(in11 (each (toplevel ('#$:annotate' ()  1))
+            (toplevel ('#$:annotate' ann 1))
+            (signals "Expected grouping list")))
 
 // Inlining into a group
+
 (in11 (toplevel ('#$:annotate' [('#$:values' a b)] 1))
       (produces a::b::1))
 

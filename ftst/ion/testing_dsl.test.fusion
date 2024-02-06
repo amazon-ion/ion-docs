@@ -84,4 +84,33 @@
                                  (produces 1))))
 
 
+
+//=========================
+// each
+
+(expect_syntax_error
+  (in11 (each /* no expectation */)))
+(expect_syntax_error
+  (in11 (each (toplevel) /* no expectation */)))
+(expect_syntax_error
+  (in11 (each /* no fragment */ (produces))))
+
+
+(check_void (in11 (each (toplevel 1 2)
+                        (produces 1 2))))
+(check_void (in11 (each (toplevel 1 2)
+                        (toplevel 1 2)
+                        (produces 1 2))))
+
+// EACH can end with an extension
+(check_void (in11 (each (toplevel 1)
+                        (then (toplevel 2) (produces 1 2)))))
+
+(check_void (in11 (each (toplevel 1)
+                        (toplevel 1)
+                        (each (toplevel 2)
+                              (toplevel 2)
+                              (produces 1 2)))))
+
+
 "SUCCESS (testing_dsl.test)"
