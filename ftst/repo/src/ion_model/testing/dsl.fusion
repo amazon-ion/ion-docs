@@ -37,7 +37,6 @@ Here's the grammar for the DSL:
 
   (require
     "/fusion/exception"
-    "/fusion/experimental/check"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/testing"
@@ -54,31 +53,15 @@ Here's the grammar for the DSL:
   )
 
   (provide
+    in10
     in11
+    in1x
   )
 
 
   '''
 TODOs
 -----
-  * Might be nice if the various bits of data could use `unquote`.
-  * Fanout at encoding/mactab/document level
-
-Nesting the expectation-clause inside the content clause is structurally clear,
-but the extra delimeter in `document` may be annoying.
-Plus we should also have one in `produces` for consistency.
-
-Could also be nice to allow nesting of encoding/mactab/document for hierarchical
-fanout.  Extension of encoding directives.
-
-- encoding
-  - module
-    - mactab
-      - segment
-        - expectation
-      - segment
-        - expectation
-
 Expectation clause can appear at any level, to test the preceding document.
   * Is there any reason to allow continuing with more content and expectation?
     * Yes: to show that a successful doc produces content, but adding an error
@@ -243,17 +226,42 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
         (do (|c| (interp_extension c docs)) clauses))))
 
 
+  (define (interp_dsl stx docs)
+    (interp_body stx (tail (syntax_unwrap stx)) docs))
+
+
   //============================================================================
   // These outer-edge forms bootstrap the tests by feeding its body the
   // appropriate document prologue(s).
 
+  (define (interp_in10 stx)
+    (interp_dsl stx (quote [(), ('#$ion_1_0')])))   // Test 1.0 docs with and without the IVM
+
   (define (interp_in11 stx)
-    (interp_body stx (tail (syntax_unwrap stx)) (quote [('#$ion_1_1')])))
+    (interp_dsl stx (quote [('#$ion_1_1')])))
+
+  (define (interp_in1x stx)
+    (interp_dsl stx (quote [(), ('#$ion_1_0'), ('#$ion_1_1')])))
+
+
+  (define_syntax in10
+    (lambda (stx)
+      (datum_to_syntax
+        (QQ (interp_in10 (quote_syntax (UQ stx))))
+        (QS context)
+        stx)))
 
   (define_syntax in11
     (lambda (stx)
       (datum_to_syntax
         (QQ (interp_in11 (quote_syntax (UQ stx))))
+        (QS context)
+        stx)))
+
+  (define_syntax in1x
+    (lambda (stx)
+      (datum_to_syntax
+        (QQ (interp_in1x (quote_syntax (UQ stx))))
         (QS context)
         stx)))
 

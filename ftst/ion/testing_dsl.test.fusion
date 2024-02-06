@@ -5,24 +5,31 @@
   "/ion_model/testing/dsl"
 )
 
-//(in11 (after (toplevel)))
-// TODO ensure at least one clause in `after`
 
+(check_void (in10 (produces)))
 (check_void (in11 (produces)))
+(check_void (in1x (produces)))
 
+(check_void (in10 (toplevel)         (produces)))
 (check_void (in11 (toplevel)         (produces)))
+(check_void (in1x (toplevel)         (produces)))
+
+(check_void (in10 (toplevel '#$1' 1) (produces $ion 1)))
 (check_void (in11 (toplevel '#$1' 1) (produces $ion 1)))
+(check_void (in1x (toplevel '#$1' 1) (produces $ion 1)))
+
+(check_void (in10 (toplevel '#$999') (signals "Invalid symbol address 999")))
 (check_void (in11 (toplevel '#$999') (signals "Invalid symbol address 999")))
+(check_void (in1x (toplevel '#$999') (signals "Invalid symbol address 999")))
 
 (check_void (in11 (then (toplevel)         (produces))
                   (then (toplevel '#$1' 1) (produces $ion 1))
                   (then (toplevel '#$999') (signals "Invalid symbol address 999"))))
 
-//// after can appear as part of body.
-//(check_void (in11 (after (toplevel)  (produces))))
 
-(expect_syntax_error
-  (in11 /* No body */))
+(expect_syntax_error (in10 /* No body */))
+(expect_syntax_error (in11 /* No body */))
+(expect_syntax_error (in1x /* No body */))
 
 
 //=========================
