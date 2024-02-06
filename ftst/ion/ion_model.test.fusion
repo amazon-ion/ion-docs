@@ -1,19 +1,16 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
 // Safe types
 
-(check_expansion
-  (quote_top null.null null.null a::null $ion ::null)   // Expected output
-  (quote_top null      null.null a::null '#$1'::null))  // Input document
+(in1x
+  (toplevel null      null.null a::null '#$1'::null)
+  (produces null.null null.null a::null $ion ::null))
 
 (check_expansion
   (quote_top null.bool a::null.bool true $ion ::false)
