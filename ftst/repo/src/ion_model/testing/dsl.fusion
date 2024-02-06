@@ -26,15 +26,24 @@ Here's the grammar for the DSL:
 
     <fork> := <expectation> | <extension>+
 
-    // TODO Why not <fork>+ at the end of an extension?
     <extension> := (then <content>+ <fork>)
-                 | (each <content>+ <fork>)
+                 | (each <content>+ <fork>)   // TODO Implement multi extensions
 
     // TODO Rename to <fragment>
     <content> := (toplevel ___)
                | (ivm <version>)   // TODO not implemented
                | (encoding ___)
                | (mactab   ___)
+
+
+TODOs
+=====
+  * Is there any reason to allow continuing with more content and expectation?
+    * Yes: to show that a successful doc produces content, but adding an error
+      causes a signals failure.
+    * Alternatively, have an <expectation> that's both produces and signals.
+  * Add metadata to compose a description of the test case.
+    * Could work like RSpec in appending nested context descriptions.
   '''
 
   (require
@@ -59,16 +68,6 @@ Here's the grammar for the DSL:
     in11
     in1x
   )
-
-
-  '''
-TODOs
------
-Expectation clause can appear at any level, to test the preceding document.
-  * Is there any reason to allow continuing with more content and expectation?
-    * Yes: to show that a successful doc produces content, but adding an error
-      causes a signals failure.
-  '''
 
 
   (define (is_clause stx)
