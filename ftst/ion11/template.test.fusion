@@ -219,20 +219,21 @@
 
 // List quasi-literals
 
-(check_expansion
-  (quote_top c0::[] [1] [1, 2] a1::[1, a, 2]
-             [1, [a], 2, 3] [1, [[a]], 2, r1, r2, 3])
-  (quote11   $ion_encoding::((module M
-                               (macro_table
-                                 (macro c0  ()         c0::[])
-                                 (macro c1  ()         [1])
-                                 (macro c2  ()         [1, 2])
-                                 (macro a1  (v)        a1::[1, v, 2])
-                                 (macro a1r (v (r...)) [1, [v], 2, r, 3])))
-                             (macro_table M))
-             ('#$:c0') ('#$:c1') ('#$:c2')
-             ('#$:a1' a)
-             ('#$:a1r' a) ('#$:a1r' [a] r1 r2)))
+(in11 (mactab (macro n  () a::null.list)
+              (macro e  () b::[])
+              (macro v1 () [1])
+              (macro v2 () [1, c::2]))
+      (toplevel ('#$:n')      ('#$:e')  ('#$:v1')  ('#$:v2'))
+      (produces a::null.list  b::[]     [1]        [1, c::2]))
+
+(in11 (mactab (macro m1  (v)       a::[1, v, 2])
+              (macro m2 (v (r...)) [1, [v], 2, r, 3]))
+      (toplevel ('#$:m1' a)   ('#$:m2' a)     ('#$:m2' [a] r1 r2))
+      (produces a::[1, a, 2]  [1, [a], 2, 3]  [1, [[a]], 2, r1, r2, 3]))
+
+
+(in11 (mactab (macro _ () [1, 2, v]))
+      (signals "Unbound variable: v"))
 
 
 // Struct quasi-literals

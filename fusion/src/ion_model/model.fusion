@@ -67,7 +67,9 @@ Defects:
 Spec Issues: 1.1
 ----------------
 * Spec should ban the name $ion in load and import.
-* TL quasi-literal explanations (§9.1.3) should demonstrate null.list/struct
+* Perhaps TL should treat all nulls as literals.  Easy and intuitive.
+  * See quasi-literal explanations (§9.1.3)
+  * null.symbol is the main thing that could be confusing.
 * Spec says `symbol_table` rejects duplicate module names, and `$ion`.
   * I'm not sure the duplicate filter achieves anything; the same module can
     still appear under different names, with no difference in outcome.
@@ -1361,10 +1363,12 @@ Spec Issues: 1.0
 
 
     (fn interp_list ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
-      (let [(us (Value_annots v)),
-            (i ('interp_template...' (lower (Value_content v) List 'Value*') scope macroEnv))]
-        (mk_fn Interpreter (env)
-          (seq 'Value*' (tuple Value us (lift (i env) List Content))))))
+      (if (element_of (Value_content v) DotNull)
+        (interp_literal v)
+        (let [(us (Value_annots v)),
+              (i ('interp_template...' (lower (Value_content v) List 'Value*') scope macroEnv))]
+          (mk_fn Interpreter (env)
+            (seq 'Value*' (tuple Value us (lift (i env) List Content)))))))
 
     (fn interp_struct ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
       (if (element_of (Value_content v) DotNull)
@@ -1384,6 +1388,7 @@ Spec Issues: 1.0
 
 
     (fn interp_sexp ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
+      // TODO Treat null.sexp as a literal.
       (if (isClause v "literal")
         (interpSF_literal (clauseBody v) scope)
         (if (isClause v "if_void")
