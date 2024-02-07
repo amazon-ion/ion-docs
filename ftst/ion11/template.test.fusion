@@ -6,6 +6,7 @@
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
@@ -232,6 +233,29 @@
              ('#$:c0') ('#$:c1') ('#$:c2')
              ('#$:a1' a)
              ('#$:a1r' a) ('#$:a1r' [a] r1 r2)))
+
+
+// Struct quasi-literals
+
+(in11 (mactab (macro n  () a::null.struct)
+              (macro e  () b::{})
+              (macro f1 () {n: (literal v)})
+              (macro f2 () {n: (literal v), n:2}))
+      (toplevel ('#$:n')       ('#$:e') ('#$:f1') ('#$:f2'))
+      (produces a::null.struct b::{}   {n:v}     {n:2, n:v}))
+
+// Template in field-value position can returns non-singular results.
+(in11 (mactab (macro m [(v...)] {n:v}))
+      (toplevel ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' ('#$:values' 1 2)))
+      (produces {}       {n:1}      {n:2, n:1}   {n:1, n:2}))
+
+(in11 (mactab (macro m [(v...)] {n1:v, n2:v}))
+      (toplevel ('#$:m') ('#$:m' 1)   ('#$:m' 1 2))
+      (produces {}       {n1:1, n2:1} {n1:2, n2:1, n2:2, n1:1}))
+
+
+(in11 (mactab (macro _ () {n: v}))
+      (signals "Unbound variable: v"))
 
 
 // Special forms: literal
