@@ -15,8 +15,8 @@
   {
     "name": "ion-java",
     "category": "core",
-    "latest_release_version": "1.11.1",
-    "latest_release_date": "2024-01-18",
+    "latest_release_version": "1.11.2",
+    "latest_release_date": "2024-02-08",
     "documentation": "https://www.javadoc.io/doc/com.amazon.ion/ion-java/"
   },
   {
@@ -29,8 +29,8 @@
   {
     "name": "ion-rust",
     "category": "core",
-    "latest_release_version": "1.0.0-rc.1",
-    "latest_release_date": "2023-07-19"
+    "latest_release_version": "1.0.0-rc.2",
+    "latest_release_date": "2024-02-08"
   },
   {
     "name": "ion-python",
