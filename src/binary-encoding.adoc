@@ -162,8 +162,8 @@ represent the symbol’s text.
 * *exactly zero*, another byte follows that is an <<opcodes, opcode>>. The `FlexSym` parser is not responsible for
 evaluating this opcode, only returning it—the caller will decide whether the opcode is legal in the current context.
 Example usages of the opcode include:
-** Representing SID `$0` as `0x70`. (See: <<strings, Strings>>)
-** Representing the empty string (`""`) as `0x80`. (See: <<symbols_with_inline_text, Symbols with inline text>>)
+** Representing SID `$0` as `0x90`.
+** Representing the empty string (`""`) as `0x80`.
 ** When used to encode a struct field name, the opcode can invoke a macro that will evaluate to a struct whose key/value
 pairs are spliced into the parent struct (TODO: Link)
 ** In a <<delimited_structs, delimited struct>>, terminating the sequence of `(field name, value)` pairs with `0xF0`.
@@ -198,9 +198,10 @@ pairs are spliced into the parent struct (TODO: Link)
               ┌─── The leading FlexInt ends in a `1`,
               │    no more FlexInt bytes follow.
               │
-0 0 0 0 0 0 0 1   01110000
+
+0 0 0 0 0 0 0 1   01001000
 └─────┬─────┘     └───┬──┘
-  2's comp.      opcode 0x70:
+  2's comp.      opcode 0x90:
   zero           empty symbol
 ----
 
