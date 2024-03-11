@@ -199,7 +199,7 @@ pairs are spliced into the parent struct (TODO: Link)
               │    no more FlexInt bytes follow.
               │
 
-0 0 0 0 0 0 0 1   01001000
+0 0 0 0 0 0 0 1   10010000
 └─────┬─────┘     └───┬──┘
   2's comp.      opcode 0x90:
   zero           empty symbol
