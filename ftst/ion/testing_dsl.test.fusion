@@ -118,10 +118,24 @@
                               (toplevel 2)
                               (produces 1 2)))))
 
-// TODO EACH can end with multiple extensions
+// TODO [EACH-FORK] can end with multiple extensions
 //(check_void (in1x (each (toplevel 1)
 //                        (then (toplevel 2) (produces 1 2))
 //                        (then (toplevel 3) (produces 1 3)))))
+
+
+
+//=========================
+// AST Synthesis
+
+// TODO [BAD-AST] Reject malformed macro references; eg:
+//   ('#$:')    malformed macro reference
+//   ('#$::')   malformed module name; malformed macro name/address
+//   ('#$:1:1') malformed module name
+
+// TODO [BAD-AST] Reject misplaced AST tunneling symbols; eg:
+//   (toplevel '#$:oops')      Module ref not head of an AST S-expression
+//   (toplevel ['#$ion_1_0'])  IVM not at top-level
 
 
 "SUCCESS (testing_dsl.test)"

@@ -27,10 +27,11 @@ TODOs
 Implementation:
   * Rename content to fragment
   * Rename fork to continuation
-  * Continuation of `each` with multiple extensions.
+  * [EACH-FORK] Continuation of `each` with multiple extensions.
   * `text` and `binary` fragments
   * `and` and `or` expectations
   * `denotes` expectation
+  * [BAD-AST] Validate shape and location of #$ forms.
 
 DSL Design:
   * Propose `(ivm <int> <int>?)` fragment.
@@ -40,6 +41,7 @@ DSL Design:
     * Propose  `continuation ::= expectation extension*`
   * Add metadata to compose a description of the test case.
     * Could work like RSpec in appending nested context descriptions.
+  * [TAB-BOUNDS] Mechanism to test bounds of current symtab and mactab.
   '''
 
   (require

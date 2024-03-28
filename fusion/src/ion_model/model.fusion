@@ -1648,6 +1648,9 @@ Spec Issues: 1.0
 
   (require (only_in "/fusioncontrib/denotation" eject))
 
+  // TODO [BAD-AST] Validate the number and shape of components
+  //  * Reject refs with more than two parts.
+  //  * Reject malformed module and macro names.
   (define_fn parseMacroRef ((c Unicode) -> MacroRef)
     (if (string_starts_with (eject c) ":")
       (let [(parts (string_split (eject c) ":"))]

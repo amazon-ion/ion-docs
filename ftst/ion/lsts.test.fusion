@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -6,6 +6,7 @@
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
@@ -171,6 +172,13 @@
 (check_expansion_and_bounds 13
   (quote_top m a)
   (quote_top $ion_symbol_table::{imports:[{name:"mnop", max_id:3}, {name:"abcs"}]} '#$10' '#$13'))
+
+// TODO [TAB-BOUNDS] This should be easier.
+(in10 (toplevel $ion_symbol_table::{imports:[{name:"mnop", max_id:3}, {name:"abcs"}]} '#$10' '#$13')
+      (then (toplevel '#$14')
+            (signals "Invalid symbol address 14"))
+      (then (toplevel)
+            (produces m a)))
 
 
 // TODO Use both versions of abcs; how to handle the second copy of "a"?
