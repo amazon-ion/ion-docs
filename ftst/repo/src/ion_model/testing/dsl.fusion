@@ -18,30 +18,26 @@ We "tunnel" special tokens as follows:
   * On output, `'#$name#ddd'` represents absent symbol at index `ddd` of SST `name`.
 
 
-Here's the grammar for the DSL:
-
-    <test> := (in10 <body>) | (in11 <body>)
-
-    <body> := <content>* <fork>
-
-    <fork> := <expectation> | <extension>+
-
-    <extension> := (then <content>+ <fork>)
-                 | (each <content>+ <fork>)   // TODO Implement multi extensions
-
-    // TODO Rename to <fragment>
-    <content> := (toplevel ___)
-               | (ivm <version>)   // TODO not implemented
-               | (encoding ___)
-               | (mactab   ___)
+The DSL grammar, with many additions not implemented here, is currently
+documented by https://github.com/amazon-ion/ion-tests/pull/89
 
 
 TODOs
 =====
+Implementation:
+  * Rename content to fragment
+  * Rename fork to continuation
+  * Continuation of `each` with multiple extensions.
+  * `text` and `binary` fragments
+  * `and` and `or` expectations
+  * `denotes` expectation
+
+DSL Design:
+  * Propose `(ivm <int> <int>?)` fragment.
   * Is there any reason to allow continuing with more content and expectation?
     * Yes: to show that a successful doc produces content, but adding an error
-      causes a signals failure.
-    * Alternatively, have an <expectation> that's both produces and signals.
+      causes a failure.
+    * Propose  `continuation ::= expectation extension*`
   * Add metadata to compose a description of the test case.
     * Could work like RSpec in appending nested context descriptions.
   '''
