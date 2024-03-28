@@ -1,0 +1,39 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+// Macros can produce encoding directives.
+
+(require "/ion_model/testing/dsl")
+
+
+// Demonstration of what can heppen without type-checking or grouping.
+// Here none of the fields have declared types.
+(in11 (mactab (macro import ((name) (version ?) (max_id ?))
+                { name:name, version:version, max_id:max_id })
+
+              (macro local_symtab ((imports *) (symbols ...))
+                $ion_symbol_table::{
+                  imports: (if_void imports (void) [imports]),
+                  symbols: (if_void symbols (void) [symbols]),
+                }))
+
+      (then (toplevel ('#$:local_symtab'))
+            (produces))
+
+      (then (toplevel ('#$:local_symtab'))
+            (then (toplevel '#$10') (produces $ion_literal))
+            (then (toplevel '#$11') (signals "Invalid symbol address 11")))
+
+      // Correct usage without imports
+      (then (toplevel ('#$:local_symtab' ('#$:values') "a" "b") '#$12')
+            (produces b))
+
+      // Erroneous use where `imports` is "a" and `symbols` is "b".
+      (then (toplevel ('#$:local_symtab' "a" "b") '#$10' '#$11')
+            (produces $ion_literal b))                          // Expected 'a'
+      (then (toplevel ('#$:local_symtab' "a" "b") '#$12')
+            (signals "Invalid symbol address 12"))              // Expected 'b'
+
+      // Erroneous use where import name isn't a string so the clause is ignored.
+      (then (toplevel ('#$:local_symtab' ('#$:import' abc 1 4)) '#$11')
+            (signals "Invalid symbol address 11"))              // Expected 'a'
+)
