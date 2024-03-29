@@ -209,7 +209,7 @@ _module-body_ `)`
 |quasi-literal |::=|  `[` _template_* `]`  \|  `{` _quasi-field_* `}`
 |quasi-field   |::=| _text_ `:` _template_
 
-|special-form |::=|  `(` `*literal*` _datum_ `)`                             +
+|special-form |::=|  `(` `*literal*` _datum_ `)`                                               +
                  \|  `(` `*if_void*`   _template~cond~_ _template~then~_ _template~else~_ `)`  +
                  \|  `(` `*if_single*` _template~cond~_ _template~then~_ _template~else~_ `)`  +
                  \|  `(` `*if_many*`   _template~cond~_ _template~then~_ _template~else~_ `)`  +

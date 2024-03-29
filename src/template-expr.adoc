@@ -214,7 +214,7 @@ enclosing module or `$ion_encoding` directive.
 
 // TODO See Resolving Macro References: Encoding Modules 2023-05 for the relevant algorithm.
 
-The remaining elements of the S-expression are subforms that denote the inputs to the macro.
+The remaining elements of the S-expression are argument subforms that denote the inputs to the macro.
 These use normal Ion notation, but what’s syntactically acceptable is defined by the macro’s
 signature.
 

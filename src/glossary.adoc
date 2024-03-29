@@ -62,12 +62,13 @@ E-expressions. Ion binary devotes a large number of opcodes to E-expressions, so
 compact.
 
 fixed arity::
-Describes a macro without optional or rest parameters, so invocations must have actual arity that
-equals the macro’s formal arity.
+Describes a macro without optional or rest parameters, so invocations must have _actual arity_ that
+equals the macro’s _formal arity_.
 
 formal arity::
 The number of parameters declared by a macro.  Due to _optional parameters_ and _rest parameters_,
-the _actual arity_ of a macro invocation may differ from its formal arity.
+the _actual arity_ of a macro invocation may differ from the formal arity of the macro being
+invoked.
 
 grouped parameter::
 A macro parameter that accepts multiple arguments in an _argument group_ when the macro is
@@ -167,8 +168,8 @@ A macro reference that consists of either a macro name or numeric address, witho
 module name. These are resolved using lexical scope and must always be unambiguous.
 
 variable arity::
-Describes a macro with optional and/or rest parameters, so invocations may have actual arity
-different from the macro’s formal arity.
+Describes a macro with optional and/or rest parameters, so invocations may have _actual arity_
+different from the macro’s _formal arity_.
 
 void::
 An empty stream of values. Produced by the system macro `void` as in the E-expression `(:void)`.

@@ -9,7 +9,7 @@ Signatures apply to both E-expressions and macro-language invocations.
 Because they denote the interface for users of macros, we describe them independently of macro
 definitions.
 
-A signature consists of a sequence of named parameter specifications, followed by an option result
+A signature consists of a sequence of named parameter specifications, followed by an optional result
 specification.
 
 [{bnf}]
@@ -17,7 +17,7 @@ specification.
 include::grammar.adoc[tag=signature]
 |===
 
-Each parameter in a signature has a name, expressed as a Ion identifier symbol.
+Each parameter in a signature has a name, expressed as an Ion identifier symbol.
 Restricting names to Java-style identifiers enables use of operator characters (like `?` and
 `{asterisk}`) for the syntax surrounding names, including qualified macro references.
 
@@ -168,7 +168,7 @@ are called _voidable_ because their resulting value streams can be void.
 A parameter is _optional_ when it is voidable and all following parameters are voidable.
 
 Optional parameters are given special treatment in text invocations: their arguments can be
-omitted entirely (as long as all following arguments are also omitted).
+omitted entirely, as long as all following arguments are also omitted.
 
 
 === Arity

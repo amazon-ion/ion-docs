@@ -818,8 +818,8 @@ Since `d`, `e`, and `f` are all voidable, they can be omitted by invokers.  But 
 (:optionals [] (:) "value for c") ⇒ ["value for c"]
 ----
 
-Now `c` receives the symbol `for_c` while the other parameters are all void.  If we want to provide
-just `e`, then we must also provide a group for `d`:
+Now `c` receives the string `"value for c"` while the other parameters are all void.
+If we want to provide `e`, then we must also provide a group for `d`:
 
 ----
 (:optionals [] (:) "value for c" [] "value for e")
@@ -827,6 +827,7 @@ just `e`, then we must also provide a group for `d`:
 ----
 
 
+// TODO Should this be "primitive" instead of "tagless"?
 [#tagless]
 === Tagless and Fixed-Width Types
 
@@ -842,7 +843,7 @@ self-describes its type via a type tag.
 
 If schema constraints are enforced through some mechanism outside the serializer/deserializer,
 the type tags are unnecessary and may add up to a non-trivial amount of wasted space.
-when you observe that the overhead for each value also includes length information: encoding an
+Furthermore, the overhead for each value also includes length information: encoding an
 octet of data takes two octets on the stream.
 
 Ion 1.1 tries to mitigate this overhead in the binary format by allowing macro parameters to use
@@ -899,7 +900,7 @@ For the same reasons, a parameter accepting more than one tagless argument can o
 expressed by grouped or rest parameters, not by ungrouped forms.  For example,
 `(v *var_int+*)` and `(v *int32{asterisk}*)` are not accepted.
 
-A subset of the tagless types are _fixed-width_: they are binary-encoded with no per-value
+A subset of the primitive types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
 
 [{nrm}]
@@ -974,13 +975,13 @@ pseudo-type:
   [points])
 ----
 
-<1> `point` is not one of the built-in types, so its a reference to the macro of that name
+<1> `point` is not one of the built-in types, so this is a reference to the macro of that name
 defined earlier.
 
 ----
-(:scatterplot (3 17) (395 23) (15 48) (2023 5) …)
+(:scatterplot (3 17) (395 23) (15 48) (2023 5))
   ⇒
-  [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}, …]
+  [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}]
 ----
 
 Each argument S-expression like `(3 17)` is _implicitly an
