@@ -10,13 +10,15 @@ A macro can be _fixed arity_ or _variable arity_.
 
 argument::
 A single sub-expression within a macro invocation, corresponding to one of the macro’s
-parameters.  This is by default a one-to-one relation, but a parameter’s grouping mode
-can change this to a many-to-one relation.
+parameters.  This is by default a one-to-one relation, but a rest parameter accepts
+zero-or-more or one-or-more arguments.
 
 argument group::
-The concrete syntax for a _grouped parameter_.
-In a macro invocation, a list containing multiple arguments, delimited explicitly with `[...]`
-notation in Ion text. Used to express parameters that accept more than one argument.
+The concrete syntax for passing a stream of values to a macro parameter.
+In a text E-expression, a group starts with the digraph `(:` and ends with `)`,
+similar to an S-expression.
+In the template language, a group is written as an S-expression starting with
+`;` (semicolon).
 
 cardinality::
 Describes the number of values that a parameter will accept when the macro is invoked.
@@ -70,16 +72,6 @@ The number of parameters declared by a macro.  Due to _optional parameters_ and 
 the _actual arity_ of a macro invocation may differ from the formal arity of the macro being
 invoked.
 
-grouped parameter::
-A macro parameter that accepts multiple arguments in an _argument group_ when the macro is
-invoked.
-See also _grouping mode_.
-
-grouping mode::
-One of three ways that a macro parameter is given arguments. A _simple parameter_ accepts one
-argument, a _grouped parameter_ accepts a list of arguments, and a _rest parameter_ accepts
-“all the rest” of the trailing arguments without a grouping list.
-
 Ion version marker::
 A keyword directive that denotes the start of a new segment encoded with a specific Ion version.
 Also known as “IVM”.
@@ -123,7 +115,6 @@ rest parameter::
 A macro parameter—always the final parameter—declared with the `*\...*` or `*\...+*` modifier,
 that accepts all remaining arguments to the macro as if they were in an implicit _argument group_.
 Similar to “varargs” parameters in Java and other languages.
-See also _grouping mode_.
 
 segment::
 A contiguous partition of a document that uses the same encoding environment. Segment boundaries
@@ -134,10 +125,6 @@ signature::
 The part of a macro definition that specifies its “calling convention”, in terms of the shape,
 type, and cardinality of arguments it accepts, and the type and cardinality of the results it
 produces.
-
-simple parameter::
-A macro parameter that matches a single argument when the macro is invoked.
-See also _grouping mode_.
 
 subform::
 A nested portion within some syntactic form of the module or macro declarations.

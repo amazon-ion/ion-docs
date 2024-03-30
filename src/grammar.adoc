@@ -149,19 +149,10 @@ _module-body_ `)`
 |param-name  |::=|  _unannotated-identifier-symbol_
 // end::signature[]
 // tag::param-shape[]
-|param-shape        |::=|  _simple-shape_  \|  _grouped-shape_
-|simple-shape       |::=|  _tagged-type_? _tagged-cardinality_?    +
-                       \|  _tagless-type_ _tagless-cardinality_?
+|param-shape  |::=|  _any-type_? _cardinality_?
 // end::param-shape[]
 // tag::cardinality[]
-|tagged-cardinality  |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
-|tagless-cardinality |::=|  `*'?'*`
-// end::cardinality[]
-// tag::param-shape[]
-|grouped-shape      |::=|   `[` _any-type_? `]` _grouped-cardinality_?
-// end::param-shape[]
-// tag::cardinality[]
-|grouped-cardinality |::=|  `*'+'*`
+|cardinality  |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`
 // end::cardinality[]
 // tag::param-shape[]
 |rest-shape       |::=|  _any-type_? _rest-cardinality_
@@ -218,7 +209,7 @@ _module-body_ `)`
 |for-clause       |::=| `(` _identifier_ _template~in~_ `)`
 
 |macro-invocation |::=|  `(` _macro-ref_ _macro-arg_* `)`
-|macro-arg        |::=|  _template_  \|  `[` _template_* `]`        // _Very_ roughly
+|macro-arg        |::=|  _template_  \|  `(` `*;*` _template_* `)`    // _Very_ roughly
 
 |===
 // end::templexpr[]
