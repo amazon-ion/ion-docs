@@ -583,7 +583,7 @@ and the `*\...*`
 ==== Exactly-One
 
 Many parameters expect exactly one value and thus have _exactly-one cardinality_.
-This is the default for ungrouped parameters, but the `*!*` modifier can be used for clarity.
+This is the default cardinality, but the `*!*` modifier can be used for clarity.
 
 This cardinality means that the parameter requires a stream producing a single value, so one
 might refer to them as _singleton streams_ or just _singletons_ colloquially.
@@ -711,71 +711,62 @@ Thank you to my Patreon supporters:
 ----
 
 
-[#grouped_parameters]
-=== Grouped Parameters
+=== Argument Groups
 
 The non-rest versions of multi-value parameters can be annoying to invoke, since they require the
 use of `values` or some other template to produce the stream of values.  To streamline invocation,
-a macro can opt-in to special syntax that uses a list as delimiting syntax to group the
-applicable sub-expressions.  This is denoted by wrapping the parameter's type in `[]`:
+there's a special delimiting syntax for an _argument group_ collecting the
+applicable sub-expressions.
 
 [{nrm}]
 ----
 (*macro* prices
-  [(amount [*number*]),      // <1>
+  [(amount *number{asterisk}*),
    (currency *symbol*)]
   (*for* [(amt amount)]
     (price amt currency)))
 ----
 
-<1> Note the use of `[]` around `*number*`.
-
-This is referred to as a _grouped parameter_, and at invocation it requires a list delimiting its
-_argument group_:
+Here, the parameter `amount` accepts any number of `*number*`s.
+It's easy to provide exactly one:
 
 ----
-(:prices [1, 2, 3] GBP) ⇒ {amount:1, currency:GBP}
+(:prices 12.99 GBP) ⇒ {amount:12.99, currency:GBP}
+----
+
+To provide a non-singleton stream of values, use an _argument group_.
+Inside an E-expression, a group starts with the digraph `(:` similar to a macro
+invocation, but without a macro reference:
+
+----
+(:prices (:) GBP)       ⇒ _void_
+(:prices (: 1) GBP)     ⇒ {amount:1, currency:GBP}
+(:prices (: 1 2 3) GBP) ⇒ {amount:1, currency:GBP}
                           {amount:2, currency:GBP}
                           {amount:3, currency:GBP}
 ----
 
-Within the group, the invocation can have any number of arguments, including macro invocations.
+Within the group, the invocation can have any number of expressions that align
+with the parameter type.
 The macro parameter produces the results of those expressions, concatenated into a
 single stream, and the expander verifies that each value on that stream is acceptable by the
 parameter’s declared type.
 
 ----
-(:prices [1, (:values 2 3), 4] GBP) ⇒ {amount:1, currency:GBP}
+(:prices (: 1 (:values 2 3) 4) GBP) ⇒ {amount:1, currency:GBP}
                                       {amount:2, currency:GBP}
                                       {amount:3, currency:GBP}
                                       {amount:4, currency:GBP}
 ----
 
-[IMPORTANT]
-====
-To avoid ambiguity, the delimiter is required even for singleton values.  Consider this
-macro:
+Argument groups are allowed for parameters that do not have exactly-one cardinality.
 
-[{nrm}]
-----
-(*macro* ouch [(stuff [*list*])] …)
-----
+// TODO
+WARNING: The allowed combinations of cardinality and argument groups is pending
+finalization of the binary encoding.
 
-Without this rule, the E-expression `(:ouch [])` would be ambiguous whether the parameter was
-intended to be void or a singleton empty-list value.
-====
-
-Grouping says whether multiple _arguments_ can be provided, while cardinality describes the
-number of _values_ those argument(s) must produce.
-The parameter declaration `(amount [*number*])` makes grouping explicit, with a default
-cardinality of zero-or-more.
-The declaration `(amount *[number]+*)` is also valid,
-indicating that the sequence of arguments must produce at least one value.
-
-TIP: Grouped parameters cannot use the `*?*` and `*!*` modifiers; there's no point in
-requiring a grouping list when no more than one value is allowed.
-
-TIP: Rest parameters are effectively another grouping mode, so they cannot be combined with `[]`.
+TIP: Rest parameters effectively use implicit groups at the call site, and they cannot be
+invoked with explicit groups.
 
 Delimiting sequences and `values` expressions may appear similar because they both denote streams
 of values, but they are not interchangeable:
@@ -799,15 +790,15 @@ generality:
 
 === Optional Arguments
 
-When a trailing parameter is voidable, an invocation can omit its corresponding arguments or
-group, as long as no following parameter is being given an argument or group.  We’ve seen
+When a trailing parameter is voidable, an invocation can omit its corresponding argument expression,
+as long as no following parameter is being given an expression.  We’ve seen
 this as applied to `*\...*` rest-parameters, but it also applies to `*?*` and `*{asterisk}*`
-parameters, with or without groups:
+parameters:
 
 [{nrm}]
 ----
 (*macro* optionals
-  [(a [*any*]), (b *any?*), (c *any!*), (d [*any*]), (e *any?*), (f *any\...*)]
+  [(a *any{asterisk}*), (b *any?*), (c *any!*), (d *any{asterisk}*]), (e *any?*), (f *any\...*)]
   (make_list a b c d e f))
 ----
 
@@ -815,14 +806,14 @@ Since `d`, `e`, and `f` are all voidable, they can be omitted by invokers.  But 
 `a` and `b` must always be present, at least as an empty group:
 
 ----
-(:optionals [] (:) "value for c") ⇒ ["value for c"]
+(:optionals (:) (:) "value for c") ⇒ ["value for c"]
 ----
 
 Now `c` receives the string `"value for c"` while the other parameters are all void.
 If we want to provide `e`, then we must also provide a group for `d`:
 
 ----
-(:optionals [] (:) "value for c" [] "value for e")
+(:optionals (:) (:) "value for c" (:) "value for e")
   ⇒ ["value for c", "value for e"]
 ----
 
@@ -896,9 +887,8 @@ While Ion text syntax doesn’t use tags—the types are built into the syntax�
 that a text E-expression may only express things that can also be expressed using an equivalent
 binary E-expression.
 
-For the same reasons, a parameter accepting more than one tagless argument can only be
-expressed by grouped or rest parameters, not by ungrouped forms.  For example,
-`(v *var_int+*)` and `(v *int32{asterisk}*)` are not accepted.
+For the same reasons, supplying a (non-rest) tagless parameter with no value,
+or with more than one value, can only be expressed by using a group.
 
 A subset of the primitive types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
@@ -993,19 +983,18 @@ parameter produces a stream of structs.
 The binary encoding of macro-shaped parameters are similarly tagless, eliding any opcodes
 mentioning `point` and just writing its arguments with minimal delimiting.
 
-Macro types can be grouped and/or combined with cardinality modifiers, following the same rules as
-tagless types.  Note that grouped macro types require callers to use two layers of delimiting
-containers: and outer list for the group, and an inner S-expression for
-each macro instance:
+Macro types can be combined with cardinality modifiers, with invocations using groups
+as needed.  Note that grouping macro types require callers to use two layers of delimiting
+containers:
 
 [{nrm}]
 ----
 (*macro* scatterplot
-  [(points [point] *+*), (x_label *string*), (y_label *string*)]
+  [(points point *+*), (x_label *string*), (y_label *string*)]
   { points: [points], x_label: x_label, y_label: y_label })
 ----
 ----
-(:scatterplot [(3 17), (395 23), (15 48), (2023 5)] "hour" "widgets")
+(:scatterplot (: (3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
   ⇒
   {
     points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
@@ -1014,22 +1003,22 @@ each macro instance:
   }
 ----
 
-As with non-macro arguments, you cannot replace a grouping list with a macro invocation.
-Further, you can't use a macro invocation as an _element_ of the delimiting-list:
+As with other tagless parameters, you cannot replace a group with a macro invocation.
+Further, you can't use a macro invocation as an _element_ of the delimiting group:
 
 [{nrm}]
 ----
 (:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
-  ⇒ _**error**: delimiting list or sexp expected, found :make_points_
+  ⇒ _**error**: Argument group expected, found :make_points_
 
-(:scatterplot [(3 17), (:make_points 395 23 15 48), (2023 5)] "hour" "widgets")
+(:scatterplot (: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
   ⇒ _**error**: sexp expected with args for 'point', found :make_points_
 
-(:scatterplot [(3 17), (:point 395 23), (15 48), (2023 5)] "hour" "widgets")
+(:scatterplot (: (3 17) (:point 395 23) (15 48) (2023 5)) "hour" "widgets")
   ⇒ _**error**: sexp expected with args for 'point', found :point_
 ----
 
-This limitation mirrors the binary encoding, where both the delimiting list and the individual
+This limitation mirrors the binary encoding, where both the delimiting group and the individual
 macro invocations are tagless and there's no way to express a macro invocation.
 
 TIP: The primary goal of macro-shaped arguments, and tagless types in general, is to increase

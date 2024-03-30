@@ -223,12 +223,14 @@ than the macro’s minimum arity, and at most its maximum arity, when one exists
 In other words, an invocation must contain one subform for each required parameter, followed by
 optional subforms for the remaining optional parameters.
 
-Within an invocation expression, the syntax of each subform is defined first by its parameter’s
-grouping form, then its base type:
+In the template language, argument groups are written by S-expressions starting with the symbol `;`.
+The resulting notation `(; ...)` mirrors the syntax of groups in E-expressions, `(: ...)`.
 
-* The subform for a simple parameter must match the base type below.
-* The subform for a grouped parameter must be a list containing elements that each match the base
-type.
+Within an invocation expression, the syntax of each argument is defined by its parameter’s
+declared shape.
+
+* The subform for a non-rest parameter must match the base type below, or an argument group
+containing elements matching the base type.
 * A rest parameter captures all remaining subforms of the invocation, each of which must match
 the base type.
 
@@ -242,8 +244,6 @@ macro’s signature.  These are implicit invocations of the macro, and the macro
 provided explicitly.
 
 // NOTE: Removed the ability to explicitly invoke "the same macro".
-
-TODO Allow macro invocations where grouping list is expected?
 
 TODO Clarify when/where range checks are applied for fixed-width types.
 

@@ -5,7 +5,7 @@ include::styles.adoc[]
 
 A macro's _signature_ defines the syntax of expressions that invoke it, and the set of input values
 it accepts.
-Signatures apply to both E-expressions and macro-language invocations.
+Signatures constrain both E-expressions and macro-language invocations.
 Because they denote the interface for users of macros, we describe them independently of macro
 definitions.
 
@@ -26,10 +26,9 @@ Restricting names to Java-style identifiers enables use of operator characters (
 
 A macro’s “wire format”—the sequence of acceptable tokens in an E-expression—is determined by its
 parameters’ shapes.
-The shape of a parameter has two dimensions: its _base type_ and its grouping.
-The base type constrains the expression forms that can be used for each argument supplied to the
+The base type constrains the syntax that can be used for each argument supplied to the
 parameter.
-Independently, a parameter is either _simple_, _grouped_, or a _rest parameter_; this dimension
+Independently, a parameter is either _simple_ or a _rest parameter_; this dimension
 determines how the arguments supplied to the parameter are delimited within the overall invocation.
 
 [{bnf}]
@@ -113,38 +112,12 @@ Cardinality is verified by the Ion implementation: the expansion system will sig
 error if the number of values produced by the argument(s) is not aligned with the declared
 cardinality.
 
-Some combinations of type and cardinality are inherently erroneous: a primitive type cannot
-produce more than one value.
-
-
-=== Grouped Parameters
-
-A parameter may be _grouped_, in which case its invocation shape is a sequence of arguments.
-In text invocations, this sequence is written as an Ion list containing the arguments.
-In binary E-expressions, the sequence uses a dedicated encoding.
-In all cases, each element of the group must match the parameter’s declared type.
-
-TODO expansion splicing semantics
-
-To declare a grouped parameter, write the parameter specification with a list around the base type.
-Grouped parameters may declare the `+` cardinality, otherwise `*` is implied.
-No other cardinalities are allowed; there’s no point in grouping a parameter that accepts at most
-one value.
-
-Examples:
-
-[{nrm}]
-----
-(counts [int])         // Accepts zero or more ints
-(points [point]+)      // Accepts one or more points
-----
-
 
 === Rest Parameters
 
 The last parameter may be a _rest parameter_, which is effectively an implicitly grouped
 parameter.
-In text invocations, these parameters don’t use a grouping sequence, but instead take “all the
+In text invocations, these parameters don’t use group delimiters, but instead take “all the
 rest” of the argument expressions.
 
 To declare a rest parameter, use one of the two special cardinality modifiers:
