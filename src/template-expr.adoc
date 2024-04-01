@@ -223,7 +223,8 @@ than the macro’s minimum arity, and at most its maximum arity, when one exists
 In other words, an invocation must contain one subform for each required parameter, followed by
 optional subforms for the remaining optional parameters.
 
-In the template language, argument groups are written by S-expressions starting with the symbol `;`.
+In the template language, argument groups are written by unannoted S-expressions starting with the
+symbol `;`.
 The resulting notation `(; ...)` mirrors the syntax of groups in E-expressions, `(: ...)`.
 
 Within an invocation expression, the syntax of each argument is defined by its parameter’s
@@ -239,11 +240,9 @@ The base types match as follows:
 * For tagged types, the subform may be any template that produces acceptable values.
 * For primitive types, the subform may be any template that produces values accepted by the
 corresponding concrete type.
-* For macro types, the subform must be an S-expression containing subforms acceptable to that
-macro’s signature.  These are implicit invocations of the macro, and the macro name cannot be
+* For macro types, the subform must be an unannotated S-expression containing subforms acceptable to
+that macro’s signature.  These are implicit invocations of the macro, and the macro name cannot be
 provided explicitly.
-
-// NOTE: Removed the ability to explicitly invoke "the same macro".
 
 TODO Clarify when/where range checks are applied for fixed-width types.
 
