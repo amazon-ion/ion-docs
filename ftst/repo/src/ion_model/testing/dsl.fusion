@@ -48,7 +48,6 @@ DSL Design:
     "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
-    "/fusioncontrib/denotation/testing"
     "/fusioncontrib/denotation/private/util"
     "/ion_model/model"
 
@@ -134,8 +133,33 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 
   (define (interp_signals clause_stx doc Values)
     // TODO arity and typecheck
-    (let [(msg (syntax_unwrap (syntax_get clause_stx 1)))]
-      (check_bottom msg Values)))
+    (let [(expected (syntax_unwrap (syntax_get clause_stx 1)))]
+      (if (is_bottom Values)
+        (let [(actual (bottom_message Values))]
+          (unless (and (string_ends_with expected ":")
+                       (string_starts_with actual expected))
+            (unless (=== expected actual)
+              (raise_contract_error (quote signals)
+                (with_output_to_string
+                  (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
+                  (displayln "Document didn't signal the expected error.")
+                  (display "Document: ")
+                  (writeln doc)
+                  (display "Signaled: ")
+                  (writeln actual)
+                  (display "Expected: ")
+                  (writeln expected))))))
+        (let [(actual_data (eject_Values Values))]
+          (raise_contract_error (quote signals)
+            (with_output_to_string
+              (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
+              (displayln "Document didn't signal an error.")
+              (display "Document: ")
+              (writeln doc)
+              (display "Expanded: ")
+              (writeln actual_data)
+              (display "Expected: ")
+              (writeln expected)))))))
 
 
   (define expectation_vtable
