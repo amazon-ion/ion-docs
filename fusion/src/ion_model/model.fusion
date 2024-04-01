@@ -39,6 +39,8 @@ Features:
 * [TUNNEL-MOD] Shared modules "tunneled" in shared symtabs
 * [VALID-NAME] Validate module, macro, and parameter names.
 * [USE-MODULE] `use` clauses at directive-level; more wiring challenges.
+* [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
+  * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.
 * [ERRMSG] Some 1.1 code relies on implicit type checking to reject erroneous
   forms, leading to unhelpful error messages.
 * Eexpr in field-position (struct inlining)
@@ -231,6 +233,10 @@ Spec Issues: 1.0
     (dom SStruct   = (+ 'SField*' DotNull))
 
     (dom SEexp      = (* MacroRef::ref 'STree*'::args))
+
+    // Absent module denotes a local ref like ':name' or ':12'.
+    // When module="" it denotes a bare reference (no leading colon) inside
+    // module bodies.  It cannot be resolved by E-expressions.
     (dom MacroRef   = (* 'Unicode?'::module NameOrAddr::macro))
     (dom NameOrAddr = (+ Unicode I))
 
@@ -1285,10 +1291,9 @@ Spec Issues: 1.0
     // Macro definition compilation
 
     // Need ModuleMap, Environment_mactab module names, local and use'd macro map
-    // TODO Distinguish unqualified names (foo ...) and named locals (':foo' ...)
-    //    Perhaps inject the name of the current module?
-    //       No... that name isn't in-scope and could shadow a real module!
-    //    Empty name might work.
+    // As noted at MacroRef, an empty module name denotes a bare reference
+    // (foo ...) as distinct from named locals (':foo' ...) where the module name
+    // is absent.
     (dom MacroEnv = (-> 'Unicode?' NameOrAddr Macro))
 
     // Same signature as Transform; perhaps we don't need both.

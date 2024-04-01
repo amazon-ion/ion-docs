@@ -5,6 +5,9 @@
 (require "/ion_model/testing/dsl")
 
 
+// Bare references (no leading colon)
+// TODO:[ALIAS] bare refs to alias
+
 (in11 (mactab (macro m [] (noSuchMacro)))
       (signals "No such macro: noSuchMacro"))
 
@@ -12,6 +15,14 @@
               (macro m_wrap [] (m)))
       (toplevel ('#$:m_wrap'))
       (produces "m"))
+
+// Local macros shadow system macros
+(in11 (mactab (macro values [] "local")
+              (macro n [] (values)))
+      (then (toplevel ('#$:$ion:values' "system")) // Precondition for this test
+            (produces "system"))
+      (then (toplevel ('#$:n'))
+            (produces "local")))
 
 
 (in11 (mactab (macro m  [(p!)] ["m", p])
