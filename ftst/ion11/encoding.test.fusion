@@ -6,6 +6,7 @@
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
@@ -119,9 +120,14 @@
   (quote11   $ion_encoding::((macro_table $ion $ion))
              ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
 
-// FIXME [VALID-MACTAB-MOD]
-//(check_eval_fail "Module not in scope: M"
-//  (quote11 $ion_encoding::((macro_table M))))
+(in11 (encoding (macro_table M))
+      (signals "Module not in scope: M"))
+(in11 (encoding (macro_table ''))
+      (signals "Module not in scope:"))
+
+(in11 (each (encoding (macro_table "M"))
+            (encoding (macro_table 1))
+            (signals "Expected a symbol:")))
 
 
 // Inline modules

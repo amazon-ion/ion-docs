@@ -48,8 +48,6 @@ Features:
 
 
 Defects:
-* [VALID-MACTAB-MOD] $ion_encoding macro_table module-names are not validated
-  WRT available modules.
 * Spec says various encoding-directive elements are unannotated, but the
   model doesn't enforce that.
 * SIDs and Macro addresses should be non-negative.
@@ -1062,9 +1060,11 @@ Spec Issues: 1.0
       // TODO Use `map`
       (if (seq_is_empty vs)
         (seq 'Unicode*')
-        // FIXME [VALID-MACTAB-MOD] verify presence in avail
-        (seq_prepend (Value_symtext (seq_head vs))
-          (compile_ED_mactab_body (seq_tail vs) avail))))
+        // TODO [ERRMSG] Poor handling of null.symbol
+        // We only compute `m` to verify the module reference is valid.
+        (let [(m (avail (Value_symtext (seq_head vs))))]
+          (seq_prepend (Value_symtext (seq_head vs))
+            (compile_ED_mactab_body (seq_tail vs) avail)))))
 
 
     (fn nextClauseIs ((vs 'Value*') (u Unicode) -> B)
