@@ -78,6 +78,8 @@ Defects:
 
 Spec Issues: 1.1
 ----------------
+* Rename "unqualified macro references" to "local"?  The latter is more precise
+  though perhaps confusing in the E-expression case.
 * Spec should ban the name $ion in load and import.
 * Perhaps TL should treat all nulls as literals.  Easy and intuitive.
   * See quasi-literal explanations (§9.1.3)
@@ -1027,28 +1029,7 @@ Spec Issues: 1.0
     (fn compile_ED_module ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
       (let [(name (Value_symtext (ith vs 0)))]                   // [VALID-NAME]
         (ModuleMap_extend avail name
-          (compile_IM_body (seq_tail vs) avail (outerMacroEnv avail) c))))
-
-    // The macro environment at the outside of a module.
-    // Includes retained or loaded modules and used macro names.
-    (fn outerMacroEnv ((mm ModuleMap) -> MacroEnv)
-      (mk_fn MacroEnv (mod mac)
-        (if (opt_is_present mod)
-          // Qualified reference
-          (if (element_of mac Unicode)
-            (resolve_qualifiedName (opt_value mod) (lower mac Unicode) mm)
-            (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) mm))
-          // Unqualified name or local-offset
-          (if (element_of mac Unicode)
-            // $ion is implicitly `use`d
-            (let [(m1 (resolve_ExportedMacros (Module_mactab (mm "$ion"))
-                                              (lower mac Unicode)))]
-              (if (opt_is_present m1)
-                (opt_value m1)
-                (wrong "No such macro: " (lower mac Unicode))))
-            // No reaching "outside" the module with unqualified addresses
-            (wrong "SHOULD NOT GET HERE")))))
-
+          (compile_IM_body (seq_tail vs) avail c))))
 
     // $ion_encoding symbol_table
 
@@ -1101,44 +1082,68 @@ Spec Issues: 1.0
     //==========================================================================
     // Inline module compilation
 
-    // TODO Rename to compile_IM_deps
-    (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (r MacroEnv) (c Catalog) -> Module)
+    (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (c Catalog) -> Module)
+      (compile_IM_deps vs avail c
+        // The macro environment at the outside of an inline module includes
+        // retained or loaded modules and used macro names.
+        (mk_fn MacroEnv (mod mac)
+          (if (not (opt_is_present mod))
+            (wrong "local-ref should have been resolved already")
+            (if (= (opt_value mod) "")
+              // Bare reference; assume Unicode name, not address.
+              // $ion is implicitly `use`d
+              (let [(m1 (resolve_ExportedMacros (Module_mactab (avail "$ion"))
+                                                (lower mac Unicode)))]
+                (if (opt_is_present m1)
+                  (opt_value m1)
+                  (wrong "No such macro: " (lower mac Unicode))))
+              // Qualified reference
+              (if (element_of mac Unicode)
+                (resolve_qualifiedName (opt_value mod) (lower mac Unicode) avail)
+                (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) avail)))))))
+
+
+    (fn compile_IM_deps ((vs 'Value*') (avail ModuleMap) (c Catalog) (r MacroEnv) -> Module)
       // TODO:[IMPORT]
       (if (nextClauseIs vs "load")
         // Recurse to find more dependencies
-        (compile_IM_body (seq_tail vs)
+        (compile_IM_deps (seq_tail vs)
           (compile_ED_load (clauseBody (seq_head vs)) avail c)
-          r  // [LOAD-MACRO] loaded module needs to be visibile in this MacroEnv
-          c)
+          c
+          r) // [LOAD-MACRO] loaded module needs to be visibile in this MacroEnv
         (if (nextClauseIs vs "use")
           (compile_IM_use (clauseBody (seq_head vs)) (seq_tail vs) c avail r)
           // No more dependencies
           (compile_IM_symtab vs avail r))))
 
+    // Use-clauses make macros available for bare-name reference.
     (fn compile_IM_use ((vs 'Value*')     // The rest of this `use` clause
                         (vs1 'Value*')    // The rest of the IM body
                         (c Catalog)
                         (avail ModuleMap)
                         (r MacroEnv) -> Module)
       (if (seq_is_empty vs)
-        (compile_IM_body vs1 avail r c)
+        (compile_IM_deps vs1 avail c r)
         // TODO:[USE-LOAD] Accept nested `load` clause.
         // Resolve the module reference immediately
-        (let [(mod0 (avail (Value_symtext (seq_head vs))))]
+        (let [(mod0 (avail (Value_symtext (seq_head vs))))]  // [ERRMSG]
           (compile_IM_use (seq_tail vs) vs1 c avail
             (mk_fn MacroEnv (mod1 mac)
-              (if (or (opt_is_present mod1) (not (element_of mac Unicode)))
-                // Qualified reference, or unqualified address; pass through.
-                (r mod1 mac)
-                // Unqualified name
-                (let [(m1 (resolve_ExportedMacros (Module_mactab mod0)
-                                                  (lower mac Unicode)))]
-                  (if (opt_is_present m1)
-                    (if (is_bottom (r mod1 mac))
-                      (opt_value m1)
-                      // [MAC-ID] Compare macro identities to allow benign duplicates.
-                     (wrong "Ambiguous macro-ref: " (lower mac Unicode)))
-                    (r mod1 mac)))))))))
+              (if (not (opt_is_present mod1))
+                (wrong "local-ref should have been resolved already")
+                (if (= (opt_value mod1) "")
+                  // Bare name
+                  (let [(m1 (resolve_ExportedMacros (Module_mactab mod0)
+                                                    (lower mac Unicode)))]
+                    (if (opt_is_present m1)
+                      (if (is_bottom (r mod1 mac))
+                        (opt_value m1)
+                        // [MAC-ID] Compare macro identities to allow benign duplicates.
+                       (wrong "Ambiguous macro-ref: " (lower mac Unicode)))
+                      // Not introduced by this use-clause, so keep looking.
+                      (r mod1 mac)))
+                  // Qualified reference; pass through.
+                  (r mod1 mac))))))))
 
     (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) (r MacroEnv) -> Module)
       (if (nextClauseIs vs "symbol_table")
@@ -1206,11 +1211,11 @@ Spec Issues: 1.0
                (if (opt_is_present m)
                  // Found the name locally; this shadows any import.
                  (opt_value m)
-                 // Delegate to outer environment.
-                 (r (opt 'Unicode?') mac)))
-            // Qualified reference with real module name; pass through to outer env.
+                 // Not a local macro; pass through to check `use`d modules.
+                 (r mod mac)))
+            // Qualified reference with real module name; pass through.
             (r mod mac))
-          // Unqualified name or local-offset
+          // Local name or offset
           (if (element_of mac Unicode)
             (let [(m (resolve_ExportedMacros ms (lower mac Unicode)))]
                (if (opt_is_present m)
@@ -1654,6 +1659,7 @@ Spec Issues: 1.0
           (appendText (seq_tail vs)))))
 
     (fn Value_unicode ((v Value) -> Unicode)
+      // Turns null.string and null.symbol into ""
       (let [(c (Value_content v))]
         (if (element_of c Symbol)
           (if (element_of c Unicode)
@@ -1678,12 +1684,15 @@ Spec Issues: 1.0
     (if (string_starts_with (eject c) ":")
       (let [(parts (string_split (eject c) ":"))]
         (if (= 1 (size parts))
+          // Local reference
           (tuple MacroRef
             (opt 'Unicode?')
             (parseNameOrAddr (. parts 0)))
+          // Qualified reference
           (tuple MacroRef
             (opt 'Unicode?' (inject_into Unicode (. parts 0)))
             (parseNameOrAddr (. parts 1)))))
+      // Bare name
       (tuple MacroRef (opt 'Unicode?' "") (lift_to NameOrAddr c))))
 
   (define (parseNameOrAddr /*string::*/ str)
