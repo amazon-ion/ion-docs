@@ -49,7 +49,7 @@
 // Ambiguous `use`d names must be qualified.
 (with_encoding ((module M1 (macro_table (macro m [] "m1")))
                 (module M2 (macro_table (macro m [] "m2")))
-                (module U (use M1 M1)
+                (module U (use M1 M2)
                           (macro_table (macro u1 [] (m)))))
   (document)
   (signals "Ambiguous macro-ref: m"))
