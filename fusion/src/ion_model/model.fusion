@@ -22,10 +22,9 @@ Major Components:
 * [SHARED-MOD] Shared modules
   * [LOAD-MACRO] Load macros from shared modules
 * [TUNNEL-MOD] Shared modules "tunneled" in shared symtabs
+* [STRUCT-EE] Eexpr in field-position (struct inlining)
 
 Features:
-* [ED-USE] `use` clauses at directive-level; more wiring challenges.
-  * Perhaps easier after [UNIFY-MACREF]?
 * [PARAM-CARD] Validate cardinality of grouped parameters
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
@@ -34,29 +33,28 @@ Features:
     * Perhaps add LoadedModule to track that data, and return from ModuleMap.
   * Accept non-exact-match modules in `symbol_table`.
 * Accept symbols in `symbol_table` inner lists: (symbol_table [sym1, "sym2"])
+  * What about $0 ?
 * [SYMTAB-COMPOSE] Module-level symtabs don't handle non-exact-match modules.
   For Module to handle symtab composition, it needs SymTok* not Unicode*
-  Also, unknown symbols have the wrong symtab name, breaking equality rules.
+* [SYM-EQ] When a module's symtab includes another with unknown symbols, they
+  have the wrong symtab name, breaking equality rules.
 * [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
   * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.
-* [ALIAS] Macro aliases
-    * Requires a MacroMap (MacroBindings?) = Unicode -> Macro
 * [MAC-ID] Macro identity and proper ambiguity detection
 * [EXPORT-MOD] A module's macro_table can have a module name, as in EDs.
-* [EXPORT-FROM]
 * [EXPORT-REF] Export by macro reference.
-  * Requires Unicode_split, digit detection/parse.
-* [IMPORT] `import` clauses for both directive and module body
+* [EXPORT-FROM]
+* [ED-USE] `use` clauses at directive-level; more wiring challenges.
+  * Perhaps easier after [UNIFY-MACREF]?
 * [USE-LOAD] Nested (use (load ...)) combination.
+* [IMPORT] `import` clauses for both directive and module body
 * [VALID-NAME] Validate module, macro, and parameter names.
 * [OPT-NAME] Optional macro names; can streamline some tests
 * [VALID-FORM] Many forms need better validation of arity and argument type.
 * [ERRMSG] Some 1.1 code relies on implicit type checking to reject erroneous
   forms, leading to unhelpful error messages.
-* Eexpr in field-position (struct inlining)
-  * If `{(:values {a:1}), b:2}` ==> `{ a:1, b:2 }` then what about `{ {a:1}, b:2 }`?
-    Isn't (:values V) == V ?
 * Implement Decimal, Float, Timestamp, Blob/Clob
+* [ALIAS] Macro aliases; main impact is inability to import/rename/export macros.
 
 
 Defects:
@@ -1043,7 +1041,7 @@ Spec Issues: 1.0
         // TODO:[SYMTAB-COMPOSE] this assumes exact match acquired
         (let [(symtab (Module_symtab (avail (Value_symtext v))))]
           // Convert Module's Unicode* to SymTok*
-          // FIXME This uses the defined name, not the catalog name.
+          // TODO:[SYM-EQ] This uses the defined name, not the catalog name.
           // Absent-symbol equality is therefore incorrect.
           (compile_symtab symtab (Value_symtext v) (seq_length symtab)))
         (map 'SymTok*' compile_module_symtab_text
