@@ -1,10 +1,13 @@
-(module display "/fusion"
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
+
+(module util "/fusion"
   '''
 Miscellaneous things that should really be provided by Fusion.
   '''
 
   (require
     "/fusion/exception"
+    "/fusion/experimental/string"
     "/fusion/experimental/syntax"
 
     (rename_in "/fusion/experimental/syntax"
@@ -20,6 +23,8 @@ Miscellaneous things that should really be provided by Fusion.
     is_sexp_of_ids
     is_syntax_pair
     is_text
+    string_holds_decimal_int
+    string_holds_ion_identifier
     symbol_append
     text_to_string
     text_to_symbol
@@ -87,6 +92,47 @@ Miscellaneous things that should really be provided by Fusion.
       (if (is_string t)
         (string_to_symbol t)
         (raise_argument_error "text_to_symbol" "string or symbol" 0 t))))
+
+
+
+  // Magic knowledge of how ASCII is laid out.
+  (define CODEPOINT_$ (first (string_explode "$")))
+  (define CODEPOINT_0 (first (string_explode "0")))
+  (define CODEPOINT_9 (first (string_explode "9")))
+  (define CODEPOINT_A (first (string_explode "A")))
+  (define CODEPOINT_Z (first (string_explode "Z")))
+  (define CODEPOINT__ (first (string_explode "_")))
+  (define CODEPOINT_a (first (string_explode "a")))
+  (define CODEPOINT_z (first (string_explode "z")))
+
+  (define (cp_is_between cp lo hi)
+    (and (<= lo cp) (<= cp hi)))
+
+  (define (is_ascii_digit cp)
+    (cp_is_between cp CODEPOINT_0 CODEPOINT_9))
+
+  (define (is_ascii_letter cp)
+    (or (cp_is_between cp CODEPOINT_A CODEPOINT_Z)
+        (cp_is_between cp CODEPOINT_a CODEPOINT_z)))
+
+  (define (is_ion_ident_char cp)
+    (or (is_ascii_letter cp)
+        (is_ascii_digit cp)
+        (=== CODEPOINT_$ cp)
+        (=== CODEPOINT__ cp)))
+
+  (define (string_holds_decimal_int str)
+    (or (=== "0" str)
+        (let [(cps (string_explode str))]
+          (and (not (is_empty cps))
+               (every is_ascii_digit cps)
+               (not (=== CODEPOINT_0 (first cps)))))))
+
+  (define (string_holds_ion_identifier str)
+    (let [(cps (string_explode str))]
+      (and (not (is_empty cps))
+           (every is_ion_ident_char cps)
+           (not (is_ascii_digit (first cps))))))
 
   // TODO We could use something recursive like syntax_to_datum.
   (define (desyntax v)

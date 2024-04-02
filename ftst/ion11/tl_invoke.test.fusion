@@ -117,6 +117,21 @@
                            (macro_table (macro _ [] (':m')))))
       (signals "No such macro declared in this module: :m"))
 
+// TODO:[ALIAS] ... or aliases
+
+
+// Malformed macro references in templates
+
+(in11 (each (mactab (macro _ [] (':')))
+            (mactab (macro _ [] ('::')))
+            (mactab (macro _ [] (':1:')))
+            (mactab (macro _ [] (':$ion:')))
+            (mactab (macro m [] 0)
+                    (macro _ [] ('::m')))
+            (mactab (macro m [] 0)
+                    (macro _ [] ('m:')))
+            (signals "Malformed macro-ref:")))
+
 
 // Arity checking
 

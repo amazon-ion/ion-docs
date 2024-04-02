@@ -24,8 +24,6 @@ Major Components:
 * [TUNNEL-MOD] Shared modules "tunneled" in shared symtabs
 
 Features:
-* [VALID-MACREF] Validate macro references.
-  * This also fixes some test-DSL [BAD-AST] cases.
 * [ED-USE] `use` clauses at directive-level; more wiring challenges.
   * Perhaps easier after [UNIFY-MACREF]?
 * [PARAM-CARD] Validate cardinality of grouped parameters
@@ -1675,31 +1673,46 @@ Spec Issues: 1.0
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
 
 
-  (require (only_in "/fusioncontrib/denotation" eject))
+  // Be very selective with what is required! This escapes the denotational model.
+  (require
+    (only_in "/fusioncontrib/denotation"
+      eject)
+    (only_in "/fusioncontrib/denotation/private/util"
+      string_holds_decimal_int
+      string_holds_ion_identifier))
 
-  // TODO:[BAD-AST] [VALID-MACREF] Validate the number and shape of components
-  //  * Reject refs with more than two parts.
-  //  * Reject malformed module and macro names.
   (define_fn parseMacroRef ((c Unicode) -> MacroRef)
-    (if (string_starts_with (eject c) ":")
-      (let [(parts (string_split (eject c) ":"))]
-        (if (= 1 (size parts))
-          // Local reference
-          (tuple MacroRef
-            (opt 'Unicode?')
-            (parseNameOrAddr (. parts 0)))
-          // Qualified reference
-          (tuple MacroRef
-            (opt 'Unicode?' (inject_into Unicode (. parts 0)))
-            (parseNameOrAddr (. parts 1)))))
-      // Bare name
-      (tuple MacroRef (opt 'Unicode?' "") (lift_to NameOrAddr c))))
+    (if (string_ends_with (eject c) ":")
+      // Hack to workaround string_split igoring leading/trailing delimiters
+      (wrong "Malformed macro-ref: " (eject c))
+      (if (string_starts_with (eject c) ":")
+        (let [(parts (string_split (eject c) ":"))]
+          (if (= 1 (size parts))
+            // Local reference
+            (tuple MacroRef
+              (opt 'Unicode?')
+              (parseNameOrAddr c (. parts 0)))
+            (if (= 2 (size parts))
+              // Qualified reference
+              (tuple MacroRef
+                (opt 'Unicode?' (parseName c (. parts 0)))
+                (parseNameOrAddr c (. parts 1)))
+              // Too many parts
+              (wrong "Malformed macro-ref: " (eject c)))))
+        // Bare name
+        (tuple MacroRef (opt 'Unicode?' "") (lift_to NameOrAddr (parseName c (eject c)))))))
 
-  (define (parseNameOrAddr /*string::*/ str)
-    (let [(val (with_ion_from_string str read))]
-      (lift_to NameOrAddr
-        (if (is_symbol val)
-          (inject_into Unicode (symbol_to_string val))
-          (inject_into I val)))))
+  (define (parseName /*Unicode::*/ref /*string::*/ str)
+    (if (string_holds_ion_identifier str)
+      (inject_into Unicode str)
+      (wrong "Malformed macro-ref: " (eject ref))))
+
+  (define (parseNameOrAddr /*Unicode::*/ref /*string::*/ str)
+    (if (string_holds_decimal_int str)
+      (let [(i (with_ion_from_string str read))]
+        (lift_to NameOrAddr (inject_into I i)))
+      (if (string_holds_ion_identifier str)
+        (lift_to NameOrAddr (inject_into Unicode str))
+        (wrong "Malformed macro-ref: " (eject ref)))))
 
 )

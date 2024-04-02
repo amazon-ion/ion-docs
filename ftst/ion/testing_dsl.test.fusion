@@ -128,10 +128,31 @@
 //=========================
 // AST Synthesis
 
-// TODO [BAD-AST] Reject malformed macro references; eg:
-//   ('#$:')    malformed macro reference
-//   ('#$::')   malformed module name; malformed macro name/address
-//   ('#$:1:1') malformed module name
+// Reject malformed macro references
+
+(expect_argument_error (in11 (toplevel ('#$:' )) (produces)))
+(expect_argument_error (in11 (toplevel ('#$::' )) (produces)))
+
+// Malformed module name:
+(expect_argument_error (in11 (toplevel ('#$::m')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:0:m')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:*:m')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:0M:m')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M@dule:m')) (produces)))
+
+// Malformed name|address
+(expect_argument_error (in11 (toplevel ('#$:M:')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:/')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:@')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:m acro')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:01')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:-1')) (produces)))
+
+// Extra parts
+(expect_argument_error (in11 (toplevel ('#$:M:m:')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:m:a')) (produces)))
+(expect_argument_error (in11 (toplevel ('#$:M:m:0')) (produces)))
+
 
 // TODO [BAD-AST] Reject misplaced AST tunneling symbols; eg:
 //   (toplevel '#$:oops')      Module ref not head of an AST S-expression

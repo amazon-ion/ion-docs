@@ -22,6 +22,7 @@ We "tunnel" special tokens as follows:
   (require
     "/fusion/exception"
     "/fusion/experimental/check"
+    "/fusion/experimental/string"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/fusioncontrib/denotation/testing"
@@ -115,12 +116,14 @@ We "tunnel" special tokens as follows:
          (string_starts_with (symbol_to_string (head c)) "#$:")))
 
   (define (mk_MacroRef c)
-    (lets [(parts (string_split (symbol_to_string c) ":")),
+    (assert (string_starts_with (symbol_to_string c) "#$:") "Not a macro-ref: " c)
+    (lets [(chars (string_explode (symbol_to_string c))),
            // Drop the "#$" prefix
-           (sym   (apply string_join ":" "" (subseq parts 1 (size parts)))),
+           (sym   (string_implode (subseq chars 2 (size chars)))),
            (ref   (parseMacroRef sym))]
       (when (is_bottom ref)
-        (raise_argument_error mk_MacroRef "valid macro-ref" 0 c))
+        // TODO: Improve message when triggered from the conformance DSL.
+        (raise_argument_error "mk_MacroRef" "well-formed macro-ref" 0 c))
       ref))
 
   (define (mk_SEexp c)

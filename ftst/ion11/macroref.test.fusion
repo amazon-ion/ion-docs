@@ -1,0 +1,34 @@
+// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+
+(require
+  "/fusioncontrib/denotation/testing"
+  "/ion_model/model"
+)
+
+
+// Unit-testing the parseMacroRef function.
+
+(for [(r ["", ":", "::",
+
+          // Malformed module name
+          "::m",
+          ":0:m",
+          ":*:m",
+          ":0M:m",
+          ":M@dule:m",
+
+          // Well-formed module name, malformed name/address:
+          ":M:m:",
+          ":M:",
+          ":M:/",
+          ":M:@",
+          ":M:m acro",
+          ":M:01",
+          ":M:-1",
+
+          // Extra parts
+          ":M:m:",
+          ":M:m:a",
+          ":M:m:0",
+         ])]
+  (check_bottom (string_append "Malformed macro-ref: " r) (parseMacroRef r)))
