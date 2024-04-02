@@ -16,9 +16,18 @@ Terminology/Readability:
 * Separate syntactic IVM from semantic spec-version?
 * Print the Appendix in manually-assembled sections.
   * Should have a way to detect when a domain element is forgotten.
+* Improve clarity around "Environment", "ModuleMap", "MacroEnv", and other lookups.
+
+Major Components:
+* [SHARED-MOD] Shared modules
+  * [LOAD-MACRO] Load macros from shared modules
+* [TUNNEL-MOD] Shared modules "tunneled" in shared symtabs
 
 Features:
-* [OPT-NAME] Optional macro names; can streamline some tests
+* [VALID-MACREF] Validate macro references.
+  * This also fixes some test-DSL [BAD-AST] cases.
+* [ED-USE] `use` clauses at directive-level; more wiring challenges.
+  * Perhaps easier after [UNIFY-MACREF]?
 * [PARAM-CARD] Validate cardinality of grouped parameters
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
@@ -29,18 +38,21 @@ Features:
 * Accept symbols in `symbol_table` inner lists: (symbol_table [sym1, "sym2"])
 * [SYMTAB-COMPOSE] Module-level symtabs don't handle non-exact-match modules.
   For Module to handle symtab composition, it needs SymTok* not Unicode*
-* [SHARED-MOD] Shared modules
+  Also, unknown symbols have the wrong symtab name, breaking equality rules.
+* [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
+  * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.
 * [ALIAS] Macro aliases
     * Requires a MacroMap (MacroBindings?) = Unicode -> Macro
 * [MAC-ID] Macro identity and proper ambiguity detection
+* [EXPORT-MOD] A module's macro_table can have a module name, as in EDs.
 * [EXPORT-FROM]
 * [EXPORT-REF] Export by macro reference.
   * Requires Unicode_split, digit detection/parse.
-* [TUNNEL-MOD] Shared modules "tunneled" in shared symtabs
+* [IMPORT] `import` clauses for both directive and module body
+* [USE-LOAD] Nested (use (load ...)) combination.
 * [VALID-NAME] Validate module, macro, and parameter names.
-* [USE-MODULE] `use` clauses at directive-level; more wiring challenges.
-* [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
-  * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.
+* [OPT-NAME] Optional macro names; can streamline some tests
+* [VALID-FORM] Many forms need better validation of arity and argument type.
 * [ERRMSG] Some 1.1 code relies on implicit type checking to reject erroneous
   forms, leading to unhelpful error messages.
 * Eexpr in field-position (struct inlining)
@@ -890,7 +902,7 @@ Spec Issues: 1.0
               (if (element_of (ParamSpec_shape p) GroupShape)
                 (if (and (element_of t SValue)  // not an Eexp
                          (element_of (SValue_content (lower t SValue)) SList))
-                  // TODO reject null.list and annotations
+                  // TODO:[VALID-FORM] reject null.list and annotations
                   (let [(ts1 (lower (SValue_content (lower t SValue)) SList 'STree*'))]
                     // [PARAM-CARD] Cardinality checking of expanded group
                     (seq_prepend ('expand_STree*' ts1 r) is))
@@ -952,6 +964,7 @@ Spec Issues: 1.0
           (compile_ED_modules vs mm0 r))))
 
     (fn compile_ED_modules ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
+      // TODO:[ED-USE] [IMPORT]
       (if (nextClauseIs vs "load")
         (compile_ED_modules (seq_tail vs)
           (compile_ED_load (clauseBody (seq_head vs)) avail (Environment_catalog r))
@@ -1003,7 +1016,7 @@ Spec Issues: 1.0
       (let [(name    (Value_symtext (ith vs 0))),                // [VALID-NAME]
             (catname (Value_strtext (ith vs 1))),
             (version (Value_int     (ith vs 2))),                // [LOAD-MAXID]
-            // FIXME ensure no extra arguments
+            // TODO:[VALID-FORM] ensure no extra arguments
            ]
         (ModuleMap_extend avail name
           (SharedModule_module (exactModule_Catalog c catname version)))))
@@ -1048,7 +1061,7 @@ Spec Issues: 1.0
     (fn compile_module_symtab_elt ((v Value) (avail ModuleMap) -> 'SymTok*')
       (if (element_of (Value_content v) Symbol)
         // TODO copied from compile_import
-        // TODO this assumes exact match acquired
+        // TODO:[SYMTAB-COMPOSE] this assumes exact match acquired
         (let [(symtab (Module_symtab (avail (Value_symtext v))))]
           // Convert Module's Unicode* to SymTok*
           // FIXME This uses the defined name, not the catalog name.
@@ -1058,12 +1071,11 @@ Spec Issues: 1.0
           (lower (Value_content v) List 'Value*'))))
 
     (fn compile_module_symtab_text ((v Value) -> SymTok)
-      // TODO typecheck, nullcheck
+      // TODO:[ERRMSG] typecheck, nullcheck
       (lift_to SymTok (Value_strtext v)))
 
 
     (fn compile_ED_mactab_body ((vs 'Value*') (avail ModuleMap) -> 'Unicode*')
-      // TODO Use `map`
       (if (seq_is_empty vs)
         (seq 'Unicode*')
         // TODO [ERRMSG] Poor handling of null.symbol
@@ -1089,12 +1101,14 @@ Spec Issues: 1.0
     //==========================================================================
     // Inline module compilation
 
+    // TODO Rename to compile_IM_deps
     (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (r MacroEnv) (c Catalog) -> Module)
+      // TODO:[IMPORT]
       (if (nextClauseIs vs "load")
         // Recurse to find more dependencies
         (compile_IM_body (seq_tail vs)
           (compile_ED_load (clauseBody (seq_head vs)) avail c)
-          r  // FIXME loaded module needs to be visibile in this MacroEnv
+          r  // [LOAD-MACRO] loaded module needs to be visibile in this MacroEnv
           c)
         (if (nextClauseIs vs "use")
           (compile_IM_use (clauseBody (seq_head vs)) (seq_tail vs) c avail r)
@@ -1108,6 +1122,7 @@ Spec Issues: 1.0
                         (r MacroEnv) -> Module)
       (if (seq_is_empty vs)
         (compile_IM_body vs1 avail r c)
+        // TODO:[USE-LOAD] Accept nested `load` clause.
         // Resolve the module reference immediately
         (let [(mod0 (avail (Value_symtext (seq_head vs))))]
           (compile_IM_use (seq_tail vs) vs1 c avail
@@ -1131,6 +1146,8 @@ Spec Issues: 1.0
           // [SYMTAB-COMPOSE] This doesn't handle absent symbols or their equality.
           (compile_module_symtab (clauseBody (seq_head vs)) avail))
         (compile_IM_mactab vs avail r (seq 'SymTok*'))))
+
+    // TODO:[ALIAS]
 
     (fn compile_IM_mactab ((vs 'Value*')
                            (avail ModuleMap)
@@ -1170,6 +1187,9 @@ Spec Issues: 1.0
         (let [(macroEnv (localMacroEnv r macs))]
           (seq_append macs
             (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macroEnv))))
+        // TODO:[EXPORT-REF] (export foo ':$ion:foo')
+        // TODO:[EXPORT-MOD] A plan module-name in place of (export ...)
+        // TODO:[EXPORT-FROM] (export (from MODNAME ...))
         (let [(mod (mods (Value_symtext v)))]
           // [DUPE-NAME] Check for duplicates
           (seq_append macs (Module_mactab mod)))))
@@ -1177,8 +1197,6 @@ Spec Issues: 1.0
     // Create a MacroEnv that can resolve local names/addrs within a module.
     // Note that local macros shadow imported names.
     (fn localMacroEnv ((r MacroEnv) (ms 'ExportedMacro*') -> MacroEnv)
-      // This only supports locol names
-      // TODO Support qualified refs, non-local names.
       // [DUPE-NAME] We assume no duplicate names in `ms`
       (mk_fn MacroEnv (mod mac)
         (if (opt_is_present mod)
@@ -1653,7 +1671,7 @@ Spec Issues: 1.0
 
   (require (only_in "/fusioncontrib/denotation" eject))
 
-  // TODO [BAD-AST] Validate the number and shape of components
+  // TODO:[BAD-AST] [VALID-MACREF] Validate the number and shape of components
   //  * Reject refs with more than two parts.
   //  * Reject malformed module and macro names.
   (define_fn parseMacroRef ((c Unicode) -> MacroRef)

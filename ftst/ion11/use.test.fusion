@@ -27,7 +27,7 @@
   (document)
   (signals "Module not in scope: M"))
 
-// Use must precede symbol_table, macro_table    // TODO and `alias`
+// Use must precede symbol_table, macro_table    // TODO:[ALIAS]
 (with_encoding ((module M (symbol_table) (use)))
   (document)
   (signals "Unexpected clause in module:"))
