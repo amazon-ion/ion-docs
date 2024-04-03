@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -21,22 +21,25 @@
 (check_true (element_of empty_Zs 'Z*'))
 
 (define z0 (inject_into Z 0))
-(define z1 (inject_into Z 1))
 (define z2 (inject_into Z 2))
-(define Z012 (seq 'Z*' z0 z1 z2))
+(define Z012 (seq 'Z*' z0 1 z2))                // The 1 is auto-injected
 
 (check_pred is_seq Z012)
 (check_same z0 (ith Z012 0))
 (check_same z2 (ith Z012 2))
 (check_same z2 (ith Z012 (inject_into I 2)))    // Accepts domain integers
 
+(define z1 (ith Z012 1))
+(check domain_is z1 Z)                          // Auto-injected into the right domain
+(check === 1 (eject (ith Z012 1)))
+
 (check_bottom "57" (seq 'Z*' (wrong 57)))       // strict on values (not domain)
 (check_bottom "57" (seq 'Z*' z0 (wrong 57)))
-(check_bottom "57" (seq 'Z*' z0 z1 (wrong 57)))
+(check_bottom "57" (seq 'Z*' z0 1 (wrong 57)))
 
-(expect_argument_error (seq Z))                           // 1st arg isn't a seq domain
-(check_bottom "seq element #1 not in Z" (seq 'Z*' 0))           // 2nd arg isn't a domain value
-(check_bottom "seq element #1 not in Z" (seq 'Z*' int_any_val)) // 2nd arg is "above" the sequence type
+(expect_argument_error (seq Z))                  // 1st arg isn't a seq domain
+(expect_argument_error (seq 'Z*' "0"))           // 2nd arg isn't a domain value and not injectable
+(expect_argument_error (seq 'Z*' int_any_val))   // 2nd arg is "above" the sequence type
 
 
 // seq_is_empty

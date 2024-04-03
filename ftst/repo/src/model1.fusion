@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module model1 "/fusion"
 
@@ -83,5 +83,5 @@
   (define stamped_int_val (tuple Stamped t_val int_any_val))
 
   // Sequence values
-  (define Zs_1_2_3 (seq 'Z*' (inject_into Z 1) (inject_into Z 2) (inject_into Z 3)))
+  (define Zs_1_2_3 (seq 'Z*' 1 2 3))
 )
