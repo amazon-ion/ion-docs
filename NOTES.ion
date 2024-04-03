@@ -8,7 +8,7 @@ TODOs
   It should work like the `fn` and `define_fn' forms, basically.
 * [ACCESSORS] Auto-configure printer for tuple field accessors.
   * Requires a factory method, Model x Printer:super -> Printer
-* [BOTTOM-STACK] (+3) Bottoms should have a stack trace like test checks do.
+* [BOTTOM-STACK] (+5) Bottoms should have a stack trace like test checks do.
   * I wish I could override `#%app`!
 * [FOLD] Similar to map, `fold` would reduce boilerplate.
 * [TOP] TOP domain

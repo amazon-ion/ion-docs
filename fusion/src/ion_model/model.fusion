@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module ion_semantic_model "/fusion"
   '''
@@ -198,10 +198,9 @@ Spec Problems
       (Module_specVersion (Environment_sysModule r)))
 
     (fn currentSymtab ((r Environment) -> 'SymTok*')
-      (let [(ss (Module_symtab (Environment_sysModule r)))]
-        (seq_prepend (lift_to SymTok SYM0)
-                     (seq_append (compile_symtab ss "$ion" (seq_length ss))
-                                 (Environment_docSymbols r)))))
+      (seq_prepend (lift_to SymTok SYM0)
+                   (seq_append (Module_symtab (Environment_sysModule r))
+                               (Environment_docSymbols r))))
 
 
     (fn expand_STree ((t STree) (r Environment) -> 'Value*')
@@ -424,29 +423,25 @@ Spec Problems
           (seq 'SymTok*')
           (if (opt_is_present m)
             // We have max_id, find best-match and adjust the length
-            (let [(s (bestModule_Catalog (Environment_catalog r) n v))]
-              (let [(symtab ('hint:oneline'
-                              (if (opt_is_present s)
-                                (Module_symtab (SharedModule_module (opt_value s)))
-                                (seq 'Unicode?*'))))]
-                (compile_symtab symtab n (opt_value m))))
-            (let [(s (exactModule_Catalog (Environment_catalog r) n v))]
-              (let [(symtab (Module_symtab (SharedModule_module s)))]
-                (compile_symtab symtab n (seq_length symtab))))))))
+            (let [(mod (bestModule_Catalog (Environment_catalog r) n v))]
+              (let [(ts ('hint:oneline'
+                          (if (opt_is_present mod)
+                            (Module_symtab (SharedModule_module (opt_value mod)))
+                            (seq 'SymTok*'))))]
+                (enforceMaxId ts n (opt_value m))))
+            // No max_id, use exact match.
+            (let [(mod (exactModule_Catalog (Environment_catalog r) n v))]
+              (Module_symtab (SharedModule_module mod)))))))
 
-
-    (fn compile_symtab ((us 'Unicode?*') (moduleName Unicode) (maxId I) -> 'SymTok*')
-      (compile_symtab_loop us moduleName maxId 0))
-
-    (fn compile_symtab_loop ((us 'Unicode?*') (moduleName Unicode) (maxId I) (i I) -> 'SymTok*')
-      // i = number of elements collected so far; index of next elt
-      (if (= i maxId)
-        (seq 'SymTok*')
-        (let [(s (if (and (< i (seq_length us))
-                          (opt_is_present (ith us i)))
-                   (lift (opt_value (ith us i)) SymTok)
-                   (lift (tuple AbsentSym moduleName (+ i 1)) SymTok)))]
-          (seq_prepend s (compile_symtab_loop us moduleName maxId (+ i 1))))))
+    
+    (fn enforceMaxId ((ts 'SymTok*') (moduleName Unicode) (maxId I) -> 'SymTok*')
+      (let [(l (seq_length ts))]
+        (if (< l maxId)
+          (let [(t (lift (tuple AbsentSym moduleName (+ l 1)) SymTok))]
+            (enforceMaxId (seq_append ts (seq 'SymTok*' t)) moduleName maxId))
+          (if (> l maxId)
+            (seq_truncate ts maxId)
+            ts))))
 
 
     (fn normalize_name ((v 'Value?') -> Unicode)             // "" = absent or invalid
@@ -476,7 +471,7 @@ Spec Problems
     //==========================================================================
     // Encoding Modules
 
-    (dom Module        = (* IVM::specVersion 'Unicode?*'::symtab /*'ExportedMacro*'*/))
+    (dom Module        = (* IVM::specVersion 'SymTok*'::symtab /*'ExportedMacro*'*/))
     (dom SharedModule  = (* Unicode::name I::version Module::module))
 
 
@@ -530,20 +525,20 @@ Spec Problems
 
     (const systemSymbols_1_0
       ('hint:multiline'
-        (seq 'Unicode?*'
-          (opt 'Unicode?' "$ion")
-          (opt 'Unicode?' "$ion_1_0")
-          (opt 'Unicode?' "$ion_symbol_table")
-          (opt 'Unicode?' "name")
-          (opt 'Unicode?' "version")
-          (opt 'Unicode?' "imports")
-          (opt 'Unicode?' "symbols")
-          (opt 'Unicode?' "max_id")
-          (opt 'Unicode?' "$ion_shared_symbol_table"))))
+        (seq 'Unicode*'
+          "$ion"
+          "$ion_1_0"
+          "$ion_symbol_table"
+          "name"
+          "version"
+          "imports"
+          "symbols"
+          "max_id"
+          "$ion_shared_symbol_table")))
 
     (fn systemModule ((i IVM) -> Module)
       (if (IVM_eq i IVM_1_0)
-        (tuple Module i systemSymbols_1_0)
+        (tuple Module i (map 'SymTok*' inSymTok systemSymbols_1_0))
         (wrong "Unsupported Ion version: " (ith i 0) "." (ith i 1))))
 
 
@@ -558,20 +553,22 @@ Spec Problems
     (fn compile_SST ((s Struct) -> SharedModule)
       (let [(n (normalize_name    (Struct_get1 s "name"))),
             // Yes, SST version is normalized to 1
-            (v (normalize_version (Struct_get1 s "version")))]
+            (v (normalize_version (Struct_get1 s "version"))),
+            (s (normalize_list    (Struct_get1 s "symbols")))]
         (if (= n "")
           (wrong "SST has invalid name")
           (tuple SharedModule n v
             (tuple Module IVM_1_0
-              (map 'Unicode?*' compile_SST_symbol
-                (normalize_list (Struct_get1 s "symbols"))))))))
+              (compile_SST_symbols s n 1))))))
 
-    (fn compile_SST_symbol ((v Value) -> 'Unicode?')
-      (let [(c (Value_content v))]
-        ('hint:oneline'
-          (if (and (element_of c String) (not (element_of c DotNull)))
-            (opt 'Unicode?' (lower c String Unicode))
-            (opt 'Unicode?')))))
+    (fn compile_SST_symbols ((vs 'Value*') (moduleName Unicode) (i I) -> 'SymTok*')
+      (if (seq_is_empty vs)
+        (seq 'SymTok*')
+        (let [(c (Value_content (seq_head vs)))]
+          (let [(s (if (and (element_of c String) (not (element_of c DotNull)))
+                     (lift_to SymTok (lower c String Unicode))
+                     (lift_to SymTok (tuple AbsentSym moduleName i))))]
+          (seq_prepend s (compile_SST_symbols (seq_tail vs) moduleName (+ i 1)))))))
 
 
     //==========================================================================
@@ -593,4 +590,9 @@ Spec Problems
   )
 
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
+
+  // [CTORS] This should be auto-generated; we need one-arg fn to use with `map`.
+  (define (inSymTok v)
+    (lift_to SymTok v))
+
 )

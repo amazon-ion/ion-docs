@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (module ion_latex "/fusion"
 
@@ -48,7 +48,8 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
                Symbol_matches
                'Value_is_symbol_matching'
                'Value?_is_symbol_matching'
-               compile_symtab
+               currentSpecVersion
+               currentSymtab
                isLocalSymbolTable)
 
       // Functions with infix syntax
@@ -62,7 +63,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (form_method 'Value?_is_symbol_matching' (pp_binary "" " \\cong " ""))
 
 
-      // Singletons
+      // Constants
       (sym_image "\\mbox{\\bf dotnull}"                                DOTNULL)
       (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.0}"                 IVM_1_0)
       (sym_image "\\mbox{\\bf ivm}_{\\scriptsize 1.1}"                 IVM_1_1)
@@ -83,9 +84,7 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST.\\tt imports}}"   compile_LST_imports)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize LST-symbol}}"         compile_LST_symbol)
       (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST}}"                compile_SST)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST-symbol}}"         compile_SST_symbol)
-      (sym_image "{\\cal C}_{\\mbox{\\scriptsize symtab}}"             compile_symtab
-                                                                       compile_symtab_loop)
+      (sym_image "{\\cal C}_{\\mbox{\\scriptsize SST.\\tt symbols}}"   compile_SST_symbols)
 
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize list}}"               normalize_list)
       (sym_image "{\\cal N}_{\\mbox{\\scriptsize\\tt max\\_id}}"       normalize_max_id)
@@ -110,6 +109,9 @@ A model printer that renders in LaTeX format, for inclusion in a larger book.
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf Value}}"         'TE_Value')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf Value}}^{\\ast}" 'TE_Value*')
       (sym_image "\\overline{\\cal E}_{\\mbox{\\scriptsize\\bf ParseStream}}"   'TE_ParseStream')
+
+      // [CTORS] Make this look like the lift method that should be generated.
+      (sym_image "\\mbox{\\it{in}\\small\\bf SymTok}"      inSymTok)
 
 //    (sym_image (string_append (texify_symbol (quote f)) "^{\\ast}") fs)
       (sym_image "\\mbox{\\it b\\/}^{\\ast}"               bs)
