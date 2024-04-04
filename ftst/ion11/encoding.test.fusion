@@ -49,8 +49,7 @@
 
 // Absent shared symbol
 (check_expansion_and_bounds 14
-  // FIXME [SYMTAB-COMPOSE] symbol identity should be mnop#1
-  (quote_top '#$mno#1' n)
+  (quote_top '#$mnop#1' n)
   (quote11 $ion_encoding::((load mno "mnop" 4) (symbol_table mno)) '#$11' '#$12'))
 
 
