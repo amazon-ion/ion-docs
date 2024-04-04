@@ -628,6 +628,24 @@ as the variable denoting environments, so for example
 stem:[\rho\!\downarrow_{\mbox{\scriptsize sysModule}}] is the current system
 module.
 
+Given this model, we can derive two critical encoding features: the current
+spec version, and the current symbol table.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=currentSpecVersion]
+\newline\newline
+include::{modeltex}[tag=currentSymtab]
+++++
+
+The latter denotes that a document's current symbol table is made up of the
+symbols from the current system module, followed by the symbols declared in the
+<<compile-lst,local symbol table>>.
+Adding a compiled representation of `$0` to the front puts everything in the
+right place to enable symbol expansion to index into the current symbol
+table by SID, which we'll turn to now.
+
+
 [id=expand_SSymTok]
 === Symbol Token Expansion
 
@@ -646,11 +664,7 @@ we rewrap it to produce a data-model symbol token *SymTok*.
 Otherwise, the token is an integer SID, so we extract it via
 stem:[\mbox{\it s\/}\mid_{\mbox{\scriptsize \mbox{\bf I}}}] and then look it up
 in the current symbol table.
-
-The environment's partitioning of the symbol ID space here proves inconvenient,
-so we use a helper function _currentSymtab_ that provides the entire
-address space, including $0, in the form of **SymTok**s, so lookup is trivial.
-That requires a range check, raising an error if the SID exceeds the size of the
+This requires a range check, raising an error if the SID exceeds the size of the
 current symbol table.
 
 To handle annotations, we'll need a recursive function expanding a sequence of
@@ -1003,16 +1017,19 @@ if the field isn't an actual list:
 include::{modeltex}[tag=normalize_list]
 ++++
 
-To build a module from the sequence of (presumably) **String**s, we map a
-helper function over the sequence of values in `symbols`:
+To complete the new module, we must compile the `symbols` list into a *SymTok*
+sequence.
+This takes some attention because of the rules regarding equivalence of absent
+or malformed imported symbols.
+These are not equivalent to `$0`, so we cannot return *Sym0*; we must instead
+construct an *AbsentSym* that holds the module's name and symbol's index
+within it.
+The latter forces us to keep a counter _i_ during the recursive traversal:
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=compile_SST_symbol]
+include::{modeltex}[tag=compile_SST_symbols]
 ++++
-
-This validates that an entry is an actual string, returning its text,
-or an absent entry (stem:[\langle \rangle]) when malformed.
 
 
 === Catalogs
@@ -1072,8 +1089,7 @@ These are packaged in the _system module_ for a given Ion version:
 [{denotation}]
 ++++
 include::{modeltex}[tag=systemSymbols_1_0]
-\newline
-\newline
+\newline\newline
 include::{modeltex}[tag=systemModule]
 ++++
 
@@ -1199,60 +1215,25 @@ symbol table.
 
 If _m_ is present, a valid `max_id` was given, so we call _bestModule_
 to search the catalog for the best match to the name and version;
-it returns an optional *SharedModule* _s_.
-When a match is present, we extract its sequence of exported symbols, otherwise
-we substitute the empty sequence.  Noting that
-stem:[symtab \in \mbox{\bf Unicode?*}], we use the upcoming
-stem:[{\cal C}_{\mbox{\scriptsize symtab}}] to transform it into the required
-**SymTok**s and adjust the length to align with the `max_id`.
+it returns an optional *SharedModule* _mod_.
+When a match is present, we extract its sequence of exported **SymTok**s, otherwise
+we substitute the empty sequence.  We then use the upcoming _enforceMaxId_
+to adjust the length per the `max_id`.
 
 When there's no valid `max_id` we require an exact match; remember that
 _exactModule_ will signal an error if no exact match exists.
-We transform the results similarly, but here the desired length is the entire
-exported table.
+This time, we don't need to adjust the length of the module's *SymTok* sequence.
 
-
-The transformation of imported symbols by
-stem:[{\cal C}_{\mbox{\scriptsize symtab}}] takes more work than one might
-expect because of the rules regarding equivalence of absent or malformed
-imported symbols.
-We can't just return `$0` like we did for locally-declared entries, we must
-instead construct an *AbsentSym* that holds the module's name and symbol's index
-within it.  The latter forces us to keep a counter _i_ during the recursive
-traversal.
+// TODO update text
+The best-match case calls _enforceMaxId_ to ensure the import uses exactly
+`max_id` **SymTok**s.
+If the given stem:[t^{\ast}] is shorter than that, we (recursively) pad the end
+with *AbsentSym*; if it's longer, we truncate to the right length.
 
 [{denotation}]
 ++++
-include::{modeltex}[tag=compile_symtab]
-\newline\newline
-include::{modeltex}[tag=compile_symtab_loop]
+include::{modeltex}[tag=enforceMaxId]
 ++++
-
-The recursive loop always produces exactly _maxId_ entries.
-If the given stem:[u^{\ast}] is shorter than that, we'll pad the end with
-*AbsentSym*; if it's longer, we'll just ignore any extra entries.
-The happy case is buried in the middle: when the index is within bounds and
-points to a present entry, the inner *then* clause simply lifts the *Unicode*
-value into *Symtok*.
-
-We can now conclude our walk-through of the Ion 1.0 semantic model by tying up
-one remaining loose end of symbol table handling: the construction of the
-current symbol table:
-
-[{denotation}]
-++++
-include::{modeltex}[tag=currentSymtab]
-++++
-
-Remembering that *Environment* holds the current system module separate from
-symbols declared in the document, we're finally able to compile the system
-symbols in the same way we compiled an exact-match import.
-(The document symbols were <<compile-lst,previously compiled>> by
-stem:[{\cal C}_{\mbox{\scriptsize LST}}].)
-Adding a compiled representation of `$0` to the front puts everything in the
-right place to enable <<expand_SSymTok,symbol expansion>> by
-stem:[{\cal X}_{\mbox{\scriptsize\bf SSymTok}}] to index into the current symbol
-table by SID, bringing the evaluation model full circle.
 
 
 [#issues]
