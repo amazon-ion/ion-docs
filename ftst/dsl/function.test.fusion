@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -15,13 +15,13 @@
 
 (check_false (element_of Projection F))  // Function domain is not a function
 
-(let [(sum (APPLY PLUS (seq 'I*' (inject_into I 1) (inject_into I 2))))] // [SEQ-INJECT]
+(let [(sum (APPLY PLUS (seq 'I*' 1 2)))]
   (check === 3 (eject sum)))
 
 
 (let [(s (MAP 'I*'
            (lambda (i) (PLUS i 1))
-           (seq 'I*' (inject_into I 1) (inject_into I 2))))] // [SEQ-INJECT]
+           (seq 'I*' 1 2)))]
   (check_same 'I*' (domain_value_domain s))
   (check === 2 (seq_length s))
   (check === 2 (eject (ith s 0)))
