@@ -548,8 +548,8 @@ argument:
 (:pi (:void)) ⇒ _**error**: 'pi' expects 0 arguments, given 1_
 ----
 
-The special-case E-expression `(:)` is synonymous with `(:void)` and is useful as a more succinct
-expression of absent arguments:
+The special form `(:)` is an <<eg:group,empty argument group>>, similar to
+`(:void)` but used specifically to express the absence of an argument:
 
 ----
 (:int_list (:)) ⇒ []
@@ -660,10 +660,13 @@ expression that produces the desired values:
 
 [{nrm}]
 ----
-(:prices (:) JPY)               ⇒ _void_
-(:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
-(:prices (:values 10 9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:) JPY)          ⇒ _void_
+(:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
+(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
+
+Here we use a non-empty <<eg:group,empty argument group>> `(: ...)` to delimit
+the multiple elements of the `amount` stream.
 
 
 ==== One-or-More
@@ -682,8 +685,8 @@ the resulting stream must produce at least one value.  To continue using our `pr
 [{nrm}]
 ----
 (:prices (:) JPY) ⇒ _**error**: at least one value expected for + parameter_
-(:prices 54 CAD)                ⇒ {amount:54, currency:CAD}
-(:prices (:values 10 9.99) GBP) ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
+(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
 A macro's final parameter can use a variant of rest parameters with one-or-more cardinality,
@@ -711,12 +714,15 @@ Thank you to my Patreon supporters:
 ----
 
 
+[#eg:group]
 === Argument Groups
 
-The non-rest versions of multi-value parameters can be annoying to invoke, since they require the
-use of `values` or some other template to produce the stream of values.  To streamline invocation,
-there is a special delimiting syntax for an _argument group_ collecting the
-applicable sub-expressions.
+The non-rest versions of multi-value parameters require some kind of delimiting
+syntax to contain the applicable sub-expressions.
+For the tagged-type parameters we've seen so far, you _could_ use `:values` or some
+other macro to produce the stream, but that doesn't work for <<tagless,tagless types>>.
+The preferred syntax, supporting all argument types, is a special delimiting form
+called an _argument group_.  Here is a macro to illustrate:
 
 [{nrm}]
 ----
@@ -727,7 +733,7 @@ applicable sub-expressions.
     (price amt currency)))
 ----
 
-Here, the parameter `amount` accepts any number of `*number*`s.
+The parameter `amount` accepts any number of **`number`**s.
 It's easy to provide exactly one:
 
 ----
@@ -738,6 +744,7 @@ To provide a non-singleton stream of values, use an _argument group_.
 Inside an E-expression, a group starts with the digraph `(:` similar to a macro
 invocation, but without a macro reference:
 
+[{nrm}]
 ----
 (:prices (:) GBP)       ⇒ _void_
 (:prices (: 1) GBP)     ⇒ {amount:1, currency:GBP}
@@ -759,7 +766,11 @@ parameter’s declared type.
                                       {amount:4, currency:GBP}
 ----
 
-Argument groups are allowed for parameters that do not have exactly-one cardinality.
+Argument groups may only appear inside macro invocations where the corresponding
+parameter has `*?*`, `*{asterisk}*`, or `*+*` cardinality.
+There is no binary opcode for these constructs; the encoding uses a tagless format to keep
+things as dense as possible.
+As usual, the text format mirrors this constraint.
 
 // TODO
 WARNING: The allowed combinations of cardinality and argument groups is pending
@@ -767,25 +778,6 @@ finalization of the binary encoding.
 
 TIP: Rest parameters effectively use implicit groups at the call site, and they cannot be
 invoked with explicit groups.
-
-Delimiting sequences and `values` expressions may appear similar because they both denote streams
-of values, but they are not interchangeable:
-
-[{nrm}]
-----
-(:prices (:values 10 9.99 12.) GBP) ⇒ _**error**: delimiting list or sexp expected_
-(:prices (:) GBP)                   ⇒ _**error**: delimiting list or sexp expected_
-----
-
-That’s because the binary representation of these parameters uses a tagless format for these
-delimiters to keep the common case as dense as possible. It’s not possible to replace that
-container with a macro invocation, and the text form mirrors that limitation. If the parameter
-type allows (see <<tagless>>), you can call a macro inside the delimiter, with no loss of
-generality:
-
-----
-(:prices [(:values 10)] GBP) ⇒ {amount:10, currency:GBP}
-----
 
 
 === Optional Arguments
@@ -888,7 +880,9 @@ that a text E-expression may only express things that can also be expressed usin
 binary E-expression.
 
 For the same reasons, supplying a (non-rest) tagless parameter with no value,
-or with more than one value, can only be expressed by using a group.
+or with more than one value, can only be expressed by using an argument group.
+
+// TODO: Add examples of non-single cardinality and use of groups.
 
 A subset of the primitive types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
@@ -984,8 +978,7 @@ The binary encoding of macro-shaped parameters are similarly tagless, eliding an
 mentioning `point` and just writing its arguments with minimal delimiting.
 
 Macro types can be combined with cardinality modifiers, with invocations using groups
-as needed.  Note that grouping macro types require callers to use two layers of delimiting
-containers:
+as needed:
 
 [{nrm}]
 ----
@@ -1003,8 +996,8 @@ containers:
   }
 ----
 
-As with other tagless parameters, you cannot replace a group with a macro invocation.
-Further, you can't use a macro invocation as an _element_ of the delimiting group:
+As with other tagless parameters, you cannot replace a group with a macro invocation,
+and you can't use a macro invocation as an _element_ of an argument group:
 
 [{nrm}]
 ----
@@ -1018,7 +1011,7 @@ Further, you can't use a macro invocation as an _element_ of the delimiting grou
   ⇒ _**error**: sexp expected with args for 'point', found :point_
 ----
 
-This limitation mirrors the binary encoding, where both the delimiting group and the individual
+This limitation mirrors the binary encoding, where both the argument group and the individual
 macro invocations are tagless and there's no way to express a macro invocation.
 
 TIP: The primary goal of macro-shaped arguments, and tagless types in general, is to increase
