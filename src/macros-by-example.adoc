@@ -715,7 +715,7 @@ Thank you to my Patreon supporters:
 
 The non-rest versions of multi-value parameters can be annoying to invoke, since they require the
 use of `values` or some other template to produce the stream of values.  To streamline invocation,
-there's a special delimiting syntax for an _argument group_ collecting the
+there is a special delimiting syntax for an _argument group_ collecting the
 applicable sub-expressions.
 
 [{nrm}]
