@@ -37,7 +37,9 @@ Features:
 * [LOAD-MAXID] Module-level symtabs don't handle non-exact-match modules.
 * [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
   * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.
-* [MAC-ID] Macro identity and proper ambiguity detection
+* [MAC-ID] Macro identity and proper ambiguity detection.
+  * Also useful for any error reporting regarding the Macro, which is currently
+    anonymous.
 * [EXPORT-MOD] A module's macro_table can have a module name, as in EDs.
 * [EXPORT-REF] Export by macro reference.
 * [EXPORT-FROM]
@@ -703,6 +705,7 @@ Spec Issues: 1.0
     //==========================================================================
     // Macros
 
+    // TODO:[MAC-ID] Retain original module name+version and macro NameOrAddr
     (dom Macro = (* Signature::signature Transform::xform))
 
     (dom Transform = (-> 'Value**' 'Value*'))
@@ -719,7 +722,11 @@ Spec Issues: 1.0
     (dom GroupShape  = (* ParamType::type SeqCardinality::card))
     (dom RestShape   = (* ParamType::type SeqCardinality::card))
 
-    (dom ParamType   = (= ANY))
+    (dom ParamType   = (+ AbstractParamType Macro))
+
+    // Not really happy with this but ANY is used in too many places right now.
+    (dom AbstractParamType = (= _ANY))
+    (const ANY (lift_to ParamType _ANY))
 
     (dom Cardinality    = (+ OptCardinality SeqCardinality))
     (dom OptCardinality = (= ZERO_OR_ONE  EXACTLY_ONE))
@@ -863,9 +870,13 @@ Spec Issues: 1.0
       (if (IVM_eq (currentSpecVersion r) IVM_1_0)
         (wrong "Eexp not allowed in Ion 1.0")
         (let [(m (resolve_MacroRef (SEexp_ref v) r))]
-          (let [(x (Macro_xform     m)),
-                (s (Macro_signature m))]
-            (x (collateArgs (Signature_params s) (Signature_rest s) r (SEexp_args v)))))))
+          (expand_macro m (SEexp_args v) r))))
+
+    (fn expand_macro ((m Macro) (ts 'STree*') (r Environment) -> 'Value*')
+      (let [(x (Macro_xform     m)),
+            (s (Macro_signature m))]
+        (x (collateArgs (Signature_params s) (Signature_rest s) r ts))))
+
 
     // Returns one Value* per parameter.
     // This should stay in sync with interp_args
@@ -899,10 +910,36 @@ Spec Issues: 1.0
                     (seq_prepend ('expand_STree*' ts1 r) is))
                   (wrong "Expected grouping list"))
                 // Non-grouped argument expected
-                (let [(vs (expand_STree t r)),
-                      (t (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
-                      (c (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
-                  (seq_prepend (validateShape t c vs) is))))))))
+                (let [(type (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
+                      (card (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
+                  (seq_prepend (expandArg type card t r) is))))))))
+
+    (fn expandArg ((t ParamType) (c Cardinality) (stx 'STree') (r Environment) -> 'Value*')
+      (if (element_of t Macro)
+        (if (element_of stx SValue)
+          // TODO reject annotations?
+          (if (element_of (SValue_content (lower stx SValue)) SSexp)
+            // TODO validate cardinality of results
+            (expand_macro (lower t Macro)
+                          // TODO handle null.sexp
+                          (lower (SValue_content (lower stx SValue)) SSexp 'STree*')
+                          r)
+            (wrong "Expected sexp with macro arguments"))
+          (wrong "Expected sexp with macro arguments, found an eexp"))
+        // TODO:[PARAM-TYPE] validate non-macro types
+        (let [(vs (expand_STree stx r))]
+          (if (element_of c OptCardinality)
+            (if (> (seq_length vs) 1)
+              (wrong "More than one value provided for parameter")
+              (if (and (= (lower c OptCardinality) EXACTLY_ONE)
+                       (= (seq_length vs) 0))
+                (wrong "No value provided for parameter")
+                vs))
+            (if (and (= (lower c SeqCardinality) ONE_OR_MORE)
+                     (= (seq_length vs) 0))
+              (wrong "No value provided for parameter")
+              // ZERO_OR_MORE is handled implicitly; it always passes.
+              vs)))))
 
     (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
       // TODO:[PARAM-TYPE]
@@ -1244,15 +1281,14 @@ Spec Issues: 1.0
             (compile_paramType (seq_tail vs) (compile_paramName (seq_head vs)) r)))))
 
     (fn compile_paramType ((vs 'Value*') (u Unicode) (r MacroEnv) -> ParamSpec)
-      // TODO:[PARAM-TYPE]
       (if (seq_is_empty vs)
         (compile_cardinality vs u ANY)
         (if (element_of (Value_content (seq_head vs)) Symbol)
           (let [(u1 (Value_symtext (seq_head vs)))]
             (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
-              // TODO Check for 'any' et al before treating as macro
+              // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
               (let [(m (interp_macroref (seq_head vs) r))]
-                (wrong "Param-type not implemented"))
+                (compile_cardinality (seq_tail vs) u (lift_to ParamType m)))
               (compile_cardinality vs u ANY)))
           (wrong "Unexpected element in param-spec: " (seq_head vs)))))
 

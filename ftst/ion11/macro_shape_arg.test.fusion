@@ -1,0 +1,22 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+// Macros can use other macros as parameter shape.
+
+(require "/ion_model/testing/dsl")
+
+
+(in11 (mactab (macro m ((vs values!)) {m:[vs]}))
+      (then (toplevel ('#$:m'))
+            (signals "Too few arguments"))
+      (then (toplevel ('#$:m' 1 2))
+            (signals "Too many arguments"))
+      (then (toplevel ('#$:m' ('#$:void')))
+            (signals "Expected sexp with macro arguments, found an eexp"))
+      (then (toplevel ('#$:m' 1))
+            (signals "Expected sexp with macro arguments"))
+      (then (toplevel ('#$:m' ()))
+            (produces {m:[]}))
+      (then (toplevel ('#$:m' (1 2 3)))
+            (produces {m:[1, 2, 3]}))
+      (then (toplevel ('#$:m' (1) (2 3)))
+            (signals "Too many arguments")))
