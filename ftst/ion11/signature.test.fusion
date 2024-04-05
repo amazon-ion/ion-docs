@@ -6,6 +6,7 @@
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
@@ -60,9 +61,11 @@
         (check_RestShape e_shape a_shape)))
     (check_false (opt_is_present a))))
 
+(define_fn empty_MacroEnv MacroEnv (mod mac)
+  (wrong "No such macro: " mac))
 
 (define_check (check_Signature params rest data)
-  (let [(s (compile_Signature (expand1 (sexp data))))]
+  (let [(s (compile_Signature (expand1 (sexp data)) empty_MacroEnv))]
     (check_not_bottom s)
     (check_same (size params) (seq_length (Signature_params s)))
     (for [(e params), (a (seq_to_sexp (Signature_params s)))]
@@ -70,7 +73,7 @@
     (check_RestSpec rest (Signature_rest s))))
 
 (define_check (check_Signature_fail msg data)
-  (let [(s (compile_Signature (expand1 (sexp data))))]
+  (let [(s (compile_Signature (expand1 (sexp data)) empty_MacroEnv))]
     (check_bottom msg s)))
 
 
@@ -144,6 +147,11 @@
 // Attempted rest-spec is non-final position
 (check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... ) w)))
 (check_Signature_fail "Unexpected element in param-spec:" (quote ((v ...+) w)))
+
+
+(in11 (mactab (macro _ [()   ] 0)) (signals "Malformed param-spec:"))
+(in11 (mactab (macro _ [(n 1)] 0)) (signals "Unexpected element in param-spec:"))
+(in11 (mactab (macro _ [(n mac)] 0)) (signals "No such macro: mac"))
 
 
 "SUCCESS (signature.test)"

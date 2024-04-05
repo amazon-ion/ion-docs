@@ -905,7 +905,7 @@ Spec Issues: 1.0
                   (seq_prepend (validateShape t c vs) is))))))))
 
     (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
-      // [PARAM-TYPE]
+      // TODO:[PARAM-TYPE]
       (if (element_of c OptCardinality)
         (if (> (seq_length vs) 1)
           (wrong "More than one value provided for parameter")
@@ -1173,7 +1173,7 @@ Spec Issues: 1.0
           (seq_append macs
             (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macroEnv))))
         // TODO:[EXPORT-REF] (export foo ':$ion:foo')
-        // TODO:[EXPORT-MOD] A plan module-name in place of (export ...)
+        // TODO:[EXPORT-MOD] A plain module-name in place of (export ...)
         // TODO:[EXPORT-FROM] (export (from MODNAME ...))
         (let [(mod (mods (Value_symtext v)))]
           // [DUPE-NAME] Check for duplicates
@@ -1210,21 +1210,21 @@ Spec Issues: 1.0
     //==========================================================================
     // Signature compilation
 
-    (fn compile_Signature ((v Value) -> Signature)
-      (compile_Signature_params (Value_seqElements v)))
+    (fn compile_Signature ((v Value) (r MacroEnv) -> Signature)
+      (compile_Signature_params (Value_seqElements v) r))
 
-    (fn compile_Signature_params ((ps 'Value*') -> Signature)
+    (fn compile_Signature_params ((ps 'Value*') (r MacroEnv) -> Signature)
       (if (seq_is_empty ps)
         (tuple Signature (seq 'ParamSpec*') NO_REST)
         (if (seq_is_empty (seq_tail ps))
           // Last entry, so it can be a rest-spec
           (if (isRestSpec (seq_head ps))
             (tuple Signature (seq 'ParamSpec*') (opt 'RestSpec?' (compile_restSpec (seq_head ps))))
-            (tuple Signature (seq 'ParamSpec*' (compile_paramSpec (seq_head ps))) NO_REST))
+            (tuple Signature (seq 'ParamSpec*' (compile_paramSpec (seq_head ps) r)) NO_REST))
           // ELSE there are >1 entries to handle, head cannot be rest-spec
-          (let [(s (compile_Signature_params (seq_tail ps)))]
+          (let [(s (compile_Signature_params (seq_tail ps) r))]
             (tuple Signature
-              (seq_prepend (compile_paramSpec (seq_head ps)) (Signature_params s))
+              (seq_prepend (compile_paramSpec (seq_head ps) r) (Signature_params s))
               (Signature_rest s))))))
 
     (fn isRestSpec ((v Value) -> B)
@@ -1234,15 +1234,27 @@ Spec Issues: 1.0
             (or (Value_is_symbol_matching (ith vs 1) "...")
                 (Value_is_symbol_matching (ith vs 1) "...+"))))))
 
-    (fn compile_paramSpec ((v Value) -> ParamSpec)
+    (fn compile_paramSpec ((v Value) (r MacroEnv) -> ParamSpec)
       (if (element_of (Value_content v) Symbol)
-        (compile_paramType (seq 'Value*') (compile_paramName v))
+        (compile_paramType (seq 'Value*') (compile_paramName v) r)
+        // [ERRMSG] Handle non-sexp, null.sexp
         (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-          (compile_paramType (seq_tail vs) (compile_paramName (seq_head vs))))))
+          (if (seq_is_empty vs)
+            (wrong "Malformed param-spec: " v)
+            (compile_paramType (seq_tail vs) (compile_paramName (seq_head vs)) r)))))
 
-    (fn compile_paramType ((vs 'Value*') (u Unicode) -> ParamSpec)
-      // TODO type
-      (compile_cardinality vs u ANY))
+    (fn compile_paramType ((vs 'Value*') (u Unicode) (r MacroEnv) -> ParamSpec)
+      // TODO:[PARAM-TYPE]
+      (if (seq_is_empty vs)
+        (compile_cardinality vs u ANY)
+        (if (element_of (Value_content (seq_head vs)) Symbol)
+          (let [(u1 (Value_symtext (seq_head vs)))]
+            (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
+              // TODO Check for 'any' et al before treating as macro
+              (let [(m (interp_macroref (seq_head vs) r))]
+                (wrong "Param-type not implemented"))
+              (compile_cardinality vs u ANY)))
+          (wrong "Unexpected element in param-spec: " (seq_head vs)))))
 
     (fn compile_cardinality ((vs 'Value*') (u Unicode) (t ParamType) -> ParamSpec)
       (if (seq_is_empty vs)
@@ -1305,10 +1317,10 @@ Spec Issues: 1.0
     (fn compile_macro_defn ((vs   'Value*')
                             (mods ModuleMap)
                             (macroEnv MacroEnv) -> ExportedMacro)
-      // TODO check arity of this (macro ...) clause
+      // TODO:[VALID-FORM] check arity of this (macro ...) clause
       // TODO [OPT-NAME] [VALID-NAME] [DUPE-NAME]
       (let [(name  (Value_symtext (ith vs 0))),
-            (sig   (compile_Signature (ith vs 1)))]
+            (sig   (compile_Signature (ith vs 1) macroEnv))]
         (tuple ExportedMacro (opt 'Unicode?' name)
           (tuple Macro sig (compile_xform (ith vs 2) sig macroEnv)))))
 
@@ -1504,6 +1516,7 @@ Spec Issues: 1.0
               (let [(as (map 'Value**' (lambda (i) (i env)) is))]
                 (f as)))))))
 
+    // TODO Not a great name; doesn't return Interpreter and we'll use this elsewhere.
     (fn interp_macroref ((v Value) (r MacroEnv) -> Macro)
       (let [(m (parseMacroRef (Value_symtext v)))]
         (let [(mod (MacroRef_module m)),
@@ -1565,6 +1578,7 @@ Spec Issues: 1.0
           "$ion_literal"
           /* ... */)))
 
+    // TODO We should produce these signatures by parsing from text.
     (const systemMacros_1_1
       ('hint:multiline'
         (seq 'ExportedMacro*'
@@ -1666,6 +1680,10 @@ Spec Issues: 1.0
     (only_in "/fusioncontrib/denotation/private/util"
       string_holds_decimal_int
       string_holds_ion_identifier))
+
+  (define_fn looksLikeMacroRef ((u Unicode) -> B)
+    (or (string_holds_ion_identifier (eject u))
+        (string_starts_with (eject u) ":")))
 
   (define_fn parseMacroRef ((c Unicode) -> MacroRef)
     (if (string_ends_with (eject c) ":")
