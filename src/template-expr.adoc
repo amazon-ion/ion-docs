@@ -143,11 +143,11 @@ Like `*if_void*`, but expands _template~then~_ if and only if _template~cond~_ p
 value, otherwise expands _template~else~_.
 
 
-===== `*if_many*`
+===== `*if_multi*`
 
 [{nrm}]
 ----
-(*if_many* _template~cond~_ _template~then~_ _template~else~_)
+(*if_multi* _template~cond~_ _template~then~_ _template~else~_)
 ----
 
 Like `*if_void*`, but expands _template~then~_ if and only if _template~cond~_ produces more than
@@ -158,8 +158,8 @@ one value, otherwise expands _template~else~_.
 (*macro* decimal_constraint
     [(precision *int{asterisk}*), (exponent *int{asterisk}*)]
     {
-        precision: (*if_many* precision range::[precision] precision),
-        exponent:  (*if_many* exponent  range::[exponent]  exponent),
+        precision: (*if_multi* precision range::[precision] precision),
+        exponent:  (*if_multi* exponent  range::[exponent]  exponent),
     })
 ----
 
