@@ -156,9 +156,6 @@ key-value pairs may not align with the actual arguments.  This is different from
 Since decimal is already compact, this is perhaps most useful in conjunction with packed arrays,
 or when the exponent is repeated and can be baked into a macro.
 
-TODO https://github.com/amazon-ion/ion-docs/issues/253
-If the coefficient were decimal, this could re-scale values. Useful?
-
 
 ===== `make_float`
 
