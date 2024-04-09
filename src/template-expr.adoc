@@ -85,6 +85,7 @@ meaning of subsequent elements depends on the operator.
 Operators come in two varieties: special forms and macro invocations.
 
 
+[[spec:tl_special]]
 === Special Forms
 
 Special forms are operators that cannot be expressed as macros, because some parts of their
@@ -199,58 +200,80 @@ https://github.com/amazon-ion/ion-docs/issues/201
 === Macro Invocation
 
 A macro definition can express its output in terms of other macros. Quite often, these will be
-macros provided by the Ion implementation,
-// —everything in System Macros 2023-05 is available by default—
-but they can also be acquired from other modules.
+<<sec:sysmod,macros provided by the Ion implementation>>, but there are multiple sources of macros:
 
-// TODO link to system-macro chapter
+* the defining module’s internal environment (which is being incrementally extended with each definition)
+* the macros exported from modules ``load``ed by the enclosing module
+* the macros exported from modules ``load``ed by the enclosing `$ion_encoding` directive
 
-The S-expression syntax for macro invocation is similar to that of E-expressions.
-When a template is an S-expression and the first element is not the name of a special form, that
-element must instead be a _macro-ref_ and the template denotes a macro invocation.
-There are multiple sources of macros: the defining module’s internal environment (which is being
-incrementally extended with each definition), and the exported macros of modules loaded by the
-enclosing module or `$ion_encoding` directive.
+The syntax for macro invocation in a template is similar to that of <<sec:eexprs,E-expressions>>.
+When a template is an S-expression and the first element is not the name of a
+<<spec:tl_special,special form>>, that element must instead be a <<spec:resolve-macro,_macro-ref_>>
+and the template denotes a macro invocation.
+See <<spec:resolve-macro>> for the syntax of macro references and the resolution algorithm.
 
-// TODO See Resolving Macro References: Encoding Modules 2023-05 for the relevant algorithm.
+The remaining elements of the S-expression are arguments supplying inputs to the macro,
+each one either _individual_ or _grouped_.
+What is syntactically well-formed is defined by the macro’s signature.
 
-The remaining elements of the S-expression are argument subforms that denote the inputs to the macro.
-These use normal Ion notation, but what’s syntactically acceptable is defined by the macro’s
-signature.
+The number of argument elements (that is, the invocation’s actual arity)
+must be equal to or greater than the macro’s minimum arity, and at most its
+maximum arity, when one exists.
+In other words, an invocation must contain one element for each required
+parameter, followed by optional elements for the remaining optional parameters.
 
-The number of such subforms (that is, the invocation’s actual arity) must be equal to or greater
-than the macro’s minimum arity, and at most its maximum arity, when one exists.
-In other words, an invocation must contain one subform for each required parameter, followed by
-optional subforms for the remaining optional parameters.
+The syntax of each argument is defined by the associated parameter’s cardinality
+and type.
+The cardinality determines whether an argument group can be used to collect a
+series of individual arguments, and the type determines the syntax of an
+individual argument, grouped or not.
 
-In the template language, argument groups are written by unannoted S-expressions starting with the
-symbol `;`.
-The resulting notation `(; ...)` mirrors the syntax of groups in E-expressions, `(: ...)`.
+The parameter type constrains the syntax of an individual argument as follows:
 
-Within an invocation expression, the syntax of each argument is defined by its parameter’s
-declared shape.
-
-* The subform for a non-rest parameter must match the base type below, or an argument group
-containing elements matching the base type.
-* A rest parameter captures all remaining subforms of the invocation, each of which must match
-the base type.
-
-The base types match as follows:
-
-* For tagged types, the subform may be any template that produces acceptable values.
-* For primitive types, the subform may be any template that produces values accepted by the
-corresponding concrete type.
-* For macro types, the subform must be an unannotated S-expression containing subforms acceptable to
-that macro’s signature.  These are implicit invocations of the macro, and the macro name cannot be
+* For tagged types, an individual argument may be any template.
+* For primitive types, an individual argument may be any template.
+* For macro types, an individual argument must be an unannotated S-expression
+containing arguments acceptable to that macro’s signature.
+These are implicit invocations of the parameter's declared macro, and the macro name cannot be
 provided explicitly.
 
-TODO Clarify when/where range checks are applied for fixed-width types.
+The parameter cardinality constrains the syntax of the overall argument
+element(s).
+In the template language, argument groups are written by unannotated S-expressions starting with the
+symbol `;`.
+Each element of an argument group must fit the same syntax rules as for an
+individual argument.
+The resulting notation `(; ...)` mirrors the syntax of groups in E-expressions, `(: ...)`.
+
+* A non-rest parameter of any cardinality accepts either a single individual argument
+  or an argument group.
+* A rest parameter captures all remaining arguments of the invocation,
+  each of which must match the individual argument syntax.
+  For a `...+` parameter there must be at least one such argument.
+
+These rules determine whether a template macro invocation is _well-formed_.
+Any violation of the above constraints must signal a syntax error when the
+macro definition is compiled.
+
 
 TODO Examples
 
 === Type Checking
 
 TODO
+
+// TODO #307 specify when the above constraints are enforced; particularly whether
+// an unused but not well-formed macro signals an error.
+
+// TODO #307 clarify when type and cardinality constraints are enforced.
+// Type and cardinality constraints are _also_ applied each time the macro is invoked,
+// ensuring that the type and number of values provided to a parameter _after arguments are expansnded_
+// The base types match as follows:
+
+// TODO #307 Clarify whether and when range checks are applied for primitive types.
+// I believe we decided that they are not verified by template invocations, since they
+// are intended to constrain the _encoding_, not the resulting argument values.
+// The corresponding concrete type _is_ verified, however, per the above.
 
 === Error Handling
 

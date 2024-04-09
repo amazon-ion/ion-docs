@@ -359,7 +359,20 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |===
 
 
+[[bin:eexp]]
 === Encoding Expressions
+
+The encoding of E-expressions is designed to balance density and generality.
+For example, they enable encodings with minimal tag bits, even none at all given
+a thoughtful signature. This increases density, but limits generality at the point
+of macro invocation.
+
+The <<sec:eexprs,text>> and binary forms of E-expressions enforce the same
+syntactic constraints on the type and range of data allowed as arguments.
+Any syntactically well-formed E-expression can be transcoded between text and binary,
+without expansion and without changing semantics, and independent of whether it can
+be expanded successfully.
+
 
 [[e_expression_with_the_address_in_the_opcode]]
 ==== E-expression With the Address in the Opcode

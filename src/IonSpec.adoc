@@ -2,7 +2,7 @@
 Ion Team
 :doctype: book
 :creator: {author}
-:copyright: Copyright ©2023 Amazon.com Inc. or Affiliates (“Amazon”)
+:copyright: Copyright ©2023-2024 Amazon.com Inc. or Affiliates (“Amazon”)
 :docinfo:
 :sectanchors:
 :sectnums:
@@ -40,6 +40,8 @@ include::directives.adoc[]
 include::modules.adoc[]
 
 include::signatures.adoc[]
+
+include::eexprs.adoc[]
 
 include::system-module.adoc[]
 
