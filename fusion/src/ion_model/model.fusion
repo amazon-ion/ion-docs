@@ -886,11 +886,14 @@ Spec Issues: 1.0
           // We have a rest-parameter, so grab everything that remains.
           (let [(vs ('expand_STree*' ts r)),
                 (t (RestShape_type (RestSpec_shape (opt_value rest)))),
-                (c (RestShape_card (RestSpec_shape (opt_value rest))))]
-            (seq 'Value**' (validateShape t (lift c Cardinality) vs)))
+                (c (lift_to Cardinality (RestShape_card (RestSpec_shape (opt_value rest)))))]
+            (if (and (seq_is_empty ts) (not (is_voidable_Cardinality c)))
+              (wrong "Too few arguments")
+              (seq 'Value**' (validateShape t c vs))))
           (if (seq_is_empty ts)
             (seq 'Value**')                 // All done!
             (wrong "Too many arguments")))
+        // More non-rest parameters to collate
         (let [(p (seq_head ps))]
           (if (seq_is_empty ts)
             // We hava a param, but no more arguments; param must be voidable.

@@ -200,21 +200,18 @@
              a ('#$:vals')
              b ('#$:vals' 1)
              c ('#$:vals' 2 3)))
-(check_expansion
-  (quote_top b 1 c 2 3)
-  (quote11   $ion_encoding::((module M (macro_table (macro vals ((v ...+)) v)))
-                             (macro_table M))
-             b ('#$:vals' 1)
-             c ('#$:vals' 2 3)))
 
-(check_eval_fail "No value provided for parameter"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [(v...+)] v)))
-                           (macro_table M))
-           ('#$:m')))
-(check_eval_fail "No value provided for parameter"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [x, (v...+)] v)))
-                           (macro_table M))
-           ('#$:m' 1)))
+
+(in11 (mactab (macro m1 [(v...+)] v)
+              (macro m2 [x, (v...+)] v))
+      (then (toplevel ('#$:m1' 1))       (produces 1))
+      (then (toplevel ('#$:m1' 1 2 3))   (produces 1 2 3))
+      (then (toplevel ('#$:m2' 1 2))     (produces 2))
+      (then (toplevel ('#$:m2' 1 2 3))   (produces 2 3))
+      (each (toplevel ('#$:m1'))
+            (toplevel ('#$:m2'))
+            (toplevel ('#$:m2' 1))
+            (signals "Too few arguments")))
 
 
 // List quasi-literals
