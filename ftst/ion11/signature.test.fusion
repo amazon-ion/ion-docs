@@ -142,7 +142,7 @@
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] ('rest...+' "r" ANY)
   (quote (v w (r ...+))))
 
-(check_Signature_fail "Unexpected element in rest-spec:" (quote ((v ... +))))
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... +))))
 
 // Attempted rest-spec is non-final position
 (check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... ) w)))

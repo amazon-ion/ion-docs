@@ -884,12 +884,12 @@ Spec Issues: 1.0
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
           // We have a rest-parameter, so grab everything that remains.
-          (let [(vs ('expand_STree*' ts r)),
-                (t (RestShape_type (RestSpec_shape (opt_value rest)))),
+          (let [(t (RestShape_type (RestSpec_shape (opt_value rest)))),
                 (c (lift_to Cardinality (RestShape_card (RestSpec_shape (opt_value rest)))))]
             (if (and (seq_is_empty ts) (not (is_voidable_Cardinality c)))
               (wrong "Too few arguments")
-              (seq 'Value**' (validateShape t c vs))))
+              (seq 'Value**' (validateShape t c
+                               (expandRest t c ts r)))))
           (if (seq_is_empty ts)
             (seq 'Value**')                 // All done!
             (wrong "Too many arguments")))
@@ -899,6 +899,7 @@ Spec Issues: 1.0
             // We hava a param, but no more arguments; param must be voidable.
             (if (is_voidable p)
               (seq_prepend (seq 'Value*')
+                // Continue checking remaining parameters voidability
                 (collateArgs (seq_tail ps) rest r ts))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
@@ -944,6 +945,14 @@ Spec Issues: 1.0
               // ZERO_OR_MORE is handled implicitly; it always passes.
               vs)))))
 
+    (fn expandRest ((t ParamType) (c Cardinality) (stxs 'STree*') (r Environment) -> 'Value*')
+      (if (seq_is_empty stxs)
+        (seq 'Value*')
+        (seq_append (expandArg  t c (seq_head stxs) r)
+                    (expandRest t c (seq_tail stxs) r))))
+
+
+    // TODO This only seems to be called for rest-args
     (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
       // TODO:[PARAM-TYPE]
       (if (element_of c OptCardinality)
@@ -1259,7 +1268,7 @@ Spec Issues: 1.0
         (if (seq_is_empty (seq_tail ps))
           // Last entry, so it can be a rest-spec
           (if (isRestSpec (seq_head ps))
-            (tuple Signature (seq 'ParamSpec*') (opt 'RestSpec?' (compile_restSpec (seq_head ps))))
+            (tuple Signature (seq 'ParamSpec*') (opt 'RestSpec?' (compile_restSpec (seq_head ps) r)))
             (tuple Signature (seq 'ParamSpec*' (compile_paramSpec (seq_head ps) r)) NO_REST))
           // ELSE there are >1 entries to handle, head cannot be rest-spec
           (let [(s (compile_Signature_params (seq_tail ps) r))]
@@ -1270,9 +1279,13 @@ Spec Issues: 1.0
     (fn isRestSpec ((v Value) -> B)
       (and (element_of (Value_content v) Sexp)
         (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-          (and (> (seq_length vs) 1)
-            (or (Value_is_symbol_matching (ith vs 1) "...")
-                (Value_is_symbol_matching (ith vs 1) "...+"))))))
+          (let [(i (- (seq_length vs) 1))]
+            // We can't use functional `and`; it will run `ith` with bad index.
+            (if (or (= i 1) (= i 2))
+              // The LaTeX printer can't render `ith` with a complex index.
+              (or (Value_is_symbol_matching (ith vs i) "...")
+                  (Value_is_symbol_matching (ith vs i) "...+"))
+              false)))))
 
     (fn compile_paramSpec ((v Value) (r MacroEnv) -> ParamSpec)
       (if (element_of (Value_content v) Symbol)
@@ -1285,17 +1298,17 @@ Spec Issues: 1.0
 
     (fn compile_paramType ((vs 'Value*') (u Unicode) (r MacroEnv) -> ParamSpec)
       (if (seq_is_empty vs)
-        (compile_cardinality vs u ANY)
+        (compile_paramCard vs u ANY)
         (if (element_of (Value_content (seq_head vs)) Symbol)
           (let [(u1 (Value_symtext (seq_head vs)))]
             (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
               // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
               (let [(m (interp_macroref (seq_head vs) r))]
-                (compile_cardinality (seq_tail vs) u (lift_to ParamType m)))
-              (compile_cardinality vs u ANY)))
+                (compile_paramCard (seq_tail vs) u (lift_to ParamType m)))
+              (compile_paramCard vs u ANY)))
           (wrong "Unexpected element in param-spec: " (seq_head vs)))))
 
-    (fn compile_cardinality ((vs 'Value*') (u Unicode) (t ParamType) -> ParamSpec)
+    (fn compile_paramCard ((vs 'Value*') (u Unicode) (t ParamType) -> ParamSpec)
       (if (seq_is_empty vs)
         (finishParamSpec vs u t (lift EXACTLY_ONE Cardinality))
         (if (Value_is_symbol_matching (seq_head vs) "!")
@@ -1315,13 +1328,20 @@ Spec Issues: 1.0
         (wrong "Unexpected element in param-spec: " (seq_head vs))))
 
 
-    (fn compile_restSpec ((v Value) -> RestSpec)
+    (fn compile_restSpec ((v Value) (r MacroEnv) -> RestSpec)
       (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-        (compile_restType (seq_tail vs) (compile_paramName (seq_head vs)))))
+        // We already checked length in isRestSpec
+        (compile_restType (seq_tail vs) (compile_paramName (seq_head vs)) r)))
 
-    (fn compile_restType ((vs 'Value*') (u Unicode) -> RestSpec)
-      // [PARAM-TYPE]
-      (compile_restCard vs u ANY))
+    (fn compile_restType ((vs 'Value*') (u Unicode) (r MacroEnv) -> RestSpec)
+      (if (element_of (Value_content (seq_head vs)) Symbol)
+        (let [(u1 (Value_symtext (seq_head vs)))]
+          (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
+            // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
+            (let [(m (interp_macroref (seq_head vs) r))]
+              (compile_restCard (seq_tail vs) u (lift_to ParamType m)))
+            (compile_restCard vs u ANY)))
+        (wrong "Unexpected element in rest-spec: " (seq_head vs))))
 
     (fn compile_restCard ((vs 'Value*') (u Unicode) (t ParamType) -> RestSpec)
       (if (Value_is_symbol_matching (seq_head vs) "...")
