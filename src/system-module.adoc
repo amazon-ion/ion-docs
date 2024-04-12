@@ -10,7 +10,7 @@ The specific system symbols are largely uninteresting to users; while the binary
 leverages the system symbol table, the text encoding that users typically interact with does not.
 The system macros are more visible, especially to authors of macros.
 
-This chapter catalogs the system-provided macros.
+This chapter catalogs the system-provided symbols and macros.
 The examples below use unqualified names, which works assuming no other module exports the same
 name, but the unambiguous form `:$ion:__macro-name__` is always correct.
 
@@ -18,72 +18,195 @@ name, but the unambiguous form `:$ion:__macro-name__` is always correct.
 IMPORTANT: This list is not complete. We expect it to grow and evolve as we gain experience
 writing macros.
 
+=== System Symbols
 
-=== Primitive Operators
+The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 System Symbol table. The system symbols are as follows:
 
-This section describes operators that cannot be defined as macros.
+|===
+| ID | Text
+
+2.+| _Ion 1.0 System Symbols_
+
+| {counter:sys_sid} | `$ion`
+| {counter:sys_sid} | `$ion_1_0`
+| {counter:sys_sid} | `$ion_symbol_table`
+| {counter:sys_sid} | `name`
+| {counter:sys_sid} | `version`
+| {counter:sys_sid} | `imports`
+| {counter:sys_sid} | `symbols`
+| {counter:sys_sid} | `max_id`
+| {counter:sys_sid} | `$ion_shared_symbol_table`
+
+2.+| _New Symbols in Ion 1.1_
+
+| {counter:sys_sid} | `$ion_encoding`
+| {counter:sys_sid} | `$ion_literal`
+| {counter:sys_sid} | `$ion_shared_module`
+| {counter:sys_sid} | `macro`
+| {counter:sys_sid} | `macro_table`
+| {counter:sys_sid} | `symbol_table`
+| {counter:sys_sid} | `module`
+| {counter:sys_sid} | `retain`
+| {counter:sys_sid} | `export`
+| {counter:sys_sid} | `catalog_key`
+| {counter:sys_sid} | `use`
+| {counter:sys_sid} | `load`
+| {counter:sys_sid} | `import`
+| {counter:sys_sid} | _<empty string>_ (i.e. `''`)
+
+2.+| _TDL Special Forms_
+
+| {counter:sys_sid} | `literal`
+| {counter:sys_sid} | `if_void`
+| {counter:sys_sid} | `if_single`
+| {counter:sys_sid} | `if_multi`
+| {counter:sys_sid} | `for`
+| {counter:sys_sid} | `fail`
+
+2.+| _System Macro Names_
+
+| {counter:sys_sid} | `values`
+| {counter:sys_sid} | `annotate`
+| {counter:sys_sid} | `make_string`
+| {counter:sys_sid} | `make_symbol`
+| {counter:sys_sid} | `make_blob`
+| {counter:sys_sid} | `make_decimal`
+| {counter:sys_sid} | `make_timestamp`
+| {counter:sys_sid} | `make_list`
+| {counter:sys_sid} | `make_sexp`
+| {counter:sys_sid} | `make_struct`
+| {counter:sys_sid} | `parse_ion`
+| {counter:sys_sid} | `repeat`
+| {counter:sys_sid} | `delta`
+| {counter:sys_sid} | `flatten`
+| {counter:sys_sid} | `sum`
+| {counter:sys_sid} | `local_symtab` (or maybe just `symbol_table`?)
+| {counter:sys_sid} | `lst_append` (or maybe just `add_symbols`?)
+| {counter:sys_sid} | `local_mactab` (or maybe just `macro_table`?)
+| {counter:sys_sid} | `lmt_append` (or maybe just `add_macro`?)
+| {counter:sys_sid} | `comment`
+
+2.+| _Parameter Encoding Types_
+
+| {counter:sys_sid} | `var_symbol`
+| {counter:sys_sid} | `var_string`
+| {counter:sys_sid} | `var_int`
+| {counter:sys_sid} | `var_uint`
+| {counter:sys_sid} | `uint8`
+| {counter:sys_sid} | `uint16`
+| {counter:sys_sid} | `uint32`
+| {counter:sys_sid} | `uint64`
+| {counter:sys_sid} | `int8`
+| {counter:sys_sid} | `int16`
+| {counter:sys_sid} | `int32`
+| {counter:sys_sid} | `int64`
+| {counter:sys_sid} | `float16`
+| {counter:sys_sid} | `float32`
+| {counter:sys_sid} | `float64`
+
+2.+| _Logical Parameter Type Names_ (possible in Ion 1.2?)
+
+| {counter:sys_sid} | `number`
+| {counter:sys_sid} | `exact`
+| {counter:sys_sid} | `text`
+| {counter:sys_sid} | `lob`
+| {counter:sys_sid} | `sequence`
+| {counter:sys_sid} | `'null'`
+| {counter:sys_sid} | `bool`
+| {counter:sys_sid} | `timestamp`
+| {counter:sys_sid} | `int`
+| {counter:sys_sid} | `decimal`
+| {counter:sys_sid} | `float`
+| {counter:sys_sid} | `string`
+| {counter:sys_sid} | `symbol`
+| {counter:sys_sid} | `blob`
+| {counter:sys_sid} | `clob`
+| {counter:sys_sid} | `list`
+| {counter:sys_sid} | `sexp`
+| {counter:sys_sid} | `struct`
+
+|===
+
+In Ion 1.1 Text, system symbols can never be referenced by symbol ID; `$1` always refers to the first symbol in the user symbol table.
+This allows the Ion 1.1 system symbol table to be relatively large without taking away SID space from the user symbol table.
+
+=== System Macro Addresses
+
+|===
+| ID | Text
+
+| {counter:sys_mac_addr} | `values`
+| {counter:sys_mac_addr} | `annotate`
+| {counter:sys_mac_addr} | `make_string`
+| {counter:sys_mac_addr} | `make_symbol`
+| {counter:sys_mac_addr} | `make_blob`
+| {counter:sys_mac_addr} | `make_decimal`
+| {counter:sys_mac_addr} | `make_timestamp`
+| {counter:sys_mac_addr} | `make_list`
+| {counter:sys_mac_addr} | `make_sexp`
+| {counter:sys_mac_addr} | `make_struct`
+| {counter:sys_mac_addr} | `parse_ion`
+| {counter:sys_mac_addr} | `repeat`
+| {counter:sys_mac_addr} | `delta`
+| {counter:sys_mac_addr} | `flatten`
+| {counter:sys_mac_addr} | `sum`
+| {counter:sys_mac_addr} | `import`
+| {counter:sys_mac_addr} | `local_symtab` (or maybe just `symbol_table`?)
+| {counter:sys_mac_addr} | `lst_append` (or maybe just `add_symbols`?)
+| {counter:sys_mac_addr} | `local_mactab` (or maybe just `macro_table`?)
+| {counter:sys_mac_addr} | `lmt_append` (or maybe just `add_macros`?)
+| {counter:sys_mac_addr} | `comment`
+|===
 
 
-==== Stream Constructors
+=== Primitive System Macros
 
-===== `void`
+This section describes operators that cannot be defined as template macros.
 
-[{nrm}]
-----
-(void) \-> any?
-----
-
-Produces an empty stream.
-The most common use of this operator is to supply “no value” to a voidable parameter.
-To make such use more readable, the special-case E-expression `(:)` is synonymous to `(:void)`.
-
+==== Constructors
 
 ===== `values`
 
 [{nrm}]
 ----
-(values (v any*)) \-> any*
+(values (v*)) \-> any*
 ----
 
-Produces a stream from any number of arguments, concatenating the streams produced by the nested
-expressions.
-Used to aggregate multiple values or sub-streams to pass to a single argument, or to return
-multiple results. Generally only useful with more than one subexpression.
-
-
-==== Value Constructors
+Produces a stream from any number of arguments, concatenating the streams produced by the nested expressions.
+Used to aggregate multiple values or sub-streams to pass to a single argument, or to return multiple results.
 
 ===== `make_string`
 
 [{nrm}]
 ----
-(make_string (content text*)) \-> string
+(make_string (text::content*)) \-> string
 ----
 
-Produces a non-null, unannotated string containing the concatenated content produced by the
-arguments. Nulls and annotations are discarded.
-
-TODO https://github.com/amazon-ion/ion-docs/issues/255
-Probably useful to allow some other Ion scalars (at least) to allow type conversion.
-I think this would be most useful for ints, since the binary representation is more compact than
-as characters. Lobs wouldn’t work well, though.
-
+Produces a non-null, unannotated string containing the concatenated content produced by the arguments. Nulls (of any type) and annotations are discarded.
 
 ===== `make_symbol`
 
 [{nrm}]
 ----
-(make_symbol (content text*)) \-> symbol
+(make_symbol (text::content*)) \-> symbol
 ----
 
 Like `make_string` but produces a symbol.
 
+===== `make_blob`
+
+[{nrm}]
+----
+(make_blob (lob::content*)) \-> blob
+----
+
+Like `make_string` but accepts lobs and produces a blob.
 
 ===== `make_list`
 
 [{nrm}]
 ----
-(make_list (vals any*)) \-> list
+(make_list (vals*)) \-> list
 ----
 
 Produces a non-null, unannotated list from any number of inputs.
@@ -94,7 +217,7 @@ Template expressions of the form `[E~1~, …, E~n~]` are equivalent to `(make_li
 
 [{nrm}]
 ----
-(make_sexp (vals any*)) \-> sexp
+(make_sexp (vals*)) \-> sexp
 ----
 
 Like `make_list` but produces a sexp.
@@ -114,6 +237,8 @@ templates are not <<ref:quasi-literals, quasi-literals>>.
 ----
 (make_struct (kv any*)) \-> struct
 ----
+
+🚧 *This section still under construction* 🚧
 
 Produces a non-null, unannotated struct from any number of elements.
 The ``kv``s are processed in order, incrementally adding fields to an initially-empty struct.
@@ -150,27 +275,19 @@ key-value pairs may not align with the actual arguments.  This is different from
 
 [{nrm}]
 ----
-(make_decimal (coefficient int) (exponent int)) \-> decimal
+(make_decimal (int::coefficient int::exponent)) \-> decimal
 ----
 
-Since decimal is already compact, this is perhaps most useful in conjunction with packed arrays,
-or when the exponent is repeated and can be baked into a macro.
-
-
-===== `make_float`
+This is no more compact than the regular binary encoding for decimals.
+However, it can be used in conjunction with other macros, for example, to represent fixed-point numbers.
 
 [{nrm}]
 ----
-(make_float ieee) \-> float
+(macro usd (cents) (annotate (literal USD) (make_decimal cents -2))
+
+
+(:usd 199)  ⇒  USD::1.99
 ----
-
-Included for completeness, but of unclear utility.
-
-TODO https://github.com/amazon-ion/ion-docs/issues/252
-Coerce an int or decimal to float?
-Perhaps useful to use fixed-width ints to encode various float widths?
-This may not be useable to convert “IEEE bits” to float, since they would be converted to int
-before arriving here.
 
 
 ===== `make_timestamp`
@@ -178,9 +295,9 @@ before arriving here.
 [{nrm}]
 ----
 (make_timestamp
-  (year int) (month? int) (day int?)
-  (hour int?)  (minute int?) (second decimal?)
-  (offset int?))
+  (int::year uint8::month uint8::day
+  uint8::hour  uint8::minute decimal::second
+  int::offset_minutes))
   -> timestamp
 ----
 Produces a non-null, unannotated timestamp at various levels of precision.
@@ -204,7 +321,7 @@ Example:
 
 [{nrm}]
 ----
-(annotate (ann text*) value) \-> any
+(annotate (text::ann* value)) \-> any
 ----
 
 Produces the `value` prefixed with the annotations ``ann``s.
@@ -212,13 +329,120 @@ Each `ann` must be a non-null, unannotated string or symbol.
 
 [{nrm}]
 ----
-(:annotate "a2" a1::true) => a2::a1::true
+(:annotate (: "a2") a1::true) => a2::a1::true
+----
+
+==== Transformations
+
+Ion 1.1 macros are intended to construct values, but there are some
+
+===== `repeat`
+
+The `repeat` system macro can be used for efficient run-length encoding.
+
+[{nrm}]
+----
+(repeat int::n! any::value+) -> any
+----
+Produces a stream that repeats the specified `value` expression(s) `n` times.
+
+[{nrm}]
+----
+(:repeat 5 0) => 0 0 0 0 0
+(:repeat 2 true false) => true false true false
+----
+
+===== `delta`
+
+NOTE:  🚧 Name still TBD 🚧
+
+The `delta` system macro can be used for directed delta encoding.
+
+[{nrm}]
+----
+(delta int::initial! int::deltas+) -> int
+----
+Produces a stream that repeats the specified `value` expression(s) `n` times.
+
+[{nrm}]
+----
+(:delta 10 1 2 3 -4) => 11 13 16 12
+----
+
+===== `flatten`
+
+The `flatten` system macro flattens one or more sequence values into a stream of their contents.
+
+[{nrm}]
+----
+(flatten sequence+) -> any
+----
+Produces a stream with the contents of all the `sequence` values.
+Any `null.sexp` or `null.list` is treated as an empty sequence.
+Any annotations on the `sequence` values are discarded.
+
+[{nrm}]
+----
+(:flatten [a, b, c] (d e f)) => a b c d e f
+(:flatten [[], null.list] null.sexp foo::()) => [] null.list
 ----
 
 
-=== Derived Operators
+The `flatten` macro can also be used to splice the content of one list or s-expression into another list or s-expression.
+[{nrm}]
+----
+[1, 2, (:flatten [a, b]), 3, 4] => [1, 2, a, b, 3, 4]
+----
 
-These operators can be defined in terms of the primitives, using the macro language.
+===== `sum`
+
+[{nrm}]
+----
+(sum int::i*) -> int
+----
+Produces the sum of all the integer arguments.
+
+[{nrm}]
+----
+(:sum 1 2 3) => 6
+(:sum (:)) => 0
+----
+
+==== Embedded Documents (aka Local Scopes)
+
+Ion documents may be embedded in other Ion documents using the `parse_ion` macro.
+
+[{nrm}]
+----
+(parse_ion data!) -> any
+----
+
+The `parse_ion` macro accepts a single, self-contained Ion document as a blob or string, and produces a stream of application values.
+
+[{nrm}]
+----
+(:parse_ion
+    '''
+    $ion_1_1
+    $ion_encoding::(
+        (module local (symbol_table "foo" "bar"))
+        (symbol_table local)
+    )
+    $1 $2
+    '''
+)
+    => foo bar
+----
+
+// TODO: Consider adding an example using embedded binary
+
+// TODO: Consider defining parse_ion variants that can
+//  - leak encoding context to the outer Ion
+//  - consume the encoding context from the outer Ion
+
+=== Derived System Macros
+
+These operators can be defined in terms of the primitives, using the macro template definition language.
 
 ==== Symbol Table Management
 
@@ -270,9 +494,30 @@ This macro is optimized for representing symbols-list with minimal space.
                        symbols:["newsym", "another"] }
 ----
 
-===== Embedded Documents (aka Local Scopes)
+==== Local Macro Table Appending
 
-TODO
+[{nrm}]
+----
+(*macro* lmt_append
+  (sexp::template_macros*)
+  (*if_void* template_macros
+    (:)                  // Produce nothing if no symbols provided.
+    $ion_encoding::(
+      (retain *{asterisk}*)
+      (module syms2 (symbol_table ["s3", "s4"]))
+      (symbol_table syms syms2)
+    )
+  )
+)
+----
+
+[{nrm}]
+----
+(:lst_append "newsym" "another")
+  =>
+  $ion_symbol_table::{ imports:$ion_symbol_table,
+                       symbols:["newsym", "another"] }
+----
 
 ==== Compact Module Definitions
 

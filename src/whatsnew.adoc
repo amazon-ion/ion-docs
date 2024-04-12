@@ -346,23 +346,10 @@ introduced in Ion 1.1 (see the *_TBD_* section for details).  An Ion 1.1 impleme
 
 === System Symbol Table Changes
 
-The system symbol table in Ion 1.1 adds the following symbols:
+The system symbol table in Ion 1.1 has a separate ID space from user symbols and include more than 50 new symbols to support the Template Definition Language (TDL) and other new features.
 
-[%header,%unbreakable,cols="1,1"]
-|===
-
-| ID
-| Symbol Text
-
-| 10
-| `$ion_encoding`
-
-| 11
-| `$ion_literal`
-
-|===
-
-System macro identifiers are namespaced separately and therefore do not have entries in the system symbol table.
+Because the system symbols table has a separate ID space, in the text encoding, system symbols are no longer reference-able by ID.
+However, the text of a system symbol is always known, so it is always possible to encode a system symbol using the symbol text.
 
 IMPORTANT: These assignments are provisional.  Specifically assignments for the macro definition language have not
 been established.
