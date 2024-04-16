@@ -40,12 +40,12 @@ The syntax that can appear in each argument position is constrained by the
 macro’s signature.
 
 The number of argument elements (that is, the invocation’s actual arity)
-must be equal to or greater than the macro’s minimum arity, and at most its
-maximum arity, when one exists.
-In other words, an E-expression must contain one element for each required
-parameter, followed by optional elements for the remaining optional parameters.
+must be equal to or greater than the macro’s minimum <<def:arity,arity>>,
+and at most its maximum arity, when one exists.
+In other words, an E-expression must contain one element for each
+<<def:required-param,required parameter>>, followed by optional elements for the
+remaining <<def:optional-param,optional parameters>>.
 
-// TODO links for arity, optional parameters
 // TODO base type? base shape?  base form?  encoding?
 
 The syntax of each argument is defined by the associated parameter’s cardinality
