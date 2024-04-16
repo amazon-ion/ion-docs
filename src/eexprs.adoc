@@ -63,7 +63,8 @@ The parameter type constrains the syntax of an individual argument as follows:
   primitive type.
 * For macro types, an individual argument must be an unannotated S-expression
   containing arguments acceptable to that macro’s signature.
-  Here, the S-expression is implicitly converted to the equivalent E-expression.
+  This is called a _macro-shaped argument_.
+  A macro-shaped argument is implicitly converted to the equivalent E-expression.
 
 The parameter cardinality constrains the syntax of the overall argument
 element(s), particularly whether a group is allowed.
