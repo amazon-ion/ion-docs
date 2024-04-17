@@ -267,7 +267,7 @@ TODO
 
 // TODO #307 clarify when type and cardinality constraints are enforced.
 // Type and cardinality constraints are _also_ applied each time the macro is invoked,
-// ensuring that the type and number of values provided to a parameter _after arguments are expansnded_
+// ensuring that the type and number of values provided to a parameter _after arguments are expanded_
 // The base types match as follows:
 
 // TODO #307 Clarify whether and when range checks are applied for primitive types.
