@@ -134,18 +134,22 @@ Examples:
 ----
 
 
-=== Voidable and Optional Parameters
+=== Arity: Required and Optional Parameters
 
+[[def:optional-param]]
 Parameters with cardinality accepting zero values (declared with modifiers `?`, `*`, or `\...`)
 are called _voidable_ because their resulting value streams can be void.
 A parameter is _optional_ when it is voidable and all following parameters are voidable.
 
+[[def:required-param]]
+A parameter is _required_ when it is not optional.
+Specifically, a parameter is required when it is declared with modifiers
+`!`, `\+`, or `...+`, _or_ when any following parameter is required.
+
 Optional parameters are given special treatment in text invocations: their arguments can be
 omitted entirely, as long as all following arguments are also omitted.
 
-
-=== Arity
-
+[[def:arity]]
 The _minimum arity_ of a macro is equal to the number of leading non-optional parameters.
 Assuming no rest-parameter, the _maximum arity_ of the macro is the total number of declared
 parameters.

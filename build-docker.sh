@@ -51,10 +51,13 @@ function usage()
     echo
     echo " -h  Show this help."
     echo " -u  Update the Docker image."
-    echo " -b  Execute the build logic inside a new container."
+    echo " -b  Execute the build logic (docker-run.sh) inside a new container."
     echo " -s  Start a shell inside a new container."
     echo
     echo "By default, when none of -ubs are given then -ub is assumed."
+    echo
+    echo "From a shell inside a container, you can run the build logic directly"
+    echo "via 'rake'.  Run 'rake -T' to see the tasks our Rakefile defines."
 }
 
 while getopts ":ubsh" o; do

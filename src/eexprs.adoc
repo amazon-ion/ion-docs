@@ -1,0 +1,101 @@
+[[sec:eexprs]]
+== Encoding Expressions
+
+Understanding macro signatures, we can now discuss how macros are leveraged to
+encode data.  The syntax for macro invocation is called an _encoding expression_
+or E-expression.  When the Ion parser encounters an E-expression, it automatically
+replaces it with the values produced by the corresponding macro transformation
+function.  The inputs to that transformation are determined by the arguments
+within the E-expression.
+
+IMPORTANT: This chapter details the syntax of E-expressions in Ion text format;
+the corresponding <<bin:eexp,Ion binary encoding>> enforces the
+equivalent constraints.
+
+In Ion Text, E-expressions look similar to S-expressions but are opened by `(:`
+and a reference to the macro that expands the expression.
+Text-encoded E-expressions have one of several forms that differ in how they
+reference the macro to be invoked:
+
+* `(:__macro-name__ …)` lookup by unambiguous name in system or local macro tables.
+* `(:__address__ …)` lookup by address in current macro table (not the system table).
+* `(:__module-name__:__macro-name__ …)` lookup by name in an installed module.
+* `(:__module-name__:__address__ …)` lookup by address in an installed module.
+
+// TODO link or write more precise resolution rules.
+
+NOTE: The parenthesis, colon, and macro reference are a single syntactic token,
+allowing no white space.
+The names are neither string nor symbol tokens, and thus may not use quotes or
+escapes or `$_uint_` symbol-table addresses.
+This reflects the idea that macros behave like new syntactic forms, with this
+entire character sequence determining the syntax that follows inside the
+expression.
+
+Following the opening macro reference and whitespace, E-expressions follow
+S-expression tokenization and whitespace rules.
+The remaining elements are arguments supplying inputs to the macro,
+each one either _individual_ or _grouped_.
+The syntax that can appear in each argument position is constrained by the
+macro’s signature.
+
+The number of argument elements (that is, the invocation’s actual arity)
+must be equal to or greater than the macro’s minimum <<def:arity,arity>>,
+and at most its maximum arity, when one exists.
+In other words, an E-expression must contain one element for each
+<<def:required-param,required parameter>>, followed by optional elements for the
+remaining <<def:optional-param,optional parameters>>.
+
+// TODO base type? base shape?  base form?  encoding?
+
+The syntax of each argument is defined by the associated parameter’s cardinality
+and type.
+The cardinality determines whether an argument group can be used to collect a
+series of individual arguments, and the type determines the syntax of an
+individual argument, grouped or not.
+
+The parameter type constrains the syntax of an individual argument as follows:
+
+* For tagged types, an individual argument must be a single E-expression or any
+  datum (which may contain nested E-expressions).
+* For primitive types, an individual argument must be a non-null, non-annotated
+  datum of the corresponding concrete type, within the range accepted by the
+  primitive type.
+* For macro types, an individual argument must be an unannotated S-expression
+  containing arguments acceptable to that macro’s signature.
+  This is called a _macro-shaped argument_.
+  A macro-shaped argument is implicitly converted to the equivalent E-expression.
+
+The parameter cardinality constrains the syntax of the overall argument
+element(s), particularly whether a group is allowed.
+In text E-expressions, argument groups are delimited using the special syntax
+`(: …)` where the colon is followed by whitespace or `)` instead of a macro
+reference.
+Each element of an argument group must fit the same syntax rules as for an
+individual argument.
+
+* A `!` parameter accepts only a single individual argument.
+* A `?` parameter accepts either a single individual argument
+  or an empty argument group `(:)`.
+* A `*` or `+` parameter accepts either a single individual argument,
+  or an argument group `(: …)`.
+* A rest parameter captures all remaining arguments of the E-expression,
+  each of which must match the individual argument syntax.
+  For a `...+` parameter there must be at least one such argument.
+
+// TODO clarify whether a `+` group must contain at least one element.
+
+The rules above determine whether an E-expression is _well-formed_.
+Any violation of the above constraints must signal a syntax error when the
+E-expression is parsed.
+
+
+// TODO #307 clarify how type and cardinality is enforced during expansion.
+
+// TODO #307 Clarify whether and when range checks are applied for fixed-width types.
+// I believe we decided that they are not verified by template invocations, since they
+// are intended to constrain the _encoding_, not the resulting argument values.
+// The corresponding concrete type _is_ verified, however, per the above.
+
+
+// TODO expansion process

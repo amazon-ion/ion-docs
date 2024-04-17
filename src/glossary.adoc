@@ -111,6 +111,9 @@ Struct-shaped templates treat the field names as literal, but the corresponding 
 templates.
 S-expressions denote operator invocations and are not treated quasi-literally.
 
+required parameter::
+A macro parameter that is not _optional_ and therefore requires an argument at each invocation.
+
 rest parameter::
 A macro parameter—always the final parameter—declared with the `*\...*` or `*\...+*` modifier,
 that accepts all remaining arguments to the macro as if they were in an implicit _argument group_.
