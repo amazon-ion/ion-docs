@@ -1802,7 +1802,7 @@ dense, but offers writers significant flexibility over whether and when field na
 symbol table.
 
 All length-prefixed structs begin as structs with symbol address field names.
-However, they can be switched to use `FlexSym` field names at any time by emitting the SID `$0` in the field name position. Once a struct has been switched to the `FlexSym` field name encoding, it cannot be switch back.
+However, they can be switched to use `FlexSym` field names at any time by emitting the FlexUInt 0 (the byte `0x01`) in the field name position. Once a struct has been switched to the `FlexSym` field name encoding, it cannot be switch back.
 
 Each field in the struct is encoded as a  <<flexsym, `FlexSym`>> field name, followed by an opcode-prefixed value.
 
