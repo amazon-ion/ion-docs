@@ -180,6 +180,6 @@ Domains come in several types:
       ((and (intish        v1) (intish        v2))     (EQ_I       v1 v2))
       ((and (unicodeish    v1) (unicodeish    v2))     (EQ_Unicode v1 v2))
       ((and (is_enum_value v1) (is_enum_value v2))     (EQ_Enum    v1 v2))
-      (true (raise_argument_error EQ "comparable values" -1 v1 v2))))
+      (true (raise_argument_error "=" "comparable values" -1 v1 v2))))
 
 )

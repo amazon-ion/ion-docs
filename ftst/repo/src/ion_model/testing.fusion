@@ -128,7 +128,13 @@ We "tunnel" special tokens as follows:
 
   (define (mk_SEexp c)
     (let [(ref (mk_MacroRef (head c)))]
-      (tuple SEexp ref (apply seq 'STree*' (map mk_STree (tail c))))))
+      (tuple SEexp ref (apply seq 'SEexpArg*' (map mk_SEexpArg (tail c))))))
+
+  (define (mk_SEexpArg c)
+    (if (and (is_pair c)
+             (== (head c) (quote '#$:')))
+      (lift_to SEexpArg (apply seq 'STree*' (map mk_STree (tail c))))
+      (lift_to SEexpArg (mk_STree c))))
 
 
   // Values

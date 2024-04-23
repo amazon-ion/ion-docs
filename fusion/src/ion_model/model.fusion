@@ -25,7 +25,9 @@ Major Components:
 * [STRUCT-EE] Eexpr in field-position (struct inlining)
 
 Features:
-* [PARAM-CARD] Validate cardinality of grouped parameters
+* [ARG-GROUP] Implement the new argument groups; remove grouped params.
+* [PARAM-CARD] Validate cardinality of argument groups.
+  * Argument elements and results
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
 * [LOAD-MAXID]`load` clause with max-id.
@@ -41,12 +43,12 @@ Features:
   * Also useful for any error reporting regarding the Macro, which is currently
     anonymous.
 * [EXPORT-MOD] A module's macro_table can have a module name, as in EDs.
+  * Matt had some confusion about this, points out that the module-name is not
+    exported here, as it is for the ED variant.
 * [EXPORT-REF] Export by macro reference.
 * [EXPORT-FROM]
 * [ED-USE] `use` clauses at directive-level; more wiring challenges.
   * Perhaps easier after [UNIFY-MACREF]?
-* [USE-LOAD] Nested (use (load ...)) combination.
-* [IMPORT] `import` clauses for both directive and module body
 * [VALID-NAME] Validate module, macro, and parameter names.
 * [OPT-NAME] Optional macro names; can streamline some tests
 * [VALID-FORM] Many forms need better validation of arity and argument type.
@@ -54,6 +56,8 @@ Features:
   forms, leading to unhelpful error messages.
 * Implement Decimal, Float, Timestamp, Blob/Clob
 * [ALIAS] Macro aliases; main impact is inability to import/rename/export macros.
+* [USE-LOAD] Nested (use (load ...)) combination.
+* [IMPORT] `import` clauses for both directive and module body
 
 
 Defects:
@@ -241,7 +245,10 @@ Spec Issues: 1.0
     (dom SField    = (* SSymTok::name STree::tree))
     (dom SStruct   = (+ 'SField*' DotNull))
 
-    (dom SEexp      = (* MacroRef::ref 'STree*'::args))
+    (dom SEexp      = (* MacroRef::ref 'SEexpArg*'::args))
+
+    // Distinguish between an individual arg and group of individual args.
+    (dom SEexpArg   = (+ STree 'STree*'))
 
     // Absent module denotes a local ref like ':name' or ':12'.
     // When module="" it denotes a bare reference (no leading colon) inside
@@ -872,7 +879,7 @@ Spec Issues: 1.0
         (let [(m (resolve_MacroRef (SEexp_ref v) r))]
           (expand_macro m (SEexp_args v) r))))
 
-    (fn expand_macro ((m Macro) (ts 'STree*') (r Environment) -> 'Value*')
+    (fn expand_macro ((m Macro) (ts 'SEexpArg*') (r Environment) -> 'Value*')
       (let [(x (Macro_xform     m)),
             (s (Macro_signature m))]
         (x (collateArgs (Signature_params s) (Signature_rest s) r ts))))
@@ -880,7 +887,7 @@ Spec Issues: 1.0
 
     // Returns one Value* per parameter.
     // This should stay in sync with interp_args
-    (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'STree*') -> 'Value**')
+    (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'SEexpArg*') -> 'Value**')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
           // We have a rest-parameter, so grab everything that remains.
@@ -889,7 +896,7 @@ Spec Issues: 1.0
             (if (and (seq_is_empty ts) (not (is_voidable_Cardinality c)))
               (wrong "Too few arguments")
               (seq 'Value**' (validateShape t c
-                               (expandRest t c ts r)))))
+                               (expandRest t ts r)))))
           (if (seq_is_empty ts)
             (seq 'Value**')                 // All done!
             (wrong "Too many arguments")))
@@ -903,56 +910,64 @@ Spec Issues: 1.0
                 (collateArgs (seq_tail ps) rest r ts))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
-            (let [(t  (seq_head ts)),
+            (let [(t  (seq_head ts)),                                    // ∈ SEexpArg
                   (is (collateArgs (seq_tail ps) rest r (seq_tail ts)))]
               (if (element_of (ParamSpec_shape p) GroupShape)
-                (if (and (element_of t SValue)  // not an Eexp
-                         (element_of (SValue_content (lower t SValue)) SList))
-                  // TODO:[VALID-FORM] reject null.list and annotations
-                  (let [(ts1 (lower (SValue_content (lower t SValue)) SList 'STree*'))]
-                    // [PARAM-CARD] Cardinality checking of expanded group
-                    (seq_prepend ('expand_STree*' ts1 r) is))
-                  (wrong "Expected grouping list"))
-                // Non-grouped argument expected
+                // TODO check
+                (let [(type (GroupShape_type (lower (ParamSpec_shape p) GroupShape))),
+                      (card (GroupShape_card (lower (ParamSpec_shape p) GroupShape)))]
+                  (if (element_of t 'STree*')
+                    // Found an argument group
+                    (seq_prepend (expandGroup type (lower t 'STree*') r) is)
+                    (if (and (element_of t SValue)  // not an Eexp or argument group
+                             (element_of (SValue_content (lower t STree SValue)) SList))
+                      // TODO:[VALID-FORM] reject null.list and annotations
+                      (let [(ts1 (lower (SValue_content (lower t STree SValue)) SList 'STree*'))]
+                        // [PARAM-CARD] Cardinality checking of expanded group
+                        (seq_prepend ('expand_STree*' ts1 r) is))
+                      (wrong "Expected grouping list"))))
+                // Parameter doesn't have [] declaration
                 (let [(type (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
                       (card (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
-                  (seq_prepend (expandArg type card t r) is))))))))
+                  (let [(vs (if (element_of t STree)
+                              (expandArg   type (lower t  STree  ) r)
+                              (if (not (and (element_of card OptCardinality)
+                                            (= (lower card OptCardinality) EXACTLY_ONE)))
+                                (expandGroup type (lower t 'STree*') r)
+                                (wrong "Unexpected argument group"))))]
+                    (seq_prepend (validateShape type card vs) is)))))))))
 
-    (fn expandArg ((t ParamType) (c Cardinality) (stx 'STree') (r Environment) -> 'Value*')
+    (fn expandArg ((t ParamType) (stx 'STree') (r Environment) -> 'Value*')
       (if (element_of t Macro)
-        (if (element_of stx SValue)
+        (if (element_of stx SValue)           // SValue ∈ STree ∈ SEexpArg
           // TODO reject annotations?
           (if (element_of (SValue_content (lower stx SValue)) SSexp)
-            // TODO validate cardinality of results
             (expand_macro (lower t Macro)
                           // TODO handle null.sexp
-                          (lower (SValue_content (lower stx SValue)) SSexp 'STree*')
+                          (map 'SEexpArg*' inSEexpArg
+                            (lower (SValue_content (lower stx SValue)) SSexp 'STree*'))
                           r)
             (wrong "Expected sexp with macro arguments"))
           (wrong "Expected sexp with macro arguments, found an eexp"))
-        // TODO:[PARAM-TYPE] validate non-macro types
-        (let [(vs (expand_STree stx r))]
-          (if (element_of c OptCardinality)
-            (if (> (seq_length vs) 1)
-              (wrong "More than one value provided for parameter")
-              (if (and (= (lower c OptCardinality) EXACTLY_ONE)
-                       (= (seq_length vs) 0))
-                (wrong "No value provided for parameter")
-                vs))
-            (if (and (= (lower c SeqCardinality) ONE_OR_MORE)
-                     (= (seq_length vs) 0))
-              (wrong "No value provided for parameter")
-              // ZERO_OR_MORE is handled implicitly; it always passes.
-              vs)))))
+        // TODO:[PARAM-TYPE] validate non-macro tagless shapes
+        (expand_STree stx r)))
 
-    (fn expandRest ((t ParamType) (c Cardinality) (stxs 'STree*') (r Environment) -> 'Value*')
+    (fn expandGroup ((t ParamType) (stxs 'STree*') (r Environment) -> 'Value*')
       (if (seq_is_empty stxs)
         (seq 'Value*')
-        (seq_append (expandArg  t c (seq_head stxs) r)
-                    (expandRest t c (seq_tail stxs) r))))
+        (seq_append (expandArg   t (seq_head stxs) r)
+                    (expandGroup t (seq_tail stxs) r))))
+
+    (fn expandRest ((t ParamType) (stxs 'SEexpArg*') (r Environment) -> 'Value*')
+      (if (seq_is_empty stxs)
+        (seq 'Value*')
+        (let [(stx (seq_head stxs))]
+          (if (element_of stx STree)
+            (seq_append (expandArg  t (lower stx STree) r)
+                        (expandRest t (seq_tail stxs) r))
+            (wrong "Unexpected argument group")))))
 
 
-    // TODO This only seems to be called for rest-args
     (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
       // TODO:[PARAM-TYPE]
       (if (element_of c OptCardinality)
@@ -1727,9 +1742,12 @@ Spec Issues: 1.0
 
   (define EMPTY_SYMTOKS    (seq 'SymTok*'))
 
-  // [CTORS] This should be auto-generated; we need one-arg fn to use with `map`.
+  // [CTORS] These should be auto-generated; we need one-arg fn to use with `map`.
   (define (inSymTok v)
     (lift_to SymTok v))
+  // TODO Latex rendering
+  (define (inSEexpArg v)
+    (lift_to SEexpArg v))
 
 
   // Be very selective with what is required! This escapes the denotational model.
