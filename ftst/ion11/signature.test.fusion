@@ -12,13 +12,13 @@
 
 (define_fn 'param?' ((name Unicode) (type ParamType) -> ParamSpec)
   (tuple ParamSpec name
-    (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality ZERO_OR_ONE)))))
+    (tuple ParamShape type (lift_to Cardinality ZERO_OR_ONE))))
 (define_fn 'param+' ((name Unicode) (type ParamType) -> ParamSpec)
   (tuple ParamSpec name
-    (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality ONE_OR_MORE)))))
+    (tuple ParamShape type (lift_to Cardinality ONE_OR_MORE))))
 (define_fn 'param*' ((name Unicode) (type ParamType) -> ParamSpec)
   (tuple ParamSpec name
-    (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality ZERO_OR_MORE)))))
+    (tuple ParamShape type (lift_to Cardinality ZERO_OR_MORE))))
 (define_fn 'rest...+' ((name Unicode) (type ParamType) -> 'RestSpec?')
   (opt 'RestSpec?' (tuple RestSpec name (tuple RestShape type ONE_OR_MORE))))
 
@@ -33,9 +33,9 @@
     (check_same (lower e SeqCardinality) (lower a SeqCardinality))))
 
 
-(define_check (check_SimpleShape e a)
-  (check_same        (SimpleShape_type e) (SimpleShape_type a))
-  (check_Cardinality (SimpleShape_card e) (SimpleShape_card a)))
+(define_check (check_ParamShape e a)
+  (check_same        (ParamShape_type e) (ParamShape_type a))
+  (check_Cardinality (ParamShape_card e) (ParamShape_card a)))
 
 (define_check (check_RestShape e a)
   (check_same           (RestShape_type e) (RestShape_type a))
@@ -46,10 +46,7 @@
   (check_eqv (eject (ParamSpec_name e)) (eject (ParamSpec_name a)))
   (let [(e_shape (ParamSpec_shape e)),
         (a_shape (ParamSpec_shape a))]
-    (check_same (subdomain e_shape) (subdomain a_shape))
-    (if (element_of e_shape SimpleShape)
-      (check_SimpleShape (lower e_shape SimpleShape) (lower a_shape SimpleShape))
-      (fail "testing groups not implemented"))))
+    (check_ParamShape e_shape a_shape)))
 
 (define_check (check_RestSpec e a)
   (if (opt_is_present e)

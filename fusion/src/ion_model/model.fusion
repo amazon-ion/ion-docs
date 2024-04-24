@@ -25,7 +25,6 @@ Major Components:
 * [STRUCT-EE] Eexpr in field-position (struct inlining)
 
 Features:
-* [ARG-GROUP] Implement the new argument groups; remove grouped params.
 * [PARAM-CARD] Validate cardinality of argument groups.
   * Argument elements and results
 * [TL-MACRO] Support macro-shaped arguments in TL invocations.
@@ -724,10 +723,7 @@ Spec Issues: 1.0
     (dom ParamSpec   = (* Unicode::name ParamShape::shape))
     (dom RestSpec    = (* Unicode::name  RestShape::shape))
 
-    (dom ParamShape  = (+ SimpleShape GroupShape))
-    (dom SimpleShape = (* ParamType::type Cardinality::card))
-    // TODO Above works for tagged types; support tagless types
-    (dom GroupShape  = (* ParamType::type SeqCardinality::card))
+    (dom ParamShape  = (* ParamType::type Cardinality::card))
     (dom RestShape   = (* ParamType::type SeqCardinality::card))
 
     (dom ParamType   = (+ AbstractParamType Macro))
@@ -749,11 +745,7 @@ Spec Issues: 1.0
 
 
     (fn is_voidable ((p ParamSpec) -> B)
-      (let [(shape (ParamSpec_shape p))]
-        (or (and (element_of shape SimpleShape)
-                 (is_voidable_Cardinality (SimpleShape_card (lower shape SimpleShape))))
-            (and (element_of shape GroupShape)
-                 (= (GroupShape_card (lower shape GroupShape)) ZERO_OR_MORE)))))
+      (is_voidable_Cardinality (ParamShape_card (ParamSpec_shape p))))
 
     (fn is_voidable_Cardinality ((c Cardinality) -> B)
       (or (and (element_of c OptCardinality)
@@ -773,11 +765,11 @@ Spec Issues: 1.0
 
     (fn 'param!' ((name Unicode) (type ParamType) -> ParamSpec)
       (tuple ParamSpec name
-        (lift_to ParamShape (tuple SimpleShape type (lift_to Cardinality EXACTLY_ONE)))))
+        (tuple ParamShape type (lift_to Cardinality EXACTLY_ONE))))
 
-    (fn 'group*' ((name Unicode) (type ParamType) -> 'ParamSpec')
+    (fn 'param*' ((name Unicode) (type ParamType) -> ParamSpec)
       (tuple ParamSpec name
-        (lift_to ParamShape (tuple GroupShape type ZERO_OR_MORE))))
+        (tuple ParamShape type (lift_to Cardinality ZERO_OR_MORE))))
 
     (fn 'rest...' ((name Unicode) (type ParamType) -> 'RestSpec?')
       (opt 'RestSpec?' (tuple RestSpec name (tuple RestShape type ZERO_OR_MORE))))
@@ -913,24 +905,15 @@ Spec Issues: 1.0
             // We have both a param and more arguments
             (let [(t  (seq_head ts)),                                    // ∈ SEexpArg
                   (is (collateArgs (seq_tail ps) rest r (seq_tail ts)))]
-              (if (element_of (ParamSpec_shape p) GroupShape)
-                // TODO check
-                (let [(type (GroupShape_type (lower (ParamSpec_shape p) GroupShape))),
-                      (card (GroupShape_card (lower (ParamSpec_shape p) GroupShape)))]
-                  (if (element_of t 'STree*')
-                    // Found an argument group
-                    (seq_prepend (expandGroup type (lower t 'STree*') r) is)
-                    (wrong "Expected argument group")))
-                // Parameter doesn't have [] declaration
-                (let [(type (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
-                      (card (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
-                  (let [(vs (if (element_of t STree)
-                              (expandArg   type (lower t  STree  ) r)
-                              (if (not (and (element_of card OptCardinality)
-                                            (= (lower card OptCardinality) EXACTLY_ONE)))
-                                (expandGroup type (lower t 'STree*') r)
-                                (wrong "Unexpected argument group"))))]
-                    (seq_prepend (validateShape type card vs) is)))))))))
+              (let [(type (ParamShape_type (ParamSpec_shape p))),
+                    (card (ParamShape_card (ParamSpec_shape p)))]
+                (let [(vs (if (element_of t STree)
+                            (expandArg   type (lower t  STree  ) r)
+                            (if (not (and (element_of card OptCardinality)
+                                          (= (lower card OptCardinality) EXACTLY_ONE)))
+                              (expandGroup type (lower t 'STree*') r)
+                              (wrong "Unexpected argument group"))))]
+                  (seq_prepend (validateShape type card vs) is))))))))
 
     (fn expandArg ((t ParamType) (stx 'STree') (r Environment) -> 'Value*')
       (if (element_of t Macro)
@@ -1333,8 +1316,7 @@ Spec Issues: 1.0
 
     (fn finishParamSpec ((vs 'Value*') (u Unicode) (t ParamType) (c Cardinality) -> ParamSpec)
       (if (seq_is_empty vs)
-        (tuple ParamSpec u
-          (lift_to ParamShape (tuple SimpleShape t c)))
+        (tuple ParamSpec u (tuple ParamShape t c))
         (wrong "Unexpected element in param-spec: " (seq_head vs))))
 
 
@@ -1380,7 +1362,14 @@ Spec Issues: 1.0
     // is absent.
     (dom MacroEnv = (-> 'Unicode?' NameOrAddr Macro))
 
-    // Same signature as Transform; perhaps we don't need both.
+    // The difference between Transform and Interpreter lies solely in their
+    // inputs.
+    //   * Transform inputs are the argument-streams from the macro
+    //     invocation, one stream per parameter.
+    //   * Interpreter inputs are the streams for all visible variables, with
+    //     most recently introduced variables first, and parameters last.
+    //     These bindings and positions are tracked by the `scope` sequence
+    //     threaded through macro compilation.
     (dom Interpreter = (-> 'Value**' 'Value*'))
 
     (fn compile_macro_defn ((vs   'Value*')
@@ -1394,18 +1383,16 @@ Spec Issues: 1.0
           (tuple Macro sig (compile_xform (ith vs 2) sig macroEnv)))))
 
     (fn compile_xform ((v Value) (s Signature) (macroEnv MacroEnv) -> Transform)
-      // These functions are invoked after arity checking and grouping, so we
-      // can assume the correct number of args (per the Signature) are given.
+      // Transforms are invoked after arity checking and argument collation, so we
+      // can assume the correct number of streams (per the Signature) are given.
       (let [(i (interp_template v (Signature_vars s) macroEnv))]
         (mk_fn Transform (args)
           (i args))))
 
-    // We assume all parameter names are unique
+    // TODO:[DUPE-NAME] We assume all parameter names are unique
 
 
     (fn interp_template ((v Value) (scope 'Unicode*') (macroEnv MacroEnv) -> Interpreter)
-      // These functions are invoked after arity checking and grouping applied.
-      // We can assume the correct number of groups (per the Signature) are given.
       (if (element_of (Value_content v) Symbol)
         (interp_ref v scope)
         (if (element_of (Value_content v) List)
@@ -1620,22 +1607,19 @@ Spec Issues: 1.0
             // We have both a param and more arguments
             (let [(v  (seq_head vs)),
                   (is (interp_args (seq_tail ps) rest scope r (seq_tail vs)))]
-              (if (element_of (ParamSpec_shape p) GroupShape)
-                (wrong "Grouped params not implemented")
-                // Parameter doesn't have [] declaration
-                (let [(type (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
-                      (card (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
-                  (let [(i (if (isClause v ";")
-                              (if (not (and (element_of card OptCardinality)
-                                            (= (lower card OptCardinality) EXACTLY_ONE)))
-                                (compileGroup (clauseBody v) type scope r)
-                                (wrong "Unexpected argument group"))
-                             (compileArg v type scope r)))]
-                    (seq_prepend
-                      (mk_fn Interpreter (env)
-                        // TODO Maybe push validation into `interp_template`?
-                        (validateShape type card (i env)))
-                      is)))))))))
+              (let [(type (ParamShape_type (ParamSpec_shape p))),
+                    (card (ParamShape_card (ParamSpec_shape p)))]
+                (let [(i (if (isClause v ";")
+                            (if (not (and (element_of card OptCardinality)
+                                          (= (lower card OptCardinality) EXACTLY_ONE)))
+                              (compileGroup (clauseBody v) type scope r)
+                              (wrong "Unexpected argument group"))
+                           (compileArg v type scope r)))]
+                  (seq_prepend
+                    (mk_fn Interpreter (env)
+                      // TODO Maybe push validation into `interp_template`?
+                      (validateShape type card (i env)))
+                    is))))))))
 
     (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
       (if (element_of type Macro)
@@ -1708,7 +1692,7 @@ Spec Issues: 1.0
                   (lift_to Content (lift_to Sexp (ith args 0)))))))
           (export "annotate"
             (seq 'ParamSpec*'
-              ('group*' "anns"  ANY)
+              ('param*' "anns"  ANY)
               ('param!' "value" ANY))
             (opt 'RestSpec?')
             (mk_fn Transform (args)

@@ -27,9 +27,8 @@
 
 // Argument groups
 
-(in11 (each (toplevel ('#$:annotate' ()  1))
-            (toplevel ('#$:annotate' ann 1))
-            (signals "Expected argument group"))
+(in11 (then (toplevel ('#$:annotate' a 1))
+            (produces a::1))
       (then (toplevel ('#$:annotate' ('#$:') 1))
             (produces 1))
       (then (toplevel ('#$:annotate' ('#$:' a) 1))
