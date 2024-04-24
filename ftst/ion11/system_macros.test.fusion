@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -6,6 +6,7 @@
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
   "/ion_model/testing"
+  "/ion_model/testing/dsl"
 )
 
 
@@ -112,38 +113,34 @@
 // annotate
 
 // Existing annotations are preserved.
-(check_expansion
-  (quote_top 1 a::2 b::c::3)
-  (quote11
-    ('#$:annotate' [] 1) ('#$:annotate' [] a::2) ('#$:annotate' [] b::c::3)))
-(check_expansion
-  (quote_top x::y::1 x::a::2 x::y::b::c::3)
-  (quote11
-    ('#$:annotate' [x, y] 1) ('#$:annotate' [x] a::2) ('#$:annotate' [x, y] b::c::3)))
+(in11 (then (toplevel ('#$:annotate' [] x))
+            (produces x))
+      (each (toplevel ('#$:annotate' [] a::b::v))
+            (toplevel ('#$:annotate' [a]   b::v))
+            (toplevel ('#$:annotate' [a, b]   v))
+            (produces a::b::v)))
 
 // Both string and symbols are accepted as annotations
-(check_expansion
-  (quote_top a::1 a::b::2 a::b::c::d::3)
-  (quote11
-    ('#$:annotate' ["a"] 1) ('#$:annotate' [a] b::2) ('#$:annotate' ["a", b] c::d::3)))
+(in11 (each (toplevel ('#$:annotate' [a, "b"]     c::d::true))
+            (toplevel ('#$:annotate' ["a", "b", c, "d"] true))
+            (produces a::b::c::d::true)))
 
 // But not nulls.
-(check_eval_fail ":$ion:annotate doesn't accept null.string"
-  (quote11 ('#$:annotate' [null.string] 1)))
-(check_eval_fail ":$ion:annotate doesn't accept null.symbol"
-  (quote11 ('#$:annotate' [null.symbol] 1)))
+(in11 (toplevel ('#$:annotate' [null.string] 1))
+      (signals ":$ion:annotate doesn't accept null.string"))
+(in11 (toplevel ('#$:annotate' [null.symbol] 1))
+      (signals ":$ion:annotate doesn't accept null.symbol"))
 
 // Or other types
-(check_eval_fail "Not a text value"
-  (quote11 ('#$:annotate' [0] 1)))
-(check_eval_fail "Not a text value"
-  (quote11 ('#$:annotate' [["a"]] 1)))
+(in11 (each (toplevel ('#$:annotate' [0] 1))
+            (toplevel ('#$:annotate' [["a"]] 1))
+            (signals "Not a text value")))
 
 // Annotations on the annotation-args are discarded
-(check_expansion
-  (quote_top b::1 c::e::f::2)
-  (quote11
-    ('#$:annotate' [a::b] 1) ('#$:annotate' [a::b::"c", d::e] f::2)))
+(in11 (then (toplevel ('#$:annotate' [a::b] 1))
+            (produces b::1))
+      (then (toplevel ('#$:annotate' [a::b::"c", d::e] f::2))
+            (produces c::e::f::2)))
 
 
 "SUCCESS (system_macros.test)"
