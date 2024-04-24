@@ -113,33 +113,37 @@
 // annotate
 
 // Existing annotations are preserved.
-(in11 (then (toplevel ('#$:annotate' [] x))
+(in11 (then (toplevel ('#$:annotate' ('#$:') x))
             (produces x))
-      (each (toplevel ('#$:annotate' [] a::b::v))
-            (toplevel ('#$:annotate' [a]   b::v))
-            (toplevel ('#$:annotate' [a, b]   v))
+      (each (toplevel ('#$:annotate' ('#$:') a::b::v))
+            (toplevel ('#$:annotate' ('#$:' a)   b::v))
+            (toplevel ('#$:annotate' ('#$:' a b)    v))
             (produces a::b::v)))
 
 // Both string and symbols are accepted as annotations
-(in11 (each (toplevel ('#$:annotate' [a, "b"]     c::d::true))
-            (toplevel ('#$:annotate' ["a", "b", c, "d"] true))
-            (produces a::b::c::d::true)))
+(in11 (each (toplevel ('#$:annotate' ('#$:' a "b")         c::d::true))
+            (toplevel ('#$:annotate' ('#$:' "a" "b" c "d")       true))
+            (produces a::b::c::d::true))
+      // Even empties
+      (then (toplevel ('#$:annotate' ('#$:' '' "") null))
+            (produces ''::''::null)))
 
 // But not nulls.
-(in11 (toplevel ('#$:annotate' [null.string] 1))
+(in11 (toplevel ('#$:annotate' ('#$:' null.string) 1))
       (signals ":$ion:annotate doesn't accept null.string"))
-(in11 (toplevel ('#$:annotate' [null.symbol] 1))
+(in11 (toplevel ('#$:annotate' ('#$:' null.symbol) 1))
       (signals ":$ion:annotate doesn't accept null.symbol"))
 
 // Or other types
-(in11 (each (toplevel ('#$:annotate' [0] 1))
-            (toplevel ('#$:annotate' [["a"]] 1))
+(in11 (each (toplevel ('#$:annotate' ('#$:' 0) 1))
+            (toplevel ('#$:annotate' ('#$:' ["a"]) 1))
+            (toplevel ('#$:annotate' ('#$:' "a" false) 1))
             (signals "Not a text value")))
 
 // Annotations on the annotation-args are discarded
-(in11 (then (toplevel ('#$:annotate' [a::b] 1))
+(in11 (then (toplevel ('#$:annotate' ('#$:' a::b) 1))
             (produces b::1))
-      (then (toplevel ('#$:annotate' [a::b::"c", d::e] f::2))
+      (then (toplevel ('#$:annotate' ('#$:' a::b::"c" d::e) f::2))
             (produces c::e::f::2)))
 
 

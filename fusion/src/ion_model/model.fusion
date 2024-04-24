@@ -920,13 +920,7 @@ Spec Issues: 1.0
                   (if (element_of t 'STree*')
                     // Found an argument group
                     (seq_prepend (expandGroup type (lower t 'STree*') r) is)
-                    (if (and (element_of t SValue)  // not an Eexp or argument group
-                             (element_of (SValue_content (lower t STree SValue)) SList))
-                      // TODO:[VALID-FORM] reject null.list and annotations
-                      (let [(ts1 (lower (SValue_content (lower t STree SValue)) SList 'STree*'))]
-                        // [PARAM-CARD] Cardinality checking of expanded group
-                        (seq_prepend ('expand_STree*' ts1 r) is))
-                      (wrong "Expected grouping list"))))
+                    (wrong "Expected argument group")))
                 // Parameter doesn't have [] declaration
                 (let [(type (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
                       (card (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
