@@ -28,6 +28,7 @@ Features:
 * [ARG-GROUP] Implement the new argument groups; remove grouped params.
 * [PARAM-CARD] Validate cardinality of argument groups.
   * Argument elements and results
+* [TL-MACRO] Support macro-shaped arguments in TL invocations.
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
 * [LOAD-MAXID]`load` clause with max-id.
@@ -1603,16 +1604,18 @@ Spec Issues: 1.0
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
           // We have a rest-parameter, so grab all remaining templates.
-          (let [(i ('interp_template...' vs scope r)),
-                (t (RestShape_type (RestSpec_shape (opt_value rest)))),
-                (c (RestShape_card (RestSpec_shape (opt_value rest))))]
-            (seq 'Interpreter*'
-              (mk_fn Interpreter (env)
-                // TODO Maybe push validation into `interp_template...`?
-                (validateShape t (lift c Cardinality) (i env)))))
+          (let [(type (RestShape_type (RestSpec_shape (opt_value rest)))),
+                (card (lift_to Cardinality (RestShape_card (RestSpec_shape (opt_value rest)))))]
+            (if (and (seq_is_empty vs) (not (is_voidable_Cardinality card)))
+              (wrong "Too few arguments")
+              (let [(i (compileGroup vs type scope r))]
+                (seq 'Interpreter*'
+                  (mk_fn Interpreter (env)
+                    (validateShape type card (i env)))))))
           (if (seq_is_empty vs)
             (seq 'Interpreter*')                 // All done!
             (wrong "Too many arguments")))
+        // More non-rest parameters to collate
         (let [(p (seq_head ps))]
           (if (seq_is_empty vs)
             // We hava a param, but no more arguments; param must be voidable.
@@ -1620,27 +1623,42 @@ Spec Issues: 1.0
               (seq_prepend Interpret_void
                 (interp_args (seq_tail ps) rest scope r vs))
               (wrong "Too few arguments"))
-//            // We have both a param and more arguments
+            // We have both a param and more arguments
             (let [(v  (seq_head vs)),
                   (is (interp_args (seq_tail ps) rest scope r (seq_tail vs)))]
               (if (element_of (ParamSpec_shape p) GroupShape)
                 (wrong "Grouped params not implemented")
-//                (if (and (element_of t SValue)  // not an Eexp
-//                         (element_of (SValue_content (lower t SValue)) SList))
-//                  // TODO reject null.list and annotations
-//                  (let [(ts1 (lower (SValue_content (lower t SValue)) SList 'STree*'))]
-//                    // [PARAM-CARD] Cardinality checking of expanded group
-//                    (seq_prepend ('expand_STree*' ts1 r) is))
-//                  (wrong "Expected grouping list"))
-                // Non-grouped argument expected
-                (let [(i (interp_template v scope r)),
-                      (t (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
-                      (c (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
-                  (seq_prepend
-                    (mk_fn Interpreter (env)
-                      // TODO Maybe push validation into `interp_template`?
-                      (validateShape t c (i env)))
-                    is))))))))
+                // Parameter doesn't have [] declaration
+                (let [(type (SimpleShape_type (lower (ParamSpec_shape p) SimpleShape))),
+                      (card (SimpleShape_card (lower (ParamSpec_shape p) SimpleShape)))]
+                  (let [(i (if (isClause v ";")
+                              (if (not (and (element_of card OptCardinality)
+                                            (= (lower card OptCardinality) EXACTLY_ONE)))
+                                (compileGroup (clauseBody v) type scope r)
+                                (wrong "Unexpected argument group"))
+                             (compileArg v type scope r)))]
+                    (seq_prepend
+                      (mk_fn Interpreter (env)
+                        // TODO Maybe push validation into `interp_template`?
+                        (validateShape type card (i env)))
+                      is)))))))))
+
+    (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
+      (if (element_of type Macro)
+        // TODO:[TL-MACRO] support macro shapes
+        (wrong "TL macro shapes not implemented")
+        (interp_template v scope r)))
+
+    // Like interp_template... but each element is shaped by the parameter type.
+    (fn compileGroup ((vs 'Value*') (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
+      (if (seq_is_empty vs)
+        Interpret_void
+        (if (isClause (seq_head vs) ";")
+          (wrong "Unexpected argument group")
+          (let [(i  (compileArg   (seq_head vs) type scope r)),
+                (is (compileGroup (seq_tail vs) type scope r))]
+            (mk_fn Interpreter (env)
+              (seq_append (i env) (is env)))))))
 
 
     //==========================================================================
