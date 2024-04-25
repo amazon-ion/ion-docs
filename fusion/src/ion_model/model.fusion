@@ -25,9 +25,13 @@ Major Components:
 * [STRUCT-EE] Eexpr in field-position (struct inlining)
 
 Features:
-* [PARAM-CARD] Validate cardinality of argument groups.
-  * Argument elements and results
+* [ARG-ERR] Prioritize argument-parsing errors over arity errors.
 * [TL-MACRO] Support macro-shaped arguments in TL invocations.
+* [PARAM-VALID] Do expand-time parameter validation in the macro or Transform
+  * This is currently done in several places invocation-side, but makes more
+    sense to happen once, macro-side.
+  * Perhaps annoying for system macros.
+  * User-macro Transform is created by `interp_xform`.
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
 * [LOAD-MAXID]`load` clause with max-id.
@@ -875,12 +879,12 @@ Spec Issues: 1.0
     (fn expand_macro ((m Macro) (ts 'SEexpArg*') (r Environment) -> 'Value*')
       (let [(x (Macro_xform     m)),
             (s (Macro_signature m))]
-        (x (collateArgs (Signature_params s) (Signature_rest s) r ts))))
+        (x (expandArgs (Signature_params s) (Signature_rest s) r ts))))
 
 
     // Returns one Value* per parameter.
-    // This should stay in sync with interp_args
-    (fn collateArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'SEexpArg*') -> 'Value**')
+    // This should stay in sync with compileArgs
+    (fn expandArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'SEexpArg*') -> 'Value**')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
           // We have a rest-parameter, so grab everything that remains.
@@ -888,8 +892,7 @@ Spec Issues: 1.0
                 (c (lift_to Cardinality (RestShape_card (RestSpec_shape (opt_value rest)))))]
             (if (and (seq_is_empty ts) (not (is_voidable_Cardinality c)))
               (wrong "Too few arguments")
-              (seq 'Value**' (validateShape t c
-                               (expandRest t ts r)))))
+              (seq 'Value**' (validateShape t c (expandRest t ts r)))))
           (if (seq_is_empty ts)
             (seq 'Value**')                 // All done!
             (wrong "Too many arguments")))
@@ -898,22 +901,23 @@ Spec Issues: 1.0
           (if (seq_is_empty ts)
             // We hava a param, but no more arguments; param must be voidable.
             (if (is_voidable p)
+              // No need to validateShape; we've done so statically.
               (seq_prepend (seq 'Value*')
                 // Continue checking remaining parameters voidability
-                (collateArgs (seq_tail ps) rest r ts))
+                (expandArgs (seq_tail ps) rest r ts))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
-            (let [(t  (seq_head ts)),                                    // ∈ SEexpArg
-                  (is (collateArgs (seq_tail ps) rest r (seq_tail ts)))]
-              (let [(type (ParamShape_type (ParamSpec_shape p))),
-                    (card (ParamShape_card (ParamSpec_shape p)))]
-                (let [(vs (if (element_of t STree)
-                            (expandArg   type (lower t  STree  ) r)
-                            (if (not (and (element_of card OptCardinality)
-                                          (= (lower card OptCardinality) EXACTLY_ONE)))
-                              (expandGroup type (lower t 'STree*') r)
-                              (wrong "Unexpected argument group"))))]
-                  (seq_prepend (validateShape type card vs) is))))))))
+            (let [(type (ParamShape_type (ParamSpec_shape p))),
+                  (card (ParamShape_card (ParamSpec_shape p))),
+                  (t    (seq_head ts)),                                    // ∈ SEexpArg
+                  (is   (expandArgs (seq_tail ps) rest r (seq_tail ts)))]
+              (let [(vs (if (element_of t STree)
+                          (expandArg   type (lower t  STree  ) r)
+                          (if (not (and (element_of card OptCardinality)
+                                        (= (lower card OptCardinality) EXACTLY_ONE)))
+                            (expandGroup type (lower t 'STree*') r)
+                            (wrong "Unexpected argument group"))))]
+                (seq_prepend (validateShape type card vs) is)))))))
 
     (fn expandArg ((t ParamType) (stx 'STree') (r Environment) -> 'Value*')
       (if (element_of t Macro)
@@ -1567,7 +1571,7 @@ Spec Issues: 1.0
       (let [(m (interp_macroref (seq_head vs) r))]
         (let [(f (Macro_xform     m)),
               (s (Macro_signature m))]
-          (let [(is (interp_args (Signature_params s) (Signature_rest s) scope r (seq_tail vs)))]
+          (let [(is (compileArgs (Signature_params s) (Signature_rest s) scope r (seq_tail vs)))]
             (mk_fn Interpreter (env)
               (let [(as (map 'Value**' (lambda (i) (i env)) is))]
                 (f as)))))))
@@ -1580,8 +1584,8 @@ Spec Issues: 1.0
           (r mod mac))))
 
     // Returns one Interpreter per parameter.
-    // This should stay in sync with collateArgs
-    (fn interp_args ((ps 'ParamSpec*') (rest 'RestSpec?') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
+    // This should stay in sync with expandArgs
+    (fn compileArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
       (if (seq_is_empty ps)
         (if (opt_is_present rest)
           // We have a rest-parameter, so grab all remaining templates.
@@ -1602,24 +1606,24 @@ Spec Issues: 1.0
             // We hava a param, but no more arguments; param must be voidable.
             (if (is_voidable p)
               (seq_prepend Interpret_void
-                (interp_args (seq_tail ps) rest scope r vs))
+                // No need to validateShape; we've done so statically.
+                (compileArgs (seq_tail ps) rest scope r vs))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
-            (let [(v  (seq_head vs)),
-                  (is (interp_args (seq_tail ps) rest scope r (seq_tail vs)))]
-              (let [(type (ParamShape_type (ParamSpec_shape p))),
-                    (card (ParamShape_card (ParamSpec_shape p)))]
-                (let [(i (if (isClause v ";")
-                            (if (not (and (element_of card OptCardinality)
-                                          (= (lower card OptCardinality) EXACTLY_ONE)))
-                              (compileGroup (clauseBody v) type scope r)
-                              (wrong "Unexpected argument group"))
-                           (compileArg v type scope r)))]
-                  (seq_prepend
-                    (mk_fn Interpreter (env)
-                      // TODO Maybe push validation into `interp_template`?
-                      (validateShape type card (i env)))
-                    is))))))))
+            (let [(type (ParamShape_type (ParamSpec_shape p))),
+                  (card (ParamShape_card (ParamSpec_shape p))),
+                  (v    (seq_head vs)),
+                  (is   (compileArgs (seq_tail ps) rest scope r (seq_tail vs)))]
+              (let [(i (if (isClause v ";")
+                          (if (not (and (element_of card OptCardinality)
+                                        (= (lower card OptCardinality) EXACTLY_ONE)))
+                            (compileGroup (clauseBody v) type scope r)
+                            (wrong "Unexpected argument group"))
+                         (compileArg v type scope r)))]
+                (seq_prepend
+                  (mk_fn Interpreter (env)
+                    (validateShape type card (i env)))
+                  is)))))))
 
     (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
       (if (element_of type Macro)
