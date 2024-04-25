@@ -100,12 +100,17 @@
             (signals "Too few arguments"))
       (each (toplevel ('#$:m' ('#$:')))
             (toplevel ('#$:m' ('#$:' 1)))
+            (toplevel ('#$:m' ('#$:' 1) 2))             // Hidden: too many args
             (toplevel ('#$:m' ('#$:' 1 2)))
             (signals "Unexpected argument group"))
       (each (toplevel ('#$:m' ('#$:void')))
             (signals "No value provided for parameter"))
       (each (toplevel ('#$:m' ('#$:values' 1 2)))
-            (signals "More than one value provided for parameter")))
+            (signals "More than one value provided for parameter"))
+      (each (toplevel ('#$:m' 1 2))
+            (toplevel ('#$:m' ('#$:void') 2))       // Hidden: no value
+            (toplevel ('#$:m' ('#$:values' 1 2) 2)) // Hidden: more than one value
+            (signals "Too many arguments")))
 
 
 // Zero-or-one cardinality
@@ -117,10 +122,10 @@
             (toplevel ('#$:m' ('#$:values')))
             (produces))
       (each (toplevel ('#$:m' 1))
-            (toplevel ('#$:m' ('#$:' 1)))
+            (toplevel ('#$:m' ('#$:' 1)))   // TODO should this be allowed? No group in binary
             (toplevel ('#$:m' ('#$:values' 1)))
             (produces 1))
-      (then (toplevel ('#$:m' ('#$:' 1 2)))
+      (each (toplevel ('#$:m' ('#$:values' 1 2)))
             (signals "More than one value provided for parameter"))
       (each (toplevel ('#$:m' 1 2))
             (toplevel ('#$:m' 1 ('#$:values')))

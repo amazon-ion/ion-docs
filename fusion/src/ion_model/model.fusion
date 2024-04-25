@@ -25,7 +25,6 @@ Major Components:
 * [STRUCT-EE] Eexpr in field-position (struct inlining)
 
 Features:
-* [ARG-ERR] Prioritize argument-parsing errors over arity errors.
 * [TL-MACRO] Support macro-shaped arguments in TL invocations.
 * [PARAM-VALID] Do expand-time parameter validation in the macro or Transform
   * This is currently done in several places invocation-side, but makes more
@@ -909,15 +908,17 @@ Spec Issues: 1.0
             // We have both a param and more arguments
             (let [(type (ParamShape_type (ParamSpec_shape p))),
                   (card (ParamShape_card (ParamSpec_shape p))),
-                  (t    (seq_head ts)),                                    // ∈ SEexpArg
-                  (is   (expandArgs (seq_tail ps) rest r (seq_tail ts)))]
+                  (t    (seq_head ts))]                                    // ∈ SEexpArg
               (let [(vs (if (element_of t STree)
                           (expandArg   type (lower t  STree  ) r)
                           (if (not (and (element_of card OptCardinality)
                                         (= (lower card OptCardinality) EXACTLY_ONE)))
                             (expandGroup type (lower t 'STree*') r)
                             (wrong "Unexpected argument group"))))]
-                (seq_prepend (validateShape type card vs) is)))))))
+                // Separate `let` ensures args are expanded left-to-right.
+                (let [(is (expandArgs (seq_tail ps) rest r (seq_tail ts)))]
+                  // Type/cardinality validation of stream happens afterwards.
+                  (seq_prepend (validateShape type card vs) is))))))))
 
     (fn expandArg ((t ParamType) (stx 'STree') (r Environment) -> 'Value*')
       (if (element_of t Macro)
@@ -1612,18 +1613,19 @@ Spec Issues: 1.0
             // We have both a param and more arguments
             (let [(type (ParamShape_type (ParamSpec_shape p))),
                   (card (ParamShape_card (ParamSpec_shape p))),
-                  (v    (seq_head vs)),
-                  (is   (compileArgs (seq_tail ps) rest scope r (seq_tail vs)))]
+                  (v    (seq_head vs))]
               (let [(i (if (isClause v ";")
                           (if (not (and (element_of card OptCardinality)
                                         (= (lower card OptCardinality) EXACTLY_ONE)))
                             (compileGroup (clauseBody v) type scope r)
                             (wrong "Unexpected argument group"))
                          (compileArg v type scope r)))]
-                (seq_prepend
-                  (mk_fn Interpreter (env)
-                    (validateShape type card (i env)))
-                  is)))))))
+                // Separate `let` ensures args are expanded left-to-right.
+                (let [(is (compileArgs (seq_tail ps) rest scope r (seq_tail vs)))]
+                  (seq_prepend
+                    (mk_fn Interpreter (env)
+                      (validateShape type card (i env)))
+                    is))))))))
 
     (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
       (if (element_of type Macro)
