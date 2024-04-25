@@ -603,14 +603,15 @@ EB 01
 [[floats]]
 ==== Floats
 
-Float values are encoded using the IEEE-754 specification, and can be serialized in four sizes:
+Float values are encoded using the IEEE-754 specification in little-endian byte order. Floats can be serialized in
+four sizes:
 
 * 0 bits (0 bytes), representing the value 0e0 and indicated by opcode `0x6A`
-* 16 bits (2 bytes, link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[half precision]),
+* 16 bits (2 bytes in little-endian order, link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[half precision]),
 indicated by opcode `0x6B`
-* 32 bits (4 bytes, link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[single precision]),
+* 32 bits (4 bytes in little-endian order, link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[single precision]),
 indicated by opcode `0x6C`
-* 64 bits (8 bytes, link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[double precision]),
+* 64 bits (8 bytes in little-endian order, link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[double precision]),
 indicated by opcode `0x6D`
 
 Note that in the Ion data model, float values are always 64 bits. However, if a value can be losslessly serialized
@@ -633,7 +634,7 @@ in fewer than 64 bits, Ion implementations may choose to do so.
 ┌──── Opcode in range 6A-6D indicates a float
 │┌─── Low nibble B indicates a 2-byte float
 ││
-6B 42 47
+6B 47 42
    └─┬─┘
 half-precision 3.14
 ----
@@ -644,7 +645,7 @@ half-precision 3.14
 ┌──── Opcode in range 6A-6D indicates a float
 │┌─── Low nibble C indicates a 4-byte,
 ││    single-precision value.
-6C 40 49 0F DB
+6C DB 0F 49 40   
    └────┬────┘
 single-precision 3.1415927
 ----
@@ -655,7 +656,7 @@ single-precision 3.1415927
 ┌──── Opcode in range 6A-6D indicates a float
 │┌─── Low nibble D indicates an 8-byte,
 ││    double-precision value.
-6D 40 09 21 FB 54 44 2D 18
+6D 18 2D 44 54 FB 21 09 40       
    └──────────┬──────────┘
 double-precision 3.141592653589793
 ----
@@ -2220,7 +2221,7 @@ arguments.
 │     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
 │  ┌──── Opcode 0x6B indicates a 2-byte float; an IEEE-754 half-precision float follows
 │  │
-00 6B 42 47
+00 6B 47 42
       └─┬─┘
       3.14e0
 
@@ -2369,15 +2370,15 @@ Primitive types include:
 .3+|`float`
 |`float16`
 |2
-|link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[IEEE-754 half-precision floating point format]
+|link:https://en.wikipedia.org/wiki/Half-precision_floating-point_format[IEEE-754 half-precision floating point format (little-endian)]
 
 |`float32`
 |4
-|link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[IEEE-754 single-precision floating point format]
+|link:https://en.wikipedia.org/wiki/Single-precision_floating-point_format[IEEE-754 single-precision floating point format (little-endian)]
 
 |`float64`
 |8
-|link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[IEEE-754 double-precision floating point format]
+|link:https://en.wikipedia.org/wiki/Double-precision_floating-point_format[IEEE-754 double-precision floating point format (little-endian)]
 
 |`symbol`
 |`compact_symbol`
