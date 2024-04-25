@@ -1,10 +1,15 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusioncontrib/denotation/printing/unicode"
   "/ion_model/model"
+
+  (only_in "/fusion/private/io"
+    with_output_to_string
+  )
 )
 
 
-// This lets us see the model when running the test suite.
-(uniprinter Ion)
+// Ensure printing the model succeeds.
+(with_output_to_string
+  (uniprinter Ion))

@@ -32,6 +32,8 @@ in math mode.
 
 TODO
 ====
+  * For testing purposes, print to a port that discards given data.
+    * Though perhaps this can be handled by JUnit, so its retained on failure?
   * Print sequence-domain names with non-bold superscript asterisk.
   * Insert some vertical space between function definitions.
     * Perhaps: 	\\smallskip, \\medskip, \\bigskip
