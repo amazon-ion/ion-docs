@@ -105,6 +105,7 @@ Domains come in several types:
     APPLY
     B 'B?' 'B*'
     bottom_message
+    bottom_parts
     EQ
     F 'F?' 'F*'
     GT

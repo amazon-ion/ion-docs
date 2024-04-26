@@ -1,8 +1,7 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
-//  "/fusion/experimental/syntax"
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/testing"
   "/model1"
@@ -42,6 +41,11 @@
 // This may turn out to be a problem, but I don't want to hide errors in the model.
 (expect_argument_error (stamp z_val (wrong 1907)))
 (expect_argument_error (stamp (wrong 1908) z_val))
+
+(lets [(parts (sexp "base" 1 Z_0)),
+       (btm   (apply wrong parts))]
+  (check === parts (bottom_parts btm))
+  (check === "base10" (bottom_message btm)))
 
 
 "SUCCESS (bottom.test)"

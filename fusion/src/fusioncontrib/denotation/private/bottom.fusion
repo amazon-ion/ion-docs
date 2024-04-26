@@ -16,6 +16,7 @@
 
   (provide
     bottom_message
+    bottom_parts
     bottom_stack
     define_strict
     frame_line
@@ -59,16 +60,28 @@ Determines whether `v` is a bottom value, which denotes an error condition.
       "private field accessor",
     ]
     (make_record_type (quote 'record:bottom') 'record:domain_value' 2 0))
-    // The inherited domain_value_rep field holds the Bottom message.
+    // The inherited domain_value_rep field holds a sexp of message parts.
     // The added fields in this subtype are:
     //  * the procedure to apply
     //  * a sexp holding the stack frames at the time of creation
 
 
+
+  (define (bottom_parts v)
+    (unless (is_bottom v)
+      (raise_argument_error "bottom_parts" "bottom value" 0 v))
+    (domain_value_rep v))
+
   (define (bottom_message v)
+    '''
+Constructs a string from the bottom's message parts.
+Each part is converted to text as per `display`.
+    '''
     (unless (is_bottom v)
       (raise_argument_error "bottom_message" "bottom value" 0 v))
-    (domain_value_rep v))
+    (apply display_to_string
+      (map (|m| (if (is_base_domain_value m) (eject m) m))
+        (bottom_parts v))))
 
   (define (bottom_stack v)
     (bottom_element v 1))
@@ -79,16 +92,17 @@ Determines whether `v` is a bottom value, which denotes an error condition.
     (wrong message ...+)
 
 Returns a bottom value with the given message content.
-The result's message is constructed as per `display_to_string`.
+The message parts are retained after ejecting any base-domain values.
     '''
     (lambda msgs
       (letrec [(bottom_val
                  (bottom_ctor
                    Bottom
-                   (apply display_to_string
-                     (map (|m| (if (is_base_domain_value m) (eject m) m))
-                          msgs))
-                   // Here's the record-proc implementation: return ourself
+                   msgs
+                   // When called as a procedure, a bottom value returns itself.
+                   // This is so that ⊥ ∈ F and every other function domain.
+                   // If a function-creation fails, then applying that function
+                   // will fail the same way.
                    (lambda args bottom_val)
                    // PRIVATE API!
                    (current_continuation_mark_sexp stack_mark_key)))]

@@ -13,10 +13,10 @@
     (dom Single = (= SINGLE)   "singleton")
     (dom Enum   = (= E1 E2 E3) "enumeration")
 
-    (dom Z = (^ is_int)       "Integers")
+    (dom Z = (^ is_int)       "Integers")        // TODO: OBSOLETE
     (dom D = (^ is_decimal)   "Decimals")
     (dom Flt = (^ is_float)   "Floats")
-    (dom S = (^ is_string)    "Strings")
+    (dom S = (^ is_string)    "Strings")         // TODO: OBSOLETE
     (dom T = (^ is_timestamp) "Timestamps")
 
     (dom Exact = (+ Z D))
