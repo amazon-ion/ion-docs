@@ -57,6 +57,7 @@ DSL Design:
     (only_in "/ion_model/testing"
       eject_Values
       expand_doc
+      pretty_bottom_message
     )
   )
 
@@ -117,7 +118,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (display "Expected: ")
             (writeln expected_data)
             (display "Message:  ")
-            (displayln (bottom_message Values)))))
+            (displayln (pretty_bottom_message Values)))))
       (let [(actual_data (eject_Values Values))]
         (unless (=== expected_data actual_data)
           (raise_contract_error (quote produces)
@@ -135,7 +136,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
     // TODO arity and typecheck
     (let [(expected (syntax_unwrap (syntax_get clause_stx 1)))]
       (if (is_bottom Values)
-        (let [(actual (bottom_message Values))]
+        (let [(actual (pretty_bottom_message Values))]
           (unless (and (string_ends_with expected ":")
                        (string_starts_with actual expected))
             (unless (=== expected actual)

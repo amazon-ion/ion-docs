@@ -25,9 +25,13 @@ We "tunnel" special tokens as follows:
     "/fusion/experimental/string"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/printing"
+    "/fusioncontrib/denotation/printing/unicode"
     "/fusioncontrib/denotation/testing"
     "/fusioncontrib/denotation/private/util"
     "/ion_model/model"
+
+    (only_in "/fusion/private/io" with_output_to_string)
   )
 
   (provide (all_defined_out))
@@ -258,6 +262,19 @@ We "tunnel" special tokens as follows:
     (unless (element_of values 'Value*')
       (raise_argument_error eject_Values "Value*" 0 values))
     (map eject_Value (seq_to_sexp values)))
+
+
+  (define (is_Value v)
+    (element_of v Value))
+
+  (define message_printer
+    (make_printer uniprinter
+      // Normally strings are written as data; here we display their content.
+      (type_method is_string pp_display)
+      (type_method is_Value (pp_xform eject_Value))))
+
+  (define (pretty_bottom_message btm)
+    (with_output_to_string (map message_printer (bottom_parts btm))))
 
 
   //============================================================================
