@@ -1,0 +1,98 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+// Tests template language (TL) macro invocations with macro-shape args.
+
+(require "/ion_model/testing/dsl")
+
+
+(in11 (encoding (module S
+                  (macro_table (macro singleShape (v) (annotate "single" v))
+                               (macro oneSingle  ((v singleShape!))   [v])
+                               (macro optSingle  ((v singleShape?))   [v])
+                               (macro plusSingle ((v singleShape+))   [v])
+                               (macro starSingle ((v singleShape*))   [v])
+                               (macro restSingle ((v singleShape...)) [v]))))
+
+      // Compile-time failures
+      (each (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:oneSingle' /*ERR*/)))))
+            (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:optSingle' (/*ERR*/))))))
+            (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:plusSingle' /*ERR*/)))))
+            (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:plusSingle' (/*ERR*/))))))
+            (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:plusSingle' (; (/*ERR*/)))))))
+            (signals "Too few arguments"))
+      (each (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:oneSingle' (1 2))))))
+            (encoding (retain *)
+                      (module user
+                        (macro_table (macro _ [] (':S:optSingle' (1 2))))))
+            (signals "Too many arguments")) // ... to Single-shaped arg
+
+      // Expansion-time
+      (then (encoding (retain *)
+                      (module user
+                        (use S)
+                        (macro_table (macro mOne   [(v...)] (oneSingle (v)))
+                                     (macro mOpt0  [(v...)] (optSingle (;)))
+                                     (macro mOpt1  [(v...)] (optSingle (v)))
+                                     (macro mPlus0 [(v...)] (plusSingle (;)))
+                                     (macro mPlus1 [(v...)] (plusSingle (v)))
+                                     (macro mPlus2 [(v...)] (plusSingle (; (v))))
+                                     (macro mPlus3 [(v...)] (plusSingle (; (v) (v))))
+                                     (macro mStar0 [(v...)] (starSingle (;)))
+                                     (macro mStar1 [(v...)] (starSingle (v)))
+                                     (macro mStar2 [(v...)] (starSingle (; (v))))
+                                     (macro mStar3 [(v...)] (starSingle (; (v) (v))))
+                                     (macro mRest0 [(v...)] (restSingle))
+                                     (macro mRest1 [(v...)] (restSingle (v)))
+                                     (macro mRest2 [(v...)] (restSingle (v) (v)))
+                      ))
+                      (macro_table user))
+            (each (toplevel ('#$:mOpt0'))
+                  (toplevel ('#$:mStar0'))
+                  (toplevel ('#$:mRest0'))
+                  (toplevel ('#$:mRest0' 1))
+                  (toplevel ('#$:mRest0' 1 2))
+                  (produces []))
+            (each (toplevel ('#$:mOne'   1))
+                  (toplevel ('#$:mOpt1'  1))
+                  (toplevel ('#$:mPlus1' 1))
+                  (toplevel ('#$:mPlus2' 1))
+                  (toplevel ('#$:mStar1' 1))
+                  (toplevel ('#$:mStar2' 1))
+                  (toplevel ('#$:mRest1' 1))
+                  (produces [single::1]))
+            (each (toplevel ('#$:mPlus3' 1))
+                  (toplevel ('#$:mStar3' 1))
+                  (toplevel ('#$:mRest2' 1))
+                  (produces [single::1, single::1]))
+            (each (toplevel ('#$:mOne'))
+                  (toplevel ('#$:mOpt1'))
+                  (toplevel ('#$:mPlus0'))
+                  (toplevel ('#$:mPlus1'))
+                  (toplevel ('#$:mPlus2'))
+                  (toplevel ('#$:mPlus3'))
+                  (toplevel ('#$:mStar1'))
+                  (toplevel ('#$:mStar2'))
+                  (toplevel ('#$:mStar3'))
+                  (signals "No value provided for parameter"))
+            (each (toplevel ('#$:mOne'   1 2))
+                  (toplevel ('#$:mOpt1'  1 2))
+                  (toplevel ('#$:mPlus1' 1 2))
+                  (toplevel ('#$:mPlus2' 1 2))
+                  (toplevel ('#$:mPlus3' 1 2))
+                  (toplevel ('#$:mStar1' 1 2))
+                  (toplevel ('#$:mRest1' 1 2))
+                  (toplevel ('#$:mRest2' 1 2))
+                  (signals "More than one value provided for parameter")))
+)

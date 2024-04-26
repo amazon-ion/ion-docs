@@ -25,7 +25,6 @@ Major Components:
 * [STRUCT-EE] Eexpr in field-position (struct inlining)
 
 Features:
-* [TL-MACRO] Support macro-shaped arguments in TL invocations.
 * [PARAM-VALID] Do expand-time parameter validation in the macro or Transform
   * This is currently done in several places invocation-side, but makes more
     sense to happen once, macro-side.
@@ -1630,8 +1629,9 @@ Spec Issues: 1.0
 
     (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
       (if (element_of type Macro)
-        // TODO:[TL-MACRO] support macro shapes
-        (wrong "TL macro shapes not implemented")
+        (if (element_of (Value_content v) Sexp)
+          (interp_macro (Value_seqElements v) (lower type Macro) scope r)
+          (wrong "Expected sexp with macro arguments"))
         (interp_template v scope r)))
 
     // Like interp_template... but each element is shaped by the parameter type.
