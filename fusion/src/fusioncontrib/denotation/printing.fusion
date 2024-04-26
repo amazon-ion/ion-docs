@@ -1,3 +1,5 @@
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
+
 (module display "/fusion"
   '''
 Customizable pretty-printing framework for denotational models (and,
@@ -82,6 +84,7 @@ References:
     pp_ternary
     pp_unary
     pp_write
+    pp_xform
     ppmod_multiline
     ppmod_oneline
     tuple_domain_field_names
@@ -203,6 +206,9 @@ parentheses.
 Contruct a customized pretty-printer, given configuration clauses.
 
 Sequences in the arguments are flattened recursively.
+
+The resulting printer is a function that accepts one argument and renders it to
+the current output port.  By default, most data is written as per `display`.
     '''
     (lambda clauses
       (lets [(base (when (is_model_printer (head clauses)) (head clauses))),
@@ -219,6 +225,8 @@ Sequences in the arguments are flattened recursively.
                          (type_method is_symbol            pp_write)
                          // For any syntax forms, unwrap and try again.
                          (type_method is_syntax            pp_syntax)
+                         // TODO Document why this doesn't use pp_write by default.
+                         //  That would eliminate the above string/symbol
                          (|v| pp_display)))))]
         (model_printer (|v| (pp_print v env)) env))))
 
@@ -332,8 +340,8 @@ clauses.
 
   (define (pp_symbol escaper)
     '''
-Produces a print method for symbols that uses the given `escaper` to prepare
-proprocess the symbol's text.  The `escaper` must accept a symbol and return a
+Produces a print method for symbols that uses the given `escaper` to preprocess
+the symbol's text.  The `escaper` must accept a symbol and return a
 string whose content is printed as-is.
 
 To customize the rendering of specific symbols, configure the printer with
@@ -380,6 +388,11 @@ To customize the rendering of specific symbols, configure the printer with
   //============================================================================
   // Printing Method Factories
   // Each creates a printing method.
+
+
+  (define (pp_xform xform)
+    (|v e| (pp_print (xform v) e)))
+
 
   (define (pp_unary beg end)
     '''
