@@ -1480,9 +1480,11 @@ Spec Issues: 1.0
               (interpSF_if_multi (clauseBody v) scope macroEnv)
               (if (isClause v "for")
                 (interpSF_for (clauseBody v) scope macroEnv)
-                (if (not (seq_is_empty (Value_seqElements v)))
-                  (interp_macro (Value_seqElements v) scope macroEnv)
-                  (wrong "Malformed template: " v))))))))
+                (let [(vs (Value_seqElements v))]
+                  (if (not (seq_is_empty vs))
+                    (let [(m (interp_macroref (seq_head vs) macroEnv))]
+                      (interp_macro (clauseBody v) m scope macroEnv))
+                    (wrong "Malformed template: " v)))))))))
 
 
     // Special forms
@@ -1568,14 +1570,13 @@ Spec Issues: 1.0
     (fn Interpret_void Interpreter (env)
       (seq 'Value*'))
 
-    (fn interp_macro ((vs 'Value*') (scope 'Unicode*') (r MacroEnv) -> Interpreter)
-      (let [(m (interp_macroref (seq_head vs) r))]
-        (let [(f (Macro_xform     m)),
-              (s (Macro_signature m))]
-          (let [(is (compileArgs (Signature_params s) (Signature_rest s) scope r (seq_tail vs)))]
-            (mk_fn Interpreter (env)
-              (let [(as (map 'Value**' (lambda (i) (i env)) is))]
-                (f as)))))))
+    (fn interp_macro ((vs 'Value*') (m Macro) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
+      (let [(f (Macro_xform     m)),
+            (s (Macro_signature m))]
+        (let [(is (compileArgs (Signature_params s) (Signature_rest s) scope r vs))]
+          (mk_fn Interpreter (env)
+            (let [(as (map 'Value**' (lambda (i) (i env)) is))]
+              (f as))))))
 
     // TODO Not a great name; doesn't return Interpreter and we'll use this elsewhere.
     (fn interp_macroref ((v Value) (r MacroEnv) -> Macro)
