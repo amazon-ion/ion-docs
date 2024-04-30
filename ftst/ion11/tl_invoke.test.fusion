@@ -24,6 +24,29 @@
       (then (toplevel ('#$:n'))
             (produces "local")))
 
+// Local macros shadow `use`d macros
+(in11 (encoding
+          (module M0
+            (macro_table (macro shadow [] "M0")))
+          (module M1
+            (use M0)
+            (macro_table (macro m0     [] (shadow))
+                         (macro shadow [] "M1")
+                         (macro m1     [] (shadow))))
+          (macro_table M0 M1))
+      (then (toplevel ('#$:m0') ('#$:m1'))
+            (produces     "M0"      "M1")))
+
+(in11 (encoding
+          (module M0
+            (macro_table (macro ambig [] "M0")))
+          (module M1
+            (macro_table (macro ambig [] "M1")))
+          (module M2
+            (use M0 M1)
+            (macro_table (macro m     [] (ambig)))))
+      (signals "Ambiguous macro-ref: ambig"))
+
 
 // Qualified references
 
