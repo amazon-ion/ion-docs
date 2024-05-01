@@ -646,6 +646,15 @@ null.sexp         // A null S-expression value
 (a.b;)  ( 'a' '.' 'b' ';')  // Equivalent; four symbols
 ```
 
+Note that comments are allowed within S-expressions and have higher precedence
+than operators, therefore `//` and `/*` denote the start of comment blocks. 
+Users are advised to avoid them as operators, though they can be used when
+escaped with single quotes:
+```
+(a/* word */b)       // An S-expression with two symbols and a comment
+(a '/*' word '*/' b) // An S-expression with five symbols
+```
+
 Although Ion S-expressions use a syntax similar to Lisp expressions, Ion does
 not define their interpretation or any semantics at all, beyond the pure
 sequence-of-values data model indicated above.
