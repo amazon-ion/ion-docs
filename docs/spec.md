@@ -462,8 +462,6 @@ identifiers can be juxtaposed without whitespace:
 (a==b&&c==d)     // S-expression with seven symbols
 ```
 
-
-
 Note that the data model does not distinguish between identifiers,
 operators, or other symbols, and that -- as always -- the binary format
 does not retain whitespace.
