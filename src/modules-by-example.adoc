@@ -352,8 +352,8 @@ in full context:
         [a, b])))
   (*macro_table* geo)
 )
-(:point 17 28)
-(:line (1 2) (3 4))
+(:point 17, 28)
+(:line (1; 2); (3; 4))
 ----
 
 This `geo` module defines macros instead of symbols, using the `*macro*` definition syntax
@@ -377,7 +377,7 @@ system macros so user-defined macros start at address zero.  In the document abo
 macro in the first module is `point`, so we could write:
 
 ----
-(:0 17 28) ⇒ {x:17, y:28}
+(:0 17; 28) ⇒ {x:17, y:28}
 ----
 
 Further, the local macro table tracks the names of installed modules, so that macros can be
@@ -388,10 +388,10 @@ so `:geo:0` resolves to the macro at address 0 of module `geo`, which is `point`
 All told, Ion text offers four variants of macro references.  Each of these lines is equivalent:
 
 ----
-(:0         17 28)  (:1        (1 2) (3 4))
-(:geo:0     17 28)  (:geo:1    (1 2) (3 4))
-(:geo:point 17 28)  (:geo:line (1 2) (3 4))
-(:point     17 28)  (:line     (1 2) (3 4))
+(:0         17; 28)  (:1        (1; 2); (3; 4))
+(:geo:0     17; 28)  (:geo:1    (1; 2); (3; 4))
+(:geo:point 17; 28)  (:geo:line (1; 2); (3; 4))
+(:point     17; 28)  (:line     (1; 2); (3; 4))
 ----
 
 This topic is more interesting when more than one module is involved, so let's table this
@@ -491,8 +491,8 @@ We now have a problem: the names `point` and `line` are ambiguous, referring to 
 macros each.  Thankfully, we can use qualified references to disambiguate:
 
 ----
-(:geo:point 17 28)  (:g3d:point 20 18 45)
-(:geo:0     17 28)  (:g3d:0     20 18 45) // Equivalent
+(:geo:point 17; 28)  (:g3d:point 20; 18; 45)
+(:geo:0     17; 28)  (:g3d:0     20; 18; 45) // Equivalent
 ----
 
 In fact, we _must_ do so.  An E-expression with an un unqualified macro name is erroneous when
@@ -500,7 +500,7 @@ the name is ambiguous, meaning that two installed modules map it to different ma
 
 [{nrm}]
 ----
-(:point 17 28) ⇒ **error**: ':point' is ambiguous, exported by 'geo' and 'g3d'.
+(:point 17; 28) ⇒ **error**: ':point' is ambiguous, exported by 'geo' and 'g3d'.
 ----
 
 Another thing to note in the directive used above is that the `**load** g3d` declaration
@@ -592,7 +592,7 @@ Regardless of how `scatterplot` is declared, we know how to invoke it in a docum
   (*load* chart "com.example.charts" 1)
   (*macro_table* chart)
 )
-(:scatterplot (3 17) (395 23) (15 48) (2023 5))
+(:scatterplot (3; 17) (395; 23) (15; 48) (2023; 5))
 ----
 
 While the signature of `point` is now implicit in the signature of `scatterplot`, and while the
@@ -601,8 +601,8 @@ the module containing it is in scope within the document:
 
 [{nrm}]
 ----
-(:point 25 10)   ⇒ **error**: no installed module exports a macro named 'point'.
-(:geo:point 2 1) ⇒ **error**: no module named 'geo' is installed.
+(:point 25; 10)   ⇒ **error**: no installed module exports a macro named 'point'.
+(:geo:point 2; 1) ⇒ **error**: no module named 'geo' is installed.
 ----
 
 In particular, `geo` is not in the encoding environment's available modules, since it wasn't
@@ -719,8 +719,8 @@ available to consumers of the module, and for that they can be exported:
       (*export* point2 point3)))
   (*macro_table* local geo g3d)
 )
-(:point2 93 5)
-(:point3 0 12 33)
+(:point2 93; 5)
+(:point3 0; 12; 33)
 ----
 
 <1> Modules loaded at the directive level are visible within inline module bodies.
@@ -840,6 +840,6 @@ single-byte opcodes by ensuring they show up first among the installed macros:
       (*export* point tri)))
   (*macro_table* priority geo g3d)
 )
-(:0 101 17 5)                            // invoke :g3d:point
-(:1 (101 17 5) (101 17 20) (100 17 20))  // invoke :g3d:tri
+(:0 101; 17; 5)                                  // invoke :g3d:point
+(:1 (101; 17; 5); (101; 17; 20); (100; 17; 20))  // invoke :g3d:tri
 ----

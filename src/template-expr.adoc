@@ -166,11 +166,11 @@ one value, otherwise expands _template~else~_.
 
 [{nrm}]
 ----
-(:decimal_constraint (3) (-1))     ⇒ { precision: 3, exponent: -1 }
-(:decimal_constraint (1 5) (-5 0)) ⇒ { precision: range::[1, 5],
+(:decimal_constraint 3; -1)       ⇒ { precision: 3, exponent: -1 }
+(:decimal_constraint 1 5; -5 0)   ⇒ { precision: range::[1, 5],
                                        exponent: range::[-5, 0] }
-(:decimal_constraint (:) (3 max))  ⇒ { exponent: range::[3, max] }
-(:decimal_constraint (1) (:))      ⇒ { precision: 1 }
+(:decimal_constraint ; 3 99)      ⇒ { exponent: range::[3, 99] }
+(:decimal_constraint 1)           ⇒ { precision: 1 }
 ----
 
 

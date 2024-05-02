@@ -195,8 +195,8 @@ Example:
 ----
 (*macro* ts_today
   \((hour uint8) (minute uint8) (seconds_millis uint32))
-  (make_timestamp 2022 04 28 hour minute
-    (decimal seconds_millis -3) 0))
+  (make_timestamp 2022; 4; 28; hour; minute;
+    (decimal seconds_millis; -3) 0))
 ----
 
 
@@ -204,7 +204,7 @@ Example:
 
 [{nrm}]
 ----
-(annotate (ann [text]*) value) \-> any
+(annotate (ann text*) value) \-> any
 ----
 
 Produces the `value` prefixed with the annotations ``ann``s.
@@ -212,7 +212,7 @@ Each `ann` must be a non-null, unannotated string or symbol.
 
 [{nrm}]
 ----
-(:annotate ["a2"] a1::true) => a2::a1::true
+(:annotate "a2"; a1::true) => a2::a1::true
 ----
 
 

@@ -93,7 +93,7 @@ This macro has a signature that declares two parameters, named `a` and `c`, and 
 therefore accepts two arguments when invoked.
 
 ----
-(:price 99 USD) ⇒ { amount: 99, currency: USD }
+(:price 99; USD) ⇒ { amount: 99, currency: USD }
 ----
 
 NOTE: We are careful to distinguish between the
@@ -118,7 +118,7 @@ expression.  Here’s a silly macro to illustrate:
 (*macro* reverse [a, b] [b, a])
 ----
 ----
-(:reverse first 1990) ⇒ [1990, first]
+(:reverse first; 1990) ⇒ [1990, first]
 ----
 
 The sub-expressions in these templates demonstrate that the expression language treats symbols as
@@ -129,7 +129,7 @@ expansion they are “filled in” with the values supplied by the invocation of
 These names are part of the macro language that have no relation to data encoded using the macro:
 
 ----
-(:reverse c {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, c]
+(:reverse c; {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, c]
 ----
 
 Symbols in an E-expression are _not_ part of the expression language and do not reference macro
@@ -139,8 +139,8 @@ From the point of view of ``reverse``’s template, the inputs are literal data.
 E-expressions can nest, so we could also encode the same data using `price`:
 
 ----
-(:reverse first (:price a c))
-  ⇒ (:reverse first {amount:a, currency:c})
+(:reverse first; (:price a, c))
+  ⇒ (:reverse first, {amount:a, currency:c})
   ⇒ [{amount:a, currency:c}, first]
 ----
 
@@ -233,13 +233,13 @@ always the case. The `*literal*` form makes this clear:
 
 [{nrm}]
 ----
-(*macro* USD_price [dollars] (price dollars (*literal* USD)))
+(*macro* USD_price [dollars] (price dollars; (*literal* USD)))
 ----
 ----
 (:USD_price 12.99) ⇒ { amount: 12.99, currency: USD }
 ----
 
-In this template, we can’t just write `(price dollars USD)` because the symbol `USD` would be
+In this template, we can’t just write `(price dollars; USD)` because the symbol `USD` would be
 treated as an unbound variable reference and a syntax error, so we turn it into literal data by
 “escaping” it with `*literal*`.
 
@@ -402,9 +402,10 @@ returns too-few or too-many values.
 
 [{nrm}]
 ----
-(:reverse (:values 5 USD))   ⇒ _**error**: 'reverse' expects 2 arguments, given 1_
-(:reverse 5 (:values) USD)   ⇒ _**error**: 'reverse' expects 2 arguments, given 3_
-(:reverse (:values 5 6) USD) ⇒ _**error**: argument 'a' expects 1 value, given 2_
+(:reverse (:values 5 USD))     ⇒ _**error**: 'reverse' has 2 parameters, given 1 argument series_
+(:reverse 5; (:values); USD)   ⇒ _**error**: 'reverse' has 2 parameters, given 3 argument series_
+(:reverse 5 6; USD)            ⇒ _**error**: parameter 'a' expects 1 argument, given 2_
+(:reverse (:values 5 6); USD)  ⇒ _**error**: parameter 'a' expects 1 value, given 2_
 ----
 
 In this example, the parameters expect exactly one argument, producing exactly one value.  When
@@ -498,7 +499,7 @@ reference, so each individual value from the `amounts` is bound to the name `amt
 `price` invocation is expanded.
 
 ----
-(:prices GBP 10 9.99 12.)
+(:prices GBP; 10 9.99 12.)
   ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP} {amount:12., currency:GBP}
 ----
 
@@ -517,7 +518,7 @@ becomes empty.
 <<eg:zero-or-more>>.
 
 ----
-(:zip (:values 1 2 3) (:values a b))
+(:zip 1 2 3; a b)
   ⇒ [1, a] [2, b]
 ----
 
@@ -549,14 +550,13 @@ argument:
 ----
 
 The special form `(:)` is an <<eg:group,empty argument group>>, similar to
-`(:void)` but used specifically to express the absence of an argument:
+`(:void)` but used specifically to express the absence of arguments for a parameter:
 
 ----
 (:int_list (:)) ⇒ []
-(:int_list 1 (:) 2) ⇒ [1, 2]
 ----
 
-TIP: While `void` and `values` both produce the empty stream, the former is preferred for
+TIP: While `(:void)` and `(:values)` both produce the empty stream, the former is preferred for
 clarity of intent and terminology.
 
 
@@ -605,8 +605,8 @@ argument as a way to denote an absent parameter.
 Since the scale is voidable, we can pass it void:
 
 ----
-(:temperature 96 F)    ⇒ {degrees:96, scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283}
+(:temperature 96; F)    ⇒ {degrees:96, scale:F}
+(:temperature 283; (:)) ⇒ {degrees:283}
 ----
 
 Note that the result’s `scale` field has disappeared because no value was provided.  It would be
@@ -620,8 +620,8 @@ detect void:
   {degrees: degrees, scale: (*if_void* scale (*literal* K) scale)})
 ----
 ----
-(:temperature 96 F)    ⇒ {degrees:96,  scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283, scale:K}
+(:temperature 96; F)    ⇒ {degrees:96,  scale:F}
+(:temperature 283; (:)) ⇒ {degrees:283, scale:K}
 ----
 
 The `*if_void*` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
@@ -660,9 +660,10 @@ expression that produces the desired values:
 
 [{nrm}]
 ----
-(:prices (:) JPY)          ⇒ _void_
-(:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
-(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:); JPY)      ⇒ _void_
+(:prices ; JPY)         ⇒ _void_
+(:prices 54; CAD)       ⇒ {amount:54, currency:CAD}
+(:prices 10 9.99; GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
 Here we use a non-empty <<eg:group,empty argument group>> `(: ...)` to delimit
@@ -684,9 +685,9 @@ the resulting stream must produce at least one value.  To continue using our `pr
 
 [{nrm}]
 ----
-(:prices (:) JPY) ⇒ _**error**: at least one value expected for + parameter_
-(:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
-(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices ; JPY)         ⇒ _**error**: at least one argument expected for + parameter_
+(:prices 54; CAD)       ⇒ {amount:54, currency:CAD}
+(:prices 10 9.99; GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
 A macro's final parameter can use a variant of rest parameters with one-or-more cardinality,
@@ -737,7 +738,7 @@ The parameter `amount` accepts any number of **`number`**s.
 It's easy to provide exactly one:
 
 ----
-(:prices 12.99 GBP) ⇒ {amount:12.99, currency:GBP}
+(:prices 12.99; GBP) ⇒ {amount:12.99, currency:GBP}
 ----
 
 To provide a non-singleton stream of values, use an _argument group_.
@@ -746,9 +747,9 @@ invocation, but without a macro reference:
 
 [{nrm}]
 ----
-(:prices (:) GBP)       ⇒ _void_
-(:prices (: 1) GBP)     ⇒ {amount:1, currency:GBP}
-(:prices (: 1 2 3) GBP) ⇒ {amount:1, currency:GBP}
+(:prices ; GBP)         ⇒ _void_
+(:prices 1; GBP)        ⇒ {amount:1, currency:GBP}
+(:prices 1 2 3; GBP)    ⇒ {amount:1, currency:GBP}
                           {amount:2, currency:GBP}
                           {amount:3, currency:GBP}
 ----
@@ -760,7 +761,7 @@ single stream, and the expander verifies that each value on that stream is accep
 parameter’s declared type.
 
 ----
-(:prices (: 1 (:values 2 3) 4) GBP) ⇒ {amount:1, currency:GBP}
+(:prices 1 (:values 2 3) 4; GBP)    ⇒ {amount:1, currency:GBP}
                                       {amount:2, currency:GBP}
                                       {amount:3, currency:GBP}
                                       {amount:4, currency:GBP}
@@ -798,14 +799,14 @@ Since `d`, `e`, and `f` are all voidable, they can be omitted by invokers.  But 
 `a` and `b` must always be present, at least as an empty group:
 
 ----
-(:optionals (:) (:) "value for c") ⇒ ["value for c"]
+(:optionals ; ; "value for c") ⇒ ["value for c"]
 ----
 
 Now `c` receives the string `"value for c"` while the other parameters are all void.
 If we want to provide `e`, then we must also provide a group for `d`:
 
 ----
-(:optionals (:) (:) "value for c" (:) "value for e")
+(:optionals (:); (:); "value for c"; (:); "value for e")
   ⇒ ["value for c", "value for e"]
 ----
 
@@ -859,7 +860,7 @@ To define a tagless parameter, just declare one of the primitive types:
   {x: x, y: y})
 ----
 ----
-(:point 3 17) ⇒ {x:3, y:17}
+(:point 3; 17) ⇒ {x:3, y:17}
 ----
 
 The type constraint has no real benefit here in text, as primitive types aim to improve the binary
@@ -870,9 +871,9 @@ arguments cannot be expressed using macros, like we’ve done before:
 
 [{nrm}]
 ----
-(:point null.int 17)   ⇒ _**error**: primitive var_int does not accept nulls_
-(:point a::3 17)       ⇒ _**error**: primitive var_int does not accept annotations_
-(:point (:values 1) 2) ⇒ _**error**: cannot use macro for a primitive argument_
+(:point null.int; 17)   ⇒ _**error**: primitive var_int does not accept nulls_
+(:point a::3; 17)       ⇒ _**error**: primitive var_int does not accept annotations_
+(:point (:values 1); 2) ⇒ _**error**: cannot use macro for a primitive argument_
 ----
 
 While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
@@ -987,7 +988,7 @@ as needed:
   { points: [points], x_label: x_label, y_label: y_label })
 ----
 ----
-(:scatterplot (: (3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
+(:scatterplot (3 17) (395 23) (15 48) (2023 5); "hour"; "widgets")
   ⇒
   {
     points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
@@ -1001,14 +1002,14 @@ and you can't use a macro invocation as an _element_ of an argument group:
 
 [{nrm}]
 ----
-(:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
-  ⇒ _**error**: Argument group expected, found :make_points_
+(:scatterplot (:make_points 3 17 395 23 15 48 2023 5); "hour"; "widgets")
+  ⇒ _**error**: Implicit macro invocation expected, found :make_points_
 
-(:scatterplot (: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
-  ⇒ _**error**: sexp expected with args for 'point', found :make_points_
+(:scatterplot (3 17) (:make_points 395 23 15 48) (2023 5); "hour"; "widgets")
+  ⇒ _**error**: Implicit macro invocation expected with args for 'point', found :make_points_
 
-(:scatterplot (: (3 17) (:point 395 23) (15 48) (2023 5)) "hour" "widgets")
-  ⇒ _**error**: sexp expected with args for 'point', found :point_
+(:scatterplot (3 17) (:point 395 23) (15 48) (2023 5); "hour"; "widgets")
+  ⇒ _**error**: Implicit macro invocation expected with args for 'point', found :point_
 ----
 
 This limitation mirrors the binary encoding, where both the argument group and the individual
