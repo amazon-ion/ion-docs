@@ -87,6 +87,15 @@
 (check_Signature_fail "Unexpected element in param-spec:" (quote ((v! int))))
 
 
+// Explicit types
+(check_Signature [('param!' "v" ANY)]
+  (quote [(v any)]))
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
+  (quote [v, (w any)]))
+(check_Signature [('param!' "v" UINT8), ('param*' "w" UINT8)]
+  (quote [(v uint8), (w uint8*)]))
+
+
 // Explicit exactly-one cardinality
 (check_Signature [('param!' "v" ANY)]
   (quote [(v!)]))

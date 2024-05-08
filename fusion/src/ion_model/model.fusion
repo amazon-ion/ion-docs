@@ -7,6 +7,7 @@ A denotational semantic model of Ion.
 TODO
 ----
 Terminology/Readability:
+* Refactor cardinality constants as done with types?
 * The names around "document symbols" don't read well in prose. "local symbols"
   might be better but that requires careful editing to keep "local" precise.
 * Figure out the proper name for `I`.  N? Z?
@@ -62,6 +63,7 @@ Features:
 * [ALIAS] Macro aliases; main impact is inability to import/rename/export macros.
 * [USE-LOAD] Nested (use (load ...)) combination.
 * [IMPORT] `import` clauses for both directive and module body
+* [DATA-TYPES] Implement missing data types: Decimal Float Timestamp Blob Clob
 
 
 Defects:
@@ -143,6 +145,7 @@ Spec Issues: 1.0
     (dom 'Value**' = (** 'Value*'))
 
     (dom Content   = (+ Symbol List Sexp Struct NullNull Bool Int String
+                        // TODO:[DATA-TYPES]
                         /*Decimal Float Timestamp Blob Clob*/))
 
 
@@ -941,19 +944,19 @@ Spec Issues: 1.0
 
 
     (fn validateShape ((t ParamType) (c Cardinality) (vs 'Value*') -> 'Value*')
-      // TODO:[PARAM-TYPE]
-      (if (element_of c OptCardinality)
-        (if (> (seq_length vs) 1)
-          (wrong "More than one value provided for parameter")
-          (if (and (= (lower c OptCardinality) EXACTLY_ONE)
+      (map 'Value*' (ParamType_validate t)
+        (if (element_of c OptCardinality)
+          (if (> (seq_length vs) 1)
+            (wrong "More than one value provided for parameter")
+            (if (and (= (lower c OptCardinality) EXACTLY_ONE)
+                     (= (seq_length vs) 0))
+              (wrong "No value provided for parameter")
+               vs))
+          (if (and (= (lower c SeqCardinality) ONE_OR_MORE)
                    (= (seq_length vs) 0))
             (wrong "No value provided for parameter")
-            vs))
-        (if (and (= (lower c SeqCardinality) ONE_OR_MORE)
-                 (= (seq_length vs) 0))
-          (wrong "No value provided for parameter")
-          // ZERO_OR_MORE is handled implicitly; it always passes.
-          vs)))
+            // ZERO_OR_MORE is handled implicitly; it always passes.
+            vs))))
 
 
     //==========================================================================
@@ -1269,11 +1272,15 @@ Spec Issues: 1.0
         (compile_paramCard vs u ANY)
         (if (element_of (Value_content (seq_head vs)) Symbol)
           (let [(u1 (Value_symtext (seq_head vs)))]
-            (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
-              // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
-              (let [(m (interp_macroref (seq_head vs) r))]
-                (compile_paramCard (seq_tail vs) u (macroType m)))
-              (compile_paramCard vs u ANY)))
+            (let [(t (findParamType u1))]
+              (if (opt_is_present t)
+                // The symbol names a built-in type
+                (compile_paramCard (seq_tail vs) u (opt_value t))
+                (if (looksLikeMacroRef u1)
+                  (let [(m (interp_macroref (seq_head vs) r))]
+                    (compile_paramCard (seq_tail vs) u (macroType m)))
+                  // Not recognized as a type, ignore it and look for cardinality.
+                  (compile_paramCard vs u ANY)))))
           (wrong "Unexpected element in param-spec: " (seq_head vs)))))
 
     (fn compile_paramCard ((vs 'Value*') (u Unicode) (t ParamType) -> ParamSpec)
@@ -1595,6 +1602,12 @@ Spec Issues: 1.0
     //==========================================================================
     // Parameter Types
 
+    (fn findParamType ((u Unicode) -> 'ParamType?')
+      (if (= u "any") (opt 'ParamType?' ANY)
+        (if (= u "uint8") (opt 'ParamType?' UINT8)
+          (opt 'ParamType?'))))
+
+
     (const ANY
       (let [(expand   (mk_fn ArgExpander (stx r)
                         (expand_STree stx r))),
@@ -1604,6 +1617,28 @@ Spec Issues: 1.0
             (validate (mk_fn ArgValidator (v)
                         // Nothing to validate; accept ANYthing.
                         v))]
+        (tuple ParamType expand compile validate)))
+
+    (const UINT8
+      (let [(expand   (mk_fn ArgExpander (stx r)
+                        (if (element_of stx SEexp)
+                          (wrong "E-expression not allowed for argument of tagless encoding")
+                          (if (not (seq_is_empty (SValue_annots (lower stx SValue))))
+                            (wrong "Annotation not allowed for argument of tagless encoding")
+                            (let [(c (SValue_content (lower stx SValue)))]
+                              (if (element_of c I)
+                                (let [(i (lower c Int I))]
+                                  (if (and (<= 0 i) (<= i 255))
+                                    (expand_STree stx r)
+                                    (wrong "Invalid uint8 argument")))
+                                (wrong "Invalid uint8 argument"))))))),
+            (compile  (mk_fn ArgCompiler (argExpr scope r)
+                        // Primitive parameter type; any template is allowed.
+                        (interp_template argExpr scope r))),
+            (validate (mk_fn ArgValidator (v)
+                        (if (element_of (Value_content v) Int)
+                          v
+                         (wrong "Parameter value is not an int"))))]
         (tuple ParamType expand compile validate)))
 
 
