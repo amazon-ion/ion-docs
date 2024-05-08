@@ -25,6 +25,8 @@ documented by https://github.com/amazon-ion/ion-tests/pull/89
 TODOs
 =====
 Implementation:
+  * In `each` (at least) the fragments are processed in reverse order, so when
+    multiple forks fail, the last failure is messaged.
   * Rename content to fragment
   * Rename fork to continuation
   * [EACH-FORK] Continuation of `each` with multiple extensions.

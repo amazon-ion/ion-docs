@@ -728,11 +728,11 @@ Spec Issues: 1.0
     (dom ParamShape  = (* ParamType::type Cardinality::card))
     (dom RestShape   = (* ParamType::type SeqCardinality::card))
 
-    (dom ParamType   = (+ AbstractParamType Macro))
+    (dom ParamType    = (* ArgExpander::expand ArgCompiler::compile ArgValidator::validate))
+    (dom ArgExpander  = (-> STree Environment 'Value*'))
+    (dom ArgCompiler  = (-> Value 'Unicode*' MacroEnv Interpreter))
+    (dom ArgValidator = (-> Value Value))
 
-    // Not really happy with this but ANY is used in too many places right now.
-    (dom AbstractParamType = (= _ANY))
-    (const ANY (lift_to ParamType _ANY))
 
     (dom Cardinality    = (+ OptCardinality SeqCardinality))
     (dom OptCardinality = (= ZERO_OR_ONE  EXACTLY_ONE))
@@ -920,19 +920,7 @@ Spec Issues: 1.0
                   (seq_prepend (validateShape type card vs) is))))))))
 
     (fn expandArg ((t ParamType) (stx 'STree') (r Environment) -> 'Value*')
-      (if (element_of t Macro)
-        (if (element_of stx SValue)           // SValue ∈ STree ∈ SEexpArg
-          // TODO reject annotations?
-          (if (element_of (SValue_content (lower stx SValue)) SSexp)
-            (expand_macro (lower t Macro)
-                          // TODO handle null.sexp
-                          (map 'SEexpArg*' inSEexpArg
-                            (lower (SValue_content (lower stx SValue)) SSexp 'STree*'))
-                          r)
-            (wrong "Expected sexp with macro arguments"))
-          (wrong "Expected sexp with macro arguments, found an eexp"))
-        // TODO:[PARAM-TYPE] validate non-macro tagless shapes
-        (expand_STree stx r)))
+      ((ParamType_expand t) stx r))
 
     (fn expandGroup ((t ParamType) (stxs 'STree*') (r Environment) -> 'Value*')
       (if (seq_is_empty stxs)
@@ -1301,7 +1289,7 @@ Spec Issues: 1.0
             (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
               // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
               (let [(m (interp_macroref (seq_head vs) r))]
-                (compile_paramCard (seq_tail vs) u (lift_to ParamType m)))
+                (compile_paramCard (seq_tail vs) u (macroType m)))
               (compile_paramCard vs u ANY)))
           (wrong "Unexpected element in param-spec: " (seq_head vs)))))
 
@@ -1335,7 +1323,7 @@ Spec Issues: 1.0
           (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
             // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
             (let [(m (interp_macroref (seq_head vs) r))]
-              (compile_restCard (seq_tail vs) u (lift_to ParamType m)))
+              (compile_restCard (seq_tail vs) u (macroType m)))
             (compile_restCard vs u ANY)))
         (wrong "Unexpected element in rest-spec: " (seq_head vs))))
 
@@ -1558,7 +1546,7 @@ Spec Issues: 1.0
 
 
     //==========================================================================
-    // TL Macro invocation
+    // Compiling TL Macro invocations
 
     // TODO Reconsider where parameter-shape validation happens.
     // Currently it's happening at the macro call-site, but probably should
@@ -1628,11 +1616,7 @@ Spec Issues: 1.0
                     is))))))))
 
     (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
-      (if (element_of type Macro)
-        (if (element_of (Value_content v) Sexp)
-          (interp_macro (Value_seqElements v) (lower type Macro) scope r)
-          (wrong "Expected sexp with macro arguments"))
-        (interp_template v scope r)))
+      ((ParamType_compile type) v scope r))
 
     // Like interp_template... but each element is shaped by the parameter type.
     (fn compileGroup ((vs 'Value*') (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
@@ -1644,6 +1628,43 @@ Spec Issues: 1.0
                 (is (compileGroup (seq_tail vs) type scope r))]
             (mk_fn Interpreter (env)
               (seq_append (i env) (is env)))))))
+
+
+    //==========================================================================
+    // Parameter Types
+
+    (const ANY
+      (let [(expand   (mk_fn ArgExpander (stx r)
+                        (expand_STree stx r))),
+            (compile  (mk_fn ArgCompiler (argExpr scope r)
+                        // Untagged parameter type; any template is allowed.
+                        (interp_template argExpr scope r))),
+            (validate (mk_fn ArgValidator (v)
+                        // Nothing to validate; accept ANYthing.
+                        v))]
+        (tuple ParamType expand compile validate)))
+
+
+    (fn macroType ((m Macro) -> ParamType)
+      (let [(expand   (mk_fn ArgExpander (stx r)
+                        (if (element_of stx SValue)           // SValue ∈ STree ∈ SEexpArg
+                          // TODO reject annotations?
+                          (if (element_of (SValue_content (lower stx SValue)) SSexp)
+                            (expand_macro m
+                                          // TODO handle null.sexp
+                                          (map 'SEexpArg*' inSEexpArg
+                                            (lower (SValue_content (lower stx SValue)) SSexp 'STree*'))
+                                          r)
+                            (wrong "Expected sexp with macro arguments"))
+                          (wrong "Expected sexp with macro arguments, found an eexp")))),
+            (compile  (mk_fn ArgCompiler (argExpr scope r)
+                        (if (element_of (Value_content argExpr) Sexp)
+                          (interp_macro (Value_seqElements argExpr) m scope r)
+                          (wrong "Expected sexp with macro arguments")))),
+            (validate (mk_fn ArgValidator (v)
+                        // Nothing to validate; accept whatever the macro produces.
+                        v))]
+        (tuple ParamType expand compile validate)))
 
 
     //==========================================================================
