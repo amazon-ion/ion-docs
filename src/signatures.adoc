@@ -26,10 +26,8 @@ Restricting names to Java-style identifiers enables use of operator characters (
 
 A macro’s “wire format”—the sequence of acceptable tokens in an E-expression—is determined by its
 parameters’ shapes.
-The base type constrains the syntax that can be used for each argument supplied to the
+The parameter type and cardinality constrain the syntax that can be used for each argument supplied to the
 parameter.
-Independently, a parameter is either _simple_ or a _rest parameter_; this dimension
-determines how the arguments supplied to the parameter are delimited within the overall invocation.
 
 [{bnf}]
 |===
@@ -96,6 +94,8 @@ their type, since that’s implied by context.
 Each parameter specification includes a _cardinality_ that indicates the number of values that it
 expects its argument(s) to produce.
 
+TODO: Cardinality also affects the number of individual arguments accepted
+
 [{bnf}]
 |===
 include::grammar.adoc[tag=cardinality]
@@ -113,47 +113,26 @@ error if the number of values produced by the argument(s) is not aligned with th
 cardinality.
 
 
-=== Rest Parameters
-
-The last parameter may be a _rest parameter_, which is effectively an implicitly grouped
-parameter.
-In text invocations, these parameters don’t use group delimiters, but instead take “all the
-rest” of the argument expressions.
-
-To declare a rest parameter, use one of the two special cardinality modifiers:
-
-* `\...` denotes a parameter that accepts zero or more values.
-* `\...+` denotes a parameter that accepts one or more values.
-
-Examples:
-
-[{nrm}]
-----
-(counts int \...)      // Accepts zero or more ints
-(points point \...+)   // Accepts one or more points
-----
-
-
 === Arity: Required and Optional Parameters
 
 [[def:optional-param]]
-Parameters with cardinality accepting zero values (declared with modifiers `?`, `*`, or `\...`)
+Parameters with cardinality accepting zero values (declared with modifiers `?` or `*`)
 are called _voidable_ because their resulting value streams can be void.
 A parameter is _optional_ when it is voidable and all following parameters are voidable.
 
 [[def:required-param]]
 A parameter is _required_ when it is not optional.
 Specifically, a parameter is required when it is declared with modifiers
-`!`, `\+`, or `...+`, _or_ when any following parameter is required.
+`!` or `+`, _or_ when any following parameter is required.
 
 Optional parameters are given special treatment in text invocations: their arguments can be
 omitted entirely, as long as all following arguments are also omitted.
 
 [[def:arity]]
 The _minimum arity_ of a macro is equal to the number of leading non-optional parameters.
-Assuming no rest-parameter, the _maximum arity_ of the macro is the total number of declared
-parameters.
-A macro with a rest-parameter has no maximum arity.
+The _maximum arity_ of the macro is the total number of declared
+parameters, unless the final parameter is declared `*` or `+` in which case
+the macro has no maximum arity.
 A macro with equal minimum and maximum arity is _fixed arity_; other templates are _variable
 arity_.
 

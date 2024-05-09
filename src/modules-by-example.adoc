@@ -348,7 +348,7 @@ in full context:
     (*macro_table*
       (*macro* point [(x *int*), (y *int*)]
         {x: x, y: y})
-      (*macro* line  [(a *point*), (b *point*)]
+      (*macro* line  [(a point), (b point)]
         [a, b])))
   (*macro_table* geo)
 )
@@ -422,9 +422,9 @@ shared symbol tables, adding a `module` field to hold macro definitions:#
   (*macro_table*
     (*macro* point [(x *int*), (y *int*), (z *int*)]
       {x: x, y: y, z: z})
-    (*macro* line  [(a *point*), (b *point*)]
+    (*macro* line  [(a point), (b point)]
       [a, b])
-    (*macro* poly  [(first *point*), (second *point*), (rest *point\...+*)]
+    (*macro* poly  [(first point), (second point), (rest point+)]
       [first, second, rest]))
 )
 ----
@@ -442,9 +442,9 @@ For comparison, here's a functionally-equivalent inline definition:
     (*macro_table*
       (*macro* point [(x *int*), (y *int*), (z *int*)]
         {x: x, y: y, z: z})
-      (*macro* line  [(a *point*), (b *point*)]
+      (*macro* line  [(a point), (b point)]
         [a, b])
-      (*macro* poly  [(first *point*), (second *point*), (rest *point\...+*)]
+      (*macro* poly  [(first point), (second point), (rest point+)]
         [first, second, rest])))
   ...
 ----
@@ -549,7 +549,7 @@ Now we build another shared module using it:
   (*load* geo "com.example.geometry" 1)   // <1>
   (*macro_table*
     (*macro* scatterplot
-      [(points ':geo:point'**\...**)]        // <2>
+      [(points ':geo:point'*)]          // <2>
       [points]))
 )
 ----
@@ -571,7 +571,7 @@ just the `geo` module but also its macros, via `*use*`:
   (*catalog_key* "com.example.charts" 1)
   (*use* (*load* geo "com.example.geometry" 1))   // <1>
   (*macro_table*
-    (*macro* scatterplot [(points point**\...**)]    // <2>
+    (*macro* scatterplot [(points point*)]      // <2>
       [points]))
 )
 ----
@@ -637,7 +637,7 @@ You can do similar things within an encoding directive:
   (*module* chart
     (*import* geo)                                 // <1>
     (*macro_table*
-      (*macro* scatterplot [(points point**\...**)]
+      (*macro* scatterplot [(points point*)]
         [points])))
   (*macro_table* chart)                            // <2>
 )
@@ -662,7 +662,7 @@ import both the 2d and 3d modules:
     (*import* geo "com.example.geometry" 1)
     (*import* g3d "com.example.graphics.3d" 1)
     (*macro_table*
-      (*macro* scatterplot [(points point**\...**)]
+      (*macro* scatterplot [(points point*)]
 
   ⇒ **error**: 'point' is ambiguous, exported by 'geo' and 'g3d'.
 ----
@@ -673,7 +673,7 @@ smile syntax does not apply.  Instead, use a quoted symbol:
 
 [{nrm}]
 ----
-      (*macro* scatterplot [(points ':geo:point' **\...**)]
+      (*macro* scatterplot [(points ':geo:point' *)]
         [points]))
 ----
 
@@ -687,7 +687,7 @@ A more ergonomic approach is to introduce an alias to disambiguate:
     (*import* g3d "com.example.graphics.3d" 1)
     (*alias* point2 ':geo:point')                 // <1>
     (*macro_table*
-      (*macro* scatterplot [(points point2 **\...**)]  // <2>
+      (*macro* scatterplot [(points point2*)]  // <2>
         [points])
       ...
 ----
@@ -795,7 +795,7 @@ If we find this particularly bothersome, a macro can eliminate the repetition:
 
 [{nrm}]
 ----
-(*macro* both_tables [(module_names *symbol\...*)]
+(*macro* both_tables [(module_names *symbol{asterisk}*)]
   (values
     (make_sexp (*literal* symbol_table) module_names)
     (make_sexp (*literal* macro_table ) module_names)))

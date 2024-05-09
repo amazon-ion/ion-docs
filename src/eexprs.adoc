@@ -78,10 +78,10 @@ individual argument.
 * A `?` parameter accepts either a single individual argument
   or an empty argument group `(:)`.
 * A `*` or `+` parameter accepts either a single individual argument,
-  or an argument group `(: …)`.
-* A rest parameter captures all remaining arguments of the E-expression,
-  each of which must match the individual argument syntax.
-  For a `...+` parameter there must be at least one such argument.
+  a group `(: …)` of individual arguments, or, if in final position, all
+  remaining arguments of the E-expression.
+  For a `+` parameter there must be at least one individual argument, grouped or
+  not.
 
 // TODO clarify whether a `+` group must contain at least one element.
 

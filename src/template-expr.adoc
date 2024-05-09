@@ -245,11 +245,11 @@ Each element of an argument group must fit the same syntax rules as for an
 individual argument.
 The resulting notation `(; ...)` mirrors the syntax of groups in E-expressions, `(: ...)`.
 
-* A non-rest parameter of any cardinality accepts either a single individual argument
+* A parameter of any cardinality accepts either a single individual argument
   or an argument group.
-* A rest parameter captures all remaining arguments of the invocation,
+* A final `*` or `+` parameter alternatively captures all remaining arguments of the invocation,
   each of which must match the individual argument syntax.
-  For a `...+` parameter there must be at least one such argument.
+  For a final `+` parameter there must be at least one such argument.
 
 These rules determine whether a template macro invocation is _well-formed_.
 Any violation of the above constraints must signal a syntax error when the
