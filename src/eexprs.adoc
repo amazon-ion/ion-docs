@@ -77,7 +77,7 @@ individual argument.
 * A `!` parameter accepts only a single individual argument.
 * A `?` parameter accepts either a single individual argument
   or an empty argument group `(:)`.
-* A `*` or `+` parameter accepts either a single individual argument,
+* A `*` or `\+` parameter accepts either a single individual argument,
   a group `(: …)` of individual arguments, or, if in final position, all
   remaining arguments of the E-expression.
   For a `+` parameter there must be at least one individual argument, grouped or
