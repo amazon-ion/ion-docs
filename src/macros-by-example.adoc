@@ -11,7 +11,7 @@ moving parts without getting into the weeds of more formal specification.
 
 Ion macros are defined using a domain-specific language that is in turn expressed via the Ion
 data model. That is, macro definitions are Ion data, and use Ion features like S-expressions and
-symbols to represent code in a LISP-like fashion.  In this document, the fundamental construct we
+symbols to represent code in a Lisp-like fashion.  In this document, the fundamental construct we
 explore is the _macro definition_, denoted using an S-expression of the form `(*macro* _name_ …)`
 where `*macro*` is a keyword and `_name_` must be a symbol denoting the macro's name.
 
@@ -324,14 +324,14 @@ To make this work, the definition of make_string is effectively:
 
 [{nrm}]
 ----
-(*macro* make_string [(parts *text \...*)] …)
+(*macro* make_string [(parts *text {asterisk}*)] …)
 ----
 
 This says that `parts` is a _rest parameter_ accepting zero or more arguments of type `*text*`.
-The `*\...*` modifier can only occur on the last parameter, declaring that “all the rest” of the
-arguments will be passed to that one name.
+The `*{asterisk}*` cardinality modifier, when applied to a final parameter, declares that
+“all the rest” of the arguments will be passed to that one name.
 
-NOTE: The Ion grammar treats identifiers like `text` and operators like `\...` as separate tokens
+NOTE: The Ion grammar treats identifiers like `text` and operators like `*` as separate tokens
 regardless of whether they are separated by whitespace.  We think it's easier to read without
 whitespace and will use that convention from now on.
 
@@ -341,7 +341,7 @@ twenty, or none. We describe the acceptable number of values for a parameter as 
 _cardinality_.  In the examples so far, all parameters have had _exactly-one_ cardinality, while
 `parts` has _zero-or-more_ cardinality.  We’ll see additional cardinalities soon!
 
-TIP: To declare a rest parameter that requires at least one value, use the `*\...+*` modifier.
+TIP: To declare a final parameter that requires at least one rest-argument, use the `*+*` modifier.
 
 
 === Arguments and Results are Streams
@@ -359,7 +359,7 @@ We have everything we need to illustrate this, via another system macro, `values
 
 [{nrm}]
 ----
-(*macro* values [(vals *any\...*)] vals)
+(*macro* values [(vals *any{asterisk}*)] vals)
 ----
 
 [{nrm}]
@@ -453,10 +453,10 @@ list:
 [{nrm}]
 ----
 (*macro* int_list
-  [(vals **int\...**)]
+  [(vals **int{asterisk}**)]
   [ vals ])
 (*macro* clumsy_bag
-  [(elts **any\...**)]
+  [(elts **any{asterisk}**)]
   { '': elts })
 ----
 ----
@@ -487,7 +487,7 @@ created and bound to the next value on the stream.
 [{nrm}]
 ----
 (*macro* prices
-  [(currency *symbol*), (amounts *number\...*)]
+  [(currency *symbol*), (amounts *number{asterisk}*)]
   (*for* [(amt amounts)]                          // <1>
     (price amt currency)))
 ----
@@ -529,7 +529,7 @@ https://github.com/amazon-ion/ion-docs/issues/201
 
 The empty stream is an important edge case that requires careful handling and communication.
 We'll use the term _void_ to mean “empty stream”.  We’ll even mint the word _voidable_ to
-describe parameters that can accept empty streams, like the ``*\...*``s above.
+describe parameters that can accept empty streams, like the ``*{asterisk}*``s above.
 
 Correspondingly, the built-in macro `void` accepts no values and produces an empty stream:
 
@@ -564,8 +564,7 @@ clarity of intent and terminology.
 
 As described earlier, parameters are all streams of values, but the number of values can be
 controlled by the parameter's cardinality.  So far we have seen the default exactly-one
-and the `*\...*`
-(zero-or-more) cardinality modifiers, and in total there are six:
+and the `*{asterisk}*` (zero-or-more) cardinality modifiers, and in total there are four:
 
 [cols="1,1"]
 |===
@@ -574,8 +573,6 @@ and the `*\...*`
 | `*?*`     |zero-or-one value
 | `*+*`     |one-or-more values
 | `***`     |zero-or-more values
-| `*\...*`  |zero-or-more values, as "rest" arguments
-| `*\...+*` |one-or-more values, as "rest" arguments
 |===
 
 
@@ -642,9 +639,7 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 [#eg:zero-or-more]
 ==== Zero-or-More
 
-A parameter with the modifier `***` has _zero-or-more cardinality_.  This modifier behaves the
-same as `*\...*` from the perspective of its template, but it can be used in any position, not
-just last place.
+A parameter with the modifier `***` has _zero-or-more cardinality_.
 
 [{nrm}]
 ----
@@ -654,8 +649,9 @@ just last place.
     (price amt currency)))
 ----
 
-The calling convention for `***` is different from `*\...*` since the “all the rest”
-convention can’t be used to draw the boundaries of the stream.  Instead, we need a single
+When `*{asterisk}*` is on a non-final parameter, we cannot take the “all the rest” of the arguments
+and must use a different calling convention to draw the boundaries of the stream.
+Instead, we need a single
 expression that produces the desired values:
 
 [{nrm}]
@@ -671,7 +667,7 @@ the multiple elements of the `amount` stream.
 
 ==== One-or-More
 
-A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `***` except
+A parameter with the modifier `*+*` has _one-or-more cardinality_, which works like `*{asterisk}*` except
 the resulting stream must produce at least one value.  To continue using our `prices` example:
 
 [{nrm}]
@@ -689,12 +685,11 @@ the resulting stream must produce at least one value.  To continue using our `pr
 (:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ----
 
-A macro's final parameter can use a variant of rest parameters with one-or-more cardinality,
-denoted by the `*\...+*` modifier:
+On the final parameter, `*+*` collects the remaining (one or more) arguments:
 
 [{nrm}]
 ----
-(*macro* thanks [(names *text\...+*)]
+(*macro* thanks [(names *text+*)]
   (make_string "Thank you to my Patreon supporters:\n"
     (for [(n names)]
       (make_string "  * " n "\n"))))
@@ -702,7 +697,7 @@ denoted by the `*\...+*` modifier:
 
 [{nrm}]
 ----
-(:thanks) ⇒ _**error**: at least one value expected for \...+ parameter_
+(:thanks) ⇒ _**error**: at least one value expected for + parameter_
 
 (:thanks Larry Curly Moe) =>
 '''\
@@ -776,21 +771,18 @@ As usual, the text format mirrors this constraint.
 WARNING: The allowed combinations of cardinality and argument groups is pending
 finalization of the binary encoding.
 
-TIP: Rest parameters effectively use implicit groups at the call site, and they cannot be
-invoked with explicit groups.
-
 
 === Optional Arguments
 
 When a trailing parameter is voidable, an invocation can omit its corresponding argument expression,
 as long as no following parameter is being given an expression.  We’ve seen
-this as applied to `*\...*` rest-parameters, but it also applies to `*?*` and `*{asterisk}*`
+this as applied to final `*{asterisk}*` parameters, but it also applies to `*?*`
 parameters:
 
 [{nrm}]
 ----
 (*macro* optionals
-  [(a *any{asterisk}*), (b *any?*), (c *any!*), (d *any{asterisk}*]), (e *any?*), (f *any\...*)]
+  [(a *any{asterisk}*), (b *any?*), (c *any!*), (d *any{asterisk}*]), (e *any?*), (f *any{asterisk}*)]
   (make_list a b c d e f))
 ----
 
@@ -890,7 +882,7 @@ overhead.
 [{nrm}]
 ----
 (*macro* byte_array
-  [(bytes *uint8\...*)]
+  [(bytes *uint8{asterisk}*)]
   [bytes])
 ----
 
@@ -936,7 +928,7 @@ can go is `*struct*`, and things aren’t really any better:
 
 [{nrm}]
 ----
-(*macro* scatterplot [(points *struct\...*)]
+(*macro* scatterplot [(points *struct{asterisk}*)]
   [points])
 ----
 ----
@@ -955,7 +947,7 @@ pseudo-type:
 
 [{nrm}]
 ----
-(*macro* scatterplot [(points point**\...**)]  // <1>
+(*macro* scatterplot [(points point*)]  // <1>
   [points])
 ----
 

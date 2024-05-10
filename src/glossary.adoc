@@ -115,8 +115,8 @@ required parameter::
 A macro parameter that is not _optional_ and therefore requires an argument at each invocation.
 
 rest parameter::
-A macro parameter—always the final parameter—declared with the `*\...*` or `*\...+*` modifier,
-that accepts all remaining arguments to the macro as if they were in an implicit _argument group_.
+A macro parameter—always the final parameter—declared with `*` or `+` cardinality,
+that accepts all remaining individual arguments to the macro as if they were in an implicit _argument group_.
 Similar to “varargs” parameters in Java and other languages.
 
 segment::
