@@ -67,6 +67,8 @@ Features:
 Defects:
 * Spec says various encoding-directive elements are unannotated, but the
   model doesn't enforce that.
+  * Template expressions may matter more than other places, more likely to be
+    compatibility issue later?
 * SIDs and Macro addresses should be non-negative.
 * The spec doesn't say that SST must have its annotation as the first one.
 * [SST Semantics] "When mapping from string to symbol ID, there may be multiple
@@ -1607,16 +1609,17 @@ Spec Issues: 1.0
 
     (fn macroType ((m Macro) -> ParamType)
       (let [(expand   (mk_fn ArgExpander (stx r)
-                        (if (element_of stx SValue)           // SValue ∈ STree ∈ SEexpArg
-                          // TODO reject annotations?
-                          (if (element_of (SValue_content (lower stx SValue)) SSexp)
-                            (expand_macro m
-                                          // TODO handle null.sexp
-                                          (map 'SEexpArg*' inSEexpArg
-                                            (lower (SValue_content (lower stx SValue)) SSexp 'STree*'))
-                                          r)
-                            (wrong "Expected sexp with macro arguments"))
-                          (wrong "Expected sexp with macro arguments, found an eexp")))),
+                        (if (element_of stx SEexp)
+                          (wrong "E-expression not allowed for argument of tagless encoding")
+                          (if (not (seq_is_empty (SValue_annots (lower stx SValue))))
+                            (wrong "Annotation not allowed for argument of tagless encoding")
+                            (if (element_of (SValue_content (lower stx SValue)) SSexp)
+                              (expand_macro m
+                                            // TODO handle null.sexp
+                                            (map 'SEexpArg*' inSEexpArg
+                                              (lower (SValue_content (lower stx SValue)) SSexp 'STree*'))
+                                            r)
+                              (wrong "Expected sexp with macro arguments")))))),
             (compile  (mk_fn ArgCompiler (argExpr scope r)
                         (if (element_of (Value_content argExpr) Sexp)
                           (interp_macro (Value_seqElements argExpr) m scope r)

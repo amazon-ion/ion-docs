@@ -14,7 +14,9 @@
             (toplevel ('#$:m' ('#$:' (1))))
             (signals "Unexpected argument group"))
       (then (toplevel ('#$:m' ('#$:void')))
-            (signals "Expected sexp with macro arguments, found an eexp"))
+            (signals "E-expression not allowed for argument of tagless encoding"))
+      (each (toplevel ('#$:m' ann::(1)))
+            (signals "Annotation not allowed for argument of tagless encoding"))
       (each (toplevel ('#$:m' 1))
             (toplevel ('#$:m' 1 2))                     // Hidden: too many args
             (toplevel ('#$:m' 1 (2)))                   // Hidden: too many args
@@ -38,7 +40,10 @@
             (toplevel ('#$:m' ('#$:' 1)))
             (signals "Expected sexp with macro arguments"))
       (then (toplevel ('#$:m' ('#$:void')))
-            (signals "Expected sexp with macro arguments, found an eexp"))
+            (signals "E-expression not allowed for argument of tagless encoding"))
+      (each (toplevel ('#$:m' ann::(1)))
+            (toplevel ('#$:m' (0) ann::(1)))
+            (signals "Annotation not allowed for argument of tagless encoding"))
       (then (toplevel ('#$:m' ()))
             (produces {m:[]}))
       (then (toplevel ('#$:m' (1 2 3)))
@@ -63,7 +68,7 @@
             (toplevel ('#$:m' () ('#$:void')))
             (toplevel ('#$:m' ('#$:' ('#$:void'))))
             (toplevel ('#$:m' ('#$:void') ('#$:')))  // Hidden: unexpected group
-            (signals "Expected sexp with macro arguments, found an eexp"))
+            (signals "E-expression not allowed for argument of tagless encoding"))
       (then (toplevel ('#$:m' ()))
             (produces []))
       (then (toplevel ('#$:m' (1 2 3)))
