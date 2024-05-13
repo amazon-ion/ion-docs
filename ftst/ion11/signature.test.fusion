@@ -19,8 +19,6 @@
 (define_fn 'param*' ((name Unicode) (type ParamType) -> ParamSpec)
   (tuple ParamSpec name
     (tuple ParamShape type (lift_to Cardinality ZERO_OR_MORE))))
-(define_fn 'rest...+' ((name Unicode) (type ParamType) -> 'RestSpec?')
-  (opt 'RestSpec?' (tuple RestSpec name (tuple RestShape type ONE_OR_MORE))))
 
 
 (define_check (check_SeqCardinality e a)
@@ -37,10 +35,6 @@
   (check_same        (ParamShape_type e) (ParamShape_type a))
   (check_Cardinality (ParamShape_card e) (ParamShape_card a)))
 
-(define_check (check_RestShape e a)
-  (check_same           (RestShape_type e) (RestShape_type a))
-  (check_SeqCardinality (RestShape_card e) (RestShape_card a)))
-
 
 (define_check (check_ParamSpec e a)
   (check_eqv (eject (ParamSpec_name e)) (eject (ParamSpec_name a)))
@@ -48,26 +42,16 @@
         (a_shape (ParamSpec_shape a))]
     (check_ParamShape e_shape a_shape)))
 
-(define_check (check_RestSpec e a)
-  (if (opt_is_present e)
-    (let [(e (opt_value e)),
-          (a (opt_value a))]  // "unwrap" the optional domain values
-      (check_eqv (eject (RestSpec_name e)) (eject (RestSpec_name a)))
-      (let [(e_shape (RestSpec_shape e)),
-            (a_shape (RestSpec_shape a))]
-        (check_RestShape e_shape a_shape)))
-    (check_false (opt_is_present a))))
 
 (define_fn empty_MacroEnv MacroEnv (mod mac)
   (wrong "No such macro: " mac))
 
-(define_check (check_Signature params rest data)
+(define_check (check_Signature params data)
   (let [(s (compile_Signature (expand1 (sexp data)) empty_MacroEnv))]
     (check_not_bottom s)
     (check_same (size params) (seq_length (Signature_params s)))
     (for [(e params), (a (seq_to_sexp (Signature_params s)))]
-      (check_ParamSpec e a))
-    (check_RestSpec rest (Signature_rest s))))
+      (check_ParamSpec e a))))
 
 (define_check (check_Signature_fail msg data)
   (let [(s (compile_Signature (expand1 (sexp data)) empty_MacroEnv))]
@@ -78,25 +62,25 @@
 
 // Defaulting of simple param-specs
 
-(check_Signature [] NO_REST
+(check_Signature []
   (quote ()))
-(check_Signature [('param!' "v" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY)]
   (quote (v)))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
   (quote (v w)))
 
-(check_Signature [] NO_REST
+(check_Signature []
   (quote []))
-(check_Signature [('param!' "v" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY)]
   (quote [v]))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
   (quote [v, w]))
 
 
 // A param-spec can be a sexp.
-(check_Signature [('param!' "v" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY)]
   (quote [(v)]))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
   (quote [v, (w)]))
 
 (check_Signature_fail "Unexpected element in param-spec:" (quote ((v null))))
@@ -104,46 +88,32 @@
 
 
 // Explicit exactly-one cardinality
-(check_Signature [('param!' "v" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY)]
   (quote [(v!)]))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
   (quote [v, (w !)]))
 
 // Zero-or-one
-(check_Signature [('param?' "v" ANY)] NO_REST
+(check_Signature [('param?' "v" ANY)]
   (quote [(v?)]))
-(check_Signature [('param!' "v" ANY), ('param?' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param?' "w" ANY)]
   (quote [v, (w ?)]))
 
 // One-or-more
-(check_Signature [('param+' "v" ANY)] NO_REST
+(check_Signature [('param+' "v" ANY)]
   (quote [(v+)]))
-(check_Signature [('param!' "v" ANY), ('param+' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param+' "w" ANY)]
   (quote [v, (w +)]))
 
 // Zero-or-more
-(check_Signature [('param*' "v" ANY)] NO_REST
+(check_Signature [('param*' "v" ANY)]
   (quote [(v*)]))
-(check_Signature [('param!' "v" ANY), ('param*' "w" ANY)] NO_REST
+(check_Signature [('param!' "v" ANY), ('param*' "w" ANY)]
   (quote [v, (w *)]))
 
-// Rest parameters
 
-(check_Signature [] ('rest...' "r" ANY)
-  (quote ((r ...))))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] ('rest...' "r" ANY)
-  (quote (v w (r ...))))
-
-(check_Signature [] ('rest...+' "r" ANY)
-  (quote ((r ...+))))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)] ('rest...+' "r" ANY)
-  (quote (v w (r ...+))))
-
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... +))))
-
-// Attempted rest-spec is non-final position
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ... ) w)))
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ...+) w)))
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ...))))
+(check_Signature_fail "Unexpected element in param-spec:" (quote ((v + ...))))
 
 
 (in11 (mactab (macro _ [()   ] 0)) (signals "Malformed param-spec:"))

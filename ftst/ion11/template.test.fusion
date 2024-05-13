@@ -159,20 +159,20 @@
         (macro m [(v+)] v))
       (then (toplevel ('#$:m'))
             (signals "Too few arguments"))
-      (each (toplevel ('#$:m' ('#$:')))
+      (each (toplevel ('#$:m' ('#$:')))        // TODO:[PLUS-GROUP] Wrong error?
             (toplevel ('#$:m' ('#$:values')))
             (signals "No value provided for parameter"))
       (each (toplevel ('#$:m' 1))
             (toplevel ('#$:m' ('#$:' 1)))
             (toplevel ('#$:m' ('#$:values' 1)))
+            (toplevel ('#$:m' 1 ('#$:values')))    // Implicit rest
+            (toplevel ('#$:m' ('#$:values') 1))
             (produces 1))
       (each (toplevel ('#$:m' ('#$:' 1 2)))
             (toplevel ('#$:m' ('#$:values' 1 2)))
+            (toplevel ('#$:m' 1 2))                // Implicit rest
             (produces 1 2))
-      (each (toplevel ('#$:m' 1 2))
-            (toplevel ('#$:m' ('#$:') 1))
-            (toplevel ('#$:m' ('#$:values') 1))
-            (toplevel ('#$:m' 1 ('#$:values')))
+      (each (toplevel ('#$:m' ('#$:') 1))
             (signals "Too many arguments")))
 
 (in11 (mactab
@@ -207,14 +207,15 @@
       (each (toplevel ('#$:m' 1))
             (toplevel ('#$:m' ('#$:' 1)))
             (toplevel ('#$:m' ('#$:values' 1)))
+            (toplevel ('#$:m' ('#$:values') 1))   // Implicit rest
+            (toplevel ('#$:m' 1 ('#$:values')))
             (produces 1))
       (each (toplevel ('#$:m' ('#$:' 1 2)))
             (toplevel ('#$:m' ('#$:values' 1 2)))
+            (toplevel ('#$:m' 1 2))
+            (toplevel ('#$:m' ('#$:values' 1) ('#$:values' 2)))
             (produces 1 2))
-      (each (toplevel ('#$:m' 1 2))
-            (toplevel ('#$:m' ('#$:') 1))
-            (toplevel ('#$:m' ('#$:values') 1))
-            (toplevel ('#$:m' 1 ('#$:values')))
+      (each (toplevel ('#$:m' ('#$:') 1))
             (signals "Too many arguments")))
 
 (in11 (mactab
@@ -241,67 +242,6 @@
             (signals "Too many arguments")))
 
 
-// Rest parameters
-
-(in11 (mactab
-        (macro m [(v...)] v))
-      (each (toplevel ('#$:m'))
-            (toplevel ('#$:m' ('#$:values')))
-            (produces))
-      (each (toplevel ('#$:m' 1))
-            (toplevel ('#$:m' ('#$:values' 1)))
-            (produces 1))
-      (each (toplevel ('#$:m' 1 2))
-            (toplevel ('#$:m' ('#$:values' 1 2)))
-            (toplevel ('#$:m' ('#$:values' 1) ('#$:values' 2)))
-            (produces 1 2))
-      (each (toplevel ('#$:m' ('#$:')))
-            (toplevel ('#$:m' ('#$:' 1)))
-            (toplevel ('#$:m' 1 ('#$:' 2 3) 4))
-            (signals "Unexpected argument group")))
-
-
-(in11 (mactab
-        (macro m [(v...+)] v))
-      (each (toplevel ('#$:m'))
-            (signals "Too few arguments"))
-      (each (toplevel ('#$:m' ('#$:values')))
-            (toplevel ('#$:m' ('#$:values') ('#$:values')))
-            (signals "No value provided for parameter"))
-      (each (toplevel ('#$:m' 1))
-            (toplevel ('#$:m' ('#$:values' 1)))
-            (produces 1))
-      (each (toplevel ('#$:m' 1 2))
-            (toplevel ('#$:m' ('#$:values' 1 2)))
-            (toplevel ('#$:m' ('#$:values' 1) ('#$:values' 2)))
-            (produces 1 2))
-      (each (toplevel ('#$:m' ('#$:')))
-            (toplevel ('#$:m' ('#$:' 1)))
-            (toplevel ('#$:m' 1 ('#$:' 2 3) 4))
-            (signals "Unexpected argument group")))
-
-(in11 (mactab
-        (macro m [x, (v...+)] v))
-      (each (toplevel ('#$:m'))
-            (toplevel ('#$:m' 1))
-            (toplevel ('#$:m' ('#$:values' 1 2)))
-            (signals "Too few arguments"))
-      (each (toplevel ('#$:m' 1 ('#$:values')))
-            (signals "No value provided for parameter"))
-      (each (toplevel ('#$:m' 1 2))
-            (toplevel ('#$:m' 1 ('#$:values' 2)))
-            (produces 2))
-      (each (toplevel ('#$:m' 1 2 3))
-            (toplevel ('#$:m' 1 2 ('#$:values' 3)))
-            (toplevel ('#$:m' 1 ('#$:values' 2) 3))
-            (toplevel ('#$:m' 1 ('#$:values' 2 3)))
-            (produces 2 3))
-      (each (toplevel ('#$:m' 1 ('#$:')))
-            (toplevel ('#$:m' 1 ('#$:' 1)))
-            (toplevel ('#$:m' 1 2 ('#$:' 3) 4))
-            (signals "Unexpected argument group")))
-
-
 // List quasi-literals
 
 (in11 (mactab (macro n  () a::null.list)
@@ -311,8 +251,8 @@
       (toplevel ('#$:n')      ('#$:e')  ('#$:v1')  ('#$:v2'))
       (produces a::null.list  b::[]     [1]        [1, c::2]))
 
-(in11 (mactab (macro m1  (v)       a::[1, v, 2])
-              (macro m2 (v (r...)) [1, [v], 2, r, 3]))
+(in11 (mactab (macro m1 (v)       a::[1, v, 2])
+              (macro m2 (v (r*)) [1, [v], 2, r, 3]))
       (toplevel ('#$:m1' a)   ('#$:m2' a)     ('#$:m2' [a] r1 r2))
       (produces a::[1, a, 2]  [1, [a], 2, 3]  [1, [[a]], 2, r1, r2, 3]))
 
@@ -331,11 +271,11 @@
       (produces a::null.struct b::{}   {n:v}     {n:2, n:v}))
 
 // Template in field-value position can returns non-singular results.
-(in11 (mactab (macro m [(v...)] {n:v}))
+(in11 (mactab (macro m [(v*)] {n:v}))
       (toplevel ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' ('#$:values' 1 2)))
       (produces {}       {n:1}      {n:2, n:1}   {n:1, n:2}))
 
-(in11 (mactab (macro m [(v...)] {n1:v, n2:v}))
+(in11 (mactab (macro m [(v*)] {n1:v, n2:v}))
       (toplevel ('#$:m') ('#$:m' 1)   ('#$:m' 1 2))
       (produces {}       {n1:1, n2:1} {n1:2, n2:1, n2:2, n1:1}))
 
@@ -363,18 +303,18 @@
 
 // Special form: if_void
 
-(with_mactab ((macro m [(v...)]
+(with_mactab ((macro m [(v*)]
                 (if_void v true false)))
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces true     false      false        false))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m [(p...)] (if_void p true (make_string null))))
+(with_mactab ((macro m [(p*)] (if_void p true (make_string null))))
   (document ('#$:m'))
   (produces true)
   (document ('#$:m' 1))
   (signals "Not a text value"))
-(with_mactab ((macro m [(p...)] (if_void p (make_string null) false)))
+(with_mactab ((macro m [(p*)] (if_void p (make_string null) false)))
   (document ('#$:m'))
   (signals "Not a text value")
   (document ('#$:m' 1))
@@ -406,18 +346,18 @@
 
 // Special form: if_single
 
-(with_mactab ((macro m [(v...)]
+(with_mactab ((macro m [(v*)]
                 (if_single v true false)))
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces false    true       false        false))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m [(p...)] (if_single p true (make_string null))))
+(with_mactab ((macro m [(p*)] (if_single p true (make_string null))))
   (document ('#$:m'))
   (signals "Not a text value")
   (document ('#$:m' 1))
   (produces true))
-(with_mactab ((macro m [(p...)] (if_single p (make_string null) false)))
+(with_mactab ((macro m [(p*)] (if_single p (make_string null) false)))
   (document ('#$:m'))
   (produces false)
   (document ('#$:m' 1))
@@ -443,18 +383,18 @@
 
 // Special form: if_multi
 
-(with_mactab ((macro m [(v...)]
+(with_mactab ((macro m [(v*)]
                 (if_multi v true false)))
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces false    false      true         true))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m [(p...)] (if_multi p true (make_string null))))
+(with_mactab ((macro m [(p*)] (if_multi p true (make_string null))))
   (document ('#$:m'))
   (signals "Not a text value")
   (document ('#$:m' 1 2))
   (produces true))
-(with_mactab ((macro m [(p...)] (if_multi p (make_string null) false)))
+(with_mactab ((macro m [(p*)] (if_multi p (make_string null) false)))
   (document ('#$:m'))
   (produces false)
   (document ('#$:m' 1 2))
@@ -481,7 +421,7 @@
 // Special form: for
 
 // No bindings, no iteration
-(with_mactab ((macro m [(as ...)]
+(with_mactab ((macro m [(as *)]
                 (for []
                   as)))
   (document ('#$:m'))
@@ -490,7 +430,7 @@
   (produces))
 
 // Single binding
-(with_mactab ((macro m [(as ...)]
+(with_mactab ((macro m [(as *)]
                 (for [(a as)]
                   [a])))
   (document ('#$:m'))
@@ -535,19 +475,19 @@
 // TODO [DUPE-NAME] reject duplicate variable names
 
 // Bound streams do not need to be parameter references
-(with_mactab ((macro m [(a ...)] (for [(f "f1")] [f, a])))
+(with_mactab ((macro m [(a*)] (for [(f "f1")] [f, a])))
   (document ('#$:m') ('#$:m' 1 2))
   (produces ["f1"]   ["f1", 1, 2]))
 
-(with_mactab ((macro m [(a ...)] (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
+(with_mactab ((macro m [(a*)] (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
   (document ('#$:m' 1 2))
   (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
 
-(with_mactab ((macro m [(a ...)] (for [(f (void))] [f, a])))
+(with_mactab ((macro m [(a*)] (for [(f (void))] [f, a])))
   (document ('#$:m') ('#$:m' 1 2))
   (produces))
 
-(with_mactab ((macro m [(a ...)] (for [(f (values "f1" a "f2"))] [f, a])))
+(with_mactab ((macro m [(a*)] (for [(f (values "f1" a "f2"))] [f, a])))
   (document ('#$:m')       ('#$:m' 1))
   (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
 
@@ -573,12 +513,12 @@
   (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1)] x)))))))
 
 // Propagate runtime failure in bound-expression
-(with_mactab ((macro m [(p...)] (for [(f (values 1 (make_symbol p) 2))] f)))
+(with_mactab ((macro m [(p*)] (for [(f (values 1 (make_symbol p) 2))] f)))
   (document ('#$:m' "a" null "b"))
   (signals "Not a text value"))    // for null
 
 // Propagate runtime failure in body-expression
-(with_mactab ((macro m [(p...)] (for [(f p)] (make_symbol p))))
+(with_mactab ((macro m [(p*)] (for [(f p)] (make_symbol p))))
   (document ('#$:m' "a" null "b"))
   (signals "Not a text value"))    // for null
 

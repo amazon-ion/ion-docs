@@ -30,6 +30,8 @@ Features:
     sense to happen once, macro-side.
   * Perhaps annoying for system macros.
   * User-macro Transform is created by `interp_xform`.
+* [PLUS-GROUP] Ensure `+` params have at least one element in a (: ...) group.
+  * Does this apply to TL as well?
 * [PARAM-TYPE] Declare and validate parameter types
 * [DUPE-NAME] Reject duplicate names in parameter lists and `for` bindings.
 * [LOAD-MAXID]`load` clause with max-id.
@@ -719,14 +721,12 @@ Spec Issues: 1.0
 
     (dom Transform = (-> 'Value**' 'Value*'))
 
-    (dom Signature   = (* 'ParamSpec*'::params 'RestSpec?'::rest /* TODO ResultSpec */))
+    (dom Signature   = (* 'ParamSpec*'::params /* TODO ResultSpec */))
 
     // TODO Should name be a SymTok?
     (dom ParamSpec   = (* Unicode::name ParamShape::shape))
-    (dom RestSpec    = (* Unicode::name  RestShape::shape))
 
     (dom ParamShape  = (* ParamType::type Cardinality::card))
-    (dom RestShape   = (* ParamType::type SeqCardinality::card))
 
     (dom ParamType    = (* ArgExpander::expand ArgCompiler::compile ArgValidator::validate))
     (dom ArgExpander  = (-> STree Environment 'Value*'))
@@ -739,11 +739,7 @@ Spec Issues: 1.0
     (dom SeqCardinality = (= ZERO_OR_MORE ONE_OR_MORE))
 
     (fn Signature_vars ((s Signature) -> 'Unicode*')
-      (seq_append
-        (map 'Unicode*' ParamSpec_name (Signature_params s))
-        (if (opt_is_present (Signature_rest s))
-          (seq 'Unicode*' (RestSpec_name (opt_value (Signature_rest s))))
-          (seq 'Unicode*'))))
+      (map 'Unicode*' ParamSpec_name (Signature_params s)))
 
 
     (fn is_voidable ((p ParamSpec) -> B)
@@ -755,15 +751,16 @@ Spec Issues: 1.0
           (and (element_of c SeqCardinality)
                (= (lower c SeqCardinality) ZERO_OR_MORE))))
 
+    (fn is_groupable_Cardinality ((c Cardinality) -> B)
+      (not (and (element_of c OptCardinality)
+                (= (lower c OptCardinality) EXACTLY_ONE))))
 
     (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
 
 
-    (fn export ((name Unicode) (params 'ParamSpec*') (rest 'RestSpec?') (xform F) -> ExportedMacro)
+    (fn export ((name Unicode) (params 'ParamSpec*') (xform F) -> ExportedMacro)
       (tuple ExportedMacro (opt 'Unicode?' name)
-        (tuple Macro (tuple Signature params rest) xform)))
-
-    (const NO_REST (opt 'RestSpec?'))
+        (tuple Macro (tuple Signature params) xform)))
 
     (fn 'param!' ((name Unicode) (type ParamType) -> ParamSpec)
       (tuple ParamSpec name
@@ -772,9 +769,6 @@ Spec Issues: 1.0
     (fn 'param*' ((name Unicode) (type ParamType) -> ParamSpec)
       (tuple ParamSpec name
         (tuple ParamShape type (lift_to Cardinality ZERO_OR_MORE))))
-
-    (fn 'rest...' ((name Unicode) (type ParamType) -> 'RestSpec?')
-      (opt 'RestSpec?' (tuple RestSpec name (tuple RestShape type ZERO_OR_MORE))))
 
 
     //==========================================================================
@@ -877,23 +871,16 @@ Spec Issues: 1.0
     (fn expand_macro ((m Macro) (ts 'SEexpArg*') (r Environment) -> 'Value*')
       (let [(x (Macro_xform     m)),
             (s (Macro_signature m))]
-        (x (expandArgs (Signature_params s) (Signature_rest s) r ts))))
+        (x (expandArgs (Signature_params s) r ts))))
 
 
     // Returns one Value* per parameter.
     // This should stay in sync with compileArgs
-    (fn expandArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (r Environment) (ts 'SEexpArg*') -> 'Value**')
+    (fn expandArgs ((ps 'ParamSpec*') (r Environment) (ts 'SEexpArg*') -> 'Value**')
       (if (seq_is_empty ps)
-        (if (opt_is_present rest)
-          // We have a rest-parameter, so grab everything that remains.
-          (let [(t (RestShape_type (RestSpec_shape (opt_value rest)))),
-                (c (lift_to Cardinality (RestShape_card (RestSpec_shape (opt_value rest)))))]
-            (if (and (seq_is_empty ts) (not (is_voidable_Cardinality c)))
-              (wrong "Too few arguments")
-              (seq 'Value**' (validateShape t c (expandRest t ts r)))))
-          (if (seq_is_empty ts)
-            (seq 'Value**')                 // All done!
-            (wrong "Too many arguments")))
+        (if (seq_is_empty ts)
+          (seq 'Value**')                 // All done!
+          (wrong "Too many arguments"))
         // More non-rest parameters to collate
         (let [(p (seq_head ps))]
           (if (seq_is_empty ts)
@@ -902,22 +889,35 @@ Spec Issues: 1.0
               // No need to validateShape; we've done so statically.
               (seq_prepend (seq 'Value*')
                 // Continue checking remaining parameters voidability
-                (expandArgs (seq_tail ps) rest r ts))
+                (expandArgs (seq_tail ps) r ts))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
             (let [(type (ParamShape_type (ParamSpec_shape p))),
                   (card (ParamShape_card (ParamSpec_shape p))),
                   (t    (seq_head ts))]                                    // ∈ SEexpArg
-              (let [(vs (if (element_of t STree)
-                          (expandArg   type (lower t  STree  ) r)
-                          (if (not (and (element_of card OptCardinality)
-                                        (= (lower card OptCardinality) EXACTLY_ONE)))
-                            (expandGroup type (lower t 'STree*') r)
-                            (wrong "Unexpected argument group"))))]
-                // Separate `let` ensures args are expanded left-to-right.
-                (let [(is (expandArgs (seq_tail ps) rest r (seq_tail ts)))]
-                  // Type/cardinality validation of stream happens afterwards.
-                  (seq_prepend (validateShape type card vs) is))))))))
+              (if (not (element_of t STree))
+                // Argument is a group
+                (if (is_groupable_Cardinality card)
+                  // TODO:[PLUS-GROUP] If + param, ensure at least one expr.
+                  (let [(vs (expandGroup type (lower t 'STree*') r))]
+                    // Separate `let` ensures args are expanded left-to-right.
+                    (let [(is (expandArgs (seq_tail ps) r (seq_tail ts)))]
+                      // Type/cardinality validation of stream happens afterwards.
+                      (seq_prepend (validateShape type card vs) is)))
+                  (wrong "Unexpected argument group"))
+                // Arg is not a group.  Is it implicit-rest?
+                (if (and (seq_is_empty (seq_tail ps))      // parameter is final and
+                         (element_of card SeqCardinality)) // is * or +
+                  // We have a rest-parameter, so grab all remaining arguments.
+                  (if (and (seq_is_empty ts) (not (is_voidable_Cardinality card)))
+                    (wrong "Too few arguments")
+                    (seq 'Value**' (validateShape type card (expandRest type ts r))))
+                  // Not implicit-rest, consume one argument
+                  (let [(vs (expandArg type (lower t STree) r))]
+                    // Separate `let` ensures args are expanded left-to-right.
+                    (let [(is (expandArgs (seq_tail ps) r (seq_tail ts)))]
+                      // Type/cardinality validation of stream happens afterwards.
+                      (seq_prepend (validateShape type card vs) is))))))))))
 
     (fn expandArg ((t ParamType) (stx 'STree') (r Environment) -> 'Value*')
       ((ParamType_expand t) stx r))
@@ -1245,32 +1245,13 @@ Spec Issues: 1.0
     // Signature compilation
 
     (fn compile_Signature ((v Value) (r MacroEnv) -> Signature)
-      (compile_Signature_params (Value_seqElements v) r))
+      (tuple Signature (compile_paramSpecs (Value_seqElements v) r)))
 
-    (fn compile_Signature_params ((ps 'Value*') (r MacroEnv) -> Signature)
+    (fn compile_paramSpecs ((ps 'Value*') (r MacroEnv) -> 'ParamSpec*')
       (if (seq_is_empty ps)
-        (tuple Signature (seq 'ParamSpec*') NO_REST)
-        (if (seq_is_empty (seq_tail ps))
-          // Last entry, so it can be a rest-spec
-          (if (isRestSpec (seq_head ps))
-            (tuple Signature (seq 'ParamSpec*') (opt 'RestSpec?' (compile_restSpec (seq_head ps) r)))
-            (tuple Signature (seq 'ParamSpec*' (compile_paramSpec (seq_head ps) r)) NO_REST))
-          // ELSE there are >1 entries to handle, head cannot be rest-spec
-          (let [(s (compile_Signature_params (seq_tail ps) r))]
-            (tuple Signature
-              (seq_prepend (compile_paramSpec (seq_head ps) r) (Signature_params s))
-              (Signature_rest s))))))
-
-    (fn isRestSpec ((v Value) -> B)
-      (and (element_of (Value_content v) Sexp)
-        (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-          (let [(i (- (seq_length vs) 1))]
-            // We can't use functional `and`; it will run `ith` with bad index.
-            (if (or (= i 1) (= i 2))
-              // The LaTeX printer can't render `ith` with a complex index.
-              (or (Value_is_symbol_matching (ith vs i) "...")
-                  (Value_is_symbol_matching (ith vs i) "...+"))
-              false)))))
+        (seq 'ParamSpec*')
+        (seq_prepend (compile_paramSpec (seq_head ps) r)
+                     (compile_paramSpecs (seq_tail ps) r))))
 
     (fn compile_paramSpec ((v Value) (r MacroEnv) -> ParamSpec)
       (if (element_of (Value_content v) Symbol)
@@ -1310,34 +1291,6 @@ Spec Issues: 1.0
       (if (seq_is_empty vs)
         (tuple ParamSpec u (tuple ParamShape t c))
         (wrong "Unexpected element in param-spec: " (seq_head vs))))
-
-
-    (fn compile_restSpec ((v Value) (r MacroEnv) -> RestSpec)
-      (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-        // We already checked length in isRestSpec
-        (compile_restType (seq_tail vs) (compile_paramName (seq_head vs)) r)))
-
-    (fn compile_restType ((vs 'Value*') (u Unicode) (r MacroEnv) -> RestSpec)
-      (if (element_of (Value_content (seq_head vs)) Symbol)
-        (let [(u1 (Value_symtext (seq_head vs)))]
-          (if (looksLikeMacroRef u1) // Type keywords "look like" bare macro-ref
-            // TODO:[PARAM-TYPE] Check for 'any' et al before treating as macro
-            (let [(m (interp_macroref (seq_head vs) r))]
-              (compile_restCard (seq_tail vs) u (macroType m)))
-            (compile_restCard vs u ANY)))
-        (wrong "Unexpected element in rest-spec: " (seq_head vs))))
-
-    (fn compile_restCard ((vs 'Value*') (u Unicode) (t ParamType) -> RestSpec)
-      (if (Value_is_symbol_matching (seq_head vs) "...")
-        (finishRestSpec (seq_tail vs) u t ZERO_OR_MORE)
-        (if (Value_is_symbol_matching (seq_head vs) "...+")
-          (finishRestSpec (seq_tail vs) u t ONE_OR_MORE)
-          (wrong "Unexpected element in rest-spec: " (seq_head vs)))))
-
-    (fn finishRestSpec ((vs 'Value*') (u Unicode) (t ParamType) (c SeqCardinality) -> RestSpec)
-      (if (seq_is_empty vs)
-        (tuple RestSpec u (tuple RestShape t c))
-        (wrong "Unexpected element in rest-spec: " (seq_head vs))))
 
 
     (fn compile_paramName ((v Value) -> Unicode)
@@ -1560,7 +1513,7 @@ Spec Issues: 1.0
     (fn interp_macro ((vs 'Value*') (m Macro) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
       (let [(f (Macro_xform     m)),
             (s (Macro_signature m))]
-        (let [(is (compileArgs (Signature_params s) (Signature_rest s) scope r vs))]
+        (let [(is (compileArgs (Signature_params s) scope r vs))]
           (mk_fn Interpreter (env)
             (let [(as (map 'Value**' (lambda (i) (i env)) is))]
               (f as))))))
@@ -1574,21 +1527,11 @@ Spec Issues: 1.0
 
     // Returns one Interpreter per parameter.
     // This should stay in sync with expandArgs
-    (fn compileArgs ((ps 'ParamSpec*') (rest 'RestSpec?') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
+    (fn compileArgs ((ps 'ParamSpec*') (scope 'Unicode*') (r MacroEnv) (vs 'Value*') -> 'Interpreter*')
       (if (seq_is_empty ps)
-        (if (opt_is_present rest)
-          // We have a rest-parameter, so grab all remaining templates.
-          (let [(type (RestShape_type (RestSpec_shape (opt_value rest)))),
-                (card (lift_to Cardinality (RestShape_card (RestSpec_shape (opt_value rest)))))]
-            (if (and (seq_is_empty vs) (not (is_voidable_Cardinality card)))
-              (wrong "Too few arguments")
-              (let [(i (compileGroup vs type scope r))]
-                (seq 'Interpreter*'
-                  (mk_fn Interpreter (env)
-                    (validateShape type card (i env)))))))
-          (if (seq_is_empty vs)
-            (seq 'Interpreter*')                 // All done!
-            (wrong "Too many arguments")))
+        (if (seq_is_empty vs)
+          (seq 'Interpreter*')                 // All done!
+          (wrong "Too many arguments"))//)
         // More non-rest parameters to collate
         (let [(p (seq_head ps))]
           (if (seq_is_empty vs)
@@ -1596,24 +1539,41 @@ Spec Issues: 1.0
             (if (is_voidable p)
               (seq_prepend Interpret_void
                 // No need to validateShape; we've done so statically.
-                (compileArgs (seq_tail ps) rest scope r vs))
+                (compileArgs (seq_tail ps) scope r vs))
               (wrong "Too few arguments"))
             // We have both a param and more arguments
             (let [(type (ParamShape_type (ParamSpec_shape p))),
                   (card (ParamShape_card (ParamSpec_shape p))),
                   (v    (seq_head vs))]
-              (let [(i (if (isClause v ";")
-                          (if (not (and (element_of card OptCardinality)
-                                        (= (lower card OptCardinality) EXACTLY_ONE)))
-                            (compileGroup (clauseBody v) type scope r)
-                            (wrong "Unexpected argument group"))
-                         (compileArg v type scope r)))]
-                // Separate `let` ensures args are expanded left-to-right.
-                (let [(is (compileArgs (seq_tail ps) rest scope r (seq_tail vs)))]
-                  (seq_prepend
-                    (mk_fn Interpreter (env)
-                      (validateShape type card (i env)))
-                    is))))))))
+              (if (isClause v ";")
+                // Argument is a group
+                (if (is_groupable_Cardinality card)
+                  (let [(i (compileGroup (clauseBody v) type scope r))]
+                    // Separate `let` ensures args are expanded left-to-right.
+                    (let [(is (compileArgs (seq_tail ps) scope r (seq_tail vs)))]
+                      (seq_prepend
+                        (mk_fn Interpreter (env)
+                          (validateShape type card (i env)))
+                        is)))
+                  (wrong "Unexpected argument group"))
+                // Arg is not a group.  Is it implicit-rest?
+                (if (and (seq_is_empty (seq_tail ps))      // parameter is final and
+                         (element_of card SeqCardinality)) // is * or +
+                  // We have a rest-parameter, so grab all remaining arguments.
+                  (if (and (seq_is_empty vs) (not (is_voidable_Cardinality card)))
+                    (wrong "Too few arguments")
+                    (let [(i (compileGroup vs type scope r))]
+                      (seq 'Interpreter*'
+                        (mk_fn Interpreter (env)
+                          (validateShape type card (i env))))))
+                  // Not implicit-rest, consume one argument
+                  (let [(i (compileArg v type scope r))]
+                    // Separate `let` ensures args are expanded left-to-right.
+                    (let [(is (compileArgs (seq_tail ps) scope r (seq_tail vs)))]
+                      (seq_prepend
+                        (mk_fn Interpreter (env)
+                          (validateShape type card (i env)))
+                        is))))))))))
 
     (fn compileArg ((v Value) (type ParamType) (scope 'Unicode*') (r MacroEnv) -> Interpreter)
       ((ParamType_compile type) v scope r))
@@ -1681,39 +1641,33 @@ Spec Issues: 1.0
       ('hint:multiline'
         (seq 'ExportedMacro*'
           (export "void"
-            (seq 'ParamSpec*')
-            ('rest...' "args" ANY)
+            (seq 'ParamSpec*' ('param*' "args" ANY))
             (mk_fn Transform (rest)
               (seq 'Value*')))
           (export "values"
-            (seq 'ParamSpec*')
-            ('rest...' "args" ANY)
+            (seq 'ParamSpec*' ('param*' "args" ANY))
             (mk_fn Transform (args)
               (ith args 0)))
           (export "make_string"
-            (seq 'ParamSpec*')
-            ('rest...' "content" ANY)
+            (seq 'ParamSpec*' ('param*' "content" ANY))
             (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift (appendText (ith args 0)) String Content)))))
           (export "make_symbol"
-            (seq 'ParamSpec*')
-            ('rest...' "content" ANY)
+            (seq 'ParamSpec*' ('param*' "content" ANY))
             (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift (appendText (ith args 0)) SymTok Symbol Content)))))
           (export "make_list"
-            (seq 'ParamSpec*')
-            ('rest...' "args" ANY)
+            (seq 'ParamSpec*' ('param*' "args" ANY))
             (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
                   (lift_to Content (lift_to List (ith args 0)))))))
           (export "make_sexp"
-            (seq 'ParamSpec*')
-            ('rest...' "args" ANY)
+            (seq 'ParamSpec*' ('param*' "args" ANY))
             (mk_fn Transform (args)
               (seq 'Value*'
                 (tuple Value (seq 'SymTok*')
@@ -1722,7 +1676,6 @@ Spec Issues: 1.0
             (seq 'ParamSpec*'
               ('param*' "anns"  ANY)
               ('param!' "value" ANY))
-            (opt 'RestSpec?')
             (mk_fn Transform (args)
               (let [(ts (map 'SymTok*'
                             (lambda (v) // Value -> SymTok
