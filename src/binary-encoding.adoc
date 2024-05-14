@@ -2593,7 +2593,7 @@ The example encodings in the following sections refer to this macro definition:
 ----
 (macro
     foo          // Macro name
-    [(x [int])]  // Parameters; `x` is a grouped parameter
+    (int::x*)    // Parameters; `x` is a grouped parameter
     /*...*/      // Body (elided)
 )
 ----
@@ -2661,7 +2661,7 @@ the end of the sequence of pages.
 ----
 (macro
     compact_foo          // Macro name
-    [(x [compact_int])]  // Parameters; `x` is a grouped parameter
+    (compact_int::x*)    // Parameters; `x` is a grouped parameter
     /*...*/              // Body (elided)
 )
 ----

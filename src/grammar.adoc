@@ -143,12 +143,12 @@ _module-body_ `)`
 // end::macro-defn[]
 // tag::signature[]
 |signature   |::=|  _param-specs_ _result-spec_?
-|param-specs |::=|  `(` _param-spec_* `)`  \|  `[` _param-spec_* `]`
-|param-spec  |::=|  _param-name_  \|  `(` _param-name_ _param-shape_ `)`
+|param-specs |::=|  `(` _param-spec_* `)`
+|param-spec  |::=|  _param-shape_? _param-name_ _cardinality_?
 |param-name  |::=|  _unannotated-identifier-symbol_
 // end::signature[]
 // tag::param-shape[]
-|param-shape  |::=|  _any-type_? _cardinality_?
+|param-shape  |::=|  _any-type_ `::`
 // end::param-shape[]
 // tag::cardinality[]
 |cardinality  |::=|  `*!*`  \|  `*+*`  \|  `*'?'*`  \|  `*'{asterisk}'*`

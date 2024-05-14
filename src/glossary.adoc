@@ -23,8 +23,7 @@ In the template language, a group is written as an S-expression starting with
 cardinality::
 Describes the number of values that a parameter will accept when the macro is invoked.
 One of zero-or-one, exactly-one, zero-or-more, or one-or-more.
-Specified in a signature by one of the modifiers `*?*`, `*!*`, `*{asterisk}*`, `*+*`, `*\...*`
-or `*\...+*`.
+Specified in a signature by one of the modifiers `*?*`, `*!*`, `*{asterisk}*`, or `*+*`.
 
 declaration::
 The association of a name with an entity (for example, a module or macro). See also _definition_. Not
