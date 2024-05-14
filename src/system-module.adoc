@@ -194,7 +194,7 @@ Example:
 [{nrm}]
 ----
 (*macro* ts_today
-  \((hour uint8) (minute uint8) (seconds_millis uint32))
+  (*uint8*::hour *uint8*::minute *uint32*::seconds_millis)
   (make_timestamp 2022 04 28 hour minute
     (decimal seconds_millis -3) 0))
 ----
@@ -229,11 +229,11 @@ This macro is optimized for representing symbols-list with minimal space.
 [{nrm}]
 ----
 (*macro* import
-  \((name *string*) (version uint**?**) (max_id uint**?**)) \-> struct
+  (*string*::name *uint*::version**?** *uint*::max_id**?**) \-> struct
   { name:name, version:version, max_id:max_id })
 
 (*macro* local_symtab
-  \((imports import*) (symbols string*))
+  (import::imports**{asterisk}** *string*::symbols**{asterisk}**)
   $ion_symbol_table::{
     imports:(*if_void* imports (void) [imports]),
     symbols:(*if_void* symbols (void) [symbols]),
@@ -254,7 +254,7 @@ This macro is optimized for representing symbols-list with minimal space.
 [{nrm}]
 ----
 (*macro* lst_append
-  \((symbols string*))
+  (*string*::symbols**{asterisk}**)
   (*if_void* symbols
     (void)                  // Produce nothing if no symbols provided.
     $ion_symbol_table::{

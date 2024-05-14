@@ -27,7 +27,7 @@ The most basic macro is a constant:
 
 [{nrm}]
 ----
-(*macro* pi []
+(*macro* pi ()
   3.141592653589793)
 ----
 
@@ -85,7 +85,7 @@ Most macros are not constant, they accept inputs that determine their results.
 [{nrm}]
 ----
 (*macro* price
-  [a, c]                          // signature
+  (a c)                           // signature
   { amount: a, currency: c })     // template
 ----
 
@@ -115,7 +115,7 @@ expression.  Here’s a silly macro to illustrate:
 
 [{nrm}]
 ----
-(*macro* reverse [a, b] [b, a])
+(*macro* reverse (a b) [b, a])
 ----
 ----
 (:reverse first 1990) ⇒ [1990, first]
@@ -156,7 +156,7 @@ either macros or _special forms_.  We start with the former:
 [{nrm}]
 ----
 (*macro* website_url
-  [path]
+  (path)
   (make_string "https://www.amazon.com/" path))
 ----
 
@@ -172,7 +172,7 @@ In the template language, macro invocations can appear almost anywhere:
 [{nrm}]
 ----
 (*macro* detail_page_url
-  [asin]
+  (asin)
   (website_url (make_string "dp/" asin)))
 ----
 ----
@@ -188,7 +188,7 @@ structs, but `(…)` doesn't construct S-expressions.  This gap is filled by the
 
 [{nrm}]
 ----
-(*macro* double_sexp [val] (make_sexp val val))
+(*macro* double_sexp (val) (make_sexp val val))
 ----
 ----
 (:make_sexp true 19.3 null) ⇒ (true 19.3 null)
@@ -233,7 +233,7 @@ always the case. The `*literal*` form makes this clear:
 
 [{nrm}]
 ----
-(*macro* USD_price [dollars] (price dollars (*literal* USD)))
+(*macro* USD_price (dollars) (price dollars (*literal* USD)))
 ----
 ----
 (:USD_price 12.99) ⇒ { amount: 12.99, currency: USD }
@@ -283,7 +283,7 @@ To detect problems close to their source, macro signatures can declare type cons
 [{nrm}]
 ----
 (*macro* detail_page_url
-  [(asin *string*)]
+  (*string*::asin)
   (website_url (make_string "dp/" asin)))
 ----
 
@@ -299,7 +299,7 @@ The intended input domain is now clear and the Ion parser can emit an error soon
 
 In this context the types include all the normal “concrete” Ion types, abstract
 supertypes like `*number*`, `*text*`, and `*lob*`, and the unconstrained “top type” `*any*`.
-The latter is the default type, and the signature `[foo]` is equivalent to `[(foo *any*)]`
+The latter is the default type, and the signature `(foo)` is equivalent to `(*any*::foo)`
 meaning that the parameter `foo` accepts one value of any type.
 
 TIP: These types also serve a second purpose: they can allow the binary encoding to be more compact by
@@ -324,7 +324,7 @@ To make this work, the definition of make_string is effectively:
 
 [{nrm}]
 ----
-(*macro* make_string [(parts *text {asterisk}*)] …)
+(*macro* make_string (*text*::parts**{asterisk}**) …)
 ----
 
 This says that `parts` is a _rest parameter_ accepting zero or more arguments of type `*text*`.
@@ -359,7 +359,7 @@ We have everything we need to illustrate this, via another system macro, `values
 
 [{nrm}]
 ----
-(*macro* values [(vals *any{asterisk}*)] vals)
+(*macro* values (*any*::vals**{asterisk}**) vals)
 ----
 
 [{nrm}]
@@ -396,7 +396,7 @@ returns too-few or too-many values.
 
 [{nrm}]
 ----
-(*macro* reverse [(a *any*), (b *any*)]
+(*macro* reverse (*any*::a *any*::b)
   [b, a])
 ----
 
@@ -453,10 +453,10 @@ list:
 [{nrm}]
 ----
 (*macro* int_list
-  [(vals **int{asterisk}**)]
+  (*int*::vals**{asterisk}**)
   [ vals ])
 (*macro* clumsy_bag
-  [(elts **any{asterisk}**)]
+  (*any*::elts**{asterisk}**)
   { '': elts })
 ----
 ----
@@ -487,7 +487,7 @@ created and bound to the next value on the stream.
 [{nrm}]
 ----
 (*macro* prices
-  [(currency *symbol*), (amounts *number{asterisk}*)]
+  (*symbol*::currency *number*::amounts**{asterisk}**)
   (*for* [(amt amounts)]                          // <1>
     (price amt currency)))
 ----
@@ -507,7 +507,7 @@ becomes empty.
 
 [{nrm}]
 ----
-(*macro* zip [(front *any{asterisk}*), (back *any{asterisk}*)]  // <1>
+(*macro* zip (*any*::front**{asterisk}** *any*::back**{asterisk}**)  // <1>
   (*for* [(f front),
         (b back)]
     [f, b]))
@@ -595,7 +595,7 @@ argument as a way to denote an absent parameter.
 [{nrm}]
 ----
 (*macro* temperature
-  [(degrees *decimal*), (scale *symbol?*)]
+  (*decimal*::degrees *symbol*::scale**?**)]
   {degrees: degrees, scale: scale})
 ----
 
@@ -613,7 +613,7 @@ detect void:
 [{nrm}]
 ----
 (*macro* temperature
-  [(degrees *decimal*), (scale *symbol?*)]
+  (*decimal*::degrees *symbol*::scale**?**)
   {degrees: degrees, scale: (*if_void* scale (*literal* K) scale)})
 ----
 ----
@@ -644,7 +644,7 @@ A parameter with the modifier `***` has _zero-or-more cardinality_.
 [{nrm}]
 ----
 (*macro* prices
-  [(amount *number{asterisk}*), (currency *symbol*)]
+  (*number*::amount**{asterisk}** *symbol*::currency)
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -673,7 +673,7 @@ the resulting stream must produce at least one value.  To continue using our `pr
 [{nrm}]
 ----
 (*macro* prices
-  [(amount *number+*), (currency *symbol*)]
+  (*number*::amount**+** *symbol*::currency)
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -689,7 +689,7 @@ On the final parameter, `*+*` collects the remaining (one or more) arguments:
 
 [{nrm}]
 ----
-(*macro* thanks [(names *text+*)]
+(*macro* thanks (*text*::names**+**)
   (make_string "Thank you to my Patreon supporters:\n"
     (for [(n names)]
       (make_string "  * " n "\n"))))
@@ -722,8 +722,7 @@ called an _argument group_.  Here is a macro to illustrate:
 [{nrm}]
 ----
 (*macro* prices
-  [(amount *number{asterisk}*),
-   (currency *symbol*)]
+  (*number*::amount**{asterisk}** *symbol*::currency)
   (*for* [(amt amount)]
     (price amt currency)))
 ----
@@ -782,7 +781,7 @@ parameters:
 [{nrm}]
 ----
 (*macro* optionals
-  [(a *any{asterisk}*), (b *any?*), (c *any!*), (d *any{asterisk}*]), (e *any?*), (f *any{asterisk}*)]
+  (*any*::a**{asterisk}** *any*::b**?** *any*::c**!** *any*::d**{asterisk}** *any*::e**?** *any*::f**{asterisk}**)
   (make_list a b c d e f))
 ----
 
@@ -847,7 +846,7 @@ To define a tagless parameter, just declare one of the primitive types:
 [{nrm}]
 ----
 (*macro* point
-  [(x *var_int*), (y *var_int*)]
+  (*var_int*::x *var_int*::y)
   {x: x, y: y})
 ----
 ----
@@ -882,7 +881,7 @@ overhead.
 [{nrm}]
 ----
 (*macro* byte_array
-  [(bytes *uint8{asterisk}*)]
+  (*uint8*::bytes**{asterisk}**)
   [bytes])
 ----
 
@@ -928,7 +927,7 @@ can go is `*struct*`, and things aren’t really any better:
 
 [{nrm}]
 ----
-(*macro* scatterplot [(points *struct{asterisk}*)]
+(*macro* scatterplot (*struct*::points**{asterisk}**)
   [points])
 ----
 ----
@@ -947,7 +946,7 @@ pseudo-type:
 
 [{nrm}]
 ----
-(*macro* scatterplot [(points point*)]  // <1>
+(*macro* scatterplot (point::points**{asterisk}**)  // <1>
   [points])
 ----
 
@@ -975,7 +974,7 @@ as needed:
 [{nrm}]
 ----
 (*macro* scatterplot
-  [(points point *+*), (x_label *string*), (y_label *string*)]
+  (point::points**+** *string*::x_label *string*::y_label)
   { points: [points], x_label: x_label, y_label: y_label })
 ----
 ----
