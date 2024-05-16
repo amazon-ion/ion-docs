@@ -220,22 +220,22 @@
 // Modules not in macro_table are not accessible
 
 (check_eval_fail "Module not in scope: M"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
                              (macro_table))
              ('#$:M:mac')))
 
 (check_eval_fail "Module not in scope: M"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
                              (macro_table))
              ('#$:M:0')))
 
 (check_eval_fail "No such macro: :mac"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
                              (macro_table))
              ('#$:mac')))
 
 (check_eval_fail "Invalid macro address: :0"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac [] 1)))
+  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
                              (macro_table))
              ('#$:0')))
 

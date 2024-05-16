@@ -37,48 +37,48 @@
   (signals "Unexpected clause in module:"))
 
 
-(with_encoding ((module M (macro_table (macro m1 [] "m1")
-                                       (macro m2 [] "m2")))
+(with_encoding ((module M (macro_table (macro m1 () "m1")
+                                       (macro m2 () "m2")))
                 (module U (use M)
-                          (macro_table (macro u1 [] [(m1), (m2)])))
+                          (macro_table (macro u1 () [(m1), (m2)])))
                 (macro_table U))
   (document ('#$:u1'))
   (produces ["m1", "m2"]))
 
 
 // Ambiguous `use`d names must be qualified.
-(with_encoding ((module M1 (macro_table (macro m [] "m1")))
-                (module M2 (macro_table (macro m [] "m2")))
+(with_encoding ((module M1 (macro_table (macro m () "m1")))
+                (module M2 (macro_table (macro m () "m2")))
                 (module U (use M1 M2)
-                          (macro_table (macro u1 [] (m)))))
+                          (macro_table (macro u1 () (m)))))
   (document)
   (signals "Ambiguous macro-ref: m"))
 
 
 // `use` in inline module doesn't affect the document.
-(with_encoding ((module M (macro_table (macro m1 [] "m1")))
+(with_encoding ((module M (macro_table (macro m1 () "m1")))
                 (module U (use M)
-                          (macro_table (macro u1 [] (m1))))
+                          (macro_table (macro u1 () (m1))))
                 (macro_table U))
   (document ('#$:m1'))
   (signals "No such macro:"))
 
 
 // Can have multiple module-names in one `use` clause.
-(with_encoding ((module M (macro_table (macro m1 [] "m1")))
-                (module N (macro_table (macro n1 [] "n1")))
+(with_encoding ((module M (macro_table (macro m1 () "m1")))
+                (module N (macro_table (macro n1 () "n1")))
                 (module U (use M N)
-                          (macro_table (macro u1 [] (values (m1) (n1)))))
+                          (macro_table (macro u1 () (values (m1) (n1)))))
                 (macro_table U))
   (document ('#$:u1'))
   (produces "m1" "n1"))
 
 // Can `use` the same module-name twice
-(with_encoding ((module M (macro_table (macro m1 [] "m1")))
-                (module N (macro_table (macro n1 [] "n1")))
+(with_encoding ((module M (macro_table (macro m1 () "m1")))
+                (module N (macro_table (macro n1 () "n1")))
                 (module U (use M N M)
-                          (macro_table (macro u1 [] (values (':M:m1') (':M:0'))))
-//                        (macro_table (macro u2 [] (m1)))     // FIXME [MAC-ID]
+                          (macro_table (macro u1 () (values (':M:m1') (':M:0'))))
+//                        (macro_table (macro u2 () (m1)))     // FIXME [MAC-ID]
                 )
                 (macro_table U))
   (document ('#$:u1'))
@@ -86,28 +86,28 @@
 
 
 // Local macro defn can shadow the same `use`d name.
-(with_encoding ((module M (macro_table (macro m [] "M:m")))
+(with_encoding ((module M (macro_table (macro m () "M:m")))
                 (module U (use M)
-                          (macro_table (macro m [] "U:m")))
+                          (macro_table (macro m () "U:m")))
                 (macro_table U))
   (document ('#$:m'))
   (produces "U:m"))
 
 
 // `use`d names do not shadow each other across `use` clauses
-(with_encoding ((module M (macro_table (macro m [] "M:m")))
-                (module N (macro_table (macro m [] "N:m")))
+(with_encoding ((module M (macro_table (macro m () "M:m")))
+                (module N (macro_table (macro m () "N:m")))
                 (module U (use M)
                           (use N)
-                          (macro_table (macro _ [] (m)))))
+                          (macro_table (macro _ () (m)))))
   (document)
   (signals "Ambiguous macro-ref: m"))
 
 // ... or within the same clause
-(with_encoding ((module M (macro_table (macro m [] "M:m")))
-                (module N (macro_table (macro m [] "N:m")))
+(with_encoding ((module M (macro_table (macro m () "M:m")))
+                (module N (macro_table (macro m () "N:m")))
                 (module U (use M N)
-                          (macro_table (macro _ [] (m)))))
+                          (macro_table (macro _ () (m)))))
   (document)
   (signals "Ambiguous macro-ref: m"))
 

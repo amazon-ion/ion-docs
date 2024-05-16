@@ -7,7 +7,7 @@
 
 // TODO test invalid type declaration
 
-(in11 (mactab (macro m ((i uint8)) [i]))
+(in11 (mactab (macro m (uint8::i) [i]))
       (then (toplevel ('#$:m' 0) ('#$:m' 1) ('#$:m' 255))
             (produces [0] [1] [255]))
       (each (toplevel ('#$:m' ('#$:values' 0)))
@@ -20,7 +20,7 @@
             (toplevel ('#$:m' 256))
             (signals "Invalid uint8 argument")))
 
-(in11 (mactab (macro m ((i uint8*)) [i]))
+(in11 (mactab (macro m (uint8::i*) [i]))
       (then (toplevel ('#$:m' 0) ('#$:m' 1) ('#$:m' 255))
             (produces [0]        [1]        [255]))
       (each (toplevel ('#$:m' ('#$:' 0 1 255)))
@@ -31,8 +31,8 @@
             (signals "Annotation not allowed for argument of tagless encoding")))
 
 // E-expression shape failures are signalled even when param is unused
-(in11 (each (mactab (macro m ((i uint8*)) [i]))
-            (mactab (macro m ((i uint8*)) false))
+(in11 (each (mactab (macro m (uint8::i*) [i]))
+            (mactab (macro m (uint8::i*) false))
             (then (each (toplevel ('#$:m' ('#$:values' 0)))
                         (toplevel ('#$:m' 0 ('#$:values' 0)))
                         (signals "E-expression not allowed for argument of tagless encoding"))

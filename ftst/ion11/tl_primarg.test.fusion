@@ -6,7 +6,7 @@
 
 
 // Range checks do not apply to TL invocations
-(in11 (mactab (macro m ((i uint8)) (annotate "uint8" i))
+(in11 (mactab (macro m (uint8::i) (annotate "uint8" i))
               (macro nul  () (m null.int))
               (macro neg1 () (m -1))
               (macro zero () (m 0))
@@ -15,7 +15,7 @@
             (produces uint8::null.int uint8::-1   uint8::0    uint8::1000)))
 
 // But type checks do
-(in11 (mactab (macro m ((i uint8)) (annotate "uint8" i))
+(in11 (mactab (macro m (uint8::i) (annotate "uint8" i))
               (macro nul () (m null))
 //            (macro dec () (m 1.))
               (macro str () (m "0")))
@@ -25,8 +25,8 @@
             (signals "Parameter value is not an int")))
 
 // Can use any template for primitive-typed argument.
-(in11 (mactab (macro m ((i uint8)) (annotate "uint8" i))
-              (macro var  ((v*))   (m v))                    // A variable reference
+(in11 (mactab (macro m (uint8::i)  (annotate "uint8" i))
+              (macro var  (v*)     (m v))                    // A variable reference
               (macro zero ()       (m (annotate "z" 0)))     // A macro
               (macro thou ()       (m (literal 1000))))      // A special form
 

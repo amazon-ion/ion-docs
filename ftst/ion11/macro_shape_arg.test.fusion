@@ -5,7 +5,7 @@
 (require "/ion_model/testing/dsl")
 
 
-(in11 (mactab (macro m ((vs values!)) {m:[vs]}))
+(in11 (mactab (macro m (values::vs!) {m:[vs]}))
       (then (toplevel ('#$:m' (1)))
             (produces {m:[1]}))
       (then (toplevel ('#$:m'))
@@ -30,7 +30,7 @@
             (toplevel ('#$:m' (1 2) 2))           // Hidden: more than one value
             (signals "Too many arguments")))
 
-(in11 (mactab (macro m ((vs make_list*)) {m:vs}))
+(in11 (mactab (macro m (make_list::vs*) {m:vs}))
       (each (toplevel ('#$:m'))
             (toplevel ('#$:m' ('#$:')))
             (produces {}))
@@ -55,7 +55,7 @@
             (toplevel ('#$:m' (1 2) ('#$:' 3) ()))
             (signals "Unexpected argument group")))
 
-(in11 (mactab (macro m ((v make_list+)) v))
+(in11 (mactab (macro m (make_list::v+) v))
       (each (toplevel ('#$:m'))
 //          (toplevel ('#$:m' ('#$:')))    // TODO:[PLUS-GROUP] ensure at least one expr
             (signals "Too few arguments"))
@@ -80,7 +80,7 @@
             (signals "Unexpected argument group")))
 
 // Using :values as a parameter shape leads to some interesting things.
-(in11 (mactab (macro m ((vs values+)) {m:[vs]}))
+(in11 (mactab (macro m (values::vs+) {m:[vs]}))
       (then (toplevel ('#$:m' ()))
             (signals "No value provided for parameter"))
       (each (toplevel ('#$:m' (1 2 3)))

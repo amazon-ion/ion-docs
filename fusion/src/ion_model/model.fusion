@@ -8,6 +8,7 @@ TODO
 ----
 Terminology/Readability:
 * Refactor cardinality constants as done with types?
+* Cleanup macro reference resolution, it's gotten messy and duplicative.
 * The names around "document symbols" don't read well in prose. "local symbols"
   might be better but that requires careful editing to keep "local" precise.
 * Figure out the proper name for `I`.  N? Z?
@@ -1250,56 +1251,54 @@ Spec Issues: 1.0
     // Signature compilation
 
     (fn compile_Signature ((v Value) (r MacroEnv) -> Signature)
-      (tuple Signature (compile_paramSpecs (Value_seqElements v) r)))
+      (if (and (element_of (Value_content v) Sexp) (not (element_of (Value_content v) DotNull)))
+        (tuple Signature (compile_paramSpecs (Value_seqElements v) (seq 'ParamSpec*') r))
+        (wrong "Signature must be a non-null sexp")))
 
-    (fn compile_paramSpecs ((ps 'Value*') (r MacroEnv) -> 'ParamSpec*')
-      (if (seq_is_empty ps)
-        (seq 'ParamSpec*')
-        (seq_prepend (compile_paramSpec (seq_head ps) r)
-                     (compile_paramSpecs (seq_tail ps) r))))
-
-    (fn compile_paramSpec ((v Value) (r MacroEnv) -> ParamSpec)
-      (if (element_of (Value_content v) Symbol)
-        (compile_paramType (seq 'Value*') (compile_paramName v) r)
-        // [ERRMSG] Handle non-sexp, null.sexp
-        (let [(vs (lower (Value_content v) Sexp 'Value*'))]
-          (if (seq_is_empty vs)
-            (wrong "Malformed param-spec: " v)
-            (compile_paramType (seq_tail vs) (compile_paramName (seq_head vs)) r)))))
-
-    (fn compile_paramType ((vs 'Value*') (u Unicode) (r MacroEnv) -> ParamSpec)
+    (fn compile_paramSpecs ((vs 'Value*') (ps 'ParamSpec*') (r MacroEnv) -> 'ParamSpec*')
       (if (seq_is_empty vs)
-        (compile_paramCard vs u ANY)
-        (if (element_of (Value_content (seq_head vs)) Symbol)
-          (let [(u1 (Value_symtext (seq_head vs)))]
-            (let [(t (findParamType u1))]
-              (if (opt_is_present t)
-                // The symbol names a built-in type
-                (compile_paramCard (seq_tail vs) u (opt_value t))
-                (if (looksLikeMacroRef u1)
-                  (let [(m (interp_macroref (seq_head vs) r))]
-                    (compile_paramCard (seq_tail vs) u (macroType m)))
-                  // Not recognized as a type, ignore it and look for cardinality.
-                  (compile_paramCard vs u ANY)))))
-          (wrong "Unexpected element in param-spec: " (seq_head vs)))))
+        ps
+        (let [(v (seq_head vs))]
+          (if (element_of (Value_content v) Symbol)
+            (compile_paramCard (seq_tail vs)
+              (compile_paramName v) (compile_paramType (Value_annots v) r) ps r)
+            (wrong "Unexpected element in param-spec: " v)))))
 
-    (fn compile_paramCard ((vs 'Value*') (u Unicode) (t ParamType) -> ParamSpec)
+
+    (fn compile_paramType ((anns 'SymTok*') (r MacroEnv) -> ParamType)
+      (if (seq_is_empty anns)
+        // End of signature, default
+        ANY
+        // TODO: Error if there's more than one annotation
+        // TODO:[ERRMSG] handle $0 and unknown symbols
+        (let [(u1 (lower (seq_head anns) Unicode))]
+          (let [(t (findParamType u1))]
+            (if (opt_is_present t)
+              // The symbol names a built-in type
+              (opt_value t)
+              (if (looksLikeMacroRef u1)
+                (let [(m (interp_macroref_U u1 r))]
+                  (macroType m))
+                // Not recognized as a type, ignore it and look for cardinality.
+                (wrong "Unrecognized parameter type annotation")))))))
+
+    (fn compile_paramCard ((vs 'Value*') (u Unicode) (t ParamType) (ps 'ParamSpec*') (r MacroEnv) -> 'ParamSpec*')
       (if (seq_is_empty vs)
-        (finishParamSpec vs u t (lift EXACTLY_ONE Cardinality))
+        (finishParamSpec vs u t (lift EXACTLY_ONE Cardinality) ps r)
         (if (Value_is_symbol_matching (seq_head vs) "!")
-          (finishParamSpec (seq_tail vs) u t (lift EXACTLY_ONE Cardinality))
+          (finishParamSpec (seq_tail vs) u t (lift EXACTLY_ONE Cardinality) ps r)
           (if (Value_is_symbol_matching (seq_head vs) "?")
-            (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_ONE Cardinality))
+            (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_ONE Cardinality) ps r)
             (if (Value_is_symbol_matching (seq_head vs) "+")
-              (finishParamSpec (seq_tail vs) u t (lift ONE_OR_MORE Cardinality))
+              (finishParamSpec (seq_tail vs) u t (lift ONE_OR_MORE Cardinality) ps r)
               (if (Value_is_symbol_matching (seq_head vs) "*")
-                (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_MORE Cardinality))
-                (wrong "Unexpected element in param-spec: " (seq_head vs))))))))
+                (finishParamSpec (seq_tail vs) u t (lift ZERO_OR_MORE Cardinality) ps r)
+                // Not a recognized cardinality, assume its the next param-spec
+                (finishParamSpec vs u t (lift EXACTLY_ONE Cardinality) ps r)))))))
 
-    (fn finishParamSpec ((vs 'Value*') (u Unicode) (t ParamType) (c Cardinality) -> ParamSpec)
-      (if (seq_is_empty vs)
-        (tuple ParamSpec u (tuple ParamShape t c))
-        (wrong "Unexpected element in param-spec: " (seq_head vs))))
+    (fn finishParamSpec ((vs 'Value*') (u Unicode) (t ParamType) (c Cardinality) (ps 'ParamSpec*') (r MacroEnv) -> 'ParamSpec*')
+      (let [(p (tuple ParamSpec u (tuple ParamShape t c)))]
+        (compile_paramSpecs vs (seq_append ps (seq 'ParamSpec*' p)) r)))
 
 
     (fn compile_paramName ((v Value) -> Unicode)
@@ -1530,6 +1529,12 @@ Spec Issues: 1.0
     // TODO Not a great name; doesn't return Interpreter and we'll use this elsewhere.
     (fn interp_macroref ((v Value) (r MacroEnv) -> Macro)
       (let [(m (parseMacroRef (Value_symtext v)))]
+        (let [(mod (MacroRef_module m)),
+              (mac (MacroRef_macro  m))]
+          (r mod mac))))
+
+    (fn interp_macroref_U ((u Unicode) (r MacroEnv) -> Macro)
+      (let [(m (parseMacroRef u))]
         (let [(mod (MacroRef_module m)),
               (mac (MacroRef_macro  m))]
           (r mod mac))))

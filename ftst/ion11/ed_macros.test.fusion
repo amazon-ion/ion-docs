@@ -7,10 +7,10 @@
 
 // Demonstration of what can heppen without type-checking or grouping.
 // Here none of the fields have declared types.
-(in11 (mactab (macro import ((name) (version ?) (max_id ?))
+(in11 (mactab (macro import (name version? max_id?)
                 { name:name, version:version, max_id:max_id })
 
-              (macro local_symtab ((imports *) (symbols *))
+              (macro local_symtab (imports* symbols*)
                 $ion_symbol_table::{
                   imports: (if_void imports (void) [imports]),
                   symbols: (if_void symbols (void) [symbols]),

@@ -45,7 +45,7 @@
       (toplevel '#$11' '#$12')
       (produces a b))
 
-(in11 (mactab (macro m [] "m"))
+(in11 (mactab (macro m () "m"))
       (toplevel ('#$:m'))
       (produces "m"))
 

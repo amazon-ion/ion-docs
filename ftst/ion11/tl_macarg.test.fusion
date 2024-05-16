@@ -7,54 +7,54 @@
 
 (in11 (encoding (module S
                   (macro_table (macro singleShape (v) (annotate "single" v))
-                               (macro oneSingle  ((v singleShape!))   [v])
-                               (macro optSingle  ((v singleShape?))   [v])
-                               (macro plusSingle ((v singleShape+))   [v])
-                               (macro starSingle ((v singleShape*))   [v]))))
+                               (macro oneSingle  (singleShape::v!)   [v])
+                               (macro optSingle  (singleShape::v?)   [v])
+                               (macro plusSingle (singleShape::v+)   [v])
+                               (macro starSingle (singleShape::v*)   [v]))))
 
       // Compile-time failures
       (each (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:oneSingle' /*ERR*/)))))
+                        (macro_table (macro _ () (':S:oneSingle' /*ERR*/)))))
             (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:optSingle' (/*ERR*/))))))
+                        (macro_table (macro _ () (':S:optSingle' (/*ERR*/))))))
             (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:plusSingle' /*ERR*/)))))
+                        (macro_table (macro _ () (':S:plusSingle' /*ERR*/)))))
             (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:plusSingle' (/*ERR*/))))))
+                        (macro_table (macro _ () (':S:plusSingle' (/*ERR*/))))))
             (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:plusSingle' (; (/*ERR*/)))))))
+                        (macro_table (macro _ () (':S:plusSingle' (; (/*ERR*/)))))))
             (signals "Too few arguments"))
       (each (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:oneSingle' (1 2))))))
+                        (macro_table (macro _ () (':S:oneSingle' (1 2))))))
             (encoding (retain *)
                       (module user
-                        (macro_table (macro _ [] (':S:optSingle' (1 2))))))
+                        (macro_table (macro _ () (':S:optSingle' (1 2))))))
             (signals "Too many arguments")) // ... to Single-shaped arg
 
       // Expansion-time
       (then (encoding (retain *)
                       (module user
                         (use S)
-                        (macro_table (macro mOne   [(v*)] (oneSingle (v)))
-                                     (macro mOpt0  [(v*)] (optSingle (;)))
-                                     (macro mOpt1  [(v*)] (optSingle (v)))
-                                     (macro mPlus0 [(v*)] (plusSingle (;)))
-                                     (macro mPlus1 [(v*)] (plusSingle (v)))
-                                     (macro mPlus2 [(v*)] (plusSingle (; (v))))
-                                     (macro mPlus3 [(v*)] (plusSingle (; (v) (v))))
-                                     (macro mStar0 [(v*)] (starSingle (;)))
-                                     (macro mStar1 [(v*)] (starSingle (v)))
-                                     (macro mStar2 [(v*)] (starSingle (; (v))))
-                                     (macro mStar3 [(v*)] (starSingle (; (v) (v))))
-                                     (macro mRest0 [(v*)] (starSingle))
-                                     (macro mRest1 [(v*)] (starSingle (v)))
-                                     (macro mRest2 [(v*)] (starSingle (v) (v)))
+                        (macro_table (macro mOne   (v*) (oneSingle (v)))
+                                     (macro mOpt0  (v*) (optSingle (;)))
+                                     (macro mOpt1  (v*) (optSingle (v)))
+                                     (macro mPlus0 (v*) (plusSingle (;)))
+                                     (macro mPlus1 (v*) (plusSingle (v)))
+                                     (macro mPlus2 (v*) (plusSingle (; (v))))
+                                     (macro mPlus3 (v*) (plusSingle (; (v) (v))))
+                                     (macro mStar0 (v*) (starSingle (;)))
+                                     (macro mStar1 (v*) (starSingle (v)))
+                                     (macro mStar2 (v*) (starSingle (; (v))))
+                                     (macro mStar3 (v*) (starSingle (; (v) (v))))
+                                     (macro mRest0 (v*) (starSingle))
+                                     (macro mRest1 (v*) (starSingle (v)))
+                                     (macro mRest2 (v*) (starSingle (v) (v)))
                       ))
                       (macro_table user))
             (each (toplevel ('#$:mOpt0'))

@@ -86,7 +86,7 @@
 
 (check_expansion
   (quote_top a)
-  (quote11   $ion_encoding::((module M (macro_table (macro val ((v)) v)))
+  (quote11   $ion_encoding::((module M (macro_table (macro val (v) v)))
                              (macro_table M))
              ('#$:val' a)))
 
@@ -95,7 +95,7 @@
 
 // TODO:[EACH-FORK] test variant signatures; EACH only allows one extension.
 (in11 (mactab
-        (macro m [(v!)] v))
+        (macro m (v!) v))
       (each (toplevel ('#$:m'))
             (signals "Too few arguments"))
       (each (toplevel ('#$:m' ('#$:')))
@@ -116,7 +116,7 @@
 // Zero-or-one cardinality
 
 (in11 (mactab
-        (macro m [(v?)] v))
+        (macro m (v?) v))
       (each (toplevel ('#$:m'))
             (toplevel ('#$:m' ('#$:')))
             (toplevel ('#$:m' ('#$:values')))
@@ -134,7 +134,7 @@
             (signals "Too many arguments")))
 
 (in11 (mactab
-        (macro m [(v?), w] [v, w]))
+        (macro m (v? w) [v, w]))
       (each (toplevel ('#$:m'))
             (toplevel ('#$:m' 2))
             (signals "Too few arguments"))
@@ -156,7 +156,7 @@
 // One-or-more cardinality
 
 (in11 (mactab
-        (macro m [(v+)] v))
+        (macro m (v+) v))
       (then (toplevel ('#$:m'))
             (signals "Too few arguments"))
       (each (toplevel ('#$:m' ('#$:')))        // TODO:[PLUS-GROUP] Wrong error?
@@ -176,7 +176,7 @@
             (signals "Too many arguments")))
 
 (in11 (mactab
-        (macro m [(v+), w] [v, w]))
+        (macro m (v+ w) [v, w]))
       (each (toplevel ('#$:m'))
             (toplevel ('#$:m' 1))
             (signals "Too few arguments"))
@@ -199,7 +199,7 @@
 // Zero-or-more cardinality
 
 (in11 (mactab
-        (macro m [(v*)] v))
+        (macro m (v*) v))
       (each (toplevel ('#$:m'))
             (toplevel ('#$:m' ('#$:')))
             (toplevel ('#$:m' ('#$:values')))
@@ -219,7 +219,7 @@
             (signals "Too many arguments")))
 
 (in11 (mactab
-        (macro m [(v*), w] [v, w]))
+        (macro m (v* w) [v, w]))
       (each (toplevel ('#$:m'))
             (toplevel ('#$:m' 1))
             (signals "Too few arguments"))
@@ -252,7 +252,7 @@
       (produces a::null.list  b::[]     [1]        [1, c::2]))
 
 (in11 (mactab (macro m1 (v)       a::[1, v, 2])
-              (macro m2 (v (r*)) [1, [v], 2, r, 3]))
+              (macro m2 (v r*)    [1, [v], 2, r, 3]))
       (toplevel ('#$:m1' a)   ('#$:m2' a)     ('#$:m2' [a] r1 r2))
       (produces a::[1, a, 2]  [1, [a], 2, 3]  [1, [[a]], 2, r1, r2, 3]))
 
@@ -271,11 +271,11 @@
       (produces a::null.struct b::{}   {n:v}     {n:2, n:v}))
 
 // Template in field-value position can returns non-singular results.
-(in11 (mactab (macro m [(v*)] {n:v}))
+(in11 (mactab (macro m (v*) {n:v}))
       (toplevel ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' ('#$:values' 1 2)))
       (produces {}       {n:1}      {n:2, n:1}   {n:1, n:2}))
 
-(in11 (mactab (macro m [(v*)] {n1:v, n2:v}))
+(in11 (mactab (macro m (v*) {n1:v, n2:v}))
       (toplevel ('#$:m') ('#$:m' 1)   ('#$:m' 1 2))
       (produces {}       {n1:1, n2:1} {n1:2, n2:1, n2:2, n1:1}))
 
@@ -289,32 +289,32 @@
 (check_expansion
   (quote_top [a::(), literal] [1, (values 2 3), (literal v)] [a, v])
   (quote11 $ion_encoding::((module M
-                             (macro_table (macro m [] [(literal a::()), (literal literal)])
-                                          (macro n [] (literal [1, (values 2 3), (literal v)]))
-                                          (macro o [v] [v, (literal v)])))
+                             (macro_table (macro m ()  [(literal a::()), (literal literal)])
+                                          (macro n ()  (literal [1, (values 2 3), (literal v)]))
+                                          (macro o (v) [v, (literal v)])))
                            (macro_table M))
            ('#$:m') ('#$:n') ('#$:o' a)))
 
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (literal)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (literal)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (literal 1 2)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (literal 1 2)))))))
 
 
 // Special form: if_void
 
-(with_mactab ((macro m [(v*)]
+(with_mactab ((macro m (v*)
                 (if_void v true false)))
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces true     false      false        false))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m [(p*)] (if_void p true (make_string null))))
+(with_mactab ((macro m (p*) (if_void p true (make_string null))))
   (document ('#$:m'))
   (produces true)
   (document ('#$:m' 1))
   (signals "Not a text value"))
-(with_mactab ((macro m [(p*)] (if_void p (make_string null) false)))
+(with_mactab ((macro m (p*) (if_void p (make_string null) false)))
   (document ('#$:m'))
   (signals "Not a text value")
   (document ('#$:m' 1))
@@ -322,106 +322,106 @@
 
 
 // Try new testing forms; still awkward.
-(with_mactab ((macro m [] (if_void)))
+(with_mactab ((macro m () (if_void)))
   (document)
   (signals "Malformed if_void form"))
 
 (check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void)))))))
 (check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1)))))))
 (check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void 1 2)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 2)))))))
 (check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void 1 2 3 4)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 2 3 4)))))))
 
 // Ensure malformed subforms are cought at compile-time.
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void (literal) 2 3)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void (literal) 2 3)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void 1 (literal) 3)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 (literal) 3)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_void 1 2 (literal))))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 2 (literal))))))))
 
 
 // Special form: if_single
 
-(with_mactab ((macro m [(v*)]
+(with_mactab ((macro m (v*)
                 (if_single v true false)))
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces false    true       false        false))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m [(p*)] (if_single p true (make_string null))))
+(with_mactab ((macro m (p*) (if_single p true (make_string null))))
   (document ('#$:m'))
   (signals "Not a text value")
   (document ('#$:m' 1))
   (produces true))
-(with_mactab ((macro m [(p*)] (if_single p (make_string null) false)))
+(with_mactab ((macro m (p*) (if_single p (make_string null) false)))
   (document ('#$:m'))
   (produces false)
   (document ('#$:m' 1))
   (signals "Not a text value"))
 
 (check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single)))))))
 (check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1)))))))
 (check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single 1 2)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 2)))))))
 (check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single 1 2 3 4)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 2 3 4)))))))
 
 // Ensure malformed subforms are cought at compile-time.
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single (literal) 2 3)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single (literal) 2 3)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single 1 (literal) 3)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 (literal) 3)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_single 1 2 (literal))))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 2 (literal))))))))
 
 
 // Special form: if_multi
 
-(with_mactab ((macro m [(v*)]
+(with_mactab ((macro m (v*)
                 (if_multi v true false)))
   (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces false    false      true         true))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m [(p*)] (if_multi p true (make_string null))))
+(with_mactab ((macro m (p*) (if_multi p true (make_string null))))
   (document ('#$:m'))
   (signals "Not a text value")
   (document ('#$:m' 1 2))
   (produces true))
-(with_mactab ((macro m [(p*)] (if_multi p (make_string null) false)))
+(with_mactab ((macro m (p*) (if_multi p (make_string null) false)))
   (document ('#$:m'))
   (produces false)
   (document ('#$:m' 1 2))
   (signals "Not a text value"))
 
 (check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi)))))))
 (check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1)))))))
 (check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 2)))))))
 (check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2 3 4)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 2 3 4)))))))
 
 // Ensure malformed subforms are cought at compile-time.
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi (literal) 2 3)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi (literal) 2 3)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 (literal) 3)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 (literal) 3)))))))
 (check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (if_multi 1 2 (literal))))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 2 (literal))))))))
 
 
 // Special form: for
 
 // No bindings, no iteration
-(with_mactab ((macro m [(as *)]
+(with_mactab ((macro m (as *)
                 (for []
                   as)))
   (document ('#$:m'))
@@ -430,7 +430,7 @@
   (produces))
 
 // Single binding
-(with_mactab ((macro m [(as *)]
+(with_mactab ((macro m (as *)
                 (for [(a as)]
                   [a])))
   (document ('#$:m'))
@@ -439,7 +439,7 @@
   (produces [1] [2]))
 
 // Multiple bindings
-(with_mactab ((macro m [(as *), (bs *)]
+(with_mactab ((macro m (as* bs*)
                 (for [(a as), (b bs)]
                   [a, b])))
   (document ('#$:m'))
@@ -458,7 +458,7 @@
   (produces [[1, 2], (3 4)]))
 
 // Shadowing parameter names
-(with_mactab ((macro m [(a *), (b *)]
+(with_mactab ((macro m (a* b*)
                 (for [(a a)]
                   [a, b])))  // b is inlined!
   (document ('#$:m' 1))
@@ -475,50 +475,50 @@
 // TODO [DUPE-NAME] reject duplicate variable names
 
 // Bound streams do not need to be parameter references
-(with_mactab ((macro m [(a*)] (for [(f "f1")] [f, a])))
+(with_mactab ((macro m (a*) (for [(f "f1")] [f, a])))
   (document ('#$:m') ('#$:m' 1 2))
   (produces ["f1"]   ["f1", 1, 2]))
 
-(with_mactab ((macro m [(a*)] (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
+(with_mactab ((macro m (a*) (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
   (document ('#$:m' 1 2))
   (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
 
-(with_mactab ((macro m [(a*)] (for [(f (void))] [f, a])))
+(with_mactab ((macro m (a*) (for [(f (void))] [f, a])))
   (document ('#$:m') ('#$:m' 1 2))
   (produces))
 
-(with_mactab ((macro m [(a*)] (for [(f (values "f1" a "f2"))] [f, a])))
+(with_mactab ((macro m (a*) (for [(f (values "f1" a "f2"))] [f, a])))
   (document ('#$:m')       ('#$:m' 1))
   (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
 
 
 (check_eval_fail "Malformed `for` form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for)))))))
 (check_eval_fail "Malformed `for` form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [])))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [])))))))
 (check_eval_fail "Malformed `for` form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [] 1 2)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [] 1 2)))))))
 
 (check_eval_fail "Malformed `for` binding pair"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [()] 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [()] 1)))))))
 (check_eval_fail "Malformed `for` binding pair"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v)] 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v)] 1)))))))
 (check_eval_fail "Malformed `for` binding pair"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1 2)] 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v 1 2)] 1)))))))
 
 // Malformed sub-templates are detected at compile-time.
 (check_eval_fail "Unbound variable: x"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v x)] 1)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v x)] 1)))))))
 (check_eval_fail "Unbound variable: x"
-  (quote11 $ion_encoding::((module M (macro_table (macro m [] (for [(v 1)] x)))))))
+  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v 1)] x)))))))
 
 // Propagate runtime failure in bound-expression
-(with_mactab ((macro m [(p*)] (for [(f (values 1 (make_symbol p) 2))] f)))
+(with_mactab ((macro m (p*) (for [(f (values 1 (make_symbol p) 2))] f)))
   (document ('#$:m' "a" null "b"))
   (signals "Not a text value"))    // for null
 
 // Propagate runtime failure in body-expression
-(with_mactab ((macro m [(p*)] (for [(f p)] (make_symbol p))))
+(with_mactab ((macro m (p*) (for [(f p)] (make_symbol p))))
   (document ('#$:m' "a" null "b"))
   (signals "Not a text value"))    // for null
 

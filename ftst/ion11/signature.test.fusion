@@ -69,65 +69,56 @@
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
   (quote (v w)))
 
-(check_Signature []
-  (quote []))
-(check_Signature [('param!' "v" ANY)]
-  (quote [v]))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
-  (quote [v, w]))
 
-
-// A param-spec can be a sexp.
-(check_Signature [('param!' "v" ANY)]
-  (quote [(v)]))
-(check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
-  (quote [v, (w)]))
-
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v null))))
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v! int))))
+(check_Signature_fail "Unexpected element in param-spec:" (quote (v null)))
+(check_Signature_fail "Unexpected element in param-spec:" (quote (v! 9)))
 
 
 // Explicit types
 (check_Signature [('param!' "v" ANY)]
-  (quote [(v any)]))
+  (quote (any::v)))
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
-  (quote [v, (w any)]))
+  (quote (v any::w)))
 (check_Signature [('param!' "v" UINT8), ('param*' "w" UINT8)]
-  (quote [(v uint8), (w uint8*)]))
+  (quote (uint8::v uint8::w*)))
 
 
 // Explicit exactly-one cardinality
 (check_Signature [('param!' "v" ANY)]
-  (quote [(v!)]))
+  (quote (v!)))
 (check_Signature [('param!' "v" ANY), ('param!' "w" ANY)]
-  (quote [v, (w !)]))
+  (quote (v w !)))
 
 // Zero-or-one
 (check_Signature [('param?' "v" ANY)]
-  (quote [(v?)]))
+  (quote (v?)))
 (check_Signature [('param!' "v" ANY), ('param?' "w" ANY)]
-  (quote [v, (w ?)]))
+  (quote (v w?)))
 
 // One-or-more
 (check_Signature [('param+' "v" ANY)]
-  (quote [(v+)]))
+  (quote (v+)))
 (check_Signature [('param!' "v" ANY), ('param+' "w" ANY)]
-  (quote [v, (w +)]))
+  (quote (v w +)))
 
 // Zero-or-more
 (check_Signature [('param*' "v" ANY)]
-  (quote [(v*)]))
+  (quote (v*)))
 (check_Signature [('param!' "v" ANY), ('param*' "w" ANY)]
-  (quote [v, (w *)]))
+  (quote (v w*)))
 
 
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v ...))))
-(check_Signature_fail "Unexpected element in param-spec:" (quote ((v + ...))))
+// TODO:[VALID-NAME]
+//(check_Signature_fail "Unexpected element in param-spec:" (quote (v ...)))
+//(check_Signature_fail "Unexpected element in param-spec:" (quote (v + ...)))
 
 
-(in11 (mactab (macro _ [()   ] 0)) (signals "Malformed param-spec:"))
-(in11 (mactab (macro _ [(n 1)] 0)) (signals "Unexpected element in param-spec:"))
-(in11 (mactab (macro _ [(n mac)] 0)) (signals "No such macro: mac"))
+(in11 (each (mactab (macro _ []        0))
+            (mactab (macro _ p         0))
+            (mactab (macro _ null.sexp 0))
+            (signals "Signature must be a non-null sexp")))
+(in11 (mactab (macro _ (n 1)     0)) (signals "Unexpected element in param-spec:"))
+(in11 (mactab (macro _ (mac::n)  0)) (signals "No such macro: mac"))
 
 
 "SUCCESS (signature.test)"
