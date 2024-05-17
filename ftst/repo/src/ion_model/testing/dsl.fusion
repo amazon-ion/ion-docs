@@ -46,20 +46,18 @@ DSL Design:
   '''
 
   (require
-    "/fusion/exception"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
-    "/fusioncontrib/denotation/private/util"
     "/ion_model/model"
+    "/ion_model/testing/util"
 
     (only_in "/fusion/private/io"
       with_output_to_string
     )
-    (only_in "/ion_model/testing"
-      eject_Values
-      expand_doc
-      pretty_bottom_message
-    )
+    (rename_in "/fusion/experimental/syntax"
+      (quote_syntax QS))
+    (rename_in "/fusion/base"
+      (quote Q) (quasiquote QQ) (unquote UQ))
   )
 
   (provide

@@ -1,0 +1,351 @@
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
+
+(module ion_testing "/fusion"
+
+  '''
+Utilities for testing the Ion denotational model.
+
+
+Our testing strategy uses normal Fusion data to represent input documents for
+the model to expand, and to represent the expected results of expansion.
+This allows us to use built-in Fusion equality to validate the results.
+
+We "tunnel" special tokens as follows:
+  * Both input and output documents use symbols of the form `'#$ddd'` to represent
+    SIDS.
+  * On input, `'#$ion_d_d'` represents an IVM.
+  * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
+    an E-expression.  The text starting with : is parsed as a macro reference.
+  * On output, `'#$name#ddd'` represents absent symbol at index `ddd` of SST `name`.
+  '''
+
+  (require
+    "/fusion/experimental/string"
+    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/printing"
+    "/fusioncontrib/denotation/printing/unicode"
+    "/ion_model/model"
+
+    (only_in "/fusion/private/io"
+      with_output_to_string)
+
+    // TODO This shouldn't be needed since we don't use the check-forms.
+    (only_in "/fusioncontrib/denotation/testing"
+      unwrap                                      // [EJECT] should auto-unwrap
+      seq_to_sexp
+      tuple_values)
+  )
+
+  (provide
+    eject_Value
+    eject_Values
+    expand_doc
+    mk_IVM                  // TODO remove?
+    pretty_bottom_message
+  )
+
+
+  //============================================================================
+  // Creating abstract syntax trees
+
+  // IVMs
+
+  (define (is_IVM c)
+    (and c (is_symbol c) (string_starts_with (symbol_to_string c) "#$ion_")))
+
+  (define (mk_IVM c)
+    (lets [(parts (string_split (symbol_to_string c) "_")),
+           (major (string_to_int (. parts 1))),
+           (minor (string_to_int (. parts 2)))]
+      (tuple IVM major minor)))
+
+
+  // Simple types
+
+  (define (mk_NullNull c)
+    (lift DOTNULL NullNull))
+
+  (define (mk_Bool c)
+    (lift_to Bool
+      (if (is_null c) DOTNULL
+        (inject_into B c))))
+
+  (define (mk_Int c)
+    (lift_to Int
+      (if (is_null c) DOTNULL
+        (inject_into I c))))
+
+  (define (mk_String c)
+    (lift_to String
+      (if (is_null c) DOTNULL
+        (inject_into Unicode c))))
+
+
+  // Symbols
+
+  (define (mk_SSymTok c)
+    (lift_to SSymTok
+      (if (is_int c)
+        (inject_into I c)
+        (let [(str (symbol_to_string c))]
+          (if (string_starts_with str "#$")
+            // If the content following #$ isn't an integer, this raises an error.
+            // This is important to prevent the prefix from "leaking through".
+            (inject_into I (string_to_int (string_replace str "#$" "")))
+            (inject_into Unicode str))))))
+
+  (define (mk_SSymbol c)
+    (lift_to SSymbol
+      (if (is_null c) DOTNULL
+        (mk_SSymTok c))))
+
+
+  // Containers
+
+  (define (mk_SList c)
+    (lift_to SList
+      (if (is_null c) DOTNULL
+        (apply seq 'STree*' (map mk_STree c)))))
+
+  (define (mk_SSexp c)
+    (lift_to SSexp
+      (if (is_null c) DOTNULL
+        (apply seq 'STree*' (map mk_STree c)))))
+
+  (define (mk_SStruct c)
+    (lift_to SStruct
+      (if (is_null c) DOTNULL
+        (apply seq 'SField*'
+          (for_list [((k v) c)]
+            (tuple SField (mk_SSymTok k) (mk_STree v)))))))
+
+
+  // E-expressions
+
+  (define (is_eexp c)
+    (and (is_sexp c)
+         (is_symbol (head c))
+         (string_starts_with (symbol_to_string (head c)) "#$:")))
+
+  (define (mk_MacroRef c)
+    (assert (string_starts_with (symbol_to_string c) "#$:") "Not a macro-ref: " c)
+    (lets [(chars (string_explode (symbol_to_string c))),
+           // Drop the "#$" prefix
+           (sym   (string_implode (subseq chars 2 (size chars)))),
+           (ref   (parseMacroRef sym))]
+      (when (is_bottom ref)
+        // TODO: Improve message when triggered from the conformance DSL.
+        (raise_argument_error "mk_MacroRef" "well-formed macro-ref" 0 c))
+      ref))
+
+  (define (mk_SEexp c)
+    (let [(ref (mk_MacroRef (head c)))]
+      (tuple SEexp ref (apply seq 'SEexpArg*' (map mk_SEexpArg (tail c))))))
+
+  (define (mk_SEexpArg c)
+    (if (and (is_pair c)
+             (== (head c) (quote '#$:')))
+      (lift_to SEexpArg (apply seq 'STree*' (map mk_STree (tail c))))
+      (lift_to SEexpArg (mk_STree c))))
+
+
+  // Values
+
+  (define (mk_SValue c)
+    (tuple SValue
+      (apply seq 'SSymTok*' (map mk_SSymTok (annotations c)))
+      (lift_to SContent
+        (let [(c (annotate c))]  // Remove any annotations
+          (cond
+            ((is_symbol    c) (mk_SSymbol  c))
+            ((is_list      c) (mk_SList    c))
+            ((is_sexp      c) (mk_SSexp    c))
+            ((is_struct    c) (mk_SStruct  c))
+            ((is_null_null c) (mk_NullNull c))
+            ((is_bool      c) (mk_Bool     c))
+            ((is_int       c) (mk_Int      c))
+            ((is_string    c) (mk_String   c))
+            (true (raise_argument_error "mk_SValue" "symbol/bool/int/string/list" 0 c)))))))
+
+  (define (mk_STree c)
+    (lift_to STree
+      (if (is_eexp c)
+        (mk_SEexp c)
+        (mk_SValue c))))
+
+  (define (mk_TSTree c)
+    (lift_to TSTree
+      (if (is_IVM c)
+        (mk_IVM c)
+        (mk_STree c))))
+
+
+  //============================================================================
+  // Ejecting output domain values to produce Fusion data
+
+  // Safe types
+
+  (define (eject_NullNull v)
+    (assert (element_of v DotNull))
+    null.null)
+
+  (define (eject_Bool v)
+    (if (element_of v DotNull)
+      null.bool
+      (eject (unwrap v))))
+
+  (define (eject_Int v)
+    (if (element_of v DotNull)
+      null.int
+      (eject (unwrap v))))
+
+  (define (eject_String v)
+    (if (element_of v DotNull)
+      null.string
+      (eject (unwrap v))))
+
+
+  // Symbols
+
+  (define (eject_SymTok sym)
+    (if (element_of sym Unicode)
+      (string_to_symbol (eject (lower sym Unicode)))
+      (if (element_of sym AbsentSym)
+        (let [(a (lower sym AbsentSym))]
+          (symbol_append "#$" (eject (AbsentSym_module a))
+                         "#" (int_to_string (eject (AbsentSym_index a)))))
+        (quote '#$0'))))
+
+  (define (eject_SymToks syms)
+    (assert (domain_is syms 'SymTok*'))
+    (map eject_SymTok (seq_to_sexp syms)))
+
+  (define (eject_Symbol v)
+    (if (element_of v DotNull)
+      (quote null.symbol)
+      (eject_SymTok (unwrap v))))
+
+
+  // Containers
+
+  (define (eject_List v)
+    (if (element_of v DotNull)
+      null.list
+      (apply list (eject_Values (unwrap v)))))
+
+  (define (eject_Sexp v)
+    (if (element_of v DotNull)
+      (quote null.sexp)
+      (apply sexp (eject_Values (unwrap v)))))
+
+  (define (eject_Struct v)
+    (if (element_of v DotNull)
+      null.struct
+      (for_struct [(f (seq_to_sexp (unwrap v)))]
+        (values (eject_SymTok (Field_name  f))
+                (eject_Value    (Field_value f))))))
+
+
+  // Values
+
+  (define (eject_Content v)
+    (let [(ejector (cond
+                     ((element_of v Symbol  ) eject_Symbol  )
+                     ((element_of v List    ) eject_List    )
+                     ((element_of v Sexp    ) eject_Sexp    )
+                     ((element_of v Struct  ) eject_Struct  )
+                     ((element_of v NullNull) eject_NullNull)
+                     ((element_of v Bool    ) eject_Bool    )
+                     ((element_of v Int     ) eject_Int     )
+                     ((element_of v String  ) eject_String  )
+                     (true (raise (subdomain v)))))]
+      (ejector (unwrap v))))
+
+  (define (eject_Value value)
+    (let_values [((annots content) (tuple_values value))]
+      // `annotate` replaces any existing annotations on the content.
+      (apply annotate (eject_Content content) (eject_SymToks annots))))
+
+  (define (eject_Values values)
+    (unless (element_of values 'Value*')
+      (raise_argument_error eject_Values "Value*" 0 values))
+    (map eject_Value (seq_to_sexp values)))
+
+
+  (define (is_Value v)
+    (element_of v Value))
+
+  (define message_printer
+    (make_printer uniprinter
+      // Normally strings are written as data; here we display their content.
+      (type_method is_string pp_display)
+      (type_method is_Value (pp_xform eject_Value))))
+
+  (define (pretty_bottom_message btm)
+    (with_output_to_string (map message_printer (bottom_parts btm))))
+
+
+  //============================================================================
+  // Parsing and Expanding Inputs
+
+  (define (mk_stream tlvs)
+    (mk_fn ParseStream (parse_env)
+      (if (is_empty tlvs)
+        (opt 'ParseStep?')
+        (opt 'ParseStep?'
+          (tuple ParseStep (mk_TSTree (head tlvs))
+                           (mk_stream (tail tlvs)))))))
+
+  (define parser
+    (mk_fn Parser (doc)         // Document -> ParseStream
+      (mk_stream (eject doc))))
+
+  (define evaluator
+    (mk_Evaluator parser))
+
+
+  (define (evaluate input catalog)
+    (evaluator (inject_into Document input) catalog))
+
+  // FIXME should be evaluate_doc
+  (define (expand_doc input)
+    "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
+    (evaluate input testing_catalog))
+
+
+
+  //============================================================================
+  // Catalogs
+
+  (define EMPTY_CATALOG
+    (tuple Catalog (seq 'SharedModule*')))
+
+  (define catalog_data
+    (quote (
+      $ion_shared_symbol_table::{
+        name:"empty", version:1, symbols:[]
+      }
+      $ion_shared_symbol_table::{
+        name:"abcs", version:1, symbols:["a"]
+      }
+      $ion_shared_symbol_table::{
+        name:"abcs", version:2, symbols:["a", "b"]
+      }
+      $ion_shared_symbol_table::{
+        name:"mnop", version:1, symbols:["m"]
+      }
+      $ion_shared_symbol_table::{
+        name:"mnop", version:3, symbols:["m", "n", "o"]
+      }
+      $ion_shared_symbol_table::{
+        name:"mnop", version:4, symbols:[absent, "n", "o", "p"]  // Gap used to detect v4
+      }
+    )))
+
+  (define testing_catalog
+    (for_fold [(c EMPTY_CATALOG)]
+      [(sst (seq_to_sexp (evaluate catalog_data EMPTY_CATALOG)))]
+      (Catalog_extend c
+        (compile_SST (lower_to Struct (Value_content sst))))))
+
+)

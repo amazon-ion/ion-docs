@@ -21,6 +21,7 @@ TODOs
   * C = Unicode code point?
 * [CTORS] (+2) Predefine constructors for each domain
   * Eliminate `inject_into`, `lift_to` `seq`, `tuple`, `opt`, `mk_fn`
+* [EJECT] `eject` should automatically unwrap and lower.
 * [OPT-ELSE] Syntax to streamline option checking pattern
     (opt_else OPT ELSE) ==> (if (opt_is_present OPT) (opt_value OPT) ELSE))
     Render something like...   OPT ?: ELSE
