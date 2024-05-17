@@ -26,8 +26,7 @@ TODOs
 =====
 Implementation:
   * In `each` (at least) the fragments are processed in reverse order, so when
-    multiple forks fail, the last failure is messaged.
-  * Rename fork to continuation
+    multiple continuations fail, the last failure is messaged.
   * [EACH-FORK] Continuation of `each` with multiple extensions.
   * `text` and `binary` fragments
   * `and` and `or` expectations
@@ -72,9 +71,11 @@ DSL Design:
          (is_identifier (syntax_get stx 0))))
 
   (define (clause_keyword clause_stx)
+    "Extracts the keyword of a clause, returning a symbol."
     (syntax_unwrap (syntax_get clause_stx 0)))
 
   (define (clause_args clause_stx)
+    "Extracts the arguments of a clause, returning a sexp of syntax objects."
     (tail (syntax_unwrap clause_stx)))
 
   (define (is_keyword_clause stx kw)
@@ -95,19 +96,20 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (clause (. rest 1))]
         (apply (. vtable (clause_keyword clause)) (tail rest)))))
 
-  (define (can_dispatch vtable clause)
-    (and (is_clause clause)
-         (is_truthy (. vtable (clause_keyword clause)))))
+  (define (can_dispatch vtable stx)
+    (and (is_clause stx)
+         (is_truthy (. vtable (clause_keyword stx)))))
 
 
   //============================================================================
-  // Expectations are implemented by functions accepting ejected evaluation
-  // results ie 'Value*'
+  // Expectations are interpreted by methods accepting a document and the
+  // result of evaluating it.  Successful evaluation returns `Values*` while
+  // unsuccessful evaluation returns Bottom.
 
-  (define (interp_produces clause_stx doc Values)
+  (define (interp_produces clause_stx doc result)
     // TODO arity and typecheck
     (let [(expected_data (syntax_to_datum (syntax_subseq clause_stx 1)))]
-      (when (is_bottom Values)
+      (when (is_bottom result)
         (raise_contract_error (quote produces)
           (with_output_to_string
             (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
@@ -117,8 +119,8 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (display "Expected: ")
             (writeln expected_data)
             (display "Message:  ")
-            (displayln (pretty_bottom_message Values)))))
-      (let [(actual_data (eject_Values Values))]
+            (displayln (pretty_bottom_message result)))))
+      (let [(actual_data (eject_Values result))]
         (unless (=== expected_data actual_data)
           (raise_contract_error (quote produces)
             (with_output_to_string
@@ -131,11 +133,11 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
               (display "Expected: ")
               (writeln expected_data)))))))
 
-  (define (interp_signals clause_stx doc Values)
+  (define (interp_signals clause_stx doc result)
     // TODO arity and typecheck
-    (let [(expected (syntax_unwrap (syntax_get clause_stx 1)))]
-      (if (is_bottom Values)
-        (let [(actual (pretty_bottom_message Values))]
+    (let [(expected (syntax_unwrap (head (clause_args clause_stx))))]
+      (if (is_bottom result)
+        (let [(actual (pretty_bottom_message result))]
           (unless (and (string_ends_with expected ":")
                        (string_starts_with actual expected))
             (unless (=== expected actual)
@@ -149,7 +151,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
                   (writeln actual)
                   (display "Expected: ")
                   (writeln expected))))))
-        (let [(actual_data (eject_Values Values))]
+        (let [(actual_data (eject_Values result))]
           (raise_contract_error (quote signals)
             (with_output_to_string
               (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
@@ -171,16 +173,20 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
     (can_dispatch expectation_vtable stx))
 
   (define (interp_expectation clause_stx docs)
+    '''
+Validates each of the given `docs` against the expectation in `clause_stx`.
+Returns nothing, but raises an error if the expectation is not met.
+    '''
     (unless (is_expectation_clause clause_stx)
       (wrong_syntax clause_stx "Not an expectation"))
     (for [(doc docs)]
-      (let [(Values (expand_doc doc))]
-        (dispatch expectation_vtable clause_stx doc Values))))
+      (let [(result (expand_doc doc))]
+        (dispatch expectation_vtable clause_stx doc result))))
 
 
   //============================================================================
-  // Fragment producers are no-argument functions that return a sequence of top-level
-  // elements to be added to each in-progress document.
+  // Fragment clauses are interpreted by methods that transform their subforms
+  // into a sequence of top-level elements to be added to each in-progress document.
 
   (define (interp_toplevel clause_stx args)
     args)
@@ -204,14 +210,21 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
     (can_dispatch fragment_vtable stx))
 
   (define (interp_fragment stx docs)
+    '''
+Extends each of the given `docs` with the top-level document fragment described
+by the clause `stx`.  Returns the extended set of documents.
+    '''
     (unless (is_fragment_clause stx)
       (wrong_syntax stx "Expected fragment"))
-    (map (|d| (append d (dispatch fragment_vtable stx (tail (syntax_to_datum stx))))) docs))
+    // Drop location info from the fragment data.
+    (lets [(args     (map syntax_to_datum (clause_args stx))),
+           (fragment (dispatch fragment_vtable stx args))]
+      (map (|d| (append d fragment)) docs)))
 
 
   //============================================================================
-  // Extensions are functions that take a list of in-progress documents,
-  // extend them, eventually checking expectations.
+  // Extensions are interpreted by methods that take a list of in-progress documents,
+  // extend them with the nested fragment(s), then interpret the nested continuation.
 
   (define (interp_then clause_stx docs)
     // TODO length check; ensure at least one fragment?
@@ -224,14 +237,14 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
         (wrong_syntax each_stx "Expected a document fragment in `each`"))
       (unless (is_fragment_clause (head clauses))
         (wrong_syntax (head clauses) "Expected a document fragment in `each`"))
-      (let [(fork (last clauses))]
-        (unless (or (is_expectation_clause fork)
-                    (is_extension_clause   fork))
+      (let [(continuation (last clauses))]
+        (unless (or (is_expectation_clause continuation)
+                    (is_extension_clause   continuation))
           (wrong_syntax each_stx "Expected an expectation or extension at end of `each` clause"))
-        (for [(fragment (tail (reverse clauses)))]    // Drop the fork
-          (if (is_expectation_clause fork)
-            (interp_expectation fork (interp_fragment fragment docs))
-            (interp_extension   fork (interp_fragment fragment docs)))))))
+        (for [(fragment (tail (reverse clauses)))]    // Drop the continuation
+          (if (is_expectation_clause continuation)
+            (interp_expectation continuation (interp_fragment fragment docs))
+            (interp_extension   continuation (interp_fragment fragment docs)))))))
 
 
   (define extension_vtable
@@ -261,7 +274,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 
 
   (define (interp_dsl stx docs)
-    (interp_body stx (tail (syntax_unwrap stx)) docs))
+    (interp_body stx (clause_args stx) docs))
 
 
   //============================================================================
