@@ -27,7 +27,6 @@ TODOs
 Implementation:
   * In `each` (at least) the fragments are processed in reverse order, so when
     multiple forks fail, the last failure is messaged.
-  * Rename content to fragment
   * Rename fork to continuation
   * [EACH-FORK] Continuation of `each` with multiple extensions.
   * `text` and `binary` fragments
@@ -37,8 +36,8 @@ Implementation:
 
 DSL Design:
   * Propose `(ivm <int> <int>?)` fragment.
-  * Is there any reason to allow continuing with more content and expectation?
-    * Yes: to show that a successful doc produces content, but adding an error
+  * Is there any reason to allow continuing with more fragment and expectation?
+    * Yes: to show that a successful doc produces data, but adding an error
       causes a failure.
     * Propose  `continuation ::= expectation extension*`
   * Add metadata to compose a description of the test case.
@@ -182,7 +181,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 
 
   //============================================================================
-  // Content producers are no-argument functions that return a sequence of top-level
+  // Fragment producers are no-argument functions that return a sequence of top-level
   // elements to be added to each in-progress document.
 
   (define (interp_toplevel clause_stx args)
@@ -197,19 +196,19 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
       (interp_encoding clause_stx encoding)))
 
 
-  (define content_vtable
+  (define fragment_vtable
     { toplevel: interp_toplevel,
       encoding: interp_encoding,
       mactab:   interp_mactab,
     })
 
-  (define (is_content_clause stx)
-    (can_dispatch content_vtable stx))
+  (define (is_fragment_clause stx)
+    (can_dispatch fragment_vtable stx))
 
-  (define (interp_content stx docs)
-    (unless (is_content_clause stx)
-      (wrong_syntax stx "Expected content expression"))
-    (map (|d| (append d (dispatch content_vtable stx (tail (syntax_to_datum stx))))) docs))
+  (define (interp_fragment stx docs)
+    (unless (is_fragment_clause stx)
+      (wrong_syntax stx "Expected fragment"))
+    (map (|d| (append d (dispatch fragment_vtable stx (tail (syntax_to_datum stx))))) docs))
 
 
   //============================================================================
@@ -217,7 +216,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   // extend them, eventually checking expectations.
 
   (define (interp_then clause_stx docs)
-    // TODO length check; ensure at least one content clause?
+    // TODO length check; ensure at least one fragment?
     (interp_body clause_stx (clause_args clause_stx) docs))
 
 
@@ -225,7 +224,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
     (let [(clauses (clause_args each_stx))]
       (when (is_empty clauses)
         (wrong_syntax each_stx "Expected a document fragment in `each`"))
-      (unless (is_content_clause (head clauses))
+      (unless (is_fragment_clause (head clauses))
         (wrong_syntax (head clauses) "Expected a document fragment in `each`"))
       (let [(fork (last clauses))]
         (unless (or (is_expectation_clause fork)
@@ -233,8 +232,8 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
           (wrong_syntax each_stx "Expected an expectation or extension at end of `each` clause"))
         (for [(fragment (tail (reverse clauses)))]    // Drop the fork
           (if (is_expectation_clause fork)
-            (interp_expectation fork (interp_content fragment docs))
-            (interp_extension   fork (interp_content fragment docs)))))))
+            (interp_expectation fork (interp_fragment fragment docs))
+            (interp_extension   fork (interp_fragment fragment docs)))))))
 
 
   (define extension_vtable
@@ -254,8 +253,8 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   (define (interp_body containing_stx clauses docs)
     (when (is_empty clauses)
       (wrong_syntax containing_stx "Expected at least one body clause"))
-    (if (is_content_clause (head clauses))
-      (interp_body containing_stx (tail clauses) (interp_content (head clauses) docs))
+    (if (is_fragment_clause (head clauses))
+      (interp_body containing_stx (tail clauses) (interp_fragment (head clauses) docs))
       (if (is_expectation_clause (head clauses))
         (if (is_empty (tail clauses))
           (interp_expectation (head clauses) docs)

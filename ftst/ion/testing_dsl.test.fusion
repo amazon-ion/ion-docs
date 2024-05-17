@@ -33,7 +33,7 @@
 
 
 //=========================
-// Content expressions
+// Fragment expressions
 
 // DSL expressions don't access Fusion bindings
 (expect_contract_error
@@ -56,7 +56,7 @@
 (check_void (in11 (then (toplevel 1 2)
                         (produces 1 2))))
 
-// THEN accepts multiple content clauses
+// THEN accepts multiple fragment clauses
 (check_void (in11 (then (toplevel 1)
                         (toplevel 2)
                         (produces 1 2))))
@@ -84,9 +84,9 @@
                                  (produces 1))))   // Dangling expectation
 
 
-(expect_syntax_error (in11 (then ()                  // Malformed content clause
+(expect_syntax_error (in11 (then ()                  // Malformed fragment clause
                                  (produces))))
-(expect_syntax_error (in11 (then 1                   // Malformed content clause
+(expect_syntax_error (in11 (then 1                   // Malformed fragment clause
                                  (produces 1))))
 
 
