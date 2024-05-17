@@ -25,9 +25,8 @@ documented by https://github.com/amazon-ion/ion-tests/pull/89
 TODOs
 =====
 Implementation:
-  * In `each` (at least) the fragments are processed in reverse order, so when
-    multiple continuations fail, the last failure is messaged.
   * [EACH-FORK] Continuation of `each` with multiple extensions.
+    * FIXED, but need to update test suite.
   * `text` and `binary` fragments
   * `and` and `or` expectations
   * `denotes` expectation
@@ -67,7 +66,8 @@ DSL Design:
 
 
   (define (is_clause stx)
-    (and (is_pair (syntax_unwrap stx))
+    (and (is_syntax stx)
+         (is_pair (syntax_unwrap stx))
          (is_identifier (syntax_get stx 0))))
 
   (define (clause_keyword clause_stx)
@@ -226,25 +226,18 @@ by the clause `stx`.  Returns the extended set of documents.
   // Extensions are interpreted by methods that take a list of in-progress documents,
   // extend them with the nested fragment(s), then interpret the nested continuation.
 
-  (define (interp_then clause_stx docs)
-    // TODO length check; ensure at least one fragment?
-    (interp_body clause_stx (clause_args clause_stx) docs))
+  (define (interp_then clause_stx docs fragments continuation)
+    // TODO ensure at least one fragment?  Note this is also used by `in1_` clauses.
+    (let [(docs (fold_left (|ds f| (interp_fragment f ds)) docs fragments))]
+      (interp_continuation continuation docs)))
 
 
-  (define (interp_each each_stx docs)
-    (let [(clauses (clause_args each_stx))]
-      (when (is_empty clauses)
-        (wrong_syntax each_stx "Expected a document fragment in `each`"))
-      (unless (is_fragment_clause (head clauses))
-        (wrong_syntax (head clauses) "Expected a document fragment in `each`"))
-      (let [(continuation (last clauses))]
-        (unless (or (is_expectation_clause continuation)
-                    (is_extension_clause   continuation))
-          (wrong_syntax each_stx "Expected an expectation or extension at end of `each` clause"))
-        (for [(fragment (tail (reverse clauses)))]    // Drop the continuation
-          (if (is_expectation_clause continuation)
-            (interp_expectation continuation (interp_fragment fragment docs))
-            (interp_extension   continuation (interp_fragment fragment docs)))))))
+  (define (interp_each each_stx docs fragments continuation)
+    (when (is_empty fragments)
+      (wrong_syntax each_stx "Expected a document fragment in `each`"))
+    (for [(fragment fragments)]
+      (let [(docs (interp_fragment fragment docs))]
+        (interp_continuation continuation docs))))
 
 
   (define extension_vtable
@@ -258,23 +251,34 @@ by the clause `stx`.  Returns the extended set of documents.
   (define (interp_extension clause_stx docs)
     (unless (is_extension_clause clause_stx)
       (wrong_syntax clause_stx "Expected a document extension"))
-    (dispatch extension_vtable clause_stx docs))
+    (let_values [((fragments continuation) (split_extension clause_stx))]
+      (dispatch extension_vtable clause_stx docs fragments continuation)))
+
+  (define (split_extension extension_stx)
+    "Returns a sexp of the leading fragments and a sexp of the remaining clauses"
+    (let loop [(fragments (quote ())),         // Accumulated in reverse order
+               (clauses   (clause_args extension_stx))]
+      (if (is_fragment_clause (head clauses))
+        (loop (pair (head clauses) fragments) (tail clauses))
+        // No more fragments; assume the rest is the continuation (to be validated later).
+        (if (is_empty clauses)
+          (wrong_syntax extension_stx "Expected at least one continuation clause")
+          (values (reverse fragments) clauses)))))
 
 
-  (define (interp_body containing_stx clauses docs)
-    (when (is_empty clauses)
-      (wrong_syntax containing_stx "Expected at least one body clause"))
-    (if (is_fragment_clause (head clauses))
-      (interp_body containing_stx (tail clauses) (interp_fragment (head clauses) docs))
-      (if (is_expectation_clause (head clauses))
-        (if (is_empty (tail clauses))
-          (interp_expectation (head clauses) docs)
-          (wrong_syntax (. clauses 1) "Extraneous forms after an expectation clause"))
-        (do (|c| (interp_extension c docs)) clauses))))
+  //============================================================================
+  // Continuations dispatch multiple clauses.
 
-
-  (define (interp_dsl stx docs)
-    (interp_body stx (clause_args stx) docs))
+  (define (interp_continuation continuation docs)
+    (assert (is_pair continuation))                      // Per split_extension
+    (let [(first_clause (head continuation))]
+      (if (is_expectation_clause first_clause)
+        (if (is_empty (tail continuation))
+          (interp_expectation first_clause docs)
+          (wrong_syntax (. continuation 1) "Extraneous form after an expectation clause"))
+          (if (is_extension_clause first_clause)
+            (do (|c| (interp_extension c docs)) continuation)
+            (wrong_syntax first_clause "Expected a fragment, expectation, or extension")))))
 
 
   //============================================================================
@@ -289,6 +293,11 @@ by the clause `stx`.  Returns the extended set of documents.
 
   (define (interp_in1x stx)
     (interp_dsl stx (quote [(), ('#$ion_1_0'), ('#$ion_1_1')])))
+
+  (define (interp_dsl stx docs)
+    (let_values [((fragments continuation) (split_extension stx))]
+      // TODO: Not quite right; `then` requires a fragment but `in__` doesn't.
+      (interp_then stx docs fragments continuation)))
 
 
   (define_syntax in10

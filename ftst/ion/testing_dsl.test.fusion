@@ -118,10 +118,9 @@
                               (toplevel 2)
                               (produces 1 2)))))
 
-// TODO [EACH-FORK] can end with multiple extensions
-//(check_void (in1x (each (toplevel 1)
-//                        (then (toplevel 2) (produces 1 2))
-//                        (then (toplevel 3) (produces 1 3)))))
+(check_void (in1x (each (toplevel 1)
+                        (then (toplevel 2) (produces 1 2))
+                        (then (toplevel 3) (produces 1 3)))))
 
 
 
