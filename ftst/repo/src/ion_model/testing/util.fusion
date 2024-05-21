@@ -46,12 +46,14 @@ We "tunnel" special tokens as follows:
 
 
   //============================================================================
-  // Creating abstract syntax trees
+  // Creating abstract syntax trees by decoding the DSL's special #$ symbols.
 
   // IVMs
 
   (define (is_IVM c)
-    (and c (is_symbol c) (string_starts_with (symbol_to_string c) "#$ion_")))
+    (and (is_symbol c)
+         c                                                 // Reject null.symbol
+         (string_starts_with (symbol_to_string c) "#$ion_")))
 
   (define (mk_IVM c)
     (lets [(parts (string_split (symbol_to_string c) "_")),
@@ -63,36 +65,31 @@ We "tunnel" special tokens as follows:
   // Simple types
 
   (define (mk_NullNull c)
-    (lift DOTNULL NullNull))
+    (lift_to NullNull DOTNULL))
 
   (define (mk_Bool c)
     (lift_to Bool
-      (if (is_null c) DOTNULL
-        (inject_into B c))))
+      (if (is_null c) DOTNULL c)))
 
   (define (mk_Int c)
     (lift_to Int
-      (if (is_null c) DOTNULL
-        (inject_into I c))))
+      (if (is_null c) DOTNULL c)))
 
   (define (mk_String c)
     (lift_to String
-      (if (is_null c) DOTNULL
-        (inject_into Unicode c))))
+      (if (is_null c) DOTNULL c)))
 
 
   // Symbols
 
   (define (mk_SSymTok c)
     (lift_to SSymTok
-      (if (is_int c)
-        (inject_into I c)
-        (let [(str (symbol_to_string c))]
-          (if (string_starts_with str "#$")
-            // If the content following #$ isn't an integer, this raises an error.
-            // This is important to prevent the prefix from "leaking through".
-            (inject_into I (string_to_int (string_replace str "#$" "")))
-            (inject_into Unicode str))))))
+      (let [(str (symbol_to_string c))]
+        (if (string_starts_with str "#$")
+          // If the content following #$ isn't an integer, this raises an error.
+          // This is important to prevent the prefix from "leaking through".
+          (inject_into I (string_to_int (string_replace str "#$" "")))
+          (inject_into Unicode str)))))
 
   (define (mk_SSymbol c)
     (lift_to SSymbol
@@ -117,12 +114,13 @@ We "tunnel" special tokens as follows:
       (if (is_null c) DOTNULL
         (apply seq 'SField*'
           (for_list [((k v) c)]
+            // TODO:[STRUCT-EE] struct inlining
             (tuple SField (mk_SSymTok k) (mk_STree v)))))))
 
 
-  // E-expressions
+  // E-expressions look like `('#$:module:macro' ...)`
 
-  (define (is_eexp c)
+  (define (denotes_eexp c)
     (and (is_sexp c)
          (is_symbol (head c))
          (string_starts_with (symbol_to_string (head c)) "#$:")))
@@ -142,9 +140,11 @@ We "tunnel" special tokens as follows:
     (let [(ref (mk_MacroRef (head c)))]
       (tuple SEexp ref (apply seq 'SEexpArg*' (map mk_SEexpArg (tail c))))))
 
+  // Argument groups look like `('#$:' ...)`
+
   (define (mk_SEexpArg c)
-    (if (and (is_pair c)
-             (== (head c) (quote '#$:')))
+    (if (and (is_sexp c)
+             (=== (head c) (quote '#$:')))
       (lift_to SEexpArg (apply seq 'STree*' (map mk_STree (tail c))))
       (lift_to SEexpArg (mk_STree c))))
 
@@ -165,15 +165,17 @@ We "tunnel" special tokens as follows:
             ((is_bool      c) (mk_Bool     c))
             ((is_int       c) (mk_Int      c))
             ((is_string    c) (mk_String   c))
+            // TODO:[DATA-TYPES] Implement the missing data types
             (true (raise_argument_error "mk_SValue" "symbol/bool/int/string/list" 0 c)))))))
 
-  (define (mk_STree c)
+
+  (define (mk_STree c)   // Syntax trees = SEexp or SValue
     (lift_to STree
-      (if (is_eexp c)
+      (if (denotes_eexp c)
         (mk_SEexp c)
         (mk_SValue c))))
 
-  (define (mk_TSTree c)
+  (define (mk_TSTree c)  // Top-level syntax trees = IVM or STree
     (lift_to TSTree
       (if (is_IVM c)
         (mk_IVM c)
@@ -208,6 +210,7 @@ We "tunnel" special tokens as follows:
   // Symbols
 
   (define (eject_SymTok sym)
+    // (dom SymTok = (+ Unicode Sym0 AbsentSym))
     (if (element_of sym Unicode)
       (string_to_symbol (eject (lower sym Unicode)))
       (if (element_of sym AbsentSym)
@@ -241,9 +244,9 @@ We "tunnel" special tokens as follows:
   (define (eject_Struct v)
     (if (element_of v DotNull)
       null.struct
-      (for_struct [(f (seq_to_sexp (unwrap v)))]
+      (for_struct [(f (seq_to_sexp (unwrap v)))]  // f ∈ Field
         (values (eject_SymTok (Field_name  f))
-                (eject_Value    (Field_value f))))))
+                (eject_Value  (Field_value f))))))
 
 
   // Values
@@ -262,6 +265,7 @@ We "tunnel" special tokens as follows:
       (ejector (unwrap v))))
 
   (define (eject_Value value)
+    // (dom Value = (* 'SymTok*'::annots Content::content))
     (let_values [((annots content) (tuple_values value))]
       // `annotate` replaces any existing annotations on the content.
       (apply annotate (eject_Content content) (eject_SymToks annots))))
@@ -271,6 +275,9 @@ We "tunnel" special tokens as follows:
       (raise_argument_error eject_Values "Value*" 0 values))
     (map eject_Value (seq_to_sexp values)))
 
+
+  //============================================================================
+  // Printing messages from Bottom values (ie exception messages)
 
   (define (is_Value v)
     (element_of v Value))
@@ -288,20 +295,27 @@ We "tunnel" special tokens as follows:
   //============================================================================
   // Parsing and Expanding Inputs
 
-  (define (mk_stream tlvs)
-    (mk_fn ParseStream (parse_env)
+  (define (mk_ParseStream tlvs)
+    (mk_fn ParseStream (parse_env)   // IVM -> ParseStep?
       (if (is_empty tlvs)
         (opt 'ParseStep?')
         (opt 'ParseStep?'
-          (tuple ParseStep (mk_TSTree (head tlvs))
-                           (mk_stream (tail tlvs)))))))
+          (tuple ParseStep (mk_TSTree      (head tlvs))
+                           (mk_ParseStream (tail tlvs)))))))
 
   (define parser
-    (mk_fn Parser (doc)         // Document -> ParseStream
-      (mk_stream (eject doc))))
+    '''
+A Parser is the semantic model's extension point for providing a stream of
+abstract syntax trees (ie 'TSTree*').
+    '''
+    (mk_fn Parser (doc)              // Document -> ParseStream
+      (mk_ParseStream (eject doc))))
 
   (define evaluator
-    (mk_Evaluator parser))
+    '''
+Create a reusable Evaluator based on our Parser.
+    '''
+    (mk_Evaluator parser))                 // mk_Evaluator is part of the model.
 
 
   (define (evaluate input catalog)
@@ -309,7 +323,9 @@ We "tunnel" special tokens as follows:
 
   // FIXME should be evaluate_doc
   (define (expand_doc input)
-    "Parse top-level inputs (contained in a sequence) into `TRValue*` then expand it."
+    '''
+Parse top-level inputs (contained in a sexp) into `TSTree` then expand it.
+    '''
     (evaluate input testing_catalog))
 
 

@@ -27,6 +27,7 @@ TODOs
 Implementation:
   * [EACH-FORK] Continuation of `each` with multiple extensions.
     * FIXED, but need to update test suite.
+  * Store document as pre-computed TSTree*, so we don't repeat the xform.
   * `text` and `binary` fragments
   * `and` and `or` expectations
   * `denotes` expectation
@@ -66,6 +67,9 @@ DSL Design:
 
 
   (define (is_clause stx)
+    '''
+A clause is a syntax-object S-expression that starts with a symbol.
+    '''
     (and (is_syntax stx)
          (is_pair (syntax_unwrap stx))
          (is_identifier (syntax_get stx 0))))
@@ -271,6 +275,7 @@ by the clause `stx`.  Returns the extended set of documents.
 
   (define (interp_continuation continuation docs)
     (assert (is_pair continuation))                      // Per split_extension
+    // continuation ::=  expectation  |  extension+
     (let [(first_clause (head continuation))]
       (if (is_expectation_clause first_clause)
         (if (is_empty (tail continuation))
@@ -294,6 +299,7 @@ by the clause `stx`.  Returns the extended set of documents.
   (define (interp_in1x stx)
     (interp_dsl stx (quote [(), ('#$ion_1_0'), ('#$ion_1_1')])))
 
+
   (define (interp_dsl stx docs)
     (let_values [((fragments continuation) (split_extension stx))]
       // TODO: Not quite right; `then` requires a fragment but `in__` doesn't.
@@ -303,21 +309,21 @@ by the clause `stx`.  Returns the extended set of documents.
   (define_syntax in10
     (lambda (stx)
       (datum_to_syntax
-        (QQ (interp_in10 (quote_syntax (UQ stx))))
+        (QQ (interp_in10 (QS (UQ stx))))
         (QS context)
         stx)))
 
   (define_syntax in11
     (lambda (stx)
       (datum_to_syntax
-        (QQ (interp_in11 (quote_syntax (UQ stx))))
+        (QQ (interp_in11 (QS (UQ stx))))
         (QS context)
         stx)))
 
   (define_syntax in1x
     (lambda (stx)
       (datum_to_syntax
-        (QQ (interp_in1x (quote_syntax (UQ stx))))
+        (QQ (interp_in1x (QS (UQ stx))))
         (QS context)
         stx)))
 

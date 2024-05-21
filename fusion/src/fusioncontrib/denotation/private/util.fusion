@@ -75,16 +75,8 @@ Miscellaneous things that should really be provided by Fusion.
                (remove_first (|v2| (equal v1 v2)) list2)))))))
 
 
-  // Also exists in /fusion/private/record
-  (define symbol_append
-    (lambda texts
-      (string_to_symbol (apply string_append texts))))
-
   (define (is_text v)
     (or (is_string v) (is_symbol v)))
-
-  (define (text_to_string v)
-    (if (is_string v) v (symbol_to_string v)))
 
   (define (text_to_symbol t)
     (if (is_symbol t)
