@@ -184,7 +184,7 @@ Returns nothing, but raises an error if the expectation is not met.
     (unless (is_expectation_clause clause_stx)
       (wrong_syntax clause_stx "Not an expectation"))
     (for [(doc docs)]
-      (let [(result (expand_doc doc))]
+      (let [(result (evaluate doc))]
         (dispatch expectation_vtable clause_stx doc result))))
 
 

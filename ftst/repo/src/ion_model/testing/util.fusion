@@ -39,7 +39,7 @@ We "tunnel" special tokens as follows:
   (provide
     eject_Value
     eject_Values
-    expand_doc
+    evaluate
     mk_IVM                  // TODO remove?
     pretty_bottom_message
   )
@@ -318,15 +318,11 @@ Create a reusable Evaluator based on our Parser.
     (mk_Evaluator parser))                 // mk_Evaluator is part of the model.
 
 
-  (define (evaluate input catalog)
-    (evaluator (inject_into Document input) catalog))
-
-  // FIXME should be evaluate_doc
-  (define (expand_doc input)
+  (define (evaluate input)
     '''
 Parse top-level inputs (contained in a sexp) into `TSTree` then expand it.
     '''
-    (evaluate input testing_catalog))
+    (evaluator input testing_catalog))
 
 
 
@@ -360,7 +356,7 @@ Parse top-level inputs (contained in a sexp) into `TSTree` then expand it.
 
   (define testing_catalog
     (for_fold [(c EMPTY_CATALOG)]
-      [(sst (seq_to_sexp (evaluate catalog_data EMPTY_CATALOG)))]
+      [(sst (seq_to_sexp (evaluator catalog_data EMPTY_CATALOG)))]
       (Catalog_extend c
         (compile_SST (lower_to Struct (Value_content sst))))))
 

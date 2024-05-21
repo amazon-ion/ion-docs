@@ -34,7 +34,7 @@ We "tunnel" special tokens as follows:
   (provide
     (all_defined_out)
     eject_Values
-    expand_doc
+    evaluate
     mk_IVM
   )
 
@@ -59,17 +59,17 @@ We "tunnel" special tokens as follows:
 
   // FIXME should be evaluate1
   (define (expand1 input)
-    (ith (expand_doc input) 0))
+    (ith (evaluate input) 0))
 
 
   //============================================================================
   // Test assertions
 
   (define_check (check_eval_success doc)
-    (check_not_bottom (expand_doc doc)))
+    (check_not_bottom (evaluate doc)))
 
   (define_check (check_eval_fail bottom_msg doc)
-    (check_bottom bottom_msg (expand_doc doc)))
+    (check_bottom bottom_msg (evaluate doc)))
 
 
   (define_check (check_Value expected value)
@@ -79,7 +79,7 @@ We "tunnel" special tokens as follows:
     (check_eqv expected (eject_Values values)))
 
   (define_check (check_expansion expected input)
-    (let [(actual (expand_doc input))]
+    (let [(actual (evaluate input))]
       (check_not_bottom actual)
       (check_Values expected actual)))
 
@@ -116,7 +116,7 @@ We "tunnel" special tokens as follows:
         (datum_to_syntax
           // This code ensures the context_stx location is in the stack when
           // the checker fails.
-          (QQ (lets [(actual (expand_doc (quote (UQ doc)))),
+          (QQ (lets [(actual (evaluate (quote (UQ doc)))),
                      (check  ((UQ checker_stx) actual))]
                 check))
           (QS context)
