@@ -5,21 +5,8 @@
   '''
 A DSL for testing the Ion denotational model.
 
-Our testing strategy uses normal Fusion data to represent input documents for
-the model to expand, and to represent the expected results of expansion.
-This allows us to use built-in Fusion equality to validate the results.
-
-We "tunnel" special tokens as follows:
-  * Both input and output documents use symbols of the form `'#$ddd'` to represent
-    SIDS.
-  * On input, `'#$ion_d_d'` represents an IVM.
-  * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
-    an E-expression.  The text starting with : is parsed as a macro reference.
-  * On output, `'#$name#ddd'` represents absent symbol at index `ddd` of SST `name`.
-
-
-The DSL grammar, with many additions not implemented here, is currently
-documented by https://github.com/amazon-ion/ion-tests/pull/89
+The DSL, with several features not implemented here, is documented by
+https://github.com/amazon-ion/ion-tests/blob/master/conformance/README.md
 
 
 TODOs
@@ -28,7 +15,8 @@ Implementation:
   * [EACH-FORK] Continuation of `each` with multiple extensions.
     * FIXED, but need to update test suite.
   * Store document as pre-computed TSTree*, so we don't repeat the xform.
-  * `text` and `binary` fragments
+    * Update implementation notes below.
+  * [NON-AST] `text` and `binary` fragments
   * `and` and `or` expectations
   * `denotes` expectation
   * [BAD-AST] Validate shape and location of #$ forms.
@@ -65,6 +53,32 @@ DSL Design:
     in1x
   )
 
+  /*
+Implementation Notes
+====================
+
+We interpret the DSL on the fly, walking down the the syntax objects produced
+by the Fusion reader when reading the test cases.  Using syntax objects rather
+than "normal" Ion data means we have the source-code location of each clause
+and can thus report errors at the exact point where failure occurs.
+
+To enable this, the outermost DSL clauses like `in10` are Fusion macros that
+expand to a function call receiving the entire outer clause as a syntax object.
+
+As we traverse the clauses of a test case, we maintain a list of documents.
+Each "extension" clause (eg then/each) adds content to each of the current
+documents; in the case of `each` we duplicate the entire list for each of the
+fragments.
+
+At present, each document is represented as an S-expression holding the
+concatenated fragments.  Since we only support `toplevel` fragments, the data
+are all `ast` forms with encoded syntax elements like `'#$99'` or `('#$:void')`.
+We decode fragments in our `Parser` implementation, defined here as an input to
+the semantic model, while the document is being evaluated.
+  */
+
+
+  // Breaking down the DSL's S-expression clauses
 
   (define (is_clause stx)
     '''
@@ -86,6 +100,8 @@ A clause is a syntax-object S-expression that starts with a symbol.
     (and (is_clause stx)
          (=== (clause_keyword stx) kw)))
 
+
+  // A teeny-tiny method dispatch mechanism
 
   (define dispatch
     '''
@@ -259,7 +275,15 @@ by the clause `stx`.  Returns the extended set of documents.
       (dispatch extension_vtable clause_stx docs fragments continuation)))
 
   (define (split_extension extension_stx)
-    "Returns a sexp of the leading fragments and a sexp of the remaining clauses"
+    '''
+Given a clause of the form:
+
+    "("  <KEYWORD>  fragment*  continuation  ")"
+
+returns a sexp of the leading fragments and a sexp of the remaining clauses.
+The fragment sexp may be empty (to support use by `in10` and siblings).
+The continuation sexp will not be empty, but otherwise is not validated here.
+    '''
     (let loop [(fragments (quote ())),         // Accumulated in reverse order
                (clauses   (clause_args extension_stx))]
       (if (is_fragment_clause (head clauses))
@@ -274,6 +298,12 @@ by the clause `stx`.  Returns the extended set of documents.
   // Continuations dispatch multiple clauses.
 
   (define (interp_continuation continuation docs)
+    '''
+Interprets the continuation of a test case, as split from the body of an
+extension or `in1*` form.
+
+    continuation ::=  expectation  |  extension+
+    '''
     (assert (is_pair continuation))                      // Per split_extension
     // continuation ::=  expectation  |  extension+
     (let [(first_clause (head continuation))]
