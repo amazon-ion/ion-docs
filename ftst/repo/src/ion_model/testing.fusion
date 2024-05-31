@@ -90,7 +90,7 @@ We "tunnel" special tokens as follows:
       (append input (sexp (symbol_append "#$" (int_to_string max_sid)))))
     // Ensure the next sid is invalid
     (check_eval_fail
-      (display_to_string "Invalid symbol address " (+ 1 max_sid))
+      (display_to_string "Invalid symbol address: " (+ 1 max_sid))
       (append input (sexp (symbol_append "#$" (int_to_string (+ 1 max_sid)))))))
 
 

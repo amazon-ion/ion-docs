@@ -18,13 +18,13 @@
 (check_void (in11 (toplevel '#$1' 1) (produces $ion 1)))
 (check_void (in1x (toplevel '#$1' 1) (produces $ion 1)))
 
-(check_void (in10 (toplevel '#$999') (signals "Invalid symbol address 999")))
-(check_void (in11 (toplevel '#$999') (signals "Invalid symbol address 999")))
-(check_void (in1x (toplevel '#$999') (signals "Invalid symbol address 999")))
+(check_void (in10 (toplevel '#$999') (signals "Invalid symbol address: 999")))
+(check_void (in11 (toplevel '#$999') (signals "Invalid symbol address: 999")))
+(check_void (in1x (toplevel '#$999') (signals "Invalid symbol address: 999")))
 
 (check_void (in11 (then (toplevel)         (produces))
                   (then (toplevel '#$1' 1) (produces $ion 1))
-                  (then (toplevel '#$999') (signals "Invalid symbol address 999"))))
+                  (then (toplevel '#$999') (signals "Invalid symbol address: 999"))))
 
 
 (expect_syntax_error (in10 /* No body */))
