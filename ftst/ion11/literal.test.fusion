@@ -1,44 +1,32 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
-(require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
-  "/ion_model/testing"
-)
+(require "/ion_model/testing/dsl")
 
 
 // Ion 1.1 uses $ion_literal as a top-level `quote`.
-(check_expansion
-  (quote_top $ion_literal $ion_literal 1)
-  (quote11 '#$10' '#$10'::'#$10' '#$10'::1))
+(in11 (toplevel '#$10' '#$10'::'#$10' '#$10'::1)
+      (produces $ion_literal $ion_literal 1))
 
 // It also works in text.
-(check_expansion
-  (quote_top $ion_literal $ion_literal 1)
-  (quote11 $ion_literal $ion_literal::$ion_literal $ion_literal::1))
+(in11 (toplevel $ion_literal $ion_literal::$ion_literal $ion_literal::1)
+  (produces $ion_literal $ion_literal 1))
 
 // But literals are _only_ recognized at top level.
-(check_expansion
-  (quote_top [$ion_literal, $ion_literal::$ion_literal, $ion_literal::1])
-  (quote11 ['#$10', '#$10'::'#$10', $ion_literal::1]))
+(in11 (toplevel ['#$10',             '#$10'::'#$10',       $ion_literal::1])
+      (produces [$ion_literal, $ion_literal::$ion_literal, $ion_literal::1]))
 
 // No such effects in 1.0, even with the same SID.
-(check_expansion
-  (quote_top
-    $ion_literal $ion_literal::$ion_literal)
-  (quote_top '#$ion_1_0' $ion_symbol_table::{symbols:["$ion_literal"]}
-    '#$10' '#$10'::'#$10'))
+(in10 (toplevel $ion_symbol_table::{symbols:["$ion_literal"]})
+      (toplevel '#$10'             '#$10'::'#$10')
+      (produces $ion_literal $ion_literal::$ion_literal))
 
 
 // Top-level `$ion_literal::$ion_symbol_table::{}` is an error.
-(check_eval_fail "Cannot use literal $ion_symbol_table struct as application data"
-  (quote11 $ion_literal::$ion_symbol_table::{}))
+(in11 (toplevel $ion_literal::$ion_symbol_table::{})
+      (signals "Cannot use literal $ion_symbol_table struct as application data"))
 
-(check_expansion
-  (quote_top [$ion_literal::$ion_symbol_table::{}])
-  (quote11 [$ion_literal::$ion_symbol_table::{}]))
+(in11 (toplevel [$ion_literal::$ion_symbol_table::{}])
+      (produces [$ion_literal::$ion_symbol_table::{}]))
 
 
 "SUCCESS (literal.test)"

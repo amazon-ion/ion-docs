@@ -1,123 +1,117 @@
 // Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
-(require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
-  "/ion_model/testing"
-  "/ion_model/testing/dsl"
-)
+(require "/ion_model/testing/dsl")
 
 
 // Non-sexps pass through
-(check_expansion
-  (quote_top first $ion_encoding::[] second)
-  (quote11   first $ion_encoding::[] second))
-
-(check_expansion
-  (quote_top first $ion_encoding::{} second)
-  (quote11   first $ion_encoding::{} second))
+(in11
+      (then (toplevel 1 $ion_encoding::null 2)
+            (produces 1 $ion_encoding::null 2))
+      (then (toplevel 1 $ion_encoding::12   2)
+            (produces 1 $ion_encoding::12   2))
+      (then (toplevel 1 $ion_encoding::[]   2)
+            (produces 1 $ion_encoding::[]   2))
+      (then (toplevel 1 $ion_encoding::{}   2)
+            (produces 1 $ion_encoding::{}   2)))
 
 // Encoding directives are elided from app view
-(check_expansion
-  (quote_top first second)
-  (quote11   first $ion_encoding::() $ion_encoding::null.sexp second))
+(in11 (toplevel first $ion_encoding::() $ion_encoding::null.sexp second)
+      (produces first second))
 
 
 // Local symbols
 
-(check_expansion_and_bounds 12
-  (quote_top a b)
-  (quote11   $ion_encoding::((symbol_table ["a"] ["b"])) '#$11' '#$12'))
+(in11 (toplevel $ion_encoding::((symbol_table ["a"] ["b"])))
+      (then (toplevel '#$11' '#$12')
+            (produces a b))
+      (then (toplevel '#$13')
+            (signals "Invalid symbol address: 13")))
 
 
 // Exact-match imports
+(in11 (toplevel $ion_encoding::((load abc "abcs" 1)
+                                (symbol_table abc)))
+      (then (toplevel '#$11')
+            (produces a))
+      (then (toplevel '#$12')
+            (signals "Invalid symbol address: 12")))
 
-(check_expansion_and_bounds 11
-  (quote_top a)
-  (quote11 $ion_encoding::((load abc "abcs" 1)
-                           (symbol_table abc))
-    '#$11'))
+(in11 (toplevel $ion_encoding::((load mno "mnop" 3)
+                                (load abc "abcs" 1)
+                                (symbol_table abc mno)))
+      (then (toplevel '#$11' '#$12' '#$14')
+            (produces a m o))
+      (then (toplevel '#$15')
+            (signals "Invalid symbol address: 15")))
 
-(check_expansion_and_bounds 14
-  (quote_top a m o)
-  (quote11 $ion_encoding::((load mno "mnop" 3)
-                           (load abc "abcs" 1)
-                           (symbol_table abc mno))
-    '#$11' '#$12' '#$14'))
 
 // Absent shared symbol
-(check_expansion_and_bounds 14
-  (quote_top '#$mnop#1' n)
-  (quote11 $ion_encoding::((load mno "mnop" 4) (symbol_table mno)) '#$11' '#$12'))
+(in11 (toplevel $ion_encoding::((load mno "mnop" 4)
+                                (symbol_table mno)))
+      (then (toplevel '#$11' '#$12')
+            (produces '#$mnop#1' n)))
 
+// Module name shadowing
+(in11 (toplevel $ion_encoding::((load m "mnop" 4)
+                                (load m "mnop" 3)
+                                (symbol_table m ["x"])))
+      (then (toplevel '#$11' '#$12' '#$13' '#$14')
+            (produces m n o x))
+      (then (toplevel '#$15')
+            (signals "Invalid symbol address: 15")))
 
-// Name shadowing
-(check_expansion_and_bounds 14
-  (quote_top m n o x)
-  (quote11 $ion_encoding::((load m "mnop" 4)
-                           (load m "mnop" 3)
-                           (symbol_table m ["x"]))
-    '#$11' '#$12' '#$13' '#$14'))
 
 // Mix and match imported and local symbols
-
-(check_expansion_and_bounds 18
-  (quote_top l1 l2 a l3 m n o l4)
-  (quote11 $ion_encoding::((load mno "mnop" 3)
-                           (load abc "abcs" 1)
-                           (symbol_table ["l1", "l2"] abc ["l3"] mno ["l4"]))
-    '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18'))
+(in11 (toplevel $ion_encoding::((load mno "mnop" 3)
+                                (load abc "abcs" 1)
+                                (symbol_table ["l1", "l2"] abc ["l3"] mno ["l4"])))
+      (then (toplevel '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18')
+            (produces l1 l2 a l3 m n o l4))
+      (then (toplevel '#$19')
+            (signals "Invalid symbol address: 19")))
 
 
 // Retention
+(in11 (toplevel $ion_encoding::((load A "abcs" 1)
+                                (symbol_table ["l1"] A))
+                $ion_encoding::((symbol_table ["l2"] A))) // No `retains` clause
+      (signals "Module not in scope: A"))
 
-(check_eval_fail "Module not in scope: A"
-  (quote11 $ion_encoding::((load A "abcs" 1)
-                           (symbol_table ["l1"] A))
-           $ion_encoding::((symbol_table ["l2"] A))))
+(in11 (toplevel $ion_encoding::((load A "abcs" 1) (symbol_table ["l1"] A))
+                $ion_encoding::((retain *)        (symbol_table ["l2"] A))
+                '#$11' '#$12')
+      (produces l2 a))
 
-(check_expansion_and_bounds 12
-  (quote_top l2 a)
-  (quote11 $ion_encoding::((load A "abcs" 1) (symbol_table ["l1"] A))
-           $ion_encoding::((retain *)        (symbol_table ["l2"] A))
-           '#$11' '#$12'))
+(in11 (toplevel $ion_encoding::((load A "abcs" 1))
+                $ion_encoding::((retain A)
+                                (module I (symbol_table ["i"]))
+                                (symbol_table A))
+                '#$11'
+                $ion_encoding::((retain I A A)
+                                (symbol_table I A))
+                '#$11' '#$12')
+      (produces a i a))
 
-(check_expansion_and_bounds 12
-  (quote_top a i a)
-  (quote11 $ion_encoding::((load A "abcs" 1))
-           $ion_encoding::((retain A)
-                           (module I (symbol_table ["i"]))
-                           (symbol_table A))
-           '#$11'
-           $ion_encoding::((retain I A A)
-                           (symbol_table I A))
-           '#$11' '#$12'))
 
-(check_eval_fail "Module not in scope: M"
-  (quote11 $ion_encoding::((load A "abcs" 1)
-                           (load M "mnop" 3))
-           $ion_encoding::((retain A)
-                           (symbol_table M))))
+(in11 (toplevel $ion_encoding::((load A "abcs" 1)
+                                (load M "mnop" 3))
+                $ion_encoding::((retain A)
+                                (symbol_table M)))
+      (signals "Module not in scope: M"))
 
 
 // Top-level macro_table
 
-(check_expansion
-  (quote_top aoeui dhtns)
-  (quote11   $ion_encoding::((macro_table))
-             ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
+(in11 (toplevel $ion_encoding::((macro_table))
+                ('#$:$ion:values' aoeui) ('#$:values' dhtns))
+      (produces aoeui dhtns))
 
 // FIXME [MAC-ID] These shouldn't fail, the unqualified reference is unambiguous.
-(check_eval_fail "Ambiguous macro-ref: :values"
-//(quote_top aoeui dhtns)
-  (quote11   $ion_encoding::((macro_table $ion))
-             ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
-(check_eval_fail "Ambiguous macro-ref: :values"
-//(quote_top aoeui dhtns)
-  (quote11   $ion_encoding::((macro_table $ion $ion))
-             ('#$:$ion:values' aoeui) ('#$:values' dhtns)))
+(in11 (each (toplevel $ion_encoding::((macro_table $ion)))
+            (toplevel $ion_encoding::((macro_table $ion $ion)))
+            (then (toplevel ('#$:$ion:values' aoeui) ('#$:values' dhtns))
+                  (signals "Ambiguous macro-ref: :values"))))
+                //(produces aoeui dhtns)
 
 (in11 (encoding (macro_table M))
       (signals "Module not in scope: M"))
@@ -131,113 +125,115 @@
 
 // Inline modules
 
-(check_expansion_and_bounds 10
-  (quote_top)
-  (quote11   $ion_encoding::((module h))))
+(in11 (toplevel $ion_encoding::((module h)))
+      (produces)
+  )
 
-(check_expansion_and_bounds 11
-  (quote_top h1)
-  (quote11   $ion_encoding::((module h (symbol_table ["h1"]))
-                             (symbol_table h))
-             '#$11'))
+(in11 (toplevel $ion_encoding::((module h (symbol_table ["h1"]))
+                                (symbol_table h)))
+      (then (toplevel '#$11')
+            (produces h1))
+      (then (toplevel '#$12')
+            (signals "Invalid symbol address: 12")))
 
-(check_expansion_and_bounds 12
-  (quote_top h1 h1)
-  (quote11   $ion_encoding::((module h (symbol_table ["h1"]))
-                             (symbol_table h h))
-             '#$11' '#$12'))
+(in11 (toplevel $ion_encoding::((module h (symbol_table ["h1"]))
+                                (symbol_table h h)))
+      (then (toplevel '#$11' '#$12')
+            (produces h1 h1))
+      (then (toplevel '#$13')
+            (signals "Invalid symbol address: 13")))
 
-(check_expansion_and_bounds 13
-  (quote_top m b)
-  (quote11   $ion_encoding::((module M
-                               (load N "abcs" 2)
-                               (symbol_table ["m"] N))
-                             (symbol_table M))
-             '#$11' '#$13'))
+(in11 (toplevel $ion_encoding::((module M
+                                  (load N "abcs" 2)
+                                  (symbol_table ["m"] N))
+                                (symbol_table M)))
+      (then (toplevel '#$11' '#$13')
+            (produces m b))
+      (then (toplevel '#$14')
+            (signals "Invalid symbol address: 14")))
 
-(check_expansion_and_bounds 13
-  (quote_top m b)
-  (quote11   $ion_encoding::((module M
-                               (load M "abcs" 2)        // Note same name
-                               (symbol_table ["m"] M))
-                             (symbol_table M))
-             '#$11' '#$13'))
+(in11 (toplevel $ion_encoding::((module M
+                                  (load M "abcs" 2)        // Note same name
+                                  (symbol_table ["m"] M))
+                                (symbol_table M)))
+      (then (toplevel '#$11' '#$13')
+            (produces m b))
+      (then (toplevel '#$14')
+            (signals "Invalid symbol address: 14")))
 
-(check_expansion_and_bounds 11
-  (quote_top m)
-  (quote11   $ion_encoding::((module M
-                               (load N "abcs" 1)
-                               (load N "mnop" 1)        // Shadows previous
-                               (symbol_table N))
-                             (symbol_table M))
-             '#$11'))
+(in11 (toplevel $ion_encoding::((module M
+                                  (load N "abcs" 1)
+                                  (load N "mnop" 1)        // Shadows previous
+                                  (symbol_table N))
+                                (symbol_table M)))
+      (then (toplevel '#$11')
+            (produces m))
+      (then (toplevel '#$12')
+            (signals "Invalid symbol address: 12")))
 
 // Inner `load` not visible to top-level.
-(check_eval_fail "Module not in scope: N"
-  (quote11   $ion_encoding::((module M
-                               (load N "abcs" 1)
-                               (symbol_table N))
-                             (symbol_table N))))
+(in11 (toplevel $ion_encoding::((module M
+                                  (load N "abcs" 1)
+                                  (symbol_table N))
+                                (symbol_table N)))
+      (signals "Module not in scope: N"))
 
 // TODO:[LOAD-MACRO]
 
 // Inline module macro_table
 
-(check_expansion
-  (quote_top)
-  (quote11   $ion_encoding::((module M (macro_table)))))
+(in11 (toplevel $ion_encoding::((module M (macro_table))))
+      (produces))
 
-(check_eval_fail "No such macro: :M:mac"
-  (quote11   $ion_encoding::((module M (macro_table))
-                             (macro_table M))
-             ('#$:M:mac')))
+(in11 (toplevel $ion_encoding::((module M (macro_table))
+                                (macro_table M))
+                ('#$:M:mac'))
+      (signals "No such macro: :M:mac"))
 
-(check_expansion
-  (quote_top sahweet sahweet)
-  (quote11   $ion_encoding::((module M (macro_table $ion))
-                             (macro_table M))
-             ('#$:M:make_symbol' "sah" weet)
-             ('#$:M:3'           "sah" weet)))
+(in11 (toplevel $ion_encoding::((module M (macro_table $ion))
+                                (macro_table M))
+                ('#$:M:make_symbol' "sah" weet)
+                ('#$:M:3'           "sah" weet))
+      (produces sahweet sahweet))
 
 
 // Macro addresses
 
-(check_expansion
-  (quote_top abc abc)
-  (quote11   $ion_encoding::((module M (macro_table $ion))
-                             (macro_table M))
-//           ('#$:make_symbol' ('#$:values' "a" b) ('#$:void' x) c)  // TODO [MAC-ID]
-             ('#$:M:3'         ('#$:M:1'    "a" b) ('#$:M:0'  x) c)
-             ('#$:3'           ('#$:1'      "a" b) ('#$:0'    x) c)))
+(in11 (toplevel $ion_encoding::((module M (macro_table $ion))
+                                (macro_table M))
+//              ('#$:make_symbol' ('#$:values' "a" b) ('#$:void' x) c)  // TODO [MAC-ID]
+                ('#$:M:3'         ('#$:M:1'    "a" b) ('#$:M:0'  x) c)
+                ('#$:3'           ('#$:1'      "a" b) ('#$:0'    x) c))
+      (produces abc abc))
 
-(with_mactab ((macro M1 () "M1")
+(in11 (mactab (macro M1 () "M1")
               (macro M2 () "M2")
               $ion)
-  (document ('#$:0') ('#$:1') ('#$:M:0') ('#$:M:1') [('#$:2'), ('#$:M:2')])
-  (produces "M1"     "M2"     "M1"       "M2"       [/*void*/   /*void*/ ]))
+      (toplevel ('#$:0') ('#$:1') ('#$:M:0') ('#$:M:1') [('#$:2'), ('#$:M:2')])
+      (produces "M1"     "M2"     "M1"       "M2"       [/*void*/   /*void*/ ]))
 
 
 // Modules not in macro_table are not accessible
 
-(check_eval_fail "Module not in scope: M"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
-                             (macro_table))
-             ('#$:M:mac')))
+(in11 (toplevel $ion_encoding::((module M (macro_table (macro mac () 1)))
+                                (macro_table))
+                ('#$:M:mac'))
+      (signals "Module not in scope: M"))
 
-(check_eval_fail "Module not in scope: M"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
-                             (macro_table))
-             ('#$:M:0')))
+(in11 (toplevel $ion_encoding::((module M (macro_table (macro mac () 1)))
+                                (macro_table))
+                ('#$:M:0'))
+      (signals "Module not in scope: M"))
 
-(check_eval_fail "No such macro: :mac"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
-                             (macro_table))
-             ('#$:mac')))
+(in11 (toplevel $ion_encoding::((module M (macro_table (macro mac () 1)))
+                                (macro_table))
+                ('#$:mac'))
+      (signals "No such macro: :mac"))
 
-(check_eval_fail "Invalid macro address: :0"
-  (quote11   $ion_encoding::((module M (macro_table (macro mac () 1)))
-                             (macro_table))
-             ('#$:0')))
+(in11 (toplevel $ion_encoding::((module M (macro_table (macro mac () 1)))
+                                (macro_table))
+                ('#$:0'))
+      (signals "Invalid macro address: :0"))
 
 // TODO test addresses when there's multiple modules.
 // TODO more tests for out-of-bounds macro addresses

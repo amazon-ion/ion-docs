@@ -1,113 +1,97 @@
 // Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
-(require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
-  "/ion_model/testing"
-  "/ion_model/testing/dsl"
-)
+(require "/ion_model/testing/dsl")
 
 
 // void
+(in11 (each (toplevel 1 ('#$:$ion:void') 2)
+            (toplevel 1 ('#$:$ion:0')    2)
+            (toplevel 1 ('#$:void')      2)
+            (produces 1                  2)))
 
-(check_expansion
-  (quote_top 1 2 3 4)
-  (quote11 1 ('#$:$ion:void') 2 ('#$:$ion:1') 3 ('#$:void') 4))
-(check_expansion
-  (quote_top 1 2)
-  (quote11 1 ('#$:$ion:void' true ('#$:void' false)) 2))
+// TODO should this stay true?
+(in11 (toplevel 1 ('#$:$ion:void' true ('#$:void' false)) 2)
+      (produces 1 2))
 
 
 // values
 
-(check_expansion
-  (quote_top 1 2)
-  (quote11 1 ('#$:$ion:values') 2))
-(check_expansion
-  (quote_top 1 2)
-  (quote11 1 ('#$:values') 2))
-(check_expansion
-  (quote_top 1 2 3 4)
-  (quote11 1 ('#$:$ion:values' 2 3) 4))
-(check_expansion
-  (quote_top 1 2 3 4)
-  (quote11 1 ('#$:values' 2 3) 4))
+(in11 (each (toplevel 1 ('#$:$ion:values') 2)
+            (toplevel 1 ('#$:$ion:1')      2)
+            (toplevel 1 ('#$:values')      2)
+            (produces 1                    2))
+      (each (toplevel 1 ('#$:$ion:values' a) 2)
+            (toplevel 1 ('#$:$ion:1'      a) 2)
+            (toplevel 1 ('#$:values'      a) 2)
+            (produces 1                   a  2))
+      (each (toplevel 1 ('#$:$ion:values' a b) 2)
+            (toplevel 1 ('#$:$ion:1'      a b) 2)
+            (toplevel 1 ('#$:values'      a b) 2)
+            (produces 1                   a b  2)))
 
 
 // make_string
 
-(check_expansion
-  (quote_top "" "str" "sym")
-  (quote11
-    ('#$:make_string') ('#$:make_string' "str") ('#$:make_string' sym)))
+// TODO Error when argument isn't text
 
-(check_expansion
-  (quote_top "ab" "ab" "ab" "ab")
-  (quote11
-    ('#$:make_string' "a" "b") ('#$:make_string' a  b)
-    ('#$:make_string' "a"  b ) ('#$:make_string' a "b")))
-
-// null.string and null.symbol act like ""
-(check_expansion
-  (quote_top "" "" "")
-  (quote11
-    ('#$:make_string' null.string) ('#$:make_string' null.symbol)
-    ('#$:make_string' null.string "" null.symbol)))
-(check_expansion
-  (quote_top "ab" "ab" "ab")
-  (quote11
-    ('#$:make_string' null.string "ab" null.symbol "")
-    ('#$:make_string' "a" null.string "b" null.symbol)
-    ('#$:make_string' null.symbol "a" null.string "b")))
+(in11 (each (toplevel ('#$:make_string'))
+            (toplevel ('#$:make_string' ""))
+            (toplevel ('#$:make_string' ''))
+            (produces ""))
+      // accepts both strings and symbols
+      (each (toplevel ('#$:make_string' "a" "b"))
+            (toplevel ('#$:make_string'  a   b ))
+            (toplevel ('#$:make_string' "a"  b ))
+            (toplevel ('#$:make_string'  a  "b"))
+            (produces "ab"))
+      // null.string and null.symbol act like ""
+      (each (toplevel ('#$:make_string' null.string "ab" null.symbol ""))
+            (toplevel ('#$:make_string' "a" null.string 'b' null.symbol))
+            (toplevel ('#$:make_string' null.symbol "a" null.string "b"))
+            (produces "ab")))
 
 
 // make_symbol
 
-(check_expansion
-  (quote_top '' str sym)
-  (quote11
-    ('#$:make_symbol') ('#$:make_symbol' "str") ('#$:make_symbol' sym)))
+// TODO Error when argument isn't text
 
-(check_expansion
-  (quote_top ab ab ab ab)
-  (quote11
-    ('#$:make_symbol' "a" "b") ('#$:make_symbol' a  b)
-    ('#$:make_symbol' "a"  b ) ('#$:make_symbol' a "b")))
-
-// null.string and null.symbol act like ""
-(check_expansion
-  (quote_top '' '' '')
-  (quote11
-    ('#$:make_symbol' null.string) ('#$:make_symbol' null.symbol)
-    ('#$:make_symbol' null.string "" null.symbol)))
-(check_expansion
-  (quote_top ab ab ab)
-  (quote11
-    ('#$:make_symbol' null.string "ab" null.symbol "")
-    ('#$:make_symbol' "a" null.string "b" null.symbol)
-    ('#$:make_symbol' null.symbol "a" null.string "b")))
+(in11 (each (toplevel ('#$:make_symbol'))
+            (toplevel ('#$:make_symbol' ""))
+            (toplevel ('#$:make_symbol' ''))
+            (produces ''))
+      // accepts both strings and symbols
+      (each (toplevel ('#$:make_symbol' "a" "b"))
+            (toplevel ('#$:make_symbol'  a   b ))
+            (toplevel ('#$:make_symbol' "a"  b ))
+            (toplevel ('#$:make_symbol'  a  "b"))
+            (produces 'ab'))
+      // null.string and null.symbol act like ""
+      (each (toplevel ('#$:make_symbol' null.string "ab" null.symbol ""))
+            (toplevel ('#$:make_symbol' "a" null.string 'b' null.symbol))
+            (toplevel ('#$:make_symbol' null.symbol "a" null.string "b"))
+            (produces 'ab')))
 
 
 // make_list
 
-(check_expansion
-  (quote_top [] [1, 2])
-  (quote11 ('#$:$ion:make_list') ('#$:$ion:make_list' 1 2)))
-(check_expansion
-  (quote_top [1, 2, 3, 4])
-  (quote11 ('#$:$ion:make_list' 1 ('#$:values' 2 3) 4)))
+(in11 (toplevel ('#$:$ion:make_list') ('#$:$ion:make_list' 1 2))
+      (produces [] [1, 2]))
+
+// flattening of rest-args
+// TODO move elsewhere
+(in11 (toplevel ('#$:$ion:make_list' 1 ('#$:values' 2 3) 4))
+      (produces [1, 2, 3, 4]))
 
 
 // make_sexp
 
-(check_expansion
-  (quote_top () (1 2))
-  (quote11 ('#$:$ion:make_sexp') ('#$:$ion:make_sexp' 1 2)))
-(check_expansion
-  (quote_top (1 2 3 4))
-  (quote11 ('#$:$ion:make_sexp' 1 ('#$:values' 2 3) 4)))
+(in11 (toplevel ('#$:$ion:make_sexp') ('#$:$ion:make_sexp' 1 2))
+      (produces () (1 2)))
+
+// flattening of rest-args
+// TODO move elsewhere
+(in11 (toplevel ('#$:$ion:make_sexp' 1 ('#$:values' 2 3) 4))
+      (produces (1 2 3 4)))
 
 
 // annotate
