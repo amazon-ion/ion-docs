@@ -20,20 +20,20 @@
             (produces))
 
       (then (toplevel ('#$:local_symtab'))
-            (then (toplevel '#$10') (produces $ion_literal))
-            (then (toplevel '#$11') (signals "Invalid symbol address: 11")))
+            (then (toplevel '#$11') (produces $ion_literal))
+            (then (toplevel '#$12') (signals "Invalid symbol address:")))
 
       // Correct usage without imports
-      (then (toplevel ('#$:local_symtab' ('#$:values') "a" "b") '#$12')
+      (then (toplevel ('#$:local_symtab' ('#$:values') "a" "b") '#$13')
             (produces b))
 
       // Erroneous use where `imports` is "a" and `symbols` is "b".
-      (then (toplevel ('#$:local_symtab' "a" "b") '#$10' '#$11')
+      (then (toplevel ('#$:local_symtab' "a" "b") '#$11' '#$12')
             (produces $ion_literal b))                          // Expected 'a'
-      (then (toplevel ('#$:local_symtab' "a" "b") '#$12')
-            (signals "Invalid symbol address: 12"))             // Expected 'b'
+      (then (toplevel ('#$:local_symtab' "a" "b") '#$13')
+            (signals "Invalid symbol address:"))                // Expected 'b'
 
       // Erroneous use where import name isn't a string so the clause is ignored.
-      (then (toplevel ('#$:local_symtab' ('#$:import' abc 1 4)) '#$11')
-            (signals "Invalid symbol address: 11"))             // Expected 'a'
+      (then (toplevel ('#$:local_symtab' ('#$:import' abc 1 4)) '#$12')
+            (signals "Invalid symbol address:"))                // Expected 'a'
 )

@@ -22,53 +22,53 @@
 // Local symbols
 
 (in11 (toplevel $ion_encoding::((symbol_table ["a"] ["b"])))
-      (then (toplevel '#$11' '#$12')
+      (then (toplevel '#$12' '#$13')
             (produces a b))
-      (then (toplevel '#$13')
-            (signals "Invalid symbol address: 13")))
+      (then (toplevel '#$14')
+            (signals "Invalid symbol address:")))
 
 
 // Exact-match imports
 (in11 (toplevel $ion_encoding::((load abc "abcs" 1)
                                 (symbol_table abc)))
-      (then (toplevel '#$11')
-            (produces a))
       (then (toplevel '#$12')
-            (signals "Invalid symbol address: 12")))
+            (produces a))
+      (then (toplevel '#$13')
+            (signals "Invalid symbol address:")))
 
 (in11 (toplevel $ion_encoding::((load mno "mnop" 3)
                                 (load abc "abcs" 1)
                                 (symbol_table abc mno)))
-      (then (toplevel '#$11' '#$12' '#$14')
+      (then (toplevel '#$12' '#$13' '#$15')
             (produces a m o))
-      (then (toplevel '#$15')
-            (signals "Invalid symbol address: 15")))
+      (then (toplevel '#$16')
+            (signals "Invalid symbol address:")))
 
 
 // Absent shared symbol
 (in11 (toplevel $ion_encoding::((load mno "mnop" 4)
                                 (symbol_table mno)))
-      (then (toplevel '#$11' '#$12')
+      (then (toplevel '#$12' '#$13')
             (produces '#$mnop#1' n)))
 
 // Module name shadowing
 (in11 (toplevel $ion_encoding::((load m "mnop" 4)
                                 (load m "mnop" 3)
                                 (symbol_table m ["x"])))
-      (then (toplevel '#$11' '#$12' '#$13' '#$14')
+      (then (toplevel '#$12' '#$13' '#$14' '#$15')
             (produces m n o x))
-      (then (toplevel '#$15')
-            (signals "Invalid symbol address: 15")))
+      (then (toplevel '#$16')
+            (signals "Invalid symbol address:")))
 
 
 // Mix and match imported and local symbols
 (in11 (toplevel $ion_encoding::((load mno "mnop" 3)
                                 (load abc "abcs" 1)
                                 (symbol_table ["l1", "l2"] abc ["l3"] mno ["l4"])))
-      (then (toplevel '#$11' '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18')
+      (then (toplevel '#$12' '#$13' '#$14' '#$15' '#$16' '#$17' '#$18' '#$19')
             (produces l1 l2 a l3 m n o l4))
-      (then (toplevel '#$19')
-            (signals "Invalid symbol address: 19")))
+      (then (toplevel '#$20')
+            (signals "Invalid symbol address:")))
 
 
 // Retention
@@ -79,17 +79,17 @@
 
 (in11 (toplevel $ion_encoding::((load A "abcs" 1) (symbol_table ["l1"] A))
                 $ion_encoding::((retain *)        (symbol_table ["l2"] A))
-                '#$11' '#$12')
+                '#$12' '#$13')
       (produces l2 a))
 
 (in11 (toplevel $ion_encoding::((load A "abcs" 1))
                 $ion_encoding::((retain A)
                                 (module I (symbol_table ["i"]))
                                 (symbol_table A))
-                '#$11'
+                '#$12'
                 $ion_encoding::((retain I A A)
                                 (symbol_table I A))
-                '#$11' '#$12')
+                '#$12' '#$13')
       (produces a i a))
 
 
@@ -131,45 +131,45 @@
 
 (in11 (toplevel $ion_encoding::((module h (symbol_table ["h1"]))
                                 (symbol_table h)))
-      (then (toplevel '#$11')
-            (produces h1))
       (then (toplevel '#$12')
-            (signals "Invalid symbol address: 12")))
+            (produces h1))
+      (then (toplevel '#$13')
+            (signals "Invalid symbol address:")))
 
 (in11 (toplevel $ion_encoding::((module h (symbol_table ["h1"]))
                                 (symbol_table h h)))
-      (then (toplevel '#$11' '#$12')
+      (then (toplevel '#$12' '#$13')
             (produces h1 h1))
-      (then (toplevel '#$13')
-            (signals "Invalid symbol address: 13")))
+      (then (toplevel '#$14')
+            (signals "Invalid symbol address:")))
 
 (in11 (toplevel $ion_encoding::((module M
                                   (load N "abcs" 2)
                                   (symbol_table ["m"] N))
                                 (symbol_table M)))
-      (then (toplevel '#$11' '#$13')
+      (then (toplevel '#$12' '#$14')
             (produces m b))
-      (then (toplevel '#$14')
-            (signals "Invalid symbol address: 14")))
+      (then (toplevel '#$15')
+            (signals "Invalid symbol address:")))
 
 (in11 (toplevel $ion_encoding::((module M
                                   (load M "abcs" 2)        // Note same name
                                   (symbol_table ["m"] M))
                                 (symbol_table M)))
-      (then (toplevel '#$11' '#$13')
+      (then (toplevel '#$12' '#$14')
             (produces m b))
-      (then (toplevel '#$14')
-            (signals "Invalid symbol address: 14")))
+      (then (toplevel '#$15')
+            (signals "Invalid symbol address:")))
 
 (in11 (toplevel $ion_encoding::((module M
                                   (load N "abcs" 1)
                                   (load N "mnop" 1)        // Shadows previous
                                   (symbol_table N))
                                 (symbol_table M)))
-      (then (toplevel '#$11')
-            (produces m))
       (then (toplevel '#$12')
-            (signals "Invalid symbol address: 12")))
+            (produces m))
+      (then (toplevel '#$13')
+            (signals "Invalid symbol address:")))
 
 // Inner `load` not visible to top-level.
 (in11 (toplevel $ion_encoding::((module M

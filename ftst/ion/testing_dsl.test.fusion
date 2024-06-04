@@ -42,7 +42,7 @@
 
 
 (in11 (encoding (symbol_table ["a"] ["b"]))
-      (toplevel '#$11' '#$12')
+      (toplevel '#$12' '#$13')
       (produces a b))
 
 (in11 (mactab (macro m () "m"))

@@ -1676,6 +1676,7 @@ Spec Issues: 1.0
     (const systemSymbols_1_1
       (seq_append systemSymbols_1_0
         (seq 'Unicode*'
+          "$ion_encoding"
           "$ion_literal"
           /* ... */)))
 

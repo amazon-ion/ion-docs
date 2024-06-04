@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -17,7 +17,7 @@
 
 (define SYSTEM_SYMBOLS_1_1
   (append SYSTEM_SYMBOLS_1_0
-    (quote ($ion_literal))))
+    (quote ($ion_encoding $ion_literal))))
 
 
 // Ion 1.0 system symbols, with and without leading IVM.
@@ -34,4 +34,4 @@
 (check_expansion_and_bounds (size SYSTEM_SYMBOLS_1_1) SYSTEM_SYMBOLS_1_1
   (quote11
     '#$1' '#$2' '#$3' '#$4' '#$5' '#$6' '#$7' '#$8' '#$9'
-    '#$10'))
+    '#$10' '#$11'))
