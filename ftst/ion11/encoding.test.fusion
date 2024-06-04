@@ -125,16 +125,27 @@
 
 // Inline modules
 
-(in11 (toplevel $ion_encoding::((module h)))
-      (produces)
-  )
+(ion_1_1
+  (each (encoding (module M))
+        (encoding (module M (symbol_table)))
+        (encoding (module M (symbol_table [])))
+        (encoding (module M (symbol_table null.list)))
+        (then (toplevel '#$12')
+              (signals "Invalid symbol address:"))))
 
-(in11 (toplevel $ion_encoding::((module h (symbol_table ["h1"]))
-                                (symbol_table h)))
-      (then (toplevel '#$12')
-            (produces h1))
-      (then (toplevel '#$13')
-            (signals "Invalid symbol address:")))
+(ion_1_1
+  (each (encoding (module M (symbol_table ["a", "b"]))
+                  (symbol_table M))
+        (encoding (module M (symbol_table ["a"] ["b"]))
+                  (symbol_table M))
+        (encoding (module M (symbol_table ["a"] [] ["b"]))
+                  (symbol_table M))
+        (encoding (module M (symbol_table ["a"] null.list ["b"]))
+                  (symbol_table M))
+        (then (toplevel '#$12' '#$13')
+              (produces a b))
+        (then (toplevel '#$14')
+              (signals "Invalid symbol address:"))))
 
 (in11 (toplevel $ion_encoding::((module h (symbol_table ["h1"]))
                                 (symbol_table h h)))

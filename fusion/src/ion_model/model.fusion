@@ -1072,8 +1072,12 @@ Spec Issues: 1.0
       (if (element_of (Value_content v) Symbol)
         // TODO:[LOAD-MAXID] this assumes exact match acquired
         (Module_symtab (avail (Value_symtext v)))
-        (map 'SymTok*' compile_module_symtab_text
-          (lower (Value_content v) List 'Value*'))))
+        (if (element_of (Value_content v) List)
+          (if (element_of (Value_content v) DotNull)
+            (seq 'SymTok*')
+            (map 'SymTok*' compile_module_symtab_text
+              (lower (Value_content v) List 'Value*')))
+          (wrong "Unexpected element in `symbol_table`"))))
 
     (fn compile_module_symtab_text ((v Value) -> SymTok)
       // TODO:[ERRMSG] typecheck, nullcheck
