@@ -182,7 +182,7 @@ These special forms produce repeated output mapped across elements of a stream.
 
 [{nrm}]
 ----
-(*for* [(_id_ _template~in~_), ...] _template~body~_)
+(*for* [(_id_ _template~in~_), ...+] _template~body~_)
 ----
 
 Iteratively expands the _template~body~_ using individual values from the _in-templates_.
@@ -192,6 +192,9 @@ stream ends.
 Local variables are created for each identifier _id_, bound to the current value from their stream.
 The _template~body~_ is then expanded in that environment, and iteration proceeds.
 The result of the `*for*` expression is the concatenated results of the body expansions.
+
+It is a compile-time error if a `for` expression does not define any variables,
+as in `(*for* [] 1)`.
 
 NOTE: The termination rule is under discussion; see
 https://github.com/amazon-ion/ion-docs/issues/201
