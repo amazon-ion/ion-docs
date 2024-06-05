@@ -11,6 +11,7 @@ Terminology/Readability:
 * Cleanup macro reference resolution, it's gotten messy and duplicative.
 * The names around "document symbols" don't read well in prose. "local symbols"
   might be better but that requires careful editing to keep "local" precise.
+* Catalog should be a map, so implementation can do dynamic lookup.
 * Figure out the proper name for `I`.  N? Z?
 * Less type-switching via E[[]] denotations
   * Easier with distinct typed nulls
