@@ -123,6 +123,23 @@
                         (then (toplevel 3) (produces 1 3)))))
 
 
+//=========================
+// Denotations
+
+// Successful cases are in the conformance suite.
+
+(expect_syntax_error (ion_1_0 (denotes annotation::1)))  // annotations not allowed
+
+// Non-core types cannot be used directly in `denotes`
+(expect_syntax_error (ion_1_0 (denotes null.null)))
+(expect_syntax_error (ion_1_0 (denotes symbol)))
+(expect_syntax_error (ion_1_0 (denotes 1.23)))
+(expect_syntax_error (ion_1_0 (denotes [])))
+(expect_syntax_error (ion_1_0 (denotes ())))
+(expect_syntax_error (ion_1_0 (denotes {})))
+(expect_syntax_error (ion_1_0 (denotes {{}} )))
+(expect_syntax_error (ion_1_0 (denotes {{""}})))
+
 
 //=========================
 // AST Synthesis

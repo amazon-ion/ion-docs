@@ -5,6 +5,20 @@
   "/ion_model/testing/dsl"
 )
 
+// TODO:[CONFORM] Move these into conformance suite
+
+(ion_1_x (denotes))
+(ion_1_x (toplevel) (denotes))
+
+(ion_1_x "Primitive denotations"
+  (toplevel true false -1 0 1 "" "str")
+  (denotes  true false -1 0 1 "" "str"))
+
+(ion_1_x (toplevel [])       (denotes (list)))
+(ion_1_x (toplevel ())       (denotes (sexp)))
+(ion_1_x (toplevel [1, ("a")]) (denotes (list 1 (sexp "a"))))
+(ion_1_x (toplevel (1  ["a"])) (denotes (sexp 1 (list "a"))))
+
 
 // Safe types
 

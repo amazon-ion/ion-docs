@@ -125,15 +125,45 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 
 
   //============================================================================
+  // Denotations
+
+  (define (interp_model_value stx)
+    (let [(datum (syntax_unwrap stx))]
+      (unless (is_empty (annotations datum))
+        (wrong_syntax stx "Annotations not supported on `denotes` clauses"))
+      (if (or (is_bool datum)
+              (is_int datum)
+              (is_string datum))
+        datum
+        (if (can_dispatch model_value_vtable stx)
+          (dispatch model_value_vtable stx)
+          (wrong_syntax stx "Not a supported `denotes` clause")))))
+
+
+  (define (interp_mv_list clause_stx)
+    (apply list (map interp_model_value (clause_args clause_stx))))
+
+  (define (interp_mv_sexp clause_stx)
+    (map interp_model_value (clause_args clause_stx)))
+
+
+  (define model_value_vtable
+    {
+//    'null':  // TODO this is not going to work out well.
+      list:   interp_mv_list,
+      sexp:   interp_mv_sexp,
+    })
+
+
+
+  //============================================================================
   // Expectations are interpreted by methods accepting a document and the
   // result of evaluating it.  Successful evaluation returns `Values*` while
   // unsuccessful evaluation returns Bottom.
 
-  (define (interp_produces clause_stx doc description result)
-    // TODO arity and typecheck
-    (let [(expected_data (syntax_to_datum (syntax_subseq clause_stx 1)))]
+  (define (verify_output clause_stx doc description expected_data result)
       (when (is_bottom result)
-        (raise_contract_error (quote produces)
+        (raise_contract_error (clause_keyword clause_stx)
           (with_output_to_string
             (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
             (displayln "Unexpected bottom.")
@@ -146,7 +176,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (displayln (pretty_bottom_message result)))))
       (let [(actual_data (eject_Values result))]
         (unless (=== expected_data actual_data)
-          (raise_contract_error (quote produces)
+          (raise_contract_error (clause_keyword clause_stx)
             (with_output_to_string
               (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
               (displayln "Document didn't produce expected output.")
@@ -156,7 +186,18 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
               (display "Expanded: ")
               (writeln actual_data)
               (display "Expected: ")
-              (writeln expected_data)))))))
+              (writeln expected_data))))))
+
+  (define (interp_denotes clause_stx doc description result)
+    // TODO arity and typecheck
+    (let [(expected_data (map interp_model_value (clause_args clause_stx)))]
+      (verify_output clause_stx doc description expected_data result)))
+
+  (define (interp_produces clause_stx doc description result)
+    // TODO arity and typecheck
+    (let [(expected_data (syntax_to_datum (syntax_subseq clause_stx 1)))]
+      (verify_output clause_stx doc description expected_data result)))
+
 
   (define (interp_signals clause_stx doc description result)
     // TODO arity and typecheck
@@ -192,7 +233,8 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 
 
   (define expectation_vtable
-    { produces: interp_produces,
+    { denotes:  interp_denotes,
+      produces: interp_produces,
       signals:  interp_signals,
     })
 
