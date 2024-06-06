@@ -129,7 +129,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   // result of evaluating it.  Successful evaluation returns `Values*` while
   // unsuccessful evaluation returns Bottom.
 
-  (define (interp_produces clause_stx doc result)
+  (define (interp_produces clause_stx doc description result)
     // TODO arity and typecheck
     (let [(expected_data (syntax_to_datum (syntax_subseq clause_stx 1)))]
       (when (is_bottom result)
@@ -137,6 +137,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
           (with_output_to_string
             (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
             (displayln "Unexpected bottom.")
+            (displayln "Description: " description)
             (display "Document: ")
             (writeln doc)
             (display "Expected: ")
@@ -149,6 +150,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (with_output_to_string
               (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
               (displayln "Document didn't produce expected output.")
+              (displayln "Description: " description)
               (display "Document: ")
               (writeln doc)
               (display "Expanded: ")
@@ -156,7 +158,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
               (display "Expected: ")
               (writeln expected_data)))))))
 
-  (define (interp_signals clause_stx doc result)
+  (define (interp_signals clause_stx doc description result)
     // TODO arity and typecheck
     (let [(expected (syntax_unwrap (head (clause_args clause_stx))))]
       (if (is_bottom result)
@@ -168,6 +170,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
                 (with_output_to_string
                   (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
                   (displayln "Document didn't signal the expected error.")
+                  (displayln "Description: " description)
                   (display "Document: ")
                   (writeln doc)
                   (display "Signaled: ")
@@ -179,6 +182,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (with_output_to_string
               (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
               (displayln "Document didn't signal an error.")
+              (displayln "Description: " description)
               (display "Document: ")
               (writeln doc)
               (display "Expanded: ")
@@ -195,7 +199,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   (define (is_expectation_clause stx)
     (can_dispatch expectation_vtable stx))
 
-  (define (interp_expectation clause_stx docs)
+  (define (interp_expectation clause_stx docs description)
     '''
 Validates each of the given `docs` against the expectation in `clause_stx`.
 Returns nothing, but raises an error if the expectation is not met.
@@ -204,7 +208,7 @@ Returns nothing, but raises an error if the expectation is not met.
       (wrong_syntax clause_stx "Not an expectation"))
     (for [(doc docs)]
       (let [(result (evaluate doc))]
-        (dispatch expectation_vtable clause_stx doc result))))
+        (dispatch expectation_vtable clause_stx doc description result))))
 
 
   //============================================================================
@@ -249,18 +253,18 @@ by the clause `stx`.  Returns the extended set of documents.
   // Extensions are interpreted by methods that take a list of in-progress documents,
   // extend them with the nested fragment(s), then interpret the nested continuation.
 
-  (define (interp_then clause_stx docs fragments continuation)
+  (define (interp_then clause_stx docs description fragments continuation)
     // TODO ensure at least one fragment?  Note this is also used by `in1_` clauses.
     (let [(docs (fold_left (|ds f| (interp_fragment f ds)) docs fragments))]
-      (interp_continuation continuation docs)))
+      (interp_continuation continuation docs description)))
 
 
-  (define (interp_each each_stx docs fragments continuation)
+  (define (interp_each each_stx docs description fragments continuation)
     (when (is_empty fragments)
       (wrong_syntax each_stx "Expected a document fragment in `each`"))
     (for [(fragment fragments)]
       (let [(docs (interp_fragment fragment docs))]
-        (interp_continuation continuation docs))))
+        (interp_continuation continuation docs description))))
 
 
   (define extension_vtable
@@ -271,36 +275,53 @@ by the clause `stx`.  Returns the extended set of documents.
   (define (is_extension_clause stx)
     (can_dispatch extension_vtable stx))
 
-  (define (interp_extension clause_stx docs)
+  (define (interp_extension clause_stx docs description)
     (unless (is_extension_clause clause_stx)
       (wrong_syntax clause_stx "Expected a document extension"))
-    (let_values [((fragments continuation) (split_extension clause_stx))]
-      (dispatch extension_vtable clause_stx docs fragments continuation)))
+    (let_values [((descr fragments continuation)
+                  (split_extension clause_stx))]
+      (let [(new_descr (extend_description description descr))]
+        (dispatch extension_vtable
+          clause_stx docs new_descr fragments continuation))))
 
   (define (split_extension extension_stx)
     '''
 Given a clause of the form:
 
-    "("  <KEYWORD>  fragment*  continuation  ")"
+    "("  <KEYWORD>  description?  fragment*  continuation  ")"
 
-returns a sexp of the leading fragments and a sexp of the remaining clauses.
+returns three values:
+  * a string description; potentially null.string
+  * a sexp of the leading fragments
+  * a sexp of the remaining clauses.
+
 The fragment sexp may be empty (to support use by `in10` and siblings).
 The continuation sexp will not be empty, but otherwise is not validated here.
     '''
-    (let loop [(fragments (quote ())),         // Accumulated in reverse order
-               (clauses   (clause_args extension_stx))]
-      (if (is_fragment_clause (head clauses))
-        (loop (pair (head clauses) fragments) (tail clauses))
-        // No more fragments; assume the rest is the continuation (to be validated later).
-        (if (is_empty clauses)
-          (wrong_syntax extension_stx "Expected at least one continuation clause")
-          (values (reverse fragments) clauses)))))
+    (lets [(clauses     (clause_args extension_stx)),
+           (description (if (and (is_pair clauses)
+                                 (is_string (syntax_unwrap (head clauses))))
+                          (syntax_unwrap (head clauses))
+                          null.string))]
+      (let loop [(fragments (quote ())),         // Accumulated in reverse order
+                 (clauses   (if description (tail clauses) clauses))]
+        (if (is_fragment_clause (head clauses))
+          (loop (pair (head clauses) fragments) (tail clauses))
+          // No more fragments; assume the rest is the continuation (to be validated later).
+          (if (is_empty clauses)
+            (wrong_syntax extension_stx "Expected at least one continuation clause")
+            (values description (reverse fragments) clauses))))))
+
+  (define (extend_description front back)
+    (if (and front back)
+      (string_append front " " back)
+      (or front back)))
 
 
   //============================================================================
   // Continuations dispatch multiple clauses.
 
-  (define (interp_continuation continuation docs)
+  (define (interp_continuation continuation docs description)
     '''
 Interprets the continuation of a test case, as split from the body of an
 extension or `in1*` form.
@@ -312,10 +333,10 @@ extension or `in1*` form.
     (let [(first_clause (head continuation))]
       (if (is_expectation_clause first_clause)
         (if (is_empty (tail continuation))
-          (interp_expectation first_clause docs)
+          (interp_expectation first_clause docs description)
           (wrong_syntax (. continuation 1) "Extraneous form after an expectation clause"))
           (if (is_extension_clause first_clause)
-            (do (|c| (interp_extension c docs)) continuation)
+            (do (|c| (interp_extension c docs description)) continuation)
             (wrong_syntax first_clause "Expected a fragment, expectation, or extension")))))
 
 
@@ -334,9 +355,9 @@ extension or `in1*` form.
 
 
   (define (interp_dsl stx docs)
-    (let_values [((fragments continuation) (split_extension stx))]
+    (let_values [((description fragments continuation) (split_extension stx))]
       // TODO: Not quite right; `then` requires a fragment but `in__` doesn't.
-      (interp_then stx docs fragments continuation)))
+      (interp_then stx docs description fragments continuation)))
 
 
   (define_syntax in10
