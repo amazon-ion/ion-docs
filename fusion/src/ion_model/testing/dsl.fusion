@@ -146,6 +146,30 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   (define (interp_mv_list clause_stx args)
     (apply list (map interp_model_value args)))
 
+  (define (interp_mv_null clause_stx args)
+    (unless (= 1 (size args))
+      (wrong_syntax clause_stx "Malformed clause"))
+    (lets [(type (syntax_unwrap (head args))),
+           (result (elt null_values type))]
+      (if (is_void result)
+        (wrong_syntax clause_stx "Invalid model type")
+        result)))
+
+  (define null_values
+    (quote { blob:      null.blob,
+             bool:      null.bool,
+             clob:      null.clob,
+             decimal:   null.decimal,
+             float:     null.float,
+             int:       null.int,
+             list:      null.list,
+             'null':    null.null,
+             sexp:      null.sexp,
+             string:    null.string,
+             struct:    null.struct,
+             symbol:    null.symbol,
+             timestamp: null.timestamp }))
+
   (define (interp_mv_sexp clause_stx args)
     (map interp_model_value args))
 
@@ -169,7 +193,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 
   (define model_value_vtable
     {
-//    'null':  // TODO this is not going to work out well.
+      'null': interp_mv_null,
       list:   interp_mv_list,
       sexp:   interp_mv_sexp,
       string: interp_mv_string,
