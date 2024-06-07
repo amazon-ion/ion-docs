@@ -149,6 +149,9 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   (define (interp_mv_sexp clause_stx args)
     (map interp_model_value args))
 
+  (define (interp_mv_string clause_stx args)
+    (interp_codepoints args))
+
   (define (interp_mv_struct clause_stx args)
     (for_struct [(f_stx args)]
       (let [(f f_stx)]
@@ -169,6 +172,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 //    'null':  // TODO this is not going to work out well.
       list:   interp_mv_list,
       sexp:   interp_mv_sexp,
+      string: interp_mv_string,
       struct: interp_mv_struct,
       symbol: interp_mv_symbol,
     })
@@ -191,8 +195,11 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
       (symbol_append "#$" symtab "#" (int_to_string index))))
 
   (define (interp_model_symtok_text clause_stx args)                // -> symbol
+    (string_to_symbol (interp_codepoints args)))
+
+  (define (interp_codepoints args)                                  // -> string
     (let [(codepoints (map syntax_unwrap args))]
-      (string_to_symbol (string_implode (apply list codepoints)))))
+      (string_implode (apply list codepoints))))
 
   (define model_symtok_vtable
     {

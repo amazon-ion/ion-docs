@@ -23,6 +23,10 @@
   (then (toplevel '' symbol 'null')
         (denotes (symbol (text)) (symbol "symbol") (symbol (text 110 117 108 108)))))
 
+(ion_1_x "String denotations"
+  (then (toplevel "" "a\x62\u0063")
+        (denotes (string) (string 97 0x62 99))))
+
 (ion_1_x "Struct denotations"
   (then (toplevel {} {a:1} {a:1, b:2})
         (denotes (struct) (struct ("a" 1)) (struct ((text 0x62 /* "b" */) 2)("a" 1)))))
