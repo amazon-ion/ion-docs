@@ -29,8 +29,8 @@
   {
     "name": "ion-rust",
     "category": "core",
-    "latest_release_version": "1.0.0-rc.5",
-    "latest_release_date": "2024-06-03"
+    "latest_release_version": "1.0.0-rc.6",
+    "latest_release_date": "2024-06-06"
   },
   {
     "name": "ion-python",
@@ -42,8 +42,8 @@
   {
     "name": "ion-go",
     "category": "core",
-    "latest_release_version": "1.4.0",
-    "latest_release_date": "2024-04-26",
+    "latest_release_version": "1.5.0",
+    "latest_release_date": "2024-06-06",
     "documentation": "https://pkg.go.dev/github.com/amzn/ion-go/ion"
   },
   {
