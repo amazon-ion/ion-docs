@@ -149,10 +149,19 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   (define (interp_mv_sexp clause_stx args)
     (map interp_model_value args))
 
+  (define (interp_mv_struct clause_stx args)
+    (for_struct [(f_stx args)]
+      (let [(f f_stx)]
+        (unless (= 2 (syntax_size f))
+          (wrong_syntax clause_stx "Malformed model of struct field"))
+        (values (interp_model_symtok (syntax_get f 0))
+                (interp_model_value  (syntax_get f 1))))))
+
   (define (interp_mv_symbol clause_stx args)
     (unless (= 1 (size args))
       (wrong_syntax clause_stx "Malformed clause"))
     (interp_model_symtok (head args)))
+
 
 
   (define model_value_vtable
@@ -160,6 +169,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 //    'null':  // TODO this is not going to work out well.
       list:   interp_mv_list,
       sexp:   interp_mv_sexp,
+      struct: interp_mv_struct,
       symbol: interp_mv_symbol,
     })
 
