@@ -32,10 +32,17 @@ We "tunnel" special tokens as follows:
   )
 
   (provide
-    (all_defined_out)
+    check_eval_fail
+    check_eval_success
+    check_expansion
+    check_expansion_and_bounds
     eject_Values
     evaluate
+    expand1
     mk_IVM
+    quote11
+    quote_top
+    with_encoding
   )
 
 
