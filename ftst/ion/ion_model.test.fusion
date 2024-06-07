@@ -19,6 +19,27 @@
 (ion_1_x (toplevel [1, ("a")]) (denotes (list 1 (sexp "a"))))
 (ion_1_x (toplevel (1  ["a"])) (denotes (sexp 1 (list "a"))))
 
+(ion_1_x "Symbol denotations"
+  (then (toplevel '' symbol 'null')
+        (denotes (symbol (text)) (symbol "symbol") (symbol (text 110 117 108 108)))))
+
+// TODO move to local_symtab_imports
+(ion_1_0
+  (then (toplevel $ion_symbol_table::{imports:[{name:"absent", max_id:0}, {name:"abcs"}]} '#$10')
+        (produces a))
+  (then (toplevel $ion_symbol_table::{imports:[{name:"absent", max_id:2}, {name:"abcs"}]}
+                  '#$10' '#$11' '#$12')
+        (denotes (symbol (absent "absent" 1)) (symbol (absent "absent" 2)) (symbol "a")))
+  (then (toplevel $ion_symbol_table::{imports:[{name:"empty", version:2, max_id:3}, {name:"abcs"}]}
+                  '#$10' '#$11' '#$12' '#$13')
+        (denotes (symbol (absent "empty" 1))
+                 (symbol (absent "empty" 2))
+                 (symbol (absent "empty" 3))
+                 (symbol "a")))
+  (then (toplevel $ion_symbol_table::{imports:[{name:"mnop", version:2, max_id:2}, {name:"abcs"}]}
+                  '#$10' '#$11' '#$12')
+        // mnop v2 doesn't exist, so we should get truncated v4, which has a gap
+        (denotes (symbol (absent "mnop" 1)) (symbol "n") (symbol "a"))))
 
 // Safe types
 

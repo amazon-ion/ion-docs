@@ -33,6 +33,7 @@ DSL Design:
   '''
 
   (require
+    "/fusion/experimental/string"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/ion_model/model"
@@ -101,7 +102,7 @@ A clause is a syntax-object S-expression that starts with a symbol.
 
   (define (is_keyword_clause stx kw)
     (and (is_clause stx)
-         (=== (clause_keyword stx) kw)))
+         (= (clause_keyword stx) kw)))
 
 
   // A teeny-tiny method dispatch mechanism
@@ -120,12 +121,14 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
         (apply (. vtable (clause_keyword clause)) (tail rest)))))
 
   (define (can_dispatch vtable stx)
+    (assert (is_struct vtable))
     (and (is_clause stx)
          (is_truthy (. vtable (clause_keyword stx)))))
 
 
   //============================================================================
-  // Denotations
+  // Denotations are turned into the slightly-mangled data of eject_Values.
+  // (The "mangling" is to handle absent shared symbols.)
 
   (define (interp_model_value stx)
     (let [(datum (syntax_unwrap stx))]
@@ -136,15 +139,20 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
               (is_string datum))
         datum
         (if (can_dispatch model_value_vtable stx)
-          (dispatch model_value_vtable stx)
+          (dispatch model_value_vtable stx (clause_args stx))
           (wrong_syntax stx "Not a supported `denotes` clause")))))
 
 
-  (define (interp_mv_list clause_stx)
-    (apply list (map interp_model_value (clause_args clause_stx))))
+  (define (interp_mv_list clause_stx args)
+    (apply list (map interp_model_value args)))
 
-  (define (interp_mv_sexp clause_stx)
-    (map interp_model_value (clause_args clause_stx)))
+  (define (interp_mv_sexp clause_stx args)
+    (map interp_model_value args))
+
+  (define (interp_mv_symbol clause_stx args)
+    (unless (= 1 (size args))
+      (wrong_syntax clause_stx "Malformed clause"))
+    (interp_model_symtok (head args)))
 
 
   (define model_value_vtable
@@ -152,8 +160,35 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
 //    'null':  // TODO this is not going to work out well.
       list:   interp_mv_list,
       sexp:   interp_mv_sexp,
+      symbol: interp_mv_symbol,
     })
 
+
+
+  (define (interp_model_symtok arg)                                 // -> symbol
+    (if (is_string (syntax_unwrap arg))
+      (string_to_symbol (syntax_unwrap arg))
+      // TODO What about the `int` option?
+      (if (can_dispatch model_symtok_vtable arg)
+        (dispatch model_symtok_vtable arg (clause_args arg))
+        (wrong_syntax arg "Malformed model of symbol token"))))
+
+  (define (interp_model_symtok_absent clause_stx args)              // -> symbol
+    (unless (= 2 (size args))
+      (wrong_syntax clause_stx "Malformed clause"))
+    (let [(symtab (syntax_unwrap (. args 0))),
+          (index  (syntax_unwrap (. args 1)))]
+      (symbol_append "#$" symtab "#" (int_to_string index))))
+
+  (define (interp_model_symtok_text clause_stx args)                // -> symbol
+    (let [(codepoints (map syntax_unwrap args))]
+      (string_to_symbol (string_implode (apply list codepoints)))))
+
+  (define model_symtok_vtable
+    {
+      absent: interp_model_symtok_absent,
+      text:   interp_model_symtok_text,
+    })
 
 
   //============================================================================
