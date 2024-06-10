@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Amazon.com, Inc.  All rights reserved.
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
 (require
   "/fusion/experimental/check"
@@ -15,19 +15,7 @@
 (check_true (eject (IVM_eq IVM_1_1 (mk_IVM (quote '#$ion_1_1')))))
 
 
-(check_expansion
-  (quote_top true true)
-  (quote_top '#$ion_1_0' true '#$ion_1_1' true))
-
-
-(check_eval_fail "Unsupported Ion version: 1.2"
-  (quote_top '#$ion_1_0' true '#$ion_1_2' true))
-
-(check_eval_fail "Unsupported Ion version: 2.0"
-  (quote_top '#$ion_1_0' true '#$ion_2_0' true))
-
-
-
+// TODO:[CONFORM] move to conformance suite
 // Inline IVM resets the LST
 (check_expansion_and_bounds 9
   (quote_top $ion a)
