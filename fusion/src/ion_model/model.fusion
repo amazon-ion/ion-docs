@@ -1069,7 +1069,8 @@ Spec Issues: 1.0
           (compile_module_symtab (seq_tail vs) avail))))
 
     (fn compile_module_symtab_elt ((v Value) (avail ModuleMap) -> 'SymTok*')
-      (if (element_of (Value_content v) Symbol)
+      (if (and (element_of (Value_content v) Symbol)
+                (not (element_of (Value_content v) DotNull)))
         // TODO:[LOAD-MAXID] this assumes exact match acquired
         (Module_symtab (avail (Value_symtext v)))
         (if (element_of (Value_content v) List)
