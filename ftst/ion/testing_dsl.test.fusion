@@ -169,10 +169,10 @@
 (expect_argument_error (in11 (toplevel ('#$:M:m:a')) (produces)))
 (expect_argument_error (in11 (toplevel ('#$:M:m:0')) (produces)))
 
-
-// TODO [BAD-AST] Reject misplaced AST tunneling symbols; eg:
-//   (toplevel '#$:oops')      Module ref not head of an AST S-expression
-//   (toplevel ['#$ion_1_0'])  IVM not at top-level
+// Module ref not head of an AST S-expression
+(expect_argument_error (ion_1_x  (toplevel '#$:oops') (denotes)))
+// IVM not at top-level
+(expect_argument_error (ion_1_x  (toplevel ['#$ion_1_0']) (denotes)))
 
 
 "SUCCESS (testing_dsl.test)"

@@ -42,7 +42,7 @@ Features:
     * Perhaps add LoadedModule to track that data, and return from ModuleMap.
   * Accept non-exact-match modules in `symbol_table`.
 * Accept symbols in `symbol_table` inner lists: (symbol_table [sym1, "sym2"])
-  * What about $0 ?
+  * What about $0 and absent symbols? https://github.com/amazon-ion/ion-docs/issues/324
 * [LOAD-MAXID] Module-level symtabs don't handle non-exact-match modules.
 * [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
   * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.

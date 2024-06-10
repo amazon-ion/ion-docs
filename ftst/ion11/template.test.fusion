@@ -93,7 +93,6 @@
 
 // Exactly-one cardinality
 
-// TODO:[EACH-FORK] test variant signatures; EACH only allows one extension.
 (in11 (mactab
         (macro m (v!) v))
       (each (toplevel ('#$:m'))
