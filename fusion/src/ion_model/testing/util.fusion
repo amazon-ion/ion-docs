@@ -29,6 +29,7 @@ Utilities for testing the Ion denotational model.
     eject_Values
     evaluate
     is_UnimplementedDataType
+    mangle_absent_symbol
     mk_IVM                  // TODO remove?
     pretty_bottom_message
     UnimplementedDataType_data
@@ -201,14 +202,17 @@ Utilities for testing the Ion denotational model.
 
   // Symbols
 
+  (define (mangle_absent_symbol symtab_name index)
+    (symbol_append "#$" symtab_name "#" (int_to_string index)))
+
   (define (eject_SymTok sym)
     // (dom SymTok = (+ Unicode Sym0 AbsentSym))
     (if (element_of sym Unicode)
       (string_to_symbol (eject (lower sym Unicode)))
       (if (element_of sym AbsentSym)
         (let [(a (lower sym AbsentSym))]
-          (symbol_append "#$" (eject (AbsentSym_module a))
-                         "#" (int_to_string (eject (AbsentSym_index a)))))
+          (mangle_absent_symbol (eject (AbsentSym_module a))
+                                (eject (AbsentSym_index  a))))
         (quote '#$0'))))
 
   (define (eject_SymToks syms)

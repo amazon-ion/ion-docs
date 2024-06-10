@@ -216,7 +216,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
       (wrong_syntax clause_stx "Malformed clause"))
     (let [(symtab (syntax_unwrap (. args 0))),
           (index  (syntax_unwrap (. args 1)))]
-      (symbol_append "#$" symtab "#" (int_to_string index))))
+      (mangle_absent_symbol symtab index)))
 
   (define (interp_model_symtok_text clause_stx args)                // -> symbol
     (string_to_symbol (interp_codepoints args)))
