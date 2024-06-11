@@ -17,12 +17,6 @@
   (check_eval_fail "ignored" (quote_top '#$1')))
 
 
-(expect_check_error
-  (check_expansion_and_bounds 99  // Expected bounds is too high
-    (quote_top)
-    (quote_top $ion_symbol_table::{symbols:["a"]})))
-
-
 // Malformed inputs cause check-failure even without document/produces/signals
 (expect_check_error
   (with_encoding ((module))))

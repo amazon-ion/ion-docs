@@ -5,7 +5,8 @@
   "/fusioncontrib/denotation"
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
-  "/ion_model/testing"
+  "/ion_model/testing/util"
+  "/ion_model/testing/dsl"
 )
 
 
@@ -16,12 +17,12 @@
 
 
 // TODO:[CONFORM] move to conformance suite
-// Inline IVM resets the LST
-(check_expansion_and_bounds 9
-  (quote_top $ion a)
-  (quote_top
-    '#$ion_1_0' $ion_symbol_table::{symbols:["a"]} '#$1' '#$10'
-    '#$ion_1_0'))
+
+(ion_1_0 "IVM resets the LST"
+  (toplevel $ion_symbol_table::{symbols:["a"]})
+  (toplevel '#$ion_1_0')
+  (toplevel '#$10')
+  (signals "Invalid symbol address:"))
 
 
 "SUCCESS (ivms.test)"
