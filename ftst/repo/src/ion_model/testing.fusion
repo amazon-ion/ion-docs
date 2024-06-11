@@ -33,7 +33,6 @@ We "tunnel" special tokens as follows:
 
   (provide
     check_eval_fail
-    check_eval_success
     check_expansion
     eject_Values
     evaluate
@@ -70,9 +69,6 @@ We "tunnel" special tokens as follows:
 
   //============================================================================
   // Test assertions
-
-  (define_check (check_eval_success doc)
-    (check_not_bottom (evaluate doc)))
 
   (define_check (check_eval_fail bottom_msg doc)
     (check_bottom bottom_msg (evaluate doc)))

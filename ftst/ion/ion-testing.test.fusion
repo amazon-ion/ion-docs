@@ -9,10 +9,6 @@
 )
 
 
-(check_eval_success (quote_top '#$1'))
-(expect_check_error
-  (check_eval_success (quote_top '#$99')))
-
 (expect_check_error
   (check_eval_fail "ignored" (quote_top '#$1')))
 
