@@ -1,9 +1,6 @@
 // Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
-(require
-  "/ion_model/testing"
-  "/ion_model/testing/dsl"
-)
+(require "/ion_model/testing/dsl")
 
 // TODO:[CONFORM] Move these into conformance suite
 
@@ -68,50 +65,50 @@
 
 // Safe types
 
-(in1x
+(ion_1_x
   (toplevel null      null.null a::null '#$1'::null)
   (produces null.null null.null a::null $ion ::null))
 
-(check_expansion
-  (quote_top null.bool a::null.bool true $ion ::false)
-  (quote_top null.bool a::null.bool true '#$1'::false))
+(ion_1_x
+  (toplevel null.bool a::null.bool true '#$1'::false)
+  (produces null.bool a::null.bool true $ion ::false))
 
-(check_expansion
-  (quote_top null.int a::null.int 0 1 a::$ion ::2)
-  (quote_top null.int a::null.int 0 1 a::'#$1'::2))
+(ion_1_x
+  (toplevel null.int a::null.int 0 1 a::'#$1'::2)
+  (produces null.int a::null.int 0 1 a::$ion ::2))
 
 
-(check_expansion
-  (quote_top null.string a::null.string "" "queen" $ion ::"king")
-  (quote_top null.string a::null.string "" "queen" '#$1'::"king"))
+(ion_1_x
+  (toplevel null.string a::null.string "" "queen" '#$1'::"king")
+  (produces null.string a::null.string "" "queen" $ion ::"king"))
 
 
 // Symbols
 
-(check_expansion
-  (quote_top null.symbol a::null.symbol '' danny $ion   $ion::name)
-  (quote_top null.symbol a::null.symbol '' danny '#$1' '#$1'::'#$4'))
+(ion_1_x
+  (toplevel null.symbol a::null.symbol '' danny '#$1' '#$1'::'#$4')
+  (produces null.symbol a::null.symbol '' danny $ion   $ion::name))
 
 
 // Lists
 
-(check_expansion
-  (quote_top null.list a::null.list a::[] [[], 1, danny, $ion])
-  (quote_top null.list a::null.list a::[] [[], 1, danny, '#$1']))
+(ion_1_x
+  (toplevel null.list a::null.list a::[] [[], 1, danny, '#$1'])
+  (produces null.list a::null.list a::[] [[], 1, danny, $ion]))
 
 
 // Sexps
 
-(check_expansion
-  (quote_top null.sexp a::null.sexp a::() (() 1 danny $ion))
-  (quote_top null.sexp a::null.sexp a::() (() 1 danny '#$1')))
+(ion_1_x
+  (toplevel null.sexp a::null.sexp a::() (() 1 danny '#$1'))
+  (produces null.sexp a::null.sexp a::() (() 1 danny $ion)))
 
 
 // Structs
 
-(check_expansion
-  (quote_top null.struct a::null.struct g::{} {a:$ion, c:{}, a:1, b:danny})
-  (quote_top null.struct a::null.struct g::{} {a:1, b: danny, a:'#$1', c:{}}))
+(ion_1_x
+  (toplevel null.struct a::null.struct g::{} {a:1, b: danny, a:'#$1', c:{}})
+  (produces null.struct a::null.struct g::{} {a:$ion, c:{}, a:1, b:danny}))
 
 
 "SUCCESS (ion_model.test)"
