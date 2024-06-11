@@ -1,115 +1,110 @@
 // Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
 
-(require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
-  "/ion_model/testing"
-)
+(require "/ion_model/testing/dsl")
 
 
-// Trivial happy cases.
-(with_encoding ((module M (use))))
-(with_encoding ((module M (use $ion))))
-(with_encoding ((module M (use) (use) (use $ion))))
+(ion_1_1 "Trivial module/use cases parse successfully."
+  (each (encoding (module M (use)))
+        (encoding (module M (use $ion)))
+        (encoding (module M (use) (use) (use $ion)))
+        (denotes)))
 
+(ion_1_1 "Malformed use clauses"
+  (then (encoding (module M (use 15)))
+        (signals "Expected a symbol:")))
 
-(with_encoding ((module M (use 15)))
-  (document)
-  (signals "Expected a symbol:"))
+(ion_1_1 (encoding (module M (use foo)))
+         (signals "Module not in scope: foo"))
 
-(with_encoding ((module M (use foo)))
-  (document)
-  (signals "Module not in scope: foo"))
-
-(with_encoding ((module M (use M)))
-  (document)
+(ion_1_1 "Module name is not scoped to its own body"
+  (encoding (module M (use M)))
   (signals "Module not in scope: M"))
 
-// Use must precede symbol_table, macro_table    // TODO:[ALIAS]
-(with_encoding ((module M (symbol_table) (use)))
-  (document)
-  (signals "Unexpected clause in module:"))
 
-(with_encoding ((module M (macro_table) (use)))
-  (document)
-  (signals "Unexpected clause in module:"))
+// TODO:[ALIAS] use must precede (alias)
+(ion_1_1 "Misplaced use clause"
+  (then "must precede symbol_table"
+    (encoding (module M (symbol_table) (use)))
+    (signals "Unexpected clause in module:"))
+  (then "must precede macro_table"
+    (encoding (module M (macro_table) (use)))
+    (signals "Unexpected clause in module:")))
 
 
-(with_encoding ((module M (macro_table (macro m1 () "m1")
-                                       (macro m2 () "m2")))
-                (module U (use M)
-                          (macro_table (macro u1 () [(m1), (m2)])))
-                (macro_table U))
-  (document ('#$:u1'))
+(ion_1_1 "Basic macro imports"
+  (encoding (module M
+              (macro_table (macro m1 () "m1")
+                           (macro m2 () "m2")))
+            (module U
+              (use M)
+              (macro_table (macro u1 () [(m1), (m2)])))
+            (macro_table U))
+  (toplevel ('#$:u1'))
   (produces ["m1", "m2"]))
 
 
-// Ambiguous `use`d names must be qualified.
-(with_encoding ((module M1 (macro_table (macro m () "m1")))
-                (module M2 (macro_table (macro m () "m2")))
-                (module U (use M1 M2)
-                          (macro_table (macro u1 () (m)))))
-  (document)
+(ion_1_1 "Ambiguous `use`d names must be qualified in template"
+  (encoding (module M1 (macro_table (macro m () "m1")))
+            (module M2 (macro_table (macro m () "m2")))
+            (module U  (use M1 M2)
+                       (macro_table (macro u1 () (m)))))
   (signals "Ambiguous macro-ref: m"))
 
 
-// `use` in inline module doesn't affect the document.
-(with_encoding ((module M (macro_table (macro m1 () "m1")))
-                (module U (use M)
-                          (macro_table (macro u1 () (m1))))
-                (macro_table U))
-  (document ('#$:m1'))
+(ion_1_1 "use in inline module doesn't affect the document"
+  (encoding (module M (macro_table (macro m1 () "m1")))
+            (module U (use M)
+                      (macro_table (macro u1 () (m1))))
+            (macro_table U))
+  (toplevel ('#$:m1'))
   (signals "No such macro:"))
 
 
-// Can have multiple module-names in one `use` clause.
-(with_encoding ((module M (macro_table (macro m1 () "m1")))
-                (module N (macro_table (macro n1 () "n1")))
-                (module U (use M N)
-                          (macro_table (macro u1 () (values (m1) (n1)))))
-                (macro_table U))
-  (document ('#$:u1'))
+(ion_1_1 "Can use multiple module-names in one clause"
+  (encoding (module M (macro_table (macro m1 () "m1")))
+            (module N (macro_table (macro n1 () "n1")))
+            (module U (use M N)
+                      (macro_table (macro u1 () (values (m1) (n1)))))
+            (macro_table U))
+  (toplevel ('#$:u1'))
   (produces "m1" "n1"))
 
-// Can `use` the same module-name twice
-(with_encoding ((module M (macro_table (macro m1 () "m1")))
-                (module N (macro_table (macro n1 () "n1")))
-                (module U (use M N M)
-                          (macro_table (macro u1 () (values (':M:m1') (':M:0'))))
-//                        (macro_table (macro u2 () (m1)))     // FIXME [MAC-ID]
-                )
-                (macro_table U))
-  (document ('#$:u1'))
+
+(ion_1_1 "Can use the same module-name twice"
+  (encoding (module M (macro_table (macro m1 () "m1")))
+            (module N (macro_table (macro n1 () "n1")))
+            (module U (use M N M)
+                      (macro_table (macro u1 () (values (':M:m1') (':M:0'))))
+//                    (macro_table (macro u2 () (m1)))     // FIXME [MAC-ID]
+            )
+            (macro_table U))
+  (toplevel ('#$:u1'))
   (produces "m1" "m1"))
 
 
-// Local macro defn can shadow the same `use`d name.
-(with_encoding ((module M (macro_table (macro m () "M:m")))
-                (module U (use M)
-                          (macro_table (macro m () "U:m")))
-                (macro_table U))
-  (document ('#$:m'))
+(ion_1_1 "Local macro defn shadows a used name"
+  (encoding (module M (macro_table (macro m () "M:m")))
+            (module U (use M)
+                      (macro_table (macro m () "U:m")))
+            (macro_table U))
+  (toplevel ('#$:m'))
   (produces "U:m"))
 
 
-// `use`d names do not shadow each other across `use` clauses
-(with_encoding ((module M (macro_table (macro m () "M:m")))
-                (module N (macro_table (macro m () "N:m")))
-                (module U (use M)
-                          (use N)
-                          (macro_table (macro _ () (m)))))
-  (document)
-  (signals "Ambiguous macro-ref: m"))
-
-// ... or within the same clause
-(with_encoding ((module M (macro_table (macro m () "M:m")))
-                (module N (macro_table (macro m () "N:m")))
-                (module U (use M N)
-                          (macro_table (macro _ () (m)))))
-  (document)
-  (signals "Ambiguous macro-ref: m"))
+(ion_1_1 "used names do not shadow each other"
+  (then "across use clauses"
+    (encoding (module M (macro_table (macro m () "M:m")))
+              (module N (macro_table (macro m () "N:m")))
+              (module U (use M)
+                        (use N)
+                        (macro_table (macro _ () (m)))))
+    (signals "Ambiguous macro-ref: m"))
+  (then "within the same clause"
+    (encoding (module M (macro_table (macro m () "M:m")))
+              (module N (macro_table (macro m () "N:m")))
+              (module U (use M N)
+                        (macro_table (macro _ () (m)))))
+    (signals "Ambiguous macro-ref: m")))
 
 
 "SUCCESS (use.test)"
