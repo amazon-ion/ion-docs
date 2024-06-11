@@ -1,94 +1,88 @@
 // Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
 
-(require
-  "/fusion/experimental/check"
-  "/fusioncontrib/denotation"
-  "/fusioncontrib/denotation/testing"
-  "/ion_model/model"
-  "/ion_model/testing"
-  "/ion_model/testing/dsl"
-)
+(require "/ion_model/testing/dsl")
 
 
 // Ensure that malformed templates are signaled when they are encountered,
 // not delayed until the module is installed or macro is invoked.
-(check_eval_fail "Malformed template:"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () ()))))))
+(ion_1_1
+  (encoding (module M (macro_table (macro m () ()))))
+  (signals "Malformed template:"))
 
 
 // Contant macros; Literals of various types
 
-(check_expansion
-  (quote_top null n::null
-             true bool::null.bool
-             76 inttt::null.int
-             "string" null.string a::"string" b::c::null.string)
-  (quote11   $ion_encoding::((module M
-                               (macro_table
-                                 (macro nul          () null.null)
-                                 (macro nul_ann      () n::null)
-                                 (macro bol          () true)
-                                 (macro bol_ann_null () bool::null.bool)
-                                 (macro int          () 76)
-                                 (macro int_ann_null () inttt::null.int)
-                                 (macro str          () "string")
-                                 (macro str_null     () null.string)
-                                 (macro str_ann      () a::"string")
-                                 (macro str_ann_null () b::c::null.string)))
-                             (macro_table M))
-             ('#$:nul') ('#$:nul_ann')
-             ('#$:bol') ('#$:bol_ann_null')
-             ('#$:int') ('#$:int_ann_null')
-             ('#$:str') ('#$:str_null') ('#$:str_ann') ('#$:str_ann_null')))
+(ion_1_1
+  (encoding (module M
+              (macro_table
+                (macro nul          () null.null)
+                (macro nul_ann      () n::null)
+                (macro bol          () true)
+                (macro bol_ann_null () bool::null.bool)
+                (macro int          () 76)
+                (macro int_ann_null () inttt::null.int)
+                (macro str          () "string")
+                (macro str_null     () null.string)
+                (macro str_ann      () a::"string")
+                (macro str_ann_null () b::c::null.string)))
+            (macro_table M))
+  (toplevel ('#$:nul') ('#$:nul_ann')
+            ('#$:bol') ('#$:bol_ann_null')
+            ('#$:int') ('#$:int_ann_null')
+            ('#$:str') ('#$:str_null') ('#$:str_ann') ('#$:str_ann_null'))
+  (produces null n::null
+            true bool::null.bool
+            76 inttt::null.int
+            "string" null.string a::"string" b::c::null.string))
 
 // TODO float decimal timestap blob clob
 
-(with_mactab ((macro m () 0))
-  (document ('#$:m'))
-  (produces 0)
-  (document ('#$:m' 1))
-  (signals "Too many arguments")
-  (document ('#$:m' 1 2))
-  (signals "Too many arguments"))
+(ion_1_1
+  (mactab (macro m () 0))
+  (then (toplevel ('#$:m'))
+        (produces 0))
+  (each (toplevel ('#$:m' 1))
+        (toplevel ('#$:m' 1 2))
+        (signals "Too many arguments")))
 
 
 // Single-parameter macros; variable references
 
-(with_mactab ((macro val (v) v))
-  (document ('#$:val' a) ('#$:val' b))
-  (produces a b)
-  (document ('#$:val'))
-  (signals "Too few arguments")
-  (document ('#$:val' 1 2))
-  (signals "Too many arguments"))
+(ion_1_1
+  (mactab (macro val (v) v))
+  (then (toplevel ('#$:val' a) ('#$:val' b))
+        (produces a b))
+  (then (toplevel ('#$:val'))
+        (signals "Too few arguments"))
+  (then (toplevel ('#$:val' 1 2))
+        (signals "Too many arguments")))
 
-(with_mactab ((macro _ (v) x))
-  (document)
-  (signals "Unbound variable: x"))
+
+(ion_1_1 (mactab (macro _ (v) x))
+         (signals "Unbound variable: x"))
 
 
 // Multiple parameters
 
-(with_mactab ((macro first  (v w) v)
-              (macro second (v w) w))
-  (document ('#$:first'  a "b")
-            ('#$:second' c "d"))
-  (produces a "d")
-  (document ('#$:first'))
-  (signals "Too few arguments")
-  (document ('#$:first' 1))
-  (signals "Too few arguments")
-  (document ('#$:first' 1 2 3))
-  (signals "Too many arguments"))
+(ion_1_1 (mactab (macro first  (v w) v)
+                 (macro second (v w) w))
+  (then (toplevel ('#$:first'  a "b")
+                  ('#$:second' c "d"))
+        (produces a "d"))
+  (each (toplevel ('#$:first'))
+        (toplevel ('#$:first' 1))
+        (signals "Too few arguments"))
+  (then (toplevel ('#$:first' 1 2 3))
+        (signals "Too many arguments")))
 
 
 // Nontrivial parameter specs
 
-(check_expansion
-  (quote_top a)
-  (quote11   $ion_encoding::((module M (macro_table (macro val (v) v)))
-                             (macro_table M))
-             ('#$:val' a)))
+(ion_1_1
+  (encoding (module M (macro_table (macro val (v) v)))
+            (macro_table M))
+  (toplevel ('#$:val' a))
+  (produces a))
 
 
 // Exactly-one cardinality
@@ -285,241 +279,236 @@
 
 // Special forms: literal
 
-(check_expansion
-  (quote_top [a::(), literal] [1, (values 2 3), (literal v)] [a, v])
-  (quote11 $ion_encoding::((module M
-                             (macro_table (macro m ()  [(literal a::()), (literal literal)])
-                                          (macro n ()  (literal [1, (values 2 3), (literal v)]))
-                                          (macro o (v) [v, (literal v)])))
-                           (macro_table M))
-           ('#$:m') ('#$:n') ('#$:o' a)))
+(ion_1_1
+  (encoding (module M
+              (macro_table (macro m ()  [(literal a::()), (literal literal)])
+                           (macro n ()  (literal [1, (values 2 3), (literal v)]))
+                           (macro o (v) [v, (literal v)])))
+            (macro_table M))
+  (toplevel ('#$:m')         ('#$:n')                       ('#$:o' a))
+  (produces [a::(), literal] [1, (values 2 3), (literal v)] [a, v]))
 
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (literal)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (literal 1 2)))))))
+(ion_1_1
+  (each (encoding (module M (macro_table (macro m () (literal)))))
+        (encoding (module M (macro_table (macro m () (literal 1 2)))))
+        (signals "Malformed literal clause")))
 
 
 // Special form: if_void
 
-(with_mactab ((macro m (v*)
-                (if_void v true false)))
-  (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
+(ion_1_1 (mactab (macro m (v*)
+                   (if_void v true false)))
+  (toplevel ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
   (produces true     false      false        false))
 
 // Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m (p*) (if_void p true (make_string null))))
-  (document ('#$:m'))
-  (produces true)
-  (document ('#$:m' 1))
-  (signals "Not a text value"))
-(with_mactab ((macro m (p*) (if_void p (make_string null) false)))
-  (document ('#$:m'))
-  (signals "Not a text value")
-  (document ('#$:m' 1))
-  (produces false))
+(ion_1_1 (mactab (macro m (p*)
+                   (if_void p true (make_string null))))
+  (then (toplevel ('#$:m'))
+        (produces true))
+  (then (toplevel ('#$:m' 1))
+        (signals "Not a text value")))
 
+(ion_1_1 (mactab (macro m (p*)
+                   (if_void p (make_string null) false)))
+  (then (toplevel ('#$:m'))
+        (signals "Not a text value"))
+  (then (toplevel ('#$:m' 1))
+        (produces false)))
 
-// Try new testing forms; still awkward.
-(with_mactab ((macro m () (if_void)))
-  (document)
-  (signals "Malformed if_void form"))
-
-(check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void)))))))
-(check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1)))))))
-(check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 2)))))))
-(check_eval_fail "Malformed if_void form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 2 3 4)))))))
-
-// Ensure malformed subforms are cought at compile-time.
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void (literal) 2 3)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 (literal) 3)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_void 1 2 (literal))))))))
+(ion_1_1
+  (each (mactab (macro m () (if_void)))
+        (mactab (macro m () (if_void 1)))
+        (mactab (macro m () (if_void 1 2)))
+        (mactab (macro m () (if_void 1 2 3 4)))
+        (signals "Malformed if_void form"))
+  (each "malformed subexpressions are cought at compile-time"
+        (mactab (macro m () (if_void (literal) 2 3)))
+        (mactab (macro m () (if_void 1 (literal) 3)))
+        (mactab (macro m () (if_void 1 2 (literal))))
+        (signals "Malformed literal clause")))
 
 
 // Special form: if_single
 
-(with_mactab ((macro m (v*)
-                (if_single v true false)))
-  (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
-  (produces false    true       false        false))
+(ion_1_1 "if_single"
 
-// Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m (p*) (if_single p true (make_string null))))
-  (document ('#$:m'))
-  (signals "Not a text value")
-  (document ('#$:m' 1))
-  (produces true))
-(with_mactab ((macro m (p*) (if_single p (make_string null) false)))
-  (document ('#$:m'))
-  (produces false)
-  (document ('#$:m' 1))
-  (signals "Not a text value"))
+  (then "happy path"
+    (mactab (macro m (v*)
+              (if_single v true false)))
+    (toplevel ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
+    (produces false    true       false        false))
 
-(check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single)))))))
-(check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1)))))))
-(check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 2)))))))
-(check_eval_fail "Malformed if_single form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 2 3 4)))))))
+  (then "then-clause isn't evaluated unless selected"
+    (mactab (macro m (p*)
+              (if_single p (make_string null) false)))
+    (then (toplevel ('#$:m'))
+          (produces false))
+    (then (toplevel ('#$:m' 1))
+          (signals "Not a text value")))
 
-// Ensure malformed subforms are cought at compile-time.
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single (literal) 2 3)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 (literal) 3)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_single 1 2 (literal))))))))
+  (then "else-clause isn't evaluated unless selected"
+    (mactab (macro m (p*)
+              (if_single p true (make_string null))))
+    (then (toplevel ('#$:m'))
+          (signals "Not a text value"))
+    (then (toplevel ('#$:m' 1))
+          (produces true)))
+
+  (each "arity errors are caught at compile-time"
+    (mactab (macro m () (if_single)))
+    (mactab (macro m () (if_single 1)))
+    (mactab (macro m () (if_single 1 2)))
+    (mactab (macro m () (if_single 1 2 3 4)))
+    (signals "Malformed if_single form"))
+
+  (each "malformed subexpressions are caught at compile-time"
+    (mactab (macro m () (if_single (literal) 2 3)))
+    (mactab (macro m () (if_single 1 (literal) 3)))
+    (mactab (macro m () (if_single 1 2 (literal))))
+    (signals "Malformed literal clause")))
 
 
 // Special form: if_multi
 
-(with_mactab ((macro m (v*)
-                (if_multi v true false)))
-  (document ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
-  (produces false    false      true         true))
+(ion_1_1 "if_multi"
 
-// Ensure that the unselected clause isn't evaluated.
-(with_mactab ((macro m (p*) (if_multi p true (make_string null))))
-  (document ('#$:m'))
-  (signals "Not a text value")
-  (document ('#$:m' 1 2))
-  (produces true))
-(with_mactab ((macro m (p*) (if_multi p (make_string null) false)))
-  (document ('#$:m'))
-  (produces false)
-  (document ('#$:m' 1 2))
-  (signals "Not a text value"))
+  (then "happy path"
+    (mactab (macro m (v*)
+              (if_multi v true false)))
+    (toplevel ('#$:m') ('#$:m' 1) ('#$:m' 1 2) ('#$:m' 1 2 3))
+    (produces false    false      true         true))
 
-(check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi)))))))
-(check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1)))))))
-(check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 2)))))))
-(check_eval_fail "Malformed if_multi form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 2 3 4)))))))
+  (then "then-clause isn't evaluated unless selected"
+    (mactab (macro m (p*)
+              (if_multi p (make_string null) false)))
+    (then (toplevel ('#$:m'))
+          (produces false))
+    (then (toplevel ('#$:m' 1 2))
+          (signals "Not a text value")))
 
-// Ensure malformed subforms are cought at compile-time.
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi (literal) 2 3)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 (literal) 3)))))))
-(check_eval_fail "Malformed literal clause"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (if_multi 1 2 (literal))))))))
+  (then "else-clause isn't evaluated unless selected"
+    (mactab (macro m (p*)
+              (if_multi p true (make_string null))))
+    (then (toplevel ('#$:m'))
+          (signals "Not a text value"))
+    (then (toplevel ('#$:m' 1 2))
+          (produces true)))
+
+  (each "arity errors are caught at compile-time"
+    (mactab (macro m () (if_multi)))
+    (mactab (macro m () (if_multi 1)))
+    (mactab (macro m () (if_multi 1 2)))
+    (mactab (macro m () (if_multi 1 2 3 4)))
+    (signals "Malformed if_multi form"))
+
+  (each "malformed subexpressions are caught at compile-time"
+    (mactab (macro m () (if_multi (literal) 2 3)))
+    (mactab (macro m () (if_multi 1 (literal) 3)))
+    (mactab (macro m () (if_multi 1 2 (literal))))
+    (signals "Malformed literal clause")))
 
 
 // Special form: for
 
-// No bindings, no iteration
-(with_mactab ((macro m (as *)
-                (for []
-                  as)))
-  (document ('#$:m'))
-  (produces)
-  (document ('#$:m' 1 2))
-  (produces))
+(ion_1_1 "for loops"
+  (then "do nothing if no bindings"
+    (mactab (macro m (as*)
+              (for []
+                as)))
+    (each (toplevel ('#$:m'))
+          (toplevel ('#$:m' 1 2))
+          (produces)))
 
-// Single binding
-(with_mactab ((macro m (as *)
-                (for [(a as)]
-                  [a])))
-  (document ('#$:m'))
-  (produces)
-  (document ('#$:m' 1 2))
-  (produces [1] [2]))
+  (then "handle one binding"
+    (mactab (macro m (as*)
+              (for [(a as)]
+                [a])))
+    (then (toplevel ('#$:m'))
+          (produces))
+    (then (toplevel ('#$:m' 1 2))
+          (produces [1] [2])))
 
-// Multiple bindings
-(with_mactab ((macro m (as* bs*)
-                (for [(a as), (b bs)]
-                  [a, b])))
-  (document ('#$:m'))
-  (produces)
-  (document ('#$:m' 1))
-  (produces)
-  (document ('#$:m' 1 2))
-  (produces [1, 2])
-  (document ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
-  (produces [1, 3] [2, 4])
-  // Uneven lengths
-  (document ('#$:m' 1 ('#$:values' 2 3)) ('#$:m' ('#$:values' 1 2) 3))
-  (produces [1, 2]                       [1, 3])
-  // sequences are not decomposed
-  (document ('#$:m' [1, 2] (3 4)))
-  (produces [[1, 2], (3 4)]))
+  (then "handle multiple bindings"
+    (mactab (macro m (as* bs*)
+              (for [(a as), (b bs)]
+                [a, b])))
+    (then (toplevel ('#$:m'))
+          (produces))
+    (then (toplevel ('#$:m' 1 2))
+          (produces [1, 2]))
+    (then (toplevel ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
+          (produces [1, 3] [2, 4]))
+    (then "with uneven length"
+      (then (toplevel ('#$:m' 1))
+            (produces))
+      (then (toplevel ('#$:m' 1 ('#$:values' 2 3)))
+            (produces [1, 2]))
+      (then (toplevel ('#$:m' ('#$:values' 1 2) 3))
+            (produces [1, 3])))
 
-// Shadowing parameter names
-(with_mactab ((macro m (a* b*)
-                (for [(a a)]
-                  [a, b])))  // b is inlined!
-  (document ('#$:m' 1))
-  (produces [1])
-  (document ('#$:m' 1 2))
-  (produces [1, 2])
-  (document ('#$:m' 1 ('#$:values' 2 3)))
-  (produces [1, 2, 3])
-  (document ('#$:m' ('#$:values' 1 2) 3))
-  (produces [1, 3] [2, 3])
-  (document ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
-  (produces [1, 3, 4] [2, 3, 4]))
+    (then "sequences are not decomposed"
+      (toplevel ('#$:m' [1, 2] (3 4)))
+      (produces [[1, 2], (3 4)])))
 
-// TODO [DUPE-NAME] reject duplicate variable names
+  (then "shadow parameter names"
+    (mactab (macro m (a* b*)
+              (for [(a a)]
+                [a, b])))  // b is inlined!
+    (then (toplevel ('#$:m' 1))
+      (produces [1]))
+    (then (toplevel ('#$:m' 1 2))
+      (produces [1, 2]))
+    (then (toplevel ('#$:m' 1 ('#$:values' 2 3)))
+      (produces [1, 2, 3]))
+    (then (toplevel ('#$:m' ('#$:values' 1 2) 3))
+      (produces [1, 3] [2, 3]))
+    (then (toplevel ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
+     (produces [1, 3, 4] [2, 3, 4])))
 
-// Bound streams do not need to be parameter references
-(with_mactab ((macro m (a*) (for [(f "f1")] [f, a])))
-  (document ('#$:m') ('#$:m' 1 2))
-  (produces ["f1"]   ["f1", 1, 2]))
+  // TODO [DUPE-NAME] reject duplicate variable names
 
-(with_mactab ((macro m (a*) (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
-  (document ('#$:m' 1 2))
-  (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
+  // Bound streams do not need to be parameter references
+  (then (mactab (macro m (a*)
+                  (for [(f "f1")]
+                    [f, a])))
+        (toplevel ('#$:m') ('#$:m' 1 2))
+        (produces ["f1"]   ["f1", 1, 2]))
+  (then (mactab (macro m (a*) (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
+        (toplevel ('#$:m' 1 2))
+        (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
+  (then (mactab (macro m (a*) (for [(f (void))]
+                                [f, a])))
+        (toplevel ('#$:m') ('#$:m' 1 2))
+        (produces))
+  (then (mactab (macro m (a*) (for [(f (values "f1" a "f2"))]
+                                [f, a])))
+        (toplevel ('#$:m')       ('#$:m' 1))
+        (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
 
-(with_mactab ((macro m (a*) (for [(f (void))] [f, a])))
-  (document ('#$:m') ('#$:m' 1 2))
-  (produces))
-
-(with_mactab ((macro m (a*) (for [(f (values "f1" a "f2"))] [f, a])))
-  (document ('#$:m')       ('#$:m' 1))
-  (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
-
-
-(check_eval_fail "Malformed `for` form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for)))))))
-(check_eval_fail "Malformed `for` form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [])))))))
-(check_eval_fail "Malformed `for` form"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [] 1 2)))))))
-
-(check_eval_fail "Malformed `for` binding pair"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [()] 1)))))))
-(check_eval_fail "Malformed `for` binding pair"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v)] 1)))))))
-(check_eval_fail "Malformed `for` binding pair"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v 1 2)] 1)))))))
-
-// Malformed sub-templates are detected at compile-time.
-(check_eval_fail "Unbound variable: x"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v x)] 1)))))))
-(check_eval_fail "Unbound variable: x"
-  (quote11 $ion_encoding::((module M (macro_table (macro m () (for [(v 1)] x)))))))
-
-// Propagate runtime failure in bound-expression
-(with_mactab ((macro m (p*) (for [(f (values 1 (make_symbol p) 2))] f)))
-  (document ('#$:m' "a" null "b"))
-  (signals "Not a text value"))    // for null
-
-// Propagate runtime failure in body-expression
-(with_mactab ((macro m (p*) (for [(f p)] (make_symbol p))))
-  (document ('#$:m' "a" null "b"))
-  (signals "Not a text value"))    // for null
+  (each "arity errors are caught at compile-time"
+    (mactab (macro m () (for)))
+    (mactab (macro m () (for [])))
+    (mactab (macro m () (for [] 1 2)))
+    (signals "Malformed `for` form"))
+  (each "malformed binding-pairs are caught at compile-time"
+    (mactab (macro m () (for [()] 1)))
+    (mactab (macro m () (for [(v)] 1)))
+    (mactab (macro m () (for [(v 1 2)] 1)))
+    (signals "Malformed `for` binding pair"))
+  (each "malformed subexpressions are caught at compile-time"
+    (mactab (macro m () (for [(v x)] 1)))
+    (mactab (macro m () (for [(v 1)] x)))
+    (signals "Unbound variable: x"))
+  (then "propagate runtime failure in bound-expression"
+    (mactab (macro m (p*) (for [(f (values 1 (make_symbol p) 2))] f)))
+    (toplevel ('#$:m' "a" null "b"))
+    (signals "Not a text value"))   // for null
+  (then "propagate runtime failure in body-expression"
+    (mactab (macro m (p*) (for [(f p)] (make_symbol p))))
+    (toplevel ('#$:m' "a" null "b"))
+    (signals "Not a text value"))    // for null
+)
 
 
 "SUCCESS (template.test)"
