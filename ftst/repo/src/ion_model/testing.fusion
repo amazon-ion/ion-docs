@@ -4,41 +4,16 @@
 
   '''
 Utilities for testing the Ion denotational model.
-
-
-Our testing strategy uses normal Fusion data to represent input documents for
-the model to expand, and to represent the expected results of expansion.
-This allows us to use built-in Fusion equality to validate the results.
-
-We "tunnel" special tokens as follows:
-  * Both input and output documents use symbols of the form `'#$ddd'` to represent
-    SIDS.
-  * On input, `'#$ion_d_d'` represents an IVM.
-  * On input, S-expressions starting with a symbol with prefix `'#$:'` denote
-    an E-expression.  The text starting with : is parsed as a macro reference.
-  * On output, `'#$name#ddd'` represents absent symbol at index `ddd` of SST `name`.
   '''
 
   (require
-    "/fusion/experimental/check"
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
-    "/fusioncontrib/denotation/testing"
-    "/fusioncontrib/denotation/private/util"
-    "/ion_model/model"
     "/ion_model/testing/util"
-
-    (only_in "/fusion/private/io" with_output_to_string)
   )
 
   (provide
-    check_eval_fail
-    check_expansion
-    eject_Values
-    evaluate
     expand1
-    mk_IVM
-    quote11
     quote_top
   )
 
@@ -53,35 +28,8 @@ We "tunnel" special tokens as follows:
         (quote_syntax context)
         stx)))
 
-  (define_syntax quote11
-    (lambda (stx)
-      (datum_to_syntax
-        (quasiquote (quote (unquote (pair (quote '#$ion_1_1')
-                                          (tail (syntax_unwrap stx))))))
-        (quote_syntax context)
-        stx)))
-
   // FIXME should be evaluate1
   (define (expand1 input)
     (ith (evaluate input) 0))
-
-
-  //============================================================================
-  // Test assertions
-
-  (define_check (check_eval_fail bottom_msg doc)
-    (check_bottom bottom_msg (evaluate doc)))
-
-
-  (define_check (check_Value expected value)
-    (check_eqv expected (eject_Value value)))
-
-  (define_check (check_Values expected values)
-    (check_eqv expected (eject_Values values)))
-
-  (define_check (check_expansion expected input)
-    (let [(actual (evaluate input))]
-      (check_not_bottom actual)
-      (check_Values expected actual)))
 
 )
