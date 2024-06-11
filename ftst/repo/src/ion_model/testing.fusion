@@ -40,7 +40,6 @@ We "tunnel" special tokens as follows:
     mk_IVM
     quote11
     quote_top
-    with_encoding
   )
 
 
@@ -84,85 +83,5 @@ We "tunnel" special tokens as follows:
     (let [(actual (evaluate input))]
       (check_not_bottom actual)
       (check_Values expected actual)))
-
-
-  //============================================================================
-  // Streamlined macro testing
-  // TODO Migrate and remove this obsolete approach
-
-  // Might be nice if the various bits of data could use `unquote`.
-
-  (provide with_mactab document produces signals)
-
-  (define (gen_cases directive cases)
-    "Returns sexp of syntax-able objects"
-    (if (is_empty cases) (sexp)
-      (let [(content (head cases)),
-            (expect_stx  (head (tail cases)))]
-        (pair (gen_doc_case directive content (gen_checker expect_stx))
-              (gen_cases directive (tail (tail cases)))))))
-
-  (define (gen_doc_case directive content_stx checker_stx)
-    (if (free_identifier_equal (head (syntax_unwrap content_stx)) (QS document))
-      (let [(doc (pair (quote '#$ion_1_1') (pair directive (tail (syntax_unwrap content_stx)))))]
-        (datum_to_syntax
-          // This code ensures the context_stx location is in the stack when
-          // the checker fails.
-          (QQ (lets [(actual (evaluate (quote (UQ doc)))),
-                     (check  ((UQ checker_stx) actual))]
-                check))
-          (QS context)
-          content_stx))
-      (wrong_syntax content_stx "Only `document` is supported")))
-
-  (define (gen_checker expectation_stx)
-    // Produces (code for) a function that accepts the results of evaluation.
-    (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS produces))
-      (datum_to_syntax
-        (QQ (lambda (actual)
-              (check_not_bottom actual)
-              (check_eqv (quote (UQ (syntax_subseq expectation_stx 1))) (eject_Values actual))))
-        (QS context)
-        expectation_stx)
-    (if (free_identifier_equal (head (syntax_unwrap expectation_stx)) (QS signals))
-      (datum_to_syntax
-        (QQ (lambda (actual)
-              (check_bottom (UQ (element (syntax_unwrap expectation_stx) 1)) actual)))
-        (QS context)
-        expectation_stx)
-      (wrong_syntax expectation_stx "Unrecognized clause"))))
-
-  (define_syntax document
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside `with_mactab`")))
-  (define_syntax produces
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside `with_mactab`")))
-  (define_syntax signals
-    (lambda (stx)
-      (wrong_syntax stx "Must be inside `with_mactab`")))
-
-  (define_syntax with_encoding
-    (lambda (stx)
-      (lets [(enc (syntax_get stx 1)),
-             (cases (tail (tail (syntax_unwrap stx)))),
-             (directive (annotate (syntax_unwrap enc) "$ion_encoding"))]
-        (datum_to_syntax
-          (pair (QS begin) (gen_cases directive (if (is_empty cases)
-                                                  (sexp (QS (document)) (QS (produces)))
-                                                  cases)))
-          (QS context)
-          stx))))
-
-  (define_syntax with_mactab
-    (lambda (stx)
-      (lets [(macros (syntax_get stx 1)),
-             (cases (tail (tail (syntax_unwrap stx)))),
-             (mactab (pair (quote macro_table) macros)),
-             (enc  (QQ ((module M (UQ mactab)) (macro_table M))))]
-        (datum_to_syntax
-          (pair (QS with_encoding) (pair enc cases))
-          (QS context)
-          stx))))
 
 )

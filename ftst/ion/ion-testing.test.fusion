@@ -13,12 +13,4 @@
   (check_eval_fail "ignored" (quote_top '#$1')))
 
 
-// Malformed inputs cause check-failure even without document/produces/signals
-(expect_check_error
-  (with_encoding ((module))))
-
-(expect_check_error
-  (with_mactab ((macro))))
-
-
 "SUCCESS (ion-testing.test)"
