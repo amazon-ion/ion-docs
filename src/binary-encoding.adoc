@@ -213,7 +213,7 @@ pairs are spliced into the parent struct (TODO: Link)
               │    no more FlexInt bytes follow.
               │
 
-0 0 0 0 0 0 0 1   01100000
+0 0 0 0 0 0 0 1   01100100
 └─────┬─────┘     └───┬──┘
   2's comp.         0x64:
   zero              Indicates SSID 4
