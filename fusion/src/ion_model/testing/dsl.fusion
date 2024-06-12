@@ -45,6 +45,9 @@ DSL Design:
       (quote_syntax QS))
     (rename_in "/fusion/base"
       (quote Q) (quasiquote QQ) (unquote UQ))
+    (only_in "/fusioncontrib/denotation/testing"
+      display_bottom_stack
+    )
   )
 
   (provide
@@ -248,7 +251,8 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (display "Expected: ")
             (writeln expected_data)
             (display "Message:  ")
-            (displayln (pretty_bottom_message result)))))
+            (displayln (pretty_bottom_message result))
+            (display_bottom_stack result))))
       (let [(actual_data (eject_Values result))]
         (unless (=== expected_data actual_data)
           (raise_contract_error (clause_keyword clause_stx)
@@ -289,10 +293,11 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
                   (when description (displayln "Description: " description))
                   (display "Document: ")
                   (writeln doc)
+                  (display "Expected: ")
+                  (writeln expected)
                   (display "Signaled: ")
                   (writeln actual)
-                  (display "Expected: ")
-                  (writeln expected))))))
+                  (display_bottom_stack result))))))
         (let [(actual_data (eject_Values result))]
           (raise_contract_error (quote signals)
             (with_output_to_string

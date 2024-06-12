@@ -23,6 +23,7 @@ Utilities for testing denotational models.
     check_eqv
     check_is_seq_of
     check_lower
+    display_bottom_stack   // Doesn't seem like the right place for this.
     is_seq
     is_tuple
     seq_to_list
@@ -73,6 +74,13 @@ A check error is raised if any step fails type-checking.
             (loop (lower_to dom val) (tail doms)))))))
 
 
+  (define (display_bottom_stack b)
+    (when (is_empty (bottom_stack b))
+      (displayln "  <no stack>"))
+    (for [(f (bottom_stack b))]
+      (displayln "    L" (frame_line f) " C" (frame_column f))))
+
+
   (define_check (check_bottom message v)
     '''
 Check that `v` is a bottom value with the given `message`.
@@ -89,9 +97,7 @@ If the `message` ends with `":"` then it is treated as an expected prefix of
     "Check that `v` is not a bottom value."
     (when (is_bottom v)
       (let [(msg (with_output_to_string
-                   (display "Unexpected bottom: " (bottom_message v))
-                   (for [(f (bottom_stack v))]
-                     (displayln)
-                     (display "    L" (frame_line f) " C" (frame_column f)))))]
+                   (displayln "Unexpected bottom: " (bottom_message v))
+                   (display_bottom_stack v)))]
         (fail msg))))
 )
