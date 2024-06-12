@@ -242,7 +242,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
           (with_output_to_string
             (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
             (displayln "Unexpected bottom.")
-            (displayln "Description: " description)
+            (when description (displayln "Description: " description))
             (display "Document: ")
             (writeln doc)
             (display "Expected: ")
@@ -255,7 +255,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (with_output_to_string
               (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
               (displayln "Document didn't produce expected output.")
-              (displayln "Description: " description)
+              (when description (displayln "Description: " description))
               (display "Document: ")
               (writeln doc)
               (display "Expanded: ")
@@ -286,7 +286,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
                 (with_output_to_string
                   (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
                   (displayln "Document didn't signal the expected error.")
-                  (displayln "Description: " description)
+                  (when description (displayln "Description: " description))
                   (display "Document: ")
                   (writeln doc)
                   (display "Signaled: ")
@@ -298,7 +298,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
             (with_output_to_string
               (displayln "Failure at L" (syntax_line clause_stx) ":" (syntax_column clause_stx))
               (displayln "Document didn't signal an error.")
-              (displayln "Description: " description)
+              (when description (displayln "Description: " description))
               (display "Document: ")
               (writeln doc)
               (display "Expanded: ")
