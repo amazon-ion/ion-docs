@@ -11,17 +11,65 @@
   )
 
   (provide
+    UnimplementedFragmentType_type
     ast_fragment
+    binary_fragment
     document
     document_parser
     extend_document
+    is_UnimplementedFragmentType
     is_document
     parse_fragment
+    text_fragment
     write_document
   )
 
+  // Sometimes we can't handle everything yet.
+  (record UnimplementedFragmentType (type))
 
+
+  // Base class for fragments
   (record Fragment ())
+
+  // TODO Use record dispatch
+  (define (parse_fragment frag k)                             // -> ParseStream
+    (cond
+      ((is_ast_fragment    frag) (parse_ast_fragment    frag k))
+      ((is_binary_fragment frag) (parse_binary_fragment frag k))
+      ((is_text_fragment   frag) (parse_text_fragment   frag k))
+      (true (raise_argument_error "parse_fragment" "fragment" 0 frag k))))
+
+
+  //===========================================================================
+  // Text fragments
+
+  (define_values
+    ('record:text_fragment' text_fragment is_text_fragment text_fragment_get)
+    (make_record_type (quote text_fragment) 'record:Fragment' 1))
+    // One field: sexp holding the clause's args (as syntax objects)
+
+  (define (parse_text_fragment frag k)                        // -> ParseStream
+    (unless (is_text_fragment frag)
+      (raise_argument_error "parse_text_fragment" "text_fragment" 0 frag k))
+    (raise (UnimplementedFragmentType "text")))
+
+
+  //===========================================================================
+  // Binary fragments
+
+  (define_values
+    ('record:binary_fragment' binary_fragment is_binary_fragment binary_fragment_get)
+    (make_record_type (quote binary_fragment) 'record:Fragment' 1))
+    // One field: sexp holding the clause's args (as syntax objects)
+
+  (define (parse_binary_fragment frag k)                      // -> ParseStream
+    (unless (is_binary_fragment frag)
+      (raise_argument_error "parse_binary_fragment" "binary_fragment" 0 frag k))
+    (raise (UnimplementedFragmentType "binary")))
+
+
+  //===========================================================================
+  // AST fragments
 
   (define_values
     ('record:AstFragment' AstFragment is_ast_fragment AstFragment_get)
@@ -50,9 +98,9 @@
           (tuple ParseStep (mk_TSTree  (head asts))
                            (parse_asts (tail asts) k))))))
 
-  (define (parse_fragment frag k)          // -> ParseStream
-    (unless (is_Fragment frag)
-      (raise_argument_error "parse_fragment" "fragment" 0 frag k))
+  (define (parse_ast_fragment frag k)                         // -> ParseStream
+    (unless (is_ast_fragment frag)
+      (raise_argument_error "parse_ast_fragment" "ast_fragment" 0 frag k))
     (parse_asts (ast_fragment_asts frag) k))
 
 

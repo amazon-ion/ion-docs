@@ -331,9 +331,14 @@ Returns nothing, but raises an error if the expectation is not met.
       (wrong_syntax clause_stx "Not an expectation"))
     (for [(doc docs)]
       (with_handlers
-        [(is_UnimplementedDataType handle_UnimplementedDataType)]
+        [(is_UnimplementedFragmentType handle_UnimplementedFragmentType),
+         (is_UnimplementedDataType     handle_UnimplementedDataType)]
         (let [(result (evaluate doc))]
           (dispatch expectation_vtable clause_stx doc description result)))))
+
+  (define (handle_UnimplementedFragmentType e)
+    (display "Ignoring document with unimplemented fragment type: ")
+    (displayln (UnimplementedFragmentType_type e)))
 
   (define (handle_UnimplementedDataType e)
     (display "Ignoring document with unimplemented data type: ")
@@ -343,6 +348,12 @@ Returns nothing, but raises an error if the expectation is not met.
   //============================================================================
   // Fragment clauses are interpreted by methods that transform their subforms
   // into a sequence of top-level elements to be added to each in-progress document.
+
+  (define (interp_text clause_stx args)
+    (apply text_fragment args))
+
+  (define (interp_binary clause_stx args)
+    (apply binary_fragment args))
 
   (define (interp_toplevel clause_stx args)
     (apply ast_fragment args))
@@ -357,9 +368,12 @@ Returns nothing, but raises an error if the expectation is not met.
 
 
   (define fragment_vtable
-    { toplevel: interp_toplevel,
+    {
+      binary:   interp_binary,
       encoding: interp_encoding,
       mactab:   interp_mactab,
+      text:     interp_text,
+      toplevel: interp_toplevel,
     })
 
   (define (is_fragment_clause stx)
