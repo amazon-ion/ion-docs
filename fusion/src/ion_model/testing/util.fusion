@@ -30,7 +30,6 @@ Utilities for testing the Ion denotational model.
     evaluate
     is_UnimplementedDataType
     mangle_absent_symbol
-    mk_IVM                  // TODO remove?
     pretty_bottom_message
     UnimplementedDataType_data
   )
