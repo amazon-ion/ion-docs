@@ -19,6 +19,7 @@
     extend_document
     is_UnimplementedFragmentType
     is_document
+    ivm_fragment
     parse_fragment
     text_fragment
     write_document
@@ -36,6 +37,7 @@
     (cond
       ((is_ast_fragment    frag) (parse_ast_fragment    frag k))
       ((is_binary_fragment frag) (parse_binary_fragment frag k))
+      ((is_ivm_fragment    frag) (parse_ivm_fragment    frag k))
       ((is_text_fragment   frag) (parse_text_fragment   frag k))
       (true (raise_argument_error "parse_fragment" "fragment" 0 frag k))))
 
@@ -66,6 +68,22 @@
     (unless (is_binary_fragment frag)
       (raise_argument_error "parse_binary_fragment" "binary_fragment" 0 frag k))
     (raise (UnimplementedFragmentType "binary")))
+
+
+  //===========================================================================
+  // IVM fragments
+
+  (define_values
+    ('record:ivm_fragment' ivm_fragment is_ivm_fragment ivm_fragment_get)
+    (make_record_type (quote ivm_fragment) 'record:Fragment' 2))
+    // Fields are the major and minor versions (ints)
+
+  (define (parse_ivm_fragment frag k)                         // -> ParseStream
+    (let [(major (ivm_fragment_get frag 0)),
+          (minor (ivm_fragment_get frag 1))]
+      (mk_fn ParseStream (parse_env)   // IVM -> ParseStep?
+        (opt 'ParseStep?'
+          (tuple ParseStep (lift_to TSTree (tuple IVM major minor)) k)))))
 
 
   //===========================================================================

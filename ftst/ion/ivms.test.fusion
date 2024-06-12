@@ -5,6 +5,13 @@
 
 // TODO:[CONFORM] move to conformance suite
 
+(ion_1_x "Invalid IVM version"
+  (each (text      "$ion_12_34")
+        (binary    "E0   0C 22   EA")
+        (ivm             12 34)
+        (toplevel '#$ion_12_34')
+        (signals "Unsupported Ion version: 12.34")))
+
 (ion_1_0 "IVM resets the LST"
   (toplevel $ion_symbol_table::{symbols:["a"]})
   (toplevel '#$ion_1_0')

@@ -355,6 +355,11 @@ Returns nothing, but raises an error if the expectation is not met.
   (define (interp_binary clause_stx args)
     (apply binary_fragment args))
 
+  (define (interp_ivm clause_stx args)
+    (let [(major (element args 0)),
+          (minor (element args 1))]
+      (ivm_fragment major minor)))
+
   (define (interp_toplevel clause_stx args)
     (apply ast_fragment args))
 
@@ -371,6 +376,7 @@ Returns nothing, but raises an error if the expectation is not met.
     {
       binary:   interp_binary,
       encoding: interp_encoding,
+      ivm:      interp_ivm,
       mactab:   interp_mactab,
       text:     interp_text,
       toplevel: interp_toplevel,
