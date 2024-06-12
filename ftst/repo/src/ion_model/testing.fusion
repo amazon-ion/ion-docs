@@ -9,7 +9,7 @@ Utilities for testing the Ion denotational model.
   (require
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
-    "/ion_model/testing/util"
+    "/ion_model/testing/evaluate"
   )
 
   (provide

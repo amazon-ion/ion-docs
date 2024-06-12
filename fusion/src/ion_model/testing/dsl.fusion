@@ -33,7 +33,10 @@ DSL Design:
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/ion_model/model"
-    "/ion_model/testing/util"
+    "/ion_model/testing/ast"
+    "/ion_model/testing/bottom"
+    "/ion_model/testing/evaluate"
+    "/ion_model/testing/value"
 
     (only_in "/fusion/private/io"
       with_output_to_string

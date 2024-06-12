@@ -1,0 +1,165 @@
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
+
+(module ion_testing "/fusion"
+
+  '''
+Transformers from the conformance DSL's AST-based fragments into the Ion model
+of syntax trees.
+
+Notably this must decode the DSL's special #$ symbols.
+  '''
+
+  (require
+    "/fusion/experimental/string"
+    "/fusion/private/record"
+    "/fusioncontrib/denotation"
+    "/ion_model/model"
+  )
+
+  (provide
+    is_UnimplementedDataType
+    mk_TSTree
+    UnimplementedDataType_data
+  )
+
+
+  // Sometimes we can't convert everything yet.
+  (record UnimplementedDataType (data))
+
+
+  //============================================================================
+
+  // IVMs
+
+  (define (is_IVM c)
+    (and (is_symbol c)
+         c                                                 // Reject null.symbol
+         (string_starts_with (symbol_to_string c) "#$ion_")))
+
+  (define (mk_IVM c)
+    (lets [(parts (string_split (symbol_to_string c) "_")),
+           (major (string_to_int (. parts 1))),
+           (minor (string_to_int (. parts 2)))]
+      (tuple IVM major minor)))
+
+
+  // Simple types
+
+  (define (mk_NullNull c)
+    (lift_to NullNull DOTNULL))
+
+  (define (mk_Bool c)
+    (lift_to Bool
+      (if (is_null c) DOTNULL c)))
+
+  (define (mk_Int c)
+    (lift_to Int
+      (if (is_null c) DOTNULL c)))
+
+  (define (mk_String c)
+    (lift_to String
+      (if (is_null c) DOTNULL c)))
+
+
+  // Symbols
+
+  (define (mk_SSymTok c)
+    (lift_to SSymTok
+      (let [(str (symbol_to_string c))]
+        (if (string_starts_with str "#$")
+          // If the content following #$ isn't an integer, this raises an error.
+          // This is important to prevent the prefix from "leaking through".
+          (inject_into I (string_to_int (string_replace str "#$" "")))
+          (inject_into Unicode str)))))
+
+  (define (mk_SSymbol c)
+    (lift_to SSymbol
+      (if (is_null c) DOTNULL
+        (mk_SSymTok c))))
+
+
+  // Containers
+
+  (define (mk_SList c)
+    (lift_to SList
+      (if (is_null c) DOTNULL
+        (apply seq 'STree*' (map mk_STree c)))))
+
+  (define (mk_SSexp c)
+    (lift_to SSexp
+      (if (is_null c) DOTNULL
+        (apply seq 'STree*' (map mk_STree c)))))
+
+  (define (mk_SStruct c)
+    (lift_to SStruct
+      (if (is_null c) DOTNULL
+        (apply seq 'SField*'
+          (for_list [((k v) c)]
+            // TODO:[STRUCT-EE] struct inlining
+            (tuple SField (mk_SSymTok k) (mk_STree v)))))))
+
+
+  // E-expressions look like `('#$:module:macro' ...)`
+
+  (define (denotes_eexp c)
+    (and (is_sexp c)
+         (is_symbol (head c))
+         (string_starts_with (symbol_to_string (head c)) "#$:")))
+
+  (define (mk_MacroRef c)
+    (assert (string_starts_with (symbol_to_string c) "#$:") "Not a macro-ref: " c)
+    (lets [(chars (string_explode (symbol_to_string c))),
+           // Drop the "#$" prefix
+           (sym   (string_implode (subseq chars 2 (size chars)))),
+           (ref   (parseMacroRef sym))]
+      (when (is_bottom ref)
+        // TODO: Improve message when triggered from the conformance DSL.
+        (raise_argument_error "mk_MacroRef" "well-formed macro-ref" 0 c))
+      ref))
+
+  (define (mk_SEexp c)
+    (let [(ref (mk_MacroRef (head c)))]
+      (tuple SEexp ref (apply seq 'SEexpArg*' (map mk_SEexpArg (tail c))))))
+
+  // Argument groups look like `('#$:' ...)`
+
+  (define (mk_SEexpArg c)
+    (if (and (is_sexp c)
+             (=== (head c) (quote '#$:')))
+      (lift_to SEexpArg (apply seq 'STree*' (map mk_STree (tail c))))
+      (lift_to SEexpArg (mk_STree c))))
+
+
+  // Values
+
+  (define (mk_SValue c)
+    (tuple SValue
+      (apply seq 'SSymTok*' (map mk_SSymTok (annotations c)))
+      (lift_to SContent
+        (let [(c (annotate c))]  // Remove any annotations
+          (cond
+            ((is_symbol    c) (mk_SSymbol  c))
+            ((is_list      c) (mk_SList    c))
+            ((is_sexp      c) (mk_SSexp    c))
+            ((is_struct    c) (mk_SStruct  c))
+            ((is_null_null c) (mk_NullNull c))
+            ((is_bool      c) (mk_Bool     c))
+            ((is_int       c) (mk_Int      c))
+            ((is_string    c) (mk_String   c))
+            // TODO:[DATA-TYPES] Implement the missing data types
+            (true (raise (UnimplementedDataType c))))))))
+
+
+  (define (mk_STree c)   // Syntax trees = SEexp or SValue
+    (lift_to STree
+      (if (denotes_eexp c)
+        (mk_SEexp c)
+        (mk_SValue c))))
+
+  (define (mk_TSTree c)  // Top-level syntax trees = IVM or STree
+    (lift_to TSTree
+      (if (is_IVM c)
+        (mk_IVM c)
+        (mk_STree c))))
+
+)

@@ -1,0 +1,35 @@
+// Copyright (c) 2023-2024 Amazon.com, Inc.  All rights reserved.
+
+(module ion_testing "/fusion"
+
+  '''
+Printing messages from Bottom values (ie exception messages).
+  '''
+
+  (require
+    "/fusioncontrib/denotation"
+    "/fusioncontrib/denotation/printing"
+    "/fusioncontrib/denotation/printing/unicode"
+    "/ion_model/model"
+    "/ion_model/testing/value"
+
+    (only_in "/fusion/private/io"
+      with_output_to_string)
+  )
+
+  (provide
+    pretty_bottom_message
+  )
+
+
+  //============================================================================
+  //
+  (define message_printer
+    (make_printer uniprinter
+      // Normally strings are written as data; here we display their content.
+      (type_method is_string pp_display)
+      (type_method is_Value (pp_xform eject_Value))))
+
+  (define (pretty_bottom_message btm)
+    (with_output_to_string (map message_printer (bottom_parts btm))))
+)
