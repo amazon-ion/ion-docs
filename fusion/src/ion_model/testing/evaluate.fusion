@@ -10,10 +10,11 @@ Utilities for testing the Ion denotational model.
     "/fusioncontrib/denotation"
     "/ion_model/model"
     "/ion_model/testing/ast"
+    "/ion_model/testing/fragment"
 
     (only_in "/fusioncontrib/denotation/testing"
       seq_to_sexp
-      tuple_values)
+    )
   )
 
   (provide
@@ -22,37 +23,22 @@ Utilities for testing the Ion denotational model.
 
 
   //============================================================================
-  // Parsing and Expanding Inputs
-
-  (define (mk_ParseStream tlvs)
-    (mk_fn ParseStream (parse_env)   // IVM -> ParseStep?
-      (if (is_empty tlvs)
-        (opt 'ParseStep?')
-        (opt 'ParseStep?'
-          (tuple ParseStep (mk_TSTree      (head tlvs))
-                           (mk_ParseStream (tail tlvs)))))))
-
-  (define parser
-    '''
-A Parser is the semantic model's extension point for providing a stream of
-abstract syntax trees (ie 'TSTree*').
-    '''
-    (mk_fn Parser (doc)              // Document -> ParseStream
-      (mk_ParseStream (eject doc))))
+  // Evaluating Documents
 
   (define evaluator
     '''
 Create a reusable Evaluator based on our Parser.
     '''
-    (mk_Evaluator parser))                 // mk_Evaluator is part of the model.
+    (mk_Evaluator document_parser))       // mk_Evaluator is part of the model.
 
 
-  (define (evaluate input)
+  (define (evaluate doc)
     '''
-Parse top-level inputs (contained in a sexp) into `TSTree` then expand it.
+Parse, expand, and evaluate an abstract document.
     '''
-    (evaluator input testing_catalog))
-
+    (unless (is_document doc)
+      (raise_argument_error "evaluate" "document" 0 doc))
+    (evaluator doc testing_catalog))
 
 
   //============================================================================
@@ -61,13 +47,15 @@ Parse top-level inputs (contained in a sexp) into `TSTree` then expand it.
   (define EMPTY_CATALOG
     (tuple Catalog (seq 'SharedModule*')))
 
-  (define catalog_data
-    (with_ion_from_file "ion-tests/catalog/catalog.ion"
-      (|| (series_to_sexp (in_port)))))
+  (define catalog_doc
+    (document
+      (apply ast_fragment
+        (with_ion_from_file "ion-tests/catalog/catalog.ion"
+          (|| (series_to_sexp (in_port)))))))
 
   (define testing_catalog
     (for_fold [(c EMPTY_CATALOG)]
-      [(sst (seq_to_sexp (evaluator catalog_data EMPTY_CATALOG)))]
+      [(sst (seq_to_sexp (evaluator catalog_doc EMPTY_CATALOG)))]
       (Catalog_extend c
         (compile_SST (lower_to Struct (Value_content sst))))))
 

@@ -10,6 +10,7 @@ Utilities for testing the Ion denotational model.
     "/fusion/experimental/syntax"
     "/fusioncontrib/denotation"
     "/ion_model/testing/evaluate"
+    "/ion_model/testing/fragment"
   )
 
   (provide
@@ -30,6 +31,8 @@ Utilities for testing the Ion denotational model.
 
   // FIXME should be evaluate1
   (define (expand1 input)
-    (ith (evaluate input) 0))
+    // This old testing function is used with `quote_top` which produces
+    // sexp of pseudo-asts.
+    (ith (evaluate (document (apply ast_fragment input))) 0))
 
 )

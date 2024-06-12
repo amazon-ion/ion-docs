@@ -1,0 +1,97 @@
+// Copyright (c) 2024 Amazon.com, Inc.  All rights reserved.
+
+(module fragment "/fusion"
+
+  (require
+    "/fusion/experimental/string"
+    "/fusion/private/record"
+    "/fusioncontrib/denotation"
+    "/ion_model/model"
+    "/ion_model/testing/ast"
+  )
+
+  (provide
+    ast_fragment
+    document
+    document_parser
+    extend_document
+    is_document
+    parse_fragment
+    write_document
+  )
+
+
+  (record Fragment ())
+
+  (define_values
+    ('record:AstFragment' AstFragment is_ast_fragment AstFragment_get)
+    (make_record_type (quote AstFragment) 'record:Fragment' 1))
+
+
+  (define ast_fragment
+    '''
+    (ast_fragment fragment ...)
+    '''
+    (lambda asts
+      (AstFragment asts)))
+
+  (define (ast_fragment_asts frag)
+    (AstFragment_get frag 0))
+
+  (define parse_empty                                         // -> ParseStream
+    (mk_fn ParseStream (parse_env)
+      (opt 'ParseStep?')))
+
+  (define (parse_asts asts k)                                 // -> ParseStream
+    (mk_fn ParseStream (parse_env)   // IVM -> ParseStep?
+      (if (is_empty asts)
+        (k parse_env)
+        (opt 'ParseStep?'
+          (tuple ParseStep (mk_TSTree  (head asts))
+                           (parse_asts (tail asts) k))))))
+
+  (define (parse_fragment frag k)          // -> ParseStream
+    (unless (is_Fragment frag)
+      (raise_argument_error "parse_fragment" "fragment" 0 frag k))
+    (parse_asts (ast_fragment_asts frag) k))
+
+
+  (define (parse_fragments fragments k)                       // -> ParseStream
+    (if (is_empty fragments)
+      k
+      (parse_fragment (head fragments)
+        (parse_fragments (tail fragments) k))))
+
+
+  //===========================================================================
+  // Documents
+
+  // For new a document is a sexp of fragments
+  (define (is_document v)
+    (and (is_sexp v) (every is_Fragment v)))
+
+  (define document
+    '''
+    (document fragment ...)
+    '''
+    (lambda fragments
+      (unless (every is_Fragment fragments)
+        (apply raise_argument_error "document" "fragments" -1 fragments))
+      fragments))
+
+  (define (extend_document doc frag)
+    (unless (is_document doc)
+      (raise_argument_error "extend_document" "document" 0 doc frag))
+    (unless (is_Fragment frag)
+      (raise_argument_error "extend_document" "fragment" 1 doc frag))
+    (append doc [frag]))
+
+  (define (write_document doc)
+    (assert (is_document doc) "Not a document: " doc)
+    (write doc))
+
+
+  (define document_parser
+    (mk_fn Parser (doc)                              // Document -> ParseStream
+      (parse_fragments (eject doc) parse_empty)))
+)

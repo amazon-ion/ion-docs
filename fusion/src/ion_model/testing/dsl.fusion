@@ -36,6 +36,7 @@ DSL Design:
     "/ion_model/testing/ast"
     "/ion_model/testing/bottom"
     "/ion_model/testing/evaluate"
+    "/ion_model/testing/fragment"
     "/ion_model/testing/value"
 
     (only_in "/fusion/private/io"
@@ -344,10 +345,10 @@ Returns nothing, but raises an error if the expectation is not met.
   // into a sequence of top-level elements to be added to each in-progress document.
 
   (define (interp_toplevel clause_stx args)
-    args)
+    (apply ast_fragment args))
 
   (define (interp_encoding clause_stx args)
-    [(annotate args (Q $ion_encoding))])
+    (ast_fragment (annotate args (Q $ion_encoding))))
 
   (define (interp_mactab clause_stx macros)
     (lets [(mactab   (pair (quote macro_table) macros)),
@@ -374,7 +375,7 @@ by the clause `stx`.  Returns the extended set of documents.
     // Drop location info from the fragment data.
     (lets [(args     (map syntax_to_datum (clause_args stx))),
            (fragment (dispatch fragment_vtable stx args))]
-      (map (|d| (append d fragment)) docs)))
+      (map (|d| (extend_document d fragment)) docs)))
 
 
   //============================================================================
@@ -472,14 +473,18 @@ extension or `in1*` form.
   // These outer-edge forms bootstrap the tests by feeding its body the
   // appropriate document prologue(s).
 
+  (define noivm_doc  (document))
+  (define ivm10_doc  (document (ast_fragment (Q '#$ion_1_0'))))
+  (define ivm11_doc  (document (ast_fragment (Q '#$ion_1_1'))))
+
   (define (interp_in10 stx)
-    (interp_dsl stx (quote [(), ('#$ion_1_0')])))   // Test 1.0 docs with and without the IVM
+    (interp_dsl stx [noivm_doc, ivm10_doc]))   // Test 1.0 docs with and without the IVM
 
   (define (interp_in11 stx)
-    (interp_dsl stx (quote [('#$ion_1_1')])))
+    (interp_dsl stx [ivm11_doc]))
 
   (define (interp_in1x stx)
-    (interp_dsl stx (quote [(), ('#$ion_1_0'), ('#$ion_1_1')])))
+    (interp_dsl stx  [noivm_doc, ivm10_doc, ivm11_doc]))
 
 
   (define (interp_dsl stx docs)
