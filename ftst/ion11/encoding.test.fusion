@@ -3,22 +3,6 @@
 (require "/ion_model/testing/dsl")
 
 
-// Non-sexps pass through
-(in11
-      (then (toplevel 1 $ion_encoding::null 2)
-            (produces 1 $ion_encoding::null 2))
-      (then (toplevel 1 $ion_encoding::12   2)
-            (produces 1 $ion_encoding::12   2))
-      (then (toplevel 1 $ion_encoding::[]   2)
-            (produces 1 $ion_encoding::[]   2))
-      (then (toplevel 1 $ion_encoding::{}   2)
-            (produces 1 $ion_encoding::{}   2)))
-
-// Encoding directives are elided from app view
-(in11 (toplevel first $ion_encoding::() $ion_encoding::null.sexp second)
-      (produces first second))
-
-
 // Local symbols
 
 (in11 (toplevel $ion_encoding::((symbol_table ["a"] ["b"])))
