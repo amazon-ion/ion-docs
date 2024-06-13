@@ -33,6 +33,6 @@ Utilities for testing the Ion denotational model.
   (define (expand1 input)
     // This old testing function is used with `quote_top` which produces
     // sexp of pseudo-asts.
-    (ith (evaluate (document (apply ast_fragment input))) 0))
+    (ith (evaluate (extend_document empty_document (apply ast_fragment input))) 0))
 
 )

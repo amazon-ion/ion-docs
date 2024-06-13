@@ -48,7 +48,7 @@ Parse, expand, and evaluate an abstract document.
     (tuple Catalog (seq 'SharedModule*')))
 
   (define catalog_doc
-    (document
+    (extend_document empty_document
       (apply ast_fragment
         (with_ion_from_file "ion-tests/catalog/catalog.ion"
           (|| (series_to_sexp (in_port)))))))

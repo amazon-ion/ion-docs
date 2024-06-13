@@ -14,7 +14,6 @@ TODOs
 Implementation:
   * Store document as pre-computed TSTree*, so we don't repeat the xform.
     * Update implementation notes below.
-  * [NON-AST] `text` and `binary` fragments
   * `and` and `or` expectations
   * `denotes` expectation
     * `annot`
@@ -52,12 +51,13 @@ DSL Design:
   )
 
   (provide
-    in10
-    in11
-    in1x
-    (rename_out (in10 ion_1_0)
-                (in11 ion_1_1)
-                (in1x ion_1_x))
+    document
+    ion_1_0
+    ion_1_1
+    ion_1_x
+    (rename_out (ion_1_0 in10)
+                (ion_1_1 in11)
+                (ion_1_x in1x))
   )
 
   /*
@@ -69,19 +69,16 @@ by the Fusion reader when reading the test cases.  Using syntax objects rather
 than "normal" Ion data means we have the source-code location of each clause
 and can thus report errors at the exact point where failure occurs.
 
-To enable this, the outermost DSL clauses like `in10` are Fusion macros that
-expand to a function call receiving the entire outer clause as a syntax object.
+To enable this, the outermost DSL clauses like `document` and `ion_1_x` are
+Fusion macros that expand to a function call receiving the entire outer clause
+as a syntax object.
 
 As we traverse the clauses of a test case, we maintain a list of documents.
-Each "extension" clause (eg then/each) adds content to each of the current
-documents; in the case of `each` we duplicate the entire list for each of the
+Each "fragment" clause (eg text/binary/toplevel) is turned into a record of a
+correspoding shape.
+Each "extension" clause (eg then/each) adds fragment records to each current
+document; in the case of `each` we duplicate the entire list for each of the
 fragments.
-
-At present, each document is represented as an S-expression holding the
-concatenated fragments.  Since we only support `toplevel` fragments, the data
-are all `ast` forms with encoded syntax elements like `'#$99'` or `('#$:void')`.
-We decode fragments in our `Parser` implementation, defined here as an input to
-the semantic model, while the document is being evaluated.
   */
 
 
@@ -106,6 +103,20 @@ A clause is a syntax-object S-expression that starts with a symbol.
   (define (is_keyword_clause stx kw)
     (and (is_clause stx)
          (= (clause_keyword stx) kw)))
+
+
+  (define (split_description subforms)
+    '''
+Separates an optional description string from a sexp of subforms.
+
+Returns two values:
+  *  The first subform, if it is a string, otherwise `null.string`
+  *  The remaining subforms
+    '''
+    (if (and (is_pair subforms)
+             (is_string (syntax_unwrap (head subforms))))
+      (values (syntax_unwrap (head subforms)) (tail subforms))
+      (values null.string subforms)))
 
 
   // A teeny-tiny method dispatch mechanism
@@ -433,6 +444,7 @@ by the clause `stx`.  Returns the extended set of documents.
         (dispatch extension_vtable
           clause_stx docs new_descr fragments continuation))))
 
+
   (define (split_extension extension_stx)
     '''
 Given a clause of the form:
@@ -447,13 +459,9 @@ returns three values:
 The fragment sexp may be empty (to support use by `in10` and siblings).
 The continuation sexp will not be empty, but otherwise is not validated here.
     '''
-    (lets [(clauses     (clause_args extension_stx)),
-           (description (if (and (is_pair clauses)
-                                 (is_string (syntax_unwrap (head clauses))))
-                          (syntax_unwrap (head clauses))
-                          null.string))]
+    (let_values [((description clauses) (split_description (clause_args extension_stx)))]
       (let loop [(fragments (quote ())),         // Accumulated in reverse order
-                 (clauses   (if description (tail clauses) clauses))]
+                 (clauses   clauses)]
         (if (is_fragment_clause (head clauses))
           (loop (pair (head clauses) fragments) (tail clauses))
           // No more fragments; assume the rest is the continuation (to be validated later).
@@ -493,45 +501,43 @@ extension or `in1*` form.
   // These outer-edge forms bootstrap the tests by feeding its body the
   // appropriate document prologue(s).
 
-  (define noivm_doc  (document))
-  (define ivm10_doc  (document (ast_fragment (Q '#$ion_1_0'))))
-  (define ivm11_doc  (document (ast_fragment (Q '#$ion_1_1'))))
+  (define (interp_document stx)
+    (let_values [((description continuation) (split_description (clause_args stx)))]
+      (interp_continuation continuation [empty_document] description)))
 
-  (define (interp_in10 stx)
-    (interp_dsl stx [noivm_doc, ivm10_doc]))   // Test 1.0 docs with and without the IVM
-
-  (define (interp_in11 stx)
-    (interp_dsl stx [ivm11_doc]))
-
-  (define (interp_in1x stx)
-    (interp_dsl stx  [noivm_doc, ivm10_doc, ivm11_doc]))
-
-
-  (define (interp_dsl stx docs)
-    (let_values [((description fragments continuation) (split_extension stx))]
-      // TODO: Not quite right; `then` requires a fragment but `in__` doesn't.
-      (interp_then stx docs description fragments continuation)))
-
-
-  (define_syntax in10
+  (define_syntax document
     (lambda (stx)
       (datum_to_syntax
-        (QQ (interp_in10 (QS (UQ stx))))
+        (QQ (interp_document (QS (UQ stx))))
         (QS context)
         stx)))
 
-  (define_syntax in11
-    (lambda (stx)
-      (datum_to_syntax
-        (QQ (interp_in11 (QS (UQ stx))))
-        (QS context)
-        stx)))
 
-  (define_syntax in1x
-    (lambda (stx)
-      (datum_to_syntax
-        (QQ (interp_in1x (QS (UQ stx))))
-        (QS context)
-        stx)))
+  (define (document_with_minors stx minors)
+    '''
+Expand a `ion_1_*` form into a `document` clause for the given minor versions.
 
+Given syntax `(ion_i_* <descr>? <clause>...)`,
+produces `(document (then <descr> (ivm 1 <minor>) <clause>...) ...)`
+       '''
+    (let_values [((descr clauses) (split_description (clause_args stx)))]
+      (let [(body (for_sexp [(minor minors)]
+                    (let [(ivm (sexp (Q ivm) 1 minor))]
+                      (pair (Q then) (pair descr (pair ivm clauses))))))]
+        (datum_to_syntax
+          (pair (QS document) body)
+          (QS context)
+          stx))))
+
+  (define_syntax ion_1_0
+    (lambda (stx)
+      (document_with_minors stx [0])))
+
+  (define_syntax ion_1_1
+    (lambda (stx)
+      (document_with_minors stx [1])))
+
+  (define_syntax ion_1_x
+    (lambda (stx)
+      (document_with_minors stx [0, 1])))
 )

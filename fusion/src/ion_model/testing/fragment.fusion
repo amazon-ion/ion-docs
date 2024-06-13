@@ -2,6 +2,21 @@
 
 (module fragment "/fusion"
 
+  '''
+Implementations of conformance test fragments and documents.
+
+At present, a document is represented as an S-expression holding the
+concatenated fragments.
+
+Each fragment form has a corresponding record type, so we can dispatch
+parsing appropriately.
+
+In `toplevel` fragments, the data are all `ast` forms with encoded syntax
+elements like `'#$99'` or `('#$:void')`.
+We decode fragments in our `Parser` implementation, defined here as an input to
+the semantic model, while the document is being evaluated.
+  '''
+
   (require
     "/fusion/experimental/string"
     "/fusion/private/record"
@@ -14,8 +29,8 @@
     UnimplementedFragmentType_type
     ast_fragment
     binary_fragment
-    document
     document_parser
+    empty_document
     extend_document
     is_UnimplementedFragmentType
     is_document
@@ -132,18 +147,11 @@
   //===========================================================================
   // Documents
 
-  // For new a document is a sexp of fragments
+  // For now a document is a sexp of fragments
   (define (is_document v)
     (and (is_sexp v) (every is_Fragment v)))
 
-  (define document
-    '''
-    (document fragment ...)
-    '''
-    (lambda fragments
-      (unless (every is_Fragment fragments)
-        (apply raise_argument_error "document" "fragments" -1 fragments))
-      fragments))
+  (define empty_document (quote ()))
 
   (define (extend_document doc frag)
     (unless (is_document doc)
