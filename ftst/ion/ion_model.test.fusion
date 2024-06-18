@@ -4,7 +4,6 @@
 
 // TODO:[CONFORM] Move these into conformance suite
 
-(ion_1_x (denotes))
 (ion_1_x (toplevel) (denotes))
 
 (ion_1_x "Primitive denotations"

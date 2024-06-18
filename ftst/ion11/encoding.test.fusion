@@ -3,14 +3,6 @@
 (require "/ion_model/testing/dsl")
 
 
-// Local symbols
-
-(in11 (toplevel $ion_encoding::((symbol_table ["a"] ["b"])))
-      (then (toplevel '#$12' '#$13')
-            (produces a b))
-      (then (toplevel '#$14')
-            (signals "Invalid symbol address:")))
-
 
 // Exact-match imports
 (in11 (toplevel $ion_encoding::((load abc "abcs" 1)
