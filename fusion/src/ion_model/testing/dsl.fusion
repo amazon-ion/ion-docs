@@ -177,7 +177,7 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
              float:     null.float,
              int:       null.int,
              list:      null.list,
-             'null':    null.null,
+             'null':    null.null,  // Do we need this?
              sexp:      null.sexp,
              string:    null.string,
              struct:    null.struct,
@@ -207,12 +207,13 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   // TODO:[DATA-TYPES] blob, clob, decimal, float, timestamp
   (define model_value_vtable
     {
-      'null': interp_mv_null,
-      list:   interp_mv_list,
-      sexp:   interp_mv_sexp,
-      string: interp_mv_string,
-      struct: interp_mv_struct,
-      symbol: interp_mv_symbol,
+      // TODO Remove lower-case versions once ion-tests is updated.
+      Null:   interp_mv_null,      'null': interp_mv_null,
+      List:   interp_mv_list,      list:   interp_mv_list,
+      Sexp:   interp_mv_sexp,      sexp:   interp_mv_sexp,
+      String: interp_mv_string,    string: interp_mv_string,
+      Struct: interp_mv_struct,    struct: interp_mv_struct,
+      Symbol: interp_mv_symbol,    symbol: interp_mv_symbol,
     })
 
 

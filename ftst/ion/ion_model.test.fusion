@@ -10,37 +10,37 @@
   (toplevel true false -1 0 1 "" "str")
   (denotes  true false -1 0 1 "" "str"))
 
-(ion_1_x (toplevel [])       (denotes (list)))
-(ion_1_x (toplevel ())       (denotes (sexp)))
-(ion_1_x (toplevel [1, ("a")]) (denotes (list 1 (sexp "a"))))
-(ion_1_x (toplevel (1  ["a"])) (denotes (sexp 1 (list "a"))))
+(ion_1_x (toplevel [])       (denotes (List)))
+(ion_1_x (toplevel ())       (denotes (Sexp)))
+(ion_1_x (toplevel [1, ("a")]) (denotes (List 1 (Sexp "a"))))
+(ion_1_x (toplevel (1  ["a"])) (denotes (Sexp 1 (List "a"))))
 
 (ion_1_x "Symbol denotations"
   (then (toplevel '' symbol 'null')
-        (denotes (symbol (text)) (symbol "symbol") (symbol (text 110 117 108 108)))))
+        (denotes (Symbol (text)) (Symbol "symbol") (Symbol (text 110 117 108 108)))))
 
 (ion_1_x "String denotations"
   (then (toplevel "" "a\x62\u0063")
-        (denotes (string) (string 97 0x62 99))))
+        (denotes (String) (String 97 0x62 99))))
 
 (ion_1_x "Struct denotations"
   (then (toplevel {} {a:1} {a:1, b:2})
-        (denotes (struct) (struct ("a" 1)) (struct ((text 0x62 /* "b" */) 2)("a" 1)))))
+        (denotes (Struct) (Struct ("a" 1)) (Struct ((text 0x62 /* "b" */) 2)("a" 1)))))
 
 (ion_1_x "Null denotations"
-  (then (toplevel null.blob     ) (denotes ('null' blob     )))
-  (then (toplevel null.bool     ) (denotes ('null' bool     )))
-  (then (toplevel null.clob     ) (denotes ('null' clob     )))
-  (then (toplevel null.decimal  ) (denotes ('null' decimal  )))
-  (then (toplevel null.float    ) (denotes ('null' float    )))
-  (then (toplevel null.int      ) (denotes ('null' int      )))
-  (then (toplevel null.list     ) (denotes ('null' list     )))
-  (then (toplevel null.null     ) (denotes ('null' 'null'   )))
-  (then (toplevel null.sexp     ) (denotes ('null' sexp     )))
-  (then (toplevel null.string   ) (denotes ('null' string   )))
-  (then (toplevel null.struct   ) (denotes ('null' struct   )))
-  (then (toplevel null.symbol   ) (denotes ('null' symbol   )))
-  (then (toplevel null.timestamp) (denotes ('null' timestamp)))
+  (then (toplevel null.blob     ) (denotes (Null blob     )))
+  (then (toplevel null.bool     ) (denotes (Null bool     )))
+  (then (toplevel null.clob     ) (denotes (Null clob     )))
+  (then (toplevel null.decimal  ) (denotes (Null decimal  )))
+  (then (toplevel null.float    ) (denotes (Null float    )))
+  (then (toplevel null.int      ) (denotes (Null int      )))
+  (then (toplevel null.list     ) (denotes (Null list     )))
+  (then (toplevel null.null     ) (denotes (Null 'null'   )))
+  (then (toplevel null.sexp     ) (denotes (Null sexp     )))
+  (then (toplevel null.string   ) (denotes (Null string   )))
+  (then (toplevel null.struct   ) (denotes (Null struct   )))
+  (then (toplevel null.symbol   ) (denotes (Null symbol   )))
+  (then (toplevel null.timestamp) (denotes (Null timestamp)))
 )
 
 
@@ -50,17 +50,17 @@
         (produces a))
   (then (toplevel $ion_symbol_table::{imports:[{name:"absent", max_id:2}, {name:"abcs"}]}
                   '#$10' '#$11' '#$12')
-        (denotes (symbol (absent "absent" 1)) (symbol (absent "absent" 2)) (symbol "a")))
+        (denotes (Symbol (absent "absent" 1)) (Symbol (absent "absent" 2)) (Symbol "a")))
   (then (toplevel $ion_symbol_table::{imports:[{name:"empty", version:2, max_id:3}, {name:"abcs"}]}
                   '#$10' '#$11' '#$12' '#$13')
-        (denotes (symbol (absent "empty" 1))
-                 (symbol (absent "empty" 2))
-                 (symbol (absent "empty" 3))
-                 (symbol "a")))
+        (denotes (Symbol (absent "empty" 1))
+                 (Symbol (absent "empty" 2))
+                 (Symbol (absent "empty" 3))
+                 (Symbol "a")))
   (then (toplevel $ion_symbol_table::{imports:[{name:"mnop", version:2, max_id:2}, {name:"abcs"}]}
                   '#$10' '#$11' '#$12')
         // mnop v2 doesn't exist, so we should get truncated v4, which has a gap
-        (denotes (symbol (absent "mnop" 1)) (symbol "n") (symbol "a"))))
+        (denotes (Symbol (absent "mnop" 1)) (Symbol "n") (Symbol "a"))))
 
 // Safe types
 
