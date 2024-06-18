@@ -414,17 +414,16 @@ by the clause `stx`.  Returns the extended set of documents.
   // extend them with the nested fragment(s), then interpret the nested continuation.
 
   (define (interp_then clause_stx docs description fragments continuation)
-    // TODO ensure at least one fragment?  Note this is also used by `in1_` clauses.
     (let [(docs (fold_left (|ds f| (interp_fragment f ds)) docs fragments))]
       (interp_continuation continuation docs description)))
 
 
   (define (interp_each each_stx docs description fragments continuation)
-    (when (is_empty fragments)
-      (wrong_syntax each_stx "Expected a document fragment in `each`"))
-    (for [(fragment fragments)]
-      (let [(docs (interp_fragment fragment docs))]
-        (interp_continuation continuation docs description))))
+    (if (is_empty fragments)
+      (interp_continuation continuation docs description)
+      (for [(fragment fragments)]
+        (let [(docs (interp_fragment fragment docs))]
+          (interp_continuation continuation docs description)))))
 
 
   (define extension_vtable
@@ -502,8 +501,9 @@ extension or `in1*` form.
   // appropriate document prologue(s).
 
   (define (interp_document stx)
-    (let_values [((description continuation) (split_description (clause_args stx)))]
-      (interp_continuation continuation [empty_document] description)))
+    (let_values [((descr fragments continuation)
+                  (split_extension stx))]
+      (interp_then stx [empty_document] descr fragments continuation)))
 
   (define_syntax document
     (lambda (stx)

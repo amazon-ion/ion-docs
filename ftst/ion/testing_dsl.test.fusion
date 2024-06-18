@@ -95,11 +95,13 @@
 // each
 
 (expect_syntax_error
-  (in11 (each /* no expectation */)))
+  (in11 (each /* no body */)))
 (expect_syntax_error
   (in11 (each (toplevel) /* no expectation */)))
-(expect_syntax_error
-  (in11 (each /* no fragment */ (produces))))
+
+(ion_1_1 (each /* no fragment */ (produces)))
+(ion_1_1 (toplevel 2)
+         (each /* no fragment */ (produces 2)))
 
 
 (check_void (in11 (each (toplevel 1 2)
