@@ -1,0 +1,41 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+// Testing the `annotate` system macro
+
+
+(ion_1_1 "Existing annotations are preserved"
+  (then (toplevel ('#$:annotate' ('#$:') x))
+        (produces x))
+  (each (toplevel ('#$:annotate' ('#$:') a::b::v))
+        (toplevel ('#$:annotate' ('#$:' a)   b::v))
+        (toplevel ('#$:annotate' ('#$:' a b)    v))
+        (produces a::b::v)))
+
+
+(ion_1_1 "Both string and symbols are accepted as annotations"
+  (each (toplevel ('#$:annotate' ('#$:' a "b")         c::d::true))
+        (toplevel ('#$:annotate' ('#$:' "a" "b" c "d")       true))
+        (produces a::b::c::d::true))
+  (then "Even empties"
+        (toplevel ('#$:annotate' ('#$:' '' "") null))
+        (produces ''::''::null))
+  (then "but not nulls"
+    (then (toplevel ('#$:annotate' ('#$:' null.string) 1))
+          (signals ":$ion:annotate doesn't accept null.string"))
+    (then (toplevel ('#$:annotate' ('#$:' null.symbol) 1))
+          (signals ":$ion:annotate doesn't accept null.symbol"))))
+
+
+(ion_1_1 "Non-text values cannot be annotations"
+  (each (toplevel ('#$:annotate' ('#$:' 0) 1))
+        (toplevel ('#$:annotate' ('#$:' ["a"]) 1))
+        (toplevel ('#$:annotate' ('#$:' "a" false) 1))
+        (signals "Not a text value")))
+
+
+(ion_1_1 "Annotations on the annotation-args are discarded"
+  (then (toplevel ('#$:annotate' ('#$:' a::b) 1))
+        (produces b::1))
+  (then (toplevel ('#$:annotate' ('#$:' a::b::"c" d::e) f::2))
+        (produces c::e::f::2)))
