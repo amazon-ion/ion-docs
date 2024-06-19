@@ -1,0 +1,11 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
+(ion_1_1 "E-expression results are inlined into surrounding"
+  (then "list"
+    (toplevel [1, ('#$:$ion:values' 2 3), ('#$:$ion:values'), 4])
+    (produces [1,                   2, 3,                     4]))
+  (then "sexp"
+    (toplevel (1 ('#$:$ion:values' 2 3) ('#$:$ion:values') 4))
+    (produces (1                   2 3                     4))))

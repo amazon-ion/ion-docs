@@ -1,0 +1,18 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
+(ion_1_1 "Basic tests of argument groups"
+  (then (toplevel ('#$:annotate' a 1))
+        (produces a::1))
+  (then (toplevel ('#$:annotate' ('#$:') 1))
+        (produces 1))
+  (then (toplevel ('#$:annotate' ('#$:' a) 1))
+        (produces a::1))
+  (then (toplevel ('#$:annotate' ('#$:' a b) 1))
+        (produces a::b::1)))
+
+
+(ion_1_1 "Inlining into an argument group"
+  (toplevel ('#$:annotate' ('#$:' ('#$:values' a b)) 1))
+  (produces a::b::1))

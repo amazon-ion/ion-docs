@@ -1,0 +1,15 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
+(ion_1_0 (toplevel ('#$:nomod:mac'))
+         (signals "Eexp not allowed in Ion 1.0"))
+
+(ion_1_1 (toplevel ('#$:nomod:mac'))
+         (signals "Module not in scope: nomod"))
+
+(ion_1_1 (toplevel ('#$:$ion:mac'))
+         (signals "No such macro: :$ion:mac"))
+
+(ion_1_1 (toplevel ('#$:$ion:99'))
+         (signals "Invalid macro address: :$ion:99"))
