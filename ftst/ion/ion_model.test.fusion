@@ -35,7 +35,7 @@
   (then (toplevel null.float    ) (denotes (Null float    )))
   (then (toplevel null.int      ) (denotes (Null int      )))
   (then (toplevel null.list     ) (denotes (Null list     )))
-  (then (toplevel null.null     ) (denotes (Null 'null'   )))
+  (then (toplevel null.null     ) (denotes (Null          )))
   (then (toplevel null.sexp     ) (denotes (Null sexp     )))
   (then (toplevel null.string   ) (denotes (Null string   )))
   (then (toplevel null.struct   ) (denotes (Null struct   )))

@@ -161,13 +161,14 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
     (apply list (map interp_model_value args)))
 
   (define (interp_mv_null clause_stx args)
-    (unless (= 1 (size args))
-      (wrong_syntax clause_stx "Malformed clause"))
-    (lets [(type (syntax_unwrap (head args))),
-           (result (elt null_values type))]
-      (if (is_void result)
-        (wrong_syntax clause_stx "Invalid model type")
-        result)))
+    (cond
+      ((= 0 (size args)) null)
+      ((= 1 (size args)) (lets [(type   (syntax_unwrap (head args))),
+                                (result (elt null_values type))]
+                           (if (is_void result)
+                             (wrong_syntax clause_stx "Invalid model type in Null")
+                             result)))
+      (true (wrong_syntax clause_stx "Malformed clause"))))
 
   (define null_values
     (quote { blob:      null.blob,
@@ -177,7 +178,6 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
              float:     null.float,
              int:       null.int,
              list:      null.list,
-             'null':    null.null,  // Do we need this?
              sexp:      null.sexp,
              string:    null.string,
              struct:    null.struct,
@@ -207,13 +207,12 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   // TODO:[DATA-TYPES] blob, clob, decimal, float, timestamp
   (define model_value_vtable
     {
-      // TODO Remove lower-case versions once ion-tests is updated.
-      Null:   interp_mv_null,      'null': interp_mv_null,
-      List:   interp_mv_list,      list:   interp_mv_list,
-      Sexp:   interp_mv_sexp,      sexp:   interp_mv_sexp,
-      String: interp_mv_string,    string: interp_mv_string,
-      Struct: interp_mv_struct,    struct: interp_mv_struct,
-      Symbol: interp_mv_symbol,    symbol: interp_mv_symbol,
+      Null:   interp_mv_null,
+      List:   interp_mv_list,
+      Sexp:   interp_mv_sexp,
+      String: interp_mv_string,
+      Struct: interp_mv_struct,
+      Symbol: interp_mv_symbol
     })
 
 
