@@ -28,11 +28,18 @@
         (signals "Malformed macro-ref:")))
 
 
-(ion_1_1 "The most trivial invocation"
-  (mactab (macro m      () "m")
-          (macro m_wrap () (m)))
-  (toplevel ('#$:m_wrap'))
-  (produces "m"))
+(ion_1_1 "Invoking constant macros"
+  (each (mactab (macro m  ()  1)
+                (macro m1 ()  (m 1)))
+        (mactab (macro m  ()  1)
+                (macro m1 ()  (m 1 2)))
+        (mactab (macro m  ()  1)
+                (macro m1 ()  (m (;))))
+        (signals "Too many arguments"))
+  (then (mactab (macro m  ()  1)
+                (macro m1 ()  (m)))
+        (toplevel ('#$:m1'))
+        (produces 1)))
 
 
 (ion_1_1 "Local macros shadow system macros"
