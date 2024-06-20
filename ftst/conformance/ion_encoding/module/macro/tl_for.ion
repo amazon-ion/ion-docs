@@ -1,0 +1,106 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
+(ion_1_1 "for loops"
+  (then "do nothing if no bindings"
+    (mactab (macro m (as*)
+              (for []
+                as)))
+    (each (toplevel ('#$:m'))
+          (toplevel ('#$:m' 1 2))
+          (produces)))
+
+  (then "handle one binding"
+    (mactab (macro m (as*)
+              (for [(a as)]
+                [a])))
+    (then (toplevel ('#$:m'))
+          (produces))
+    (then (toplevel ('#$:m' 1 2))
+          (produces [1] [2])))
+
+  (then "handle multiple bindings"
+    (mactab (macro m (as* bs*)
+              (for [(a as), (b bs)]
+                [a, b])))
+    (then (toplevel ('#$:m'))
+          (produces))
+    (then (toplevel ('#$:m' 1 2))
+          (produces [1, 2]))
+    (then (toplevel ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
+          (produces [1, 3] [2, 4]))
+    (then "with uneven length"
+      (then (toplevel ('#$:m' 1))
+            (produces))
+      (then (toplevel ('#$:m' 1 ('#$:values' 2 3)))
+            (produces [1, 2]))
+      (then (toplevel ('#$:m' ('#$:values' 1 2) 3))
+            (produces [1, 3])))
+
+    (then "sequences are not decomposed"
+      (toplevel ('#$:m' [1, 2] (3 4)))
+      (produces [[1, 2], (3 4)])))
+
+  (then "shadow parameter names"
+    (mactab (macro m (a* b*)
+              (for [(a a)]
+                [a, b])))  // b is inlined!
+    (then (toplevel ('#$:m' 1))
+      (produces [1]))
+    (then (toplevel ('#$:m' 1 2))
+      (produces [1, 2]))
+    (then (toplevel ('#$:m' 1 ('#$:values' 2 3)))
+      (produces [1, 2, 3]))
+    (then (toplevel ('#$:m' ('#$:values' 1 2) 3))
+      (produces [1, 3] [2, 3]))
+    (then (toplevel ('#$:m' ('#$:values' 1 2) ('#$:values' 3 4)))
+     (produces [1, 3, 4] [2, 3, 4])))
+
+  // TODO [DUPE-NAME] reject duplicate variable names
+
+  // Bound streams do not need to be parameter references
+  (then (mactab (macro m (a*)
+                  (for [(f "f1")]
+                    [f, a])))
+        (toplevel ('#$:m') ('#$:m' 1 2))
+        (produces ["f1"]   ["f1", 1, 2]))
+  (then (mactab (macro m (a*) (for [(f (for [(g a)] ["g=", g]))] ["f=", f])))
+        (toplevel ('#$:m' 1 2))
+        (produces ["f=", ["g=", 1]] ["f=", ["g=", 2]]))
+  (then (mactab (macro m (a*) (for [(f (void))]
+                                [f, a])))
+        (toplevel ('#$:m') ('#$:m' 1 2))
+        (produces))
+  (then (mactab (macro m (a*) (for [(f (values "f1" a "f2"))]
+                                [f, a])))
+        (toplevel ('#$:m')       ('#$:m' 1))
+        (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
+
+  (each "arity errors are caught at compile-time"
+    (mactab (macro m () (for)))
+    (mactab (macro m () (for [])))
+    (mactab (macro m () (for [] 1 2)))
+    (signals "Malformed `for` form"))
+
+  (each "malformed binding-pairs are caught at compile-time"
+    (mactab (macro m () (for [()] 1)))
+    (mactab (macro m () (for [(v)] 1)))
+    (mactab (macro m () (for [(v 1 2)] 1)))
+    (signals "Malformed `for` binding pair"))
+
+  (each "malformed subexpressions are caught at compile-time"
+    (mactab (macro m () (for [(v x)] 1)))
+    (mactab (macro m () (for [(v 1)] x)))
+    (signals "Unbound variable: x"))
+
+  (then "propagate runtime failure in bound-expression"
+    (mactab (macro m (p*) (for [(f (values 1 (make_symbol p) 2))] f)))
+    (toplevel ('#$:m' "a" null "b"))
+    (signals "Not a text value"))   // for null
+
+  (then "propagate runtime failure in body-expression"
+    (mactab (macro m (p*) (for [(f p)] (make_symbol p))))
+    (toplevel ('#$:m' "a" null "b"))
+    (signals "Not a text value"))    // for null
+)
