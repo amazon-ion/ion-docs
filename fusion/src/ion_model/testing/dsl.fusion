@@ -55,9 +55,6 @@ DSL Design:
     ion_1_0
     ion_1_1
     ion_1_x
-    (rename_out (ion_1_0 in10)
-                (ion_1_1 in11)
-                (ion_1_x in1x))
   )
 
   /*

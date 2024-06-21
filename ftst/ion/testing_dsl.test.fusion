@@ -6,30 +6,30 @@
 )
 
 
-(check_void (in10 (produces)))
-(check_void (in11 (produces)))
-(check_void (in1x (produces)))
+(check_void (ion_1_0 (produces)))
+(check_void (ion_1_1 (produces)))
+(check_void (ion_1_x (produces)))
 
-(check_void (in10 (toplevel)         (produces)))
-(check_void (in11 (toplevel)         (produces)))
-(check_void (in1x (toplevel)         (produces)))
+(check_void (ion_1_0 (toplevel)         (produces)))
+(check_void (ion_1_1 (toplevel)         (produces)))
+(check_void (ion_1_x (toplevel)         (produces)))
 
-(check_void (in10 (toplevel '#$1' 1) (produces $ion 1)))
-(check_void (in11 (toplevel '#$1' 1) (produces $ion 1)))
-(check_void (in1x (toplevel '#$1' 1) (produces $ion 1)))
+(check_void (ion_1_0 (toplevel '#$1' 1) (produces $ion 1)))
+(check_void (ion_1_1 (toplevel '#$1' 1) (produces $ion 1)))
+(check_void (ion_1_x (toplevel '#$1' 1) (produces $ion 1)))
 
-(check_void (in10 (toplevel '#$999') (signals "Invalid symbol address: 999")))
-(check_void (in11 (toplevel '#$999') (signals "Invalid symbol address: 999")))
-(check_void (in1x (toplevel '#$999') (signals "Invalid symbol address: 999")))
+(check_void (ion_1_0 (toplevel '#$999') (signals "Invalid symbol address: 999")))
+(check_void (ion_1_1 (toplevel '#$999') (signals "Invalid symbol address: 999")))
+(check_void (ion_1_x (toplevel '#$999') (signals "Invalid symbol address: 999")))
 
-(check_void (in11 (then (toplevel)         (produces))
-                  (then (toplevel '#$1' 1) (produces $ion 1))
-                  (then (toplevel '#$999') (signals "Invalid symbol address: 999"))))
+(check_void (ion_1_1 (then (toplevel)         (produces))
+                     (then (toplevel '#$1' 1) (produces $ion 1))
+                     (then (toplevel '#$999') (signals "Invalid symbol address: 999"))))
 
 
-(expect_syntax_error (in10 /* No body */))
-(expect_syntax_error (in11 /* No body */))
-(expect_syntax_error (in1x /* No body */))
+(expect_syntax_error (ion_1_0 /* No body */))
+(expect_syntax_error (ion_1_1 /* No body */))
+(expect_syntax_error (ion_1_x /* No body */))
 
 
 //=========================
@@ -38,56 +38,56 @@
 // DSL expressions don't access Fusion bindings
 (expect_contract_error
   (let [(x "outer")]
-    (in11 (toplevel x) (produces "outer"))))
+    (ion_1_1 (toplevel x) (produces "outer"))))
 
 
-(in11 (encoding (symbol_table ["a"] ["b"]))
-      (toplevel '#$12' '#$13')
-      (produces a b))
+(ion_1_1 (encoding (symbol_table ["a"] ["b"]))
+         (toplevel '#$12' '#$13')
+         (produces a b))
 
-(in11 (mactab (macro m () "m"))
-      (toplevel ('#$:m'))
-      (produces "m"))
+(ion_1_1 (mactab (macro m () "m"))
+         (toplevel ('#$:m'))
+         (produces "m"))
 
 
 //=========================
 // then
 
-(check_void (in11 (then (toplevel 1 2)
-                        (produces 1 2))))
+(check_void (ion_1_1 (then (toplevel 1 2)
+                           (produces 1 2))))
 
 // THEN accepts multiple fragment clauses
-(check_void (in11 (then (toplevel 1)
-                        (toplevel 2)
-                        (produces 1 2))))
+(check_void (ion_1_1 (then (toplevel 1)
+                           (toplevel 2)
+                           (produces 1 2))))
 
 // ...but there can't be multiple expectations
-(expect_syntax_error (in11 (then (toplevel 1)
-                                 (produces 1 2)
-                                 (signals "foo"))))   // Dangling expectation
+(expect_syntax_error (ion_1_1 (then (toplevel 1)
+                                    (produces 1 2)
+                                    (signals "foo"))))   // Dangling expectation
 
 // THEN accepts nested extension clauses
-(check_void (in11 (then (toplevel 1)
-                        (then (toplevel 2)
-                              (produces 1 2)))))
+(check_void (ion_1_1 (then (toplevel 1)
+                           (then (toplevel 2)
+                                 (produces 1 2)))))
 // Even multiple extensions
-(check_void (in11 (then (toplevel 1)
-                        (then (toplevel 2)
-                              (produces 1 2))
-                        (then (toplevel 3)
-                              (produces 1 3)))))
+(check_void (ion_1_1 (then (toplevel 1)
+                           (then (toplevel 2)
+                                 (produces 1 2))
+                           (then (toplevel 3)
+                                 (produces 1 3)))))
 
 // ...but extensions can't be followed by another expectation
-(expect_syntax_error (in11 (then (toplevel 1)
-                                 (then (toplevel 2)
-                                       (produces 1 2))
-                                 (produces 1))))   // Dangling expectation
+(expect_syntax_error (ion_1_1 (then (toplevel 1)
+                                    (then (toplevel 2)
+                                          (produces 1 2))
+                                    (produces 1))))   // Dangling expectation
 
 
-(expect_syntax_error (in11 (then ()                  // Malformed fragment clause
-                                 (produces))))
-(expect_syntax_error (in11 (then 1                   // Malformed fragment clause
-                                 (produces 1))))
+(expect_syntax_error (ion_1_1 (then ()                  // Malformed fragment clause
+                                (produces))))
+(expect_syntax_error (ion_1_1 (then 1                   // Malformed fragment clause
+                                (produces 1))))
 
 
 
@@ -95,34 +95,34 @@
 // each
 
 (expect_syntax_error
-  (in11 (each /* no body */)))
+  (ion_1_1 (each /* no body */)))
 (expect_syntax_error
-  (in11 (each (toplevel) /* no expectation */)))
+  (ion_1_1 (each (toplevel) /* no expectation */)))
 
 (ion_1_1 (each /* no fragment */ (produces)))
 (ion_1_1 (toplevel 2)
          (each /* no fragment */ (produces 2)))
 
 
-(check_void (in11 (each (toplevel 1 2)
-                        (produces 1 2))))
-(check_void (in11 (each (toplevel 1 2)
-                        (toplevel 1 2)
-                        (produces 1 2))))
+(check_void (ion_1_1 (each (toplevel 1 2)
+                           (produces 1 2))))
+(check_void (ion_1_1 (each (toplevel 1 2)
+                           (toplevel 1 2)
+                           (produces 1 2))))
 
 // EACH can end with an extension
-(check_void (in11 (each (toplevel 1)
-                        (then (toplevel 2) (produces 1 2)))))
+(check_void (ion_1_1 (each (toplevel 1)
+                           (then (toplevel 2) (produces 1 2)))))
 
-(check_void (in11 (each (toplevel 1)
-                        (toplevel 1)
-                        (each (toplevel 2)
-                              (toplevel 2)
-                              (produces 1 2)))))
+(check_void (ion_1_1 (each (toplevel 1)
+                           (toplevel 1)
+                           (each (toplevel 2)
+                                 (toplevel 2)
+                                 (produces 1 2)))))
 
-(check_void (in1x (each (toplevel 1)
-                        (then (toplevel 2) (produces 1 2))
-                        (then (toplevel 3) (produces 1 3)))))
+(check_void (ion_1_x (each (toplevel 1)
+                           (then (toplevel 2) (produces 1 2))
+                           (then (toplevel 3) (produces 1 3)))))
 
 
 //=========================
@@ -148,28 +148,28 @@
 
 // Reject malformed macro references
 
-(expect_argument_error (in11 (toplevel ('#$:' )) (produces)))
-(expect_argument_error (in11 (toplevel ('#$::' )) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:' )) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$::' )) (produces)))
 
 // Malformed module name:
-(expect_argument_error (in11 (toplevel ('#$::m')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:0:m')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:*:m')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:0M:m')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M@dule:m')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$::m')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:0:m')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:*:m')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:0M:m')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M@dule:m')) (produces)))
 
 // Malformed name|address
-(expect_argument_error (in11 (toplevel ('#$:M:')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:/')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:@')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:m acro')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:01')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:-1')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:/')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:@')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:m acro')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:01')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:-1')) (produces)))
 
 // Extra parts
-(expect_argument_error (in11 (toplevel ('#$:M:m:')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:m:a')) (produces)))
-(expect_argument_error (in11 (toplevel ('#$:M:m:0')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:m:')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:m:a')) (produces)))
+(expect_argument_error (ion_1_1 (toplevel ('#$:M:m:0')) (produces)))
 
 // Module ref not head of an AST S-expression
 (expect_argument_error (ion_1_x  (toplevel '#$:oops') (denotes)))

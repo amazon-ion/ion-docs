@@ -7,7 +7,8 @@
 
 // Demonstration of what can heppen without type-checking or grouping.
 // Here none of the fields have declared types.
-(in11 (mactab (macro import (name version? max_id?)
+(ion_1_1
+      (mactab (macro import (name version? max_id?)
                 { name:name, version:version, max_id:max_id })
 
               (macro local_symtab (imports* symbols*)
