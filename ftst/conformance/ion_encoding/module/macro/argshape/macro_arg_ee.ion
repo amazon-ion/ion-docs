@@ -1,0 +1,88 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+// Macros can use other macros as parameter shape.
+
+(ion_1_1 "E-expression macro invocations with primitive args"
+
+  (then (mactab (macro m (values::vs!) {m:[vs]}))
+        (then (toplevel ('#$:m' (1)))
+              (produces {m:[1]}))
+        (then (toplevel ('#$:m'))
+              (signals "Too few arguments"))
+        (each (toplevel ('#$:m' ('#$:')))
+              (toplevel ('#$:m' ('#$:' (1))))
+              (signals "Unexpected argument group"))
+        (then (toplevel ('#$:m' ('#$:void')))
+              (signals "E-expression not allowed for argument of tagless encoding"))
+        (each (toplevel ('#$:m' ann::(1)))
+              (signals "Annotation not allowed for argument of tagless encoding"))
+        (each (toplevel ('#$:m' 1))
+              (toplevel ('#$:m' 1 2))                     // Hidden: too many args
+              (toplevel ('#$:m' 1 (2)))                   // Hidden: too many args
+              (signals "Expected sexp with macro arguments"))
+        (each (toplevel ('#$:m' ()))
+              (signals "No value provided for parameter"))
+        (then (toplevel ('#$:m' (1 2 3)))
+              (signals "More than one value provided for parameter"))
+        (each (toplevel ('#$:m' (1) 2))
+              (toplevel ('#$:m' (1) (2 3)))         // Hidden: more than one value
+              (toplevel ('#$:m' (1 2) 2))           // Hidden: more than one value
+              (signals "Too many arguments")))
+
+  (then (mactab (macro m (make_list::vs*) {m:vs}))
+        (each (toplevel ('#$:m'))
+              (toplevel ('#$:m' ('#$:')))
+              (produces {}))
+        (each (toplevel ('#$:m' 1))
+              (toplevel ('#$:m' 1 (2)))
+              (toplevel ('#$:m' (1) 2))
+              (toplevel ('#$:m' ('#$:' 1)))
+              (signals "Expected sexp with macro arguments"))
+        (then (toplevel ('#$:m' ('#$:void')))
+              (signals "E-expression not allowed for argument of tagless encoding"))
+        (each (toplevel ('#$:m' ann::(1)))
+              (toplevel ('#$:m' (0) ann::(1)))
+              (signals "Annotation not allowed for argument of tagless encoding"))
+        (then (toplevel ('#$:m' ()))
+              (produces {m:[]}))
+        (then (toplevel ('#$:m' (1 2 3)))
+              (produces {m:[1, 2, 3]}))
+        (each (toplevel ('#$:m' (1) (2 3)))
+              (toplevel ('#$:m' ('#$:' (1) (2 3))))
+              (produces {m:[2,3], m:[1]}))
+        (each (toplevel ('#$:m' (1 2) ('#$:' 3)))
+              (toplevel ('#$:m' (1 2) ('#$:' 3) ()))
+              (signals "Unexpected argument group")))
+
+  (then (mactab (macro m (make_list::v+) v))
+        (each (toplevel ('#$:m'))
+  //          (toplevel ('#$:m' ('#$:')))    // TODO:[PLUS-GROUP] ensure at least one expr
+              (signals "Too few arguments"))
+        (each (toplevel ('#$:m' 1))
+              (toplevel ('#$:m' 1 (2)))
+              (toplevel ('#$:m' (1) 2))
+              (toplevel ('#$:m' ('#$:' 1)))
+              (signals "Expected sexp with macro arguments"))
+        (each (toplevel ('#$:m' ('#$:void')))
+              (toplevel ('#$:m' () ('#$:void')))
+              (toplevel ('#$:m' ('#$:' ('#$:void'))))
+              (toplevel ('#$:m' ('#$:void') ('#$:')))  // Hidden: unexpected group
+              (signals "E-expression not allowed for argument of tagless encoding"))
+        (then (toplevel ('#$:m' ()))
+              (produces []))
+        (then (toplevel ('#$:m' (1 2 3)))
+              (produces         [1, 2, 3]))
+        (then (toplevel ('#$:m' (1) (2 3)))
+              (produces         [1] [2, 3]))
+        (each (toplevel ('#$:m' (1 2) ('#$:' 3)))
+              (toplevel ('#$:m' (1 2) ('#$:' 3) ()))
+              (signals "Unexpected argument group")))
+
+  // Using :values as a parameter shape leads to some interesting things.
+  (then (mactab (macro m (values::vs+) {m:[vs]}))
+        (then (toplevel ('#$:m' ()))
+              (signals "No value provided for parameter"))
+        (each (toplevel ('#$:m' (1 2 3)))
+              (toplevel ('#$:m' (1) (2 3)))
+              (produces {m:[1, 2, 3]}))))

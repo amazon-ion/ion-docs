@@ -1,0 +1,46 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+
+// TODO test invalid type declaration
+
+(ion_1_1 "E-expression macro invocations with primitive args"
+
+  (then "with single cardinality"
+    (mactab (macro m (uint8::i) [i]))
+    (then (toplevel ('#$:m' 0) ('#$:m' 1) ('#$:m' 255))
+          (produces [0] [1] [255]))
+    (each (toplevel ('#$:m' ('#$:values' 0)))
+          (signals "E-expression not allowed for argument of tagless encoding"))
+    (each (toplevel ('#$:m' ann::0))
+          (signals "Annotation not allowed for argument of tagless encoding"))
+    (each (toplevel ('#$:m' null))
+          (toplevel ('#$:m' null.int))
+          (toplevel ('#$:m' -1))
+          (toplevel ('#$:m' 256))
+          (signals "Invalid uint8 argument")))
+
+  (then "with multi cardinality"
+    (mactab (macro m (uint8::i*) [i]))
+    (then (toplevel ('#$:m' 0) ('#$:m' 1) ('#$:m' 255))
+          (produces [0]        [1]        [255]))
+    (each (toplevel ('#$:m' ('#$:' 0 1 255)))
+          (toplevel ('#$:m' 0 1 255))                         // Implicit rest
+          (produces [0, 1, 255]))
+    (each "reject annotated arguments"
+      (toplevel ('#$:m' ann::0))
+      (toplevel ('#$:m' ('#$:' 0 1 ann::2)))
+      (toplevel ('#$:m' 0 1 ann::2))
+      (signals "Annotation not allowed for argument of tagless encoding")))
+
+  (then "enforce shape even when param is unused"
+    (each (mactab (macro m (uint8::i*) [i]))
+          (mactab (macro m (uint8::i*) false))
+          (then (each (toplevel ('#$:m' ('#$:values' 0)))
+                      (toplevel ('#$:m' 0 ('#$:values' 0)))
+                      (signals "E-expression not allowed for argument of tagless encoding"))
+                (each (toplevel ('#$:m' null))
+                      (toplevel ('#$:m' null.int))
+                      (toplevel ('#$:m' -1))
+                      (toplevel ('#$:m' 256))
+                      (signals "Invalid uint8 argument"))))))

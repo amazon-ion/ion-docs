@@ -1,0 +1,43 @@
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+(ion_1_1 "TL macro invocations with primitive args"
+
+  (then "do not apply range checks"
+    (mactab (macro m (uint8::i) (annotate "uint8" i))
+            (macro nul  () (m null.int))
+            (macro neg1 () (m -1))
+            (macro zero () (m 0))
+            (macro thou () (m 1000)))
+    (toplevel ('#$:nul')      ('#$:neg1') ('#$:zero') ('#$:thou'))
+    (produces uint8::null.int uint8::-1   uint8::0    uint8::1000))
+
+  (then "apply type checks"
+    (mactab (macro m (uint8::i) (annotate "uint8" i))
+            (macro nul () (m null))
+//          (macro dec () (m 1.))
+            (macro str () (m "0")))
+    (each (toplevel ('#$:nul'))
+//        (toplevel ('#$:dec'))                         // TODO:[DATA-TYPES]
+          (toplevel ('#$:str'))
+          (signals "Parameter value is not an int")))
+
+  (then
+    (mactab (macro m (uint8::i)  (annotate "uint8" i))
+            (macro var  (v*)     (m v))                    // A variable reference
+            (macro zero ()       (m (annotate "z" 0)))     // A macro
+            (macro thou ()       (m (literal 1000))))      // A special form
+
+    (then "can use any template for primitive-typed argument"
+      (toplevel ('#$:var' 5) ('#$:zero') ('#$:thou'))
+      (produces uint8::5     uint8::z::0  uint8::1000))
+
+    (then "accept annotated arguments"
+      (toplevel ('#$:var' foo::5))
+      (produces uint8::foo::5))
+
+    (then "apply cardinality checks"
+      (then (toplevel ('#$:var'))
+            (signals "No value provided for parameter"))
+      (then (toplevel ('#$:var' 0 1))
+            (signals "More than one value provided for parameter")))))
