@@ -1265,7 +1265,8 @@ Spec Issues: 1.0
       (if (seq_is_empty vs)
         ps
         (let [(v (seq_head vs))]
-          (if (element_of (Value_content v) Symbol)
+          (if (and (element_of (Value_content v) Symbol)
+                   (not (element_of (Value_content v) DotNull)))
             (compile_paramCard (seq_tail vs)
               (compile_paramName v) (compile_paramType (Value_annots v) r) ps r)
             (wrong "Unexpected element in param-spec: " v)))))
@@ -1308,8 +1309,10 @@ Spec Issues: 1.0
 
 
     (fn compile_paramName ((v Value) -> Unicode)
-      // [VALID-NAME]
-      (lower (Value_content v) Symbol SymTok Unicode))
+      (let [(text (lower (Value_content v) Symbol SymTok Unicode))]
+        (if (isIdentifier text)
+          text
+          (wrong "Invalid parameter name:" text))))
 
 
     //==========================================================================
@@ -1784,6 +1787,9 @@ Spec Issues: 1.0
     (only_in "/fusioncontrib/denotation/private/util"
       string_holds_decimal_int
       string_holds_ion_identifier))
+
+  (define_fn isIdentifier ((u Unicode) -> B)
+    (string_holds_ion_identifier (eject u)))
 
   (define_fn looksLikeMacroRef ((u Unicode) -> B)
     (or (string_holds_ion_identifier (eject u))

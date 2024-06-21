@@ -104,6 +104,7 @@ Notably this must decode the DSL's special #$ symbols.
   (define (denotes_eexp c)
     (and (is_sexp c)
          (is_symbol (head c))
+         (not (is_null (head c)))
          (string_starts_with (symbol_to_string (head c)) "#$:")))
 
   (define (mk_MacroRef c)

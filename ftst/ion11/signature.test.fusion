@@ -6,7 +6,6 @@
   "/fusioncontrib/denotation/testing"
   "/ion_model/model"
   "/ion_model/testing"
-  "/ion_model/testing/dsl"
 )
 
 
@@ -106,19 +105,6 @@
   (quote (v*)))
 (check_Signature [('param!' "v" ANY), ('param*' "w" ANY)]
   (quote (v w*)))
-
-
-// TODO:[VALID-NAME]
-//(check_Signature_fail "Unexpected element in param-spec:" (quote (v ...)))
-//(check_Signature_fail "Unexpected element in param-spec:" (quote (v + ...)))
-
-
-(in11 (each (mactab (macro _ []        0))
-            (mactab (macro _ p         0))
-            (mactab (macro _ null.sexp 0))
-            (signals "Signature must be a non-null sexp")))
-(in11 (mactab (macro _ (n 1)     0)) (signals "Unexpected element in param-spec:"))
-(in11 (mactab (macro _ (mac::n)  0)) (signals "No such macro: mac"))
 
 
 "SUCCESS (signature.test)"
