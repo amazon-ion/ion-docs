@@ -154,6 +154,17 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
           (wrong_syntax stx "Not a supported `denotes` clause")))))
 
 
+  (define (interp_mv_int clause_stx args)
+    (unless (= 1 (size args))
+      (wrong_syntax clause_stx "Malformed clause"))
+    (lets [(arg_stx   (element args 0)),
+           (arg_datum (syntax_unwrap arg_stx))]
+      (unless (is_empty (annotations arg_datum))
+        (wrong_syntax arg_stx "Annotations not allowed on denotation"))
+      (unless (is_int arg_datum)
+        (wrong_syntax arg_stx "Expected int inside Int denotation"))
+      arg_datum))
+
   (define (interp_mv_list clause_stx args)
     (apply list (map interp_model_value args)))
 
@@ -204,8 +215,9 @@ Finds a function in the vtable for the clause, the applies it to the clause and 
   // TODO:[DATA-TYPES] blob, clob, decimal, float, timestamp
   (define model_value_vtable
     {
-      Null:   interp_mv_null,
+      Int:    interp_mv_int,
       List:   interp_mv_list,
+      Null:   interp_mv_null,
       Sexp:   interp_mv_sexp,
       String: interp_mv_string,
       Struct: interp_mv_struct,
