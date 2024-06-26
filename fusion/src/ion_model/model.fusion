@@ -306,6 +306,30 @@ Spec Issues: 1.0
     // docSymbols does not include $0 or system symbols
 
 
+    (fn Environment_withModules ((r Environment) (modules ModuleMap) -> Environment)
+      (tuple Environment
+          (Environment_catalog    r)
+          (Environment_sysModule  r)
+          modules
+          (Environment_docSymbols r)
+          (Environment_mactab     r)))
+
+    (fn Environment_withDocSymbols ((r Environment) (symtab 'SymTok*') -> Environment)
+      (tuple Environment
+          (Environment_catalog    r)
+          (Environment_sysModule  r)
+          (Environment_modules    r)
+          symtab
+          (Environment_mactab     r)))
+
+    (fn Environment_withMactab ((r Environment) (mactab 'Unicode*') -> Environment)
+      (tuple Environment
+          (Environment_catalog    r)
+          (Environment_sysModule  r)
+          (Environment_modules    r)
+          (Environment_docSymbols r)
+          mactab))
+
     (fn currentSpecVersion ((r Environment) -> IVM)
       (Module_specVersion (Environment_sysModule r)))
 
@@ -965,7 +989,7 @@ Spec Issues: 1.0
     // $ion_encoding compilation
 
     (fn isEncodingDirective ((v Value) -> B)
-      (and (element_of (Value_content v) Sexp)
+      (and (element_of (Value_content v) Sexp)                 // [MULTI-ANDOR]
            (and (not (seq_is_empty (Value_annots v)))
                 (SymTok_matches (seq_head (Value_annots v)) "$ion_encoding"))))
 
@@ -984,7 +1008,7 @@ Spec Issues: 1.0
                 (mm1  (Environment_modules r))]
             (if (and (= (seq_length args) 1)
                      (Value_is_symbol_matching (seq_head args) "*"))
-              (compile_ED_modules (seq_tail vs) mm1 r)
+              (compile_ED_modules (seq_tail vs) r)
               // TODO [FOLD]
               (letrec [(retain (|vs1 mm| (if (seq_is_empty vs1)
                                            mm
@@ -992,53 +1016,41 @@ Spec Issues: 1.0
                                              (ModuleMap_extend mm
                                                (Value_symtext (seq_head vs1))
                                                (mm1 (Value_symtext (seq_head vs1))))))))]
-                (compile_ED_modules (seq_tail vs) (retain args mm0) r))))
-          (compile_ED_modules vs mm0 r))))
+                (compile_ED_modules (seq_tail vs) (Environment_withModules r (retain args mm0))))))
+          (compile_ED_modules vs (Environment_withModules r mm0)))))
 
-    (fn compile_ED_modules ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
+    (fn compile_ED_modules ((vs 'Value*') (r Environment) -> Environment)
       // TODO:[ED-USE] [IMPORT]
       (if (nextClauseIs vs "load")
         (compile_ED_modules (seq_tail vs)
-          (compile_ED_load (clauseBody (seq_head vs)) avail (Environment_catalog r))
-          r)
+          (Environment_withModules r
+            (compile_ED_load (clauseBody (seq_head vs)) (Environment_modules r) (Environment_catalog r))))
         (if (nextClauseIs vs "module")
           (compile_ED_modules (seq_tail vs)
-            (compile_ED_module (clauseBody (seq_head vs)) avail (Environment_catalog r))
-            r)
+            (compile_ED_module (clauseBody (seq_head vs)) r))
           // End of module-decls
-          (compile_ED_symtab vs avail r))))
+          (compile_ED_symtab vs r))))
 
     // Same logic should be used for modules
-    (fn compile_ED_symtab ((vs 'Value*') (avail ModuleMap) (r Environment) -> Environment)
+    (fn compile_ED_symtab ((vs 'Value*') (r Environment) -> Environment)
       (if (nextClauseIs vs "symbol_table")
-        (compile_ED_mactab (seq_tail vs) avail
-          (compile_module_symtab (clauseBody (seq_head vs)) avail)
-          r)
-        (compile_ED_mactab vs avail (seq 'SymTok*') r)))
+        (compile_ED_mactab (seq_tail vs)
+          (Environment_withDocSymbols r
+            (compile_module_symtab (clauseBody (seq_head vs)) (Environment_modules r))))
+        (compile_ED_mactab vs
+          (Environment_withDocSymbols r (seq 'SymTok*')))))
 
-    (fn compile_ED_mactab ((vs 'Value*')
-                           (avail ModuleMap)
-                           (ts 'SymTok*')
-                           (r Environment) -> Environment)
+    (fn compile_ED_mactab ((vs 'Value*') (r Environment) -> Environment)
       (if (nextClauseIs vs "macro_table")
-        (compile_ED_final (seq_tail vs) avail ts
-          (compile_ED_mactab_body (clauseBody (seq_head vs)) avail)
-          r)
-        (compile_ED_final vs avail ts (seq 'Unicode*') r)))
+        (compile_ED_final (seq_tail vs)
+          (Environment_withMactab r
+            (compile_ED_mactab_body (clauseBody (seq_head vs)) (Environment_modules r))))
+        (compile_ED_final vs (Environment_withMactab r (seq 'Unicode*')))))
 
-    (fn compile_ED_final ((vs 'Value*')
-                          (avail ModuleMap)
-                          (ts 'SymTok*')
-                          (us 'Unicode*')
-                          (r Environment) -> Environment)
+    (fn compile_ED_final ((vs 'Value*') (r Environment) -> Environment)
       (if (not (seq_is_empty vs))
         (wrong "Unexpected encoding clause: " (seq_head vs))
-        (tuple Environment
-          (Environment_catalog r)
-          (Environment_sysModule r)
-          avail
-          ts
-          us)))
+        r))
 
 
     // $ion_encoding load
@@ -1063,10 +1075,12 @@ Spec Issues: 1.0
 
     // $ion_encoding module
 
-    (fn compile_ED_module ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
+    // We need to determine a unique identity for this module
+    (fn compile_ED_module ((vs 'Value*') (r Environment) -> Environment)
       (let [(name (validateModuleName (ith vs 0)))]
-        (ModuleMap_extend avail name
-          (compile_IM_body (seq_tail vs) avail c))))
+        (Environment_withModules r
+          (ModuleMap_extend (Environment_modules r) name
+            (compile_IM_body (seq_tail vs) r)))))
 
     // $ion_encoding symbol_table
 
@@ -1118,25 +1132,26 @@ Spec Issues: 1.0
     //==========================================================================
     // Inline module compilation
 
-    (fn compile_IM_body ((vs 'Value*') (avail ModuleMap) (c Catalog) -> Module)
-      (compile_IM_deps vs avail c
-        // The macro environment at the outside of an inline module includes
-        // retained or loaded modules and used macro names.
-        (mk_fn MacroEnv (mod mac)
-          (if (not (opt_is_present mod))
-            (wrong "local-ref should have been resolved already")
-            (if (= (opt_value mod) "")
-              // Bare reference; assume Unicode name, not address.
-              // $ion is implicitly `use`d
-              (let [(m1 (resolve_ExportedMacros (Module_mactab (avail "$ion"))
-                                                (lower mac Unicode)))]
-                (if (opt_is_present m1)
-                  (opt_value m1)
-                  (wrong "No such macro: " (lower mac Unicode))))
-              // Qualified reference
-              (if (element_of mac Unicode)
-                (resolve_qualifiedName (opt_value mod) (lower mac Unicode) avail)
-                (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) avail)))))))
+    (fn compile_IM_body ((vs 'Value*') (r Environment) -> Module)
+      (let [(avail (Environment_modules r))]
+        (compile_IM_deps vs avail (Environment_catalog r)
+          // The macro environment at the outside of an inline module includes
+          // retained or loaded modules and used macro names.
+          (mk_fn MacroEnv (mod mac)
+            (if (not (opt_is_present mod))
+              (wrong "local-ref should have been resolved already")
+              (if (= (opt_value mod) "")
+                // Bare reference; assume Unicode name, not address.
+                // $ion is implicitly `use`d
+                (let [(m1 (resolve_ExportedMacros (Module_mactab (avail "$ion"))
+                                                  (lower mac Unicode)))]
+                  (if (opt_is_present m1)
+                    (opt_value m1)
+                    (wrong "No such macro: " (lower mac Unicode))))
+                // Qualified reference
+                (if (element_of mac Unicode)
+                  (resolve_qualifiedName (opt_value mod) (lower mac Unicode) avail)
+                  (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) avail))))))))
 
 
     (fn compile_IM_deps ((vs 'Value*') (avail ModuleMap) (c Catalog) (r MacroEnv) -> Module)
