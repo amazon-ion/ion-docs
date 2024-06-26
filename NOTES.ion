@@ -45,7 +45,7 @@ TODOs
     perhaps wrapped into a list. Memoizing this isn't worth it.
   * However, we need to results every time. That could be worth memoizing.
 * `lift` and `lower` should statically detect impossible steps after the first.
-
+* [DOMVAL-EQ] (+2) Override `=` for domain values
 
 Requires Fusion features:
 * We need `with_output_to_string` in a non-private library.

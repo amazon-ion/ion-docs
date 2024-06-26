@@ -20,6 +20,10 @@ Terminology/Readability:
 * Print the Appendix in manually-assembled sections.
   * Should have a way to detect when a domain element is forgotten.
 * Improve clarity around "Environment", "ModuleMap", "MacroEnv", and other lookups.
+  * Add MacroEnv into Environment, so it can be used deeper in ED compilation?
+  * Add $ion into Environment_modules and remove sysModule field?
+  * Separate "Environment" and "encoding context" (symtab/mactab)?
+    * ModuleEnv = Catalog x ModuleMap x UidGen
 
 Major Components:
 * [SHARED-MOD] Shared modules
@@ -46,9 +50,6 @@ Features:
 * [LOAD-MAXID] Module-level symtabs don't handle non-exact-match modules.
 * [UNIFY-MACREF] Unify the two macro-resolution approachs (Eexp vs TL).
   * Probably migrate Eexp resolve_MacroRef functions to MacroEnv approach.
-* [MAC-ID] Macro identity and proper ambiguity detection.
-  * Also useful for any error reporting regarding the Macro, which is currently
-    anonymous.
 * [EXPORT-MOD] A module's macro_table can have a module name, as in EDs.
   * Matt had some confusion about this, points out that the module-name is not
     exported here, as it is for the ED variant.
@@ -57,6 +58,7 @@ Features:
 * [ED-USE] `use` clauses at directive-level; more wiring challenges.
   * Perhaps easier after [UNIFY-MACREF]?
 * [VALID-NAME] Validate macro and parameter names.
+  * Ban redefinition of $ion
 * [OPT-NAME] Optional macro names; can streamline some tests
 * [VALID-FORM] Many forms need better validation of arity and argument type.
 * [ERRMSG] Some 1.1 code relies on implicit type checking to reject erroneous
@@ -89,7 +91,7 @@ Spec Issues: 1.1
 ----------------
 * Rename "unqualified macro references" to "local"?  The latter is more precise
   though perhaps confusing in the E-expression case.
-* Spec should ban the name $ion in load and import.
+* Spec should ban rebinding $ion in load, import, and `module`
 * Perhaps TL should treat all nulls as literals.  Easy and intuitive.
   * See quasi-literal explanations (§9.1.3)
   * null.symbol is the main thing that could be confusing.
@@ -301,6 +303,7 @@ Spec Issues: 1.0
     (dom Environment = (* Catalog::catalog
                           Module::sysModule
                           ModuleMap::modules
+                          I::nextUid
                           'SymTok*'::docSymbols
                           'Unicode*'::mactab))
     // docSymbols does not include $0 or system symbols
@@ -311,14 +314,25 @@ Spec Issues: 1.0
           (Environment_catalog    r)
           (Environment_sysModule  r)
           modules
+          (Environment_nextUid    r)
           (Environment_docSymbols r)
           (Environment_mactab     r)))
+
+    (fn Environment_bumpUid ((r Environment) -> Environment)
+      (tuple Environment
+         (Environment_catalog    r)
+         (Environment_sysModule  r)
+         (Environment_modules    r)
+         (+ (Environment_nextUid    r) 1)
+         (Environment_docSymbols r)
+         (Environment_mactab     r)))
 
     (fn Environment_withDocSymbols ((r Environment) (symtab 'SymTok*') -> Environment)
       (tuple Environment
           (Environment_catalog    r)
           (Environment_sysModule  r)
           (Environment_modules    r)
+          (Environment_nextUid    r)
           symtab
           (Environment_mactab     r)))
 
@@ -327,6 +341,7 @@ Spec Issues: 1.0
           (Environment_catalog    r)
           (Environment_sysModule  r)
           (Environment_modules    r)
+          (Environment_nextUid    r)
           (Environment_docSymbols r)
           mactab))
 
@@ -449,6 +464,7 @@ Spec Issues: 1.0
         (let [(p0 (p d)),
               (r0 (tuple Environment c (systemModule IVM_1_0)
                     emptyModuleMap
+                    1               // Initial module UID
                     EMPTY_SYMTOKS
                     (seq 'Unicode*' /* No user macros installed */))),
               (k0 (mk_fn TContinuation (r vs) vs))]
@@ -504,6 +520,7 @@ Spec Issues: 1.0
         (Environment_catalog r)
         (systemModule i)
         emptyModuleMap
+        (Environment_nextUid r)
         EMPTY_SYMTOKS
         (seq 'Unicode*' /* No user macros installed */)))
 
@@ -530,6 +547,7 @@ Spec Issues: 1.0
             (Environment_catalog r)
             (Environment_sysModule r)
             emptyModuleMap
+            (Environment_nextUid r)
             (seq_append is ss)
             (seq 'Unicode*')))))
 
@@ -623,6 +641,8 @@ Spec Issues: 1.0
     //==========================================================================
     // Encoding Modules
 
+    // TODO Perhaps add identity here?
+    // Still need to track it through compilation
     (dom Module        = (* IVM::specVersion 'SymTok*'::symtab 'ExportedMacro*'::mactab))
     (dom SharedModule  = (* Unicode::name I::version Module::module))
 
@@ -747,8 +767,18 @@ Spec Issues: 1.0
     //==========================================================================
     // Macros
 
-    // TODO:[MAC-ID] Retain original module name+version and macro NameOrAddr
-    (dom Macro = (* Signature::signature Transform::xform))
+    (dom Macro = (* MacroIdentity::id Signature::signature Transform::xform))
+
+    // Track where a macro is defined.
+    // This is primarily to allow duplicate but unambiguous bindings, but
+    // it can also be used for improved error messages.
+    (dom MacroIdentity = (* ModuleIdentity::module Unicode::name I::addr))
+
+    (dom ModuleIdentity = (+ InlineModuleIdentity SharedModuleIdentity))
+    (dom InlineModuleIdentity = (* Unicode::name I::uid))
+    (dom SharedModuleIdentity = (* Unicode::name I::version))
+    // We handle shared modules by catalog key; much easier than allocating
+    // UIDs from within the catalog.
 
     (dom Transform = (-> 'Value**' 'Value*'))
 
@@ -789,9 +819,37 @@ Spec Issues: 1.0
     (dom ExportedMacro = (* 'Unicode?'::name Macro::macro))
 
 
+    (fn sameModuleIdentity ((id1 ModuleIdentity) (id2 ModuleIdentity) -> B)
+      (if (and (element_of id1 InlineModuleIdentity)
+               (element_of id2 InlineModuleIdentity))
+        (and (= (InlineModuleIdentity_name (lower_to InlineModuleIdentity id1))
+                (InlineModuleIdentity_name (lower_to InlineModuleIdentity id2)))
+             (= (InlineModuleIdentity_uid  (lower_to InlineModuleIdentity id1))
+                (InlineModuleIdentity_uid  (lower_to InlineModuleIdentity id2))))
+        (if (and (element_of id1 SharedModuleIdentity)
+                 (element_of id2 SharedModuleIdentity))
+          (and (= (SharedModuleIdentity_name    (lower_to SharedModuleIdentity id1))
+                  (SharedModuleIdentity_name    (lower_to SharedModuleIdentity id2)))
+               (= (SharedModuleIdentity_version (lower_to SharedModuleIdentity id1))
+                  (SharedModuleIdentity_version (lower_to SharedModuleIdentity id2))))
+          false)))
+
+    (fn sameMacro ((m1 Macro) (m2 Macro) -> B)
+      (let [(id1 (Macro_id m1)),
+            (id2 (Macro_id m2))]
+        (and (sameModuleIdentity (MacroIdentity_module id1)
+                                 (MacroIdentity_module id2))
+          (and (= (MacroIdentity_name id1)
+                  (MacroIdentity_name id2))
+               (= (MacroIdentity_addr id1)
+                  (MacroIdentity_addr id2))))))
+
+
     (fn export ((name Unicode) (params 'ParamSpec*') (xform F) -> ExportedMacro)
-      (tuple ExportedMacro (opt 'Unicode?' name)
-        (tuple Macro (tuple Signature params) xform)))
+      (let [(modId (lift_to ModuleIdentity (tuple SharedModuleIdentity "$ion" 2)))]
+        (let [(macId (tuple MacroIdentity modId name 0))]
+          (tuple ExportedMacro (opt 'Unicode?' name)
+            (tuple Macro macId (tuple Signature params) xform)))))
 
     (fn 'param!' ((name Unicode) (type ParamType) -> ParamSpec)
       (tuple ParamSpec name
@@ -883,10 +941,10 @@ Spec Issues: 1.0
         (let [(m1 (resolve_ExportedMacros (Module_mactab (seq_head mods)) u)),
               (m2 ('resolve_Module*'      (seq_tail mods) u))]
           (if (opt_is_present m1)
-            // [MAC-ID] Compare macro identities to allow benign duplicates.
-            (if (opt_is_present m2)
-              (wrong "Ambiguous macro-ref: :" u)
-              m1)
+            (if (or (not (opt_is_present m2))
+                    (sameMacro (opt_value m1) (opt_value m1)))
+              m1
+              (wrong "Ambiguous macro-ref: :" u))
             m2))))
 
 
@@ -1078,9 +1136,12 @@ Spec Issues: 1.0
     // We need to determine a unique identity for this module
     (fn compile_ED_module ((vs 'Value*') (r Environment) -> Environment)
       (let [(name (validateModuleName (ith vs 0)))]
-        (Environment_withModules r
-          (ModuleMap_extend (Environment_modules r) name
-            (compile_IM_body (seq_tail vs) r)))))
+        (let [(id (lift_to ModuleIdentity
+                    (tuple InlineModuleIdentity name (Environment_nextUid r)))),
+              (r1 (Environment_bumpUid r))]
+          (Environment_withModules r1
+            (ModuleMap_extend (Environment_modules r) name
+              (compile_IM_body (seq_tail vs) r1 id))))))
 
     // $ion_encoding symbol_table
 
@@ -1132,9 +1193,11 @@ Spec Issues: 1.0
     //==========================================================================
     // Inline module compilation
 
-    (fn compile_IM_body ((vs 'Value*') (r Environment) -> Module)
+    (fn compile_IM_body ((vs 'Value*')
+                         (r  Environment)
+                         (id ModuleIdentity) -> Module)
       (let [(avail (Environment_modules r))]
-        (compile_IM_deps vs avail (Environment_catalog r)
+        (compile_IM_deps vs avail (Environment_catalog r) id
           // The macro environment at the outside of an inline module includes
           // retained or loaded modules and used macro names.
           (mk_fn MacroEnv (mod mac)
@@ -1154,31 +1217,37 @@ Spec Issues: 1.0
                   (resolve_qualifiedAddr (opt_value mod) (lower mac I      ) avail))))))))
 
 
-    (fn compile_IM_deps ((vs 'Value*') (avail ModuleMap) (c Catalog) (r MacroEnv) -> Module)
+    (fn compile_IM_deps ((vs 'Value*')
+                         (avail ModuleMap)
+                         (c Catalog)
+                         (id ModuleIdentity)
+                         (r MacroEnv) -> Module)
       // TODO:[IMPORT]
       (if (nextClauseIs vs "load")
         // Recurse to find more dependencies
         (compile_IM_deps (seq_tail vs)
           (compile_ED_load (clauseBody (seq_head vs)) avail c)
           c
+          id
           r) // [LOAD-MACRO] loaded module needs to be visibile in this MacroEnv
         (if (nextClauseIs vs "use")
-          (compile_IM_use (clauseBody (seq_head vs)) (seq_tail vs) c avail r)
+          (compile_IM_use (clauseBody (seq_head vs)) (seq_tail vs) c avail id r)
           // No more dependencies
-          (compile_IM_symtab vs avail r))))
+          (compile_IM_symtab vs avail id r))))
 
     // Use-clauses make macros available for bare-name reference.
     (fn compile_IM_use ((vs 'Value*')     // The rest of this `use` clause
                         (vs1 'Value*')    // The rest of the IM body
                         (c Catalog)
                         (avail ModuleMap)
+                        (id    ModuleIdentity)
                         (r MacroEnv) -> Module)
       (if (seq_is_empty vs)
-        (compile_IM_deps vs1 avail c r)
+        (compile_IM_deps vs1 avail c id r)
         // TODO:[USE-LOAD] Accept nested `load` clause.
         // Resolve the module reference immediately
         (let [(mod0 (avail (Value_symtext (seq_head vs))))]  // [ERRMSG]
-          (compile_IM_use (seq_tail vs) vs1 c avail
+          (compile_IM_use (seq_tail vs) vs1 c avail id
             (mk_fn MacroEnv (mod1 mac)
               (if (not (opt_is_present mod1))
                 (wrong "local-ref should have been resolved already")
@@ -1187,30 +1256,34 @@ Spec Issues: 1.0
                   (let [(m1 (resolve_ExportedMacros (Module_mactab mod0)
                                                     (lower mac Unicode)))]
                     (if (opt_is_present m1)
-                      (if (is_bottom (r mod1 mac))
+                      (if (or (is_bottom (r mod1 mac))
+                              (sameMacro (opt_value m1) (r mod1 mac)))
                         (opt_value m1)
-                        // [MAC-ID] Compare macro identities to allow benign duplicates.
-                       (wrong "Ambiguous macro-ref: " (lower mac Unicode)))
+                        (wrong "Ambiguous macro-ref: " (lower mac Unicode)))
                       // Not introduced by this use-clause, so keep looking.
                       (r mod1 mac)))
                   // Qualified reference; pass through.
                   (r mod1 mac))))))))
 
-    (fn compile_IM_symtab ((vs 'Value*') (avail ModuleMap) (r MacroEnv) -> Module)
+    (fn compile_IM_symtab ((vs    'Value*')
+                           (avail ModuleMap)
+                           (id    ModuleIdentity)
+                           (r     MacroEnv)       -> Module)
       (if (nextClauseIs vs "symbol_table")
-        (compile_IM_mactab (seq_tail vs) avail r
+        (compile_IM_mactab (seq_tail vs) avail id r
           (compile_module_symtab (clauseBody (seq_head vs)) avail))
-        (compile_IM_mactab vs avail r (seq 'SymTok*'))))
+        (compile_IM_mactab vs avail id r (seq 'SymTok*'))))
 
     // TODO:[ALIAS]
 
     (fn compile_IM_mactab ((vs 'Value*')
                            (avail ModuleMap)
+                           (id    ModuleIdentity)
                            (r     MacroEnv)
                            (ts 'SymTok*') -> Module)
       (if (nextClauseIs vs "macro_table")
         (compile_IM_final (seq_tail vs) avail ts
-          (compile_module_mactab (clauseBody (seq_head vs)) avail r (seq 'ExportedMacro*')))
+          (compile_module_mactab (clauseBody (seq_head vs)) avail id r (seq 'ExportedMacro*')))
         (compile_IM_final vs avail ts (seq 'ExportedMacro*'))))
 
     (fn compile_IM_final ((vs 'Value*')
@@ -1224,21 +1297,25 @@ Spec Issues: 1.0
 
     (fn compile_module_mactab ((vs   'Value*')
                                (mods ModuleMap)
+                               (id   ModuleIdentity)
                                (r    MacroEnv)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (seq_is_empty vs)
         macs
-        (compile_module_mactab (seq_tail vs) mods r
-          (compile_IM_mactab_elt (seq_head vs) mods r macs))))
+        (compile_module_mactab (seq_tail vs) mods id r
+          (compile_IM_mactab_elt (seq_head vs) mods id r macs))))
 
     (fn compile_IM_mactab_elt ((v    Value)
                                (mods ModuleMap)
+                               (id   ModuleIdentity)
                                (r    MacroEnv)
                                (macs 'ExportedMacro*') -> 'ExportedMacro*')
       (if (isClause v "macro")
-        (let [(macroEnv (localMacroEnv r macs))]
+        (let [(macroEnv (localMacroEnv r macs)),
+              (macAddr  (seq_length macs))]
           (seq_append macs
-            (seq 'ExportedMacro*' (compile_macro_defn (clauseBody v) mods macroEnv))))
+            (seq 'ExportedMacro*'
+              (compile_macro_defn (clauseBody v) mods id macAddr macroEnv))))
         // TODO:[EXPORT-REF] (export foo ':$ion:foo')
         // TODO:[EXPORT-MOD] A plain module-name in place of (export ...)
         // TODO:[EXPORT-FROM] (export (from MODNAME ...))
@@ -1357,13 +1434,16 @@ Spec Issues: 1.0
 
     (fn compile_macro_defn ((vs   'Value*')
                             (mods ModuleMap)
+                            (modId    ModuleIdentity)
+                            (macAddr  I)
                             (macroEnv MacroEnv) -> ExportedMacro)
       // TODO:[VALID-FORM] check arity of this (macro ...) clause
       // TODO [OPT-NAME] [VALID-NAME] [DUPE-NAME]
       (let [(name  (Value_symtext (ith vs 0))),
             (sig   (compile_Signature (ith vs 1) macroEnv))]
-        (tuple ExportedMacro (opt 'Unicode?' name)
-          (tuple Macro sig (compile_xform (ith vs 2) sig macroEnv)))))
+        (let [(macId (tuple MacroIdentity modId name macAddr))]
+          (tuple ExportedMacro (opt 'Unicode?' name)
+            (tuple Macro macId sig (compile_xform (ith vs 2) sig macroEnv))))))
 
     (fn compile_xform ((v Value) (s Signature) (macroEnv MacroEnv) -> Transform)
       // Transforms are invoked after arity checking and argument collation, so we

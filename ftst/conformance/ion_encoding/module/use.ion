@@ -74,12 +74,15 @@
   (encoding (module M (macro_table (macro m1 () "m1")))
             (module N (macro_table (macro n1 () "n1")))
             (module U (use M N M)
-                      (macro_table (macro u1 () (values (':M:m1') (':M:0'))))
-//                    (macro_table (macro u2 () (m1)))     // FIXME [MAC-ID]
-            )
+                      (macro_table (macro u1 () (values (':M:m1') (':M:0')))
+                                   (macro u2 () (m1))))
             (macro_table U))
-  (toplevel ('#$:u1'))
-  (produces "m1" "m1"))
+  (then "and qualified references work"
+    (toplevel ('#$:u1'))
+    (produces "m1" "m1"))
+  (then "and local references work"
+    (toplevel ('#$:u2'))
+    (produces "m1")))
 
 
 (ion_1_1 "Local macro defn shadows a used name"
