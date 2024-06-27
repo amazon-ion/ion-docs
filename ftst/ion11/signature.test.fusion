@@ -69,10 +69,6 @@
   (quote (v w)))
 
 
-(check_Signature_fail "Unexpected element in param-spec:" (quote (v null)))
-(check_Signature_fail "Unexpected element in param-spec:" (quote (v! 9)))
-
-
 // Explicit types
 (check_Signature [('param!' "v" ANY)]
   (quote (any::v)))

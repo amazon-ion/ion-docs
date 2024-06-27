@@ -77,19 +77,30 @@
         (toplevel ('#$:m')       ('#$:m' 1))
         (produces ["f1"] ["f2"]  ["f1", 1] [1, 1] ["f2", 1]))
 
-  (each "arity errors are caught at compile-time"
+  (each "validate arity at compile-time"
     (mactab (macro m () (for)))
     (mactab (macro m () (for [])))
     (mactab (macro m () (for [] 1 2)))
     (signals "Malformed `for` form"))
 
-  (each "malformed binding-pairs are caught at compile-time"
+  (each "validate binding-pairs at compile-time"
     (mactab (macro m () (for [()] 1)))
     (mactab (macro m () (for [(v)] 1)))
     (mactab (macro m () (for [(v 1 2)] 1)))
     (signals "Malformed `for` binding pair"))
 
-  (each "malformed subexpressions are caught at compile-time"
+  (each "validate variable names at compile-time"
+    (mactab (macro m () (for [(''          1)] 0)))
+    (mactab (macro m () (for [(%           1)] 0)))
+    (mactab (macro m () (for [('#$0'       1)] 0)))
+    (mactab (macro m () (for [(null.symbol 1)] 0)))
+    (mactab (macro m () (for [("M"         1)] 0)))
+    (mactab (macro m () (for [(null        1)] 0)))
+    (mactab (macro m () (for [(1           1)] 0)))
+    (mactab (macro m () (for [(()          1)] 0)))
+    (signals "Invalid variable name:"))
+
+  (each "validate subexpressions at compile-time"
     (mactab (macro m () (for [(v x)] 1)))
     (mactab (macro m () (for [(v 1)] x)))
     (signals "Unbound variable: x"))

@@ -57,8 +57,7 @@ Features:
 * [EXPORT-FROM]
 * [ED-USE] `use` clauses at directive-level; more wiring challenges.
   * Perhaps easier after [UNIFY-MACREF]?
-* [VALID-NAME] Validate macro and parameter names.
-  * Ban redefinition of $ion
+* [VALID-NAME] Ban redefinition of $ion module
 * [OPT-NAME] Optional macro names; can streamline some tests
 * [VALID-FORM] Many forms need better validation of arity and argument type.
 * [ERRMSG] Some 1.1 code relies on implicit type checking to reject erroneous
@@ -1115,27 +1114,27 @@ Spec Issues: 1.0
 
     // TODO Rename; this is also used by inner modules.
     (fn compile_ED_load ((vs 'Value*') (avail ModuleMap) (c Catalog) -> ModuleMap)
-      (let [(name    (validateModuleName (ith vs 0))),
+      (let [(name    (validateBoundName (ith vs 0) "module")),
             (catname (Value_strtext (ith vs 1))),
             (version (Value_int     (ith vs 2))),                // [LOAD-MAXID]
             // TODO:[VALID-FORM] ensure no extra arguments
            ]
         (ModuleMap_extend avail name
           (SharedModule_module (exactModule_Catalog c catname version)))))
-
-    (fn validateModuleName ((v Value) -> Unicode)
+                
+    (fn validateBoundName ((v Value) (what Unicode) -> Unicode)
       (let [(c (Value_content v))]
         (if (and (element_of c Symbol)                         // [MULTI-ANDOR]
                  (and (element_of c Unicode)
                       (isIdentifier (lower c Symbol SymTok Unicode))))
             (lower c Symbol SymTok Unicode)
-            (wrong "Invalid module name: " c))))
+            (wrong "Invalid " what " name: " c))))
 
     // $ion_encoding module
 
     // We need to determine a unique identity for this module
     (fn compile_ED_module ((vs 'Value*') (r Environment) -> Environment)
-      (let [(name (validateModuleName (ith vs 0)))]
+      (let [(name (validateBoundName (ith vs 0) "module"))]
         (let [(id (lift_to ModuleIdentity
                     (tuple InlineModuleIdentity name (Environment_nextUid r)))),
               (r1 (Environment_bumpUid r))]
@@ -1172,7 +1171,7 @@ Spec Issues: 1.0
       (if (seq_is_empty vs)
         (seq 'Unicode*')
         // We only compute `m` to verify the module reference is valid.
-        (let [(m (avail (validateModuleName (seq_head vs))))]
+        (let [(m (avail (validateBoundName (seq_head vs) "module")))]
           (seq_prepend (Value_symtext (seq_head vs))
             (compile_ED_mactab_body (seq_tail vs) avail)))))
 
@@ -1363,11 +1362,10 @@ Spec Issues: 1.0
       (if (seq_is_empty vs)
         ps
         (let [(v (seq_head vs))]
-          (if (and (element_of (Value_content v) Symbol)
-                   (not (element_of (Value_content v) DotNull)))
-            (compile_paramCard (seq_tail vs)
-              (compile_paramName v) (compile_paramType (Value_annots v) r) ps r)
-            (wrong "Unexpected element in param-spec: " v)))))
+          (compile_paramCard (seq_tail vs)
+            (validateBoundName v "parameter")
+            (compile_paramType (Value_annots v) r)
+            ps r))))
 
 
     (fn compile_paramType ((anns 'SymTok*') (r MacroEnv) -> ParamType)
@@ -1406,13 +1404,6 @@ Spec Issues: 1.0
         (compile_paramSpecs vs (seq_append ps (seq 'ParamSpec*' p)) r)))
 
 
-    (fn compile_paramName ((v Value) -> Unicode)
-      (let [(text (lower (Value_content v) Symbol SymTok Unicode))]
-        (if (isIdentifier text)
-          text
-          (wrong "Invalid parameter name:" text))))
-
-
     //==========================================================================
     // Macro definition compilation
 
@@ -1438,8 +1429,8 @@ Spec Issues: 1.0
                             (macAddr  I)
                             (macroEnv MacroEnv) -> ExportedMacro)
       // TODO:[VALID-FORM] check arity of this (macro ...) clause
-      // TODO [OPT-NAME] [VALID-NAME] [DUPE-NAME]
-      (let [(name  (Value_symtext (ith vs 0))),
+      // TODO [OPT-NAME] [DUPE-NAME]
+      (let [(name  (validateBoundName (ith vs 0) "macro")),
             (sig   (compile_Signature (ith vs 1) macroEnv))]
         (let [(macId (tuple MacroIdentity modId name macAddr))]
           (tuple ExportedMacro (opt 'Unicode?' name)
@@ -1585,7 +1576,7 @@ Spec Issues: 1.0
           (let [(us (map 'Unicode*' (lambda (b)
                                       (let [(vs1 (Value_seqElements b))]
                                         (if (= (seq_length vs1) 2)
-                                          (Value_symtext (ith vs1 0))
+                                          (validateBoundName (ith vs1 0) "variable")
                                           (wrong "Malformed `for` binding pair"))))
                       bindings)),
                 (is ('interp_template*' (map 'Value*' (|b| (ith (Value_seqElements b) 1))
