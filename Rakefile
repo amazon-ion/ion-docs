@@ -144,12 +144,12 @@ namespace :spec do
     file pdf => [:prereqs, xml] do
       xml_to_pdf xml
     end
+
+    task :docbook => xml
+    task :pdf     => pdf
+    task :html    => html
   end
 
-
-  task :html    => "build/IonSpec.html"
-  task :pdf     => "build/IonSpec.pdf"
-  task :docbook => "build/IonSpec.xml"
 
   task :build => [:html, :pdf, :docbook]
 
