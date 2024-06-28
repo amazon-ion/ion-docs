@@ -202,7 +202,7 @@ pairs are spliced into the parent struct (TODO: Link)
 
 0 0 0 0 0 0 0 1   01100000
 └─────┬─────┘     └───┬──┘
-  2's comp.      SSID 0x60:
+  2's comp.      System SID 0x60:
   zero           empty symbol
 ----
 
@@ -216,7 +216,7 @@ pairs are spliced into the parent struct (TODO: Link)
 0 0 0 0 0 0 0 1   01100100
 └─────┬─────┘     └───┬──┘
   2's comp.         0x64:
-  zero              Indicates SSID 4
+  zero              Indicates System SID 4
 ----
 
 NOTE: From this point on in the document, example encodings are given in hexadecimal notation.
