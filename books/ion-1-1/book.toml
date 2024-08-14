@@ -1,0 +1,11 @@
+[book]
+authors = ["The Ion Team"]
+language = "en"
+multilingual = false
+src = "src"
+title = "The Ion 1.1 Draft Specification"
+default-theme = "light"
+
+# Enables the `mdbook-alerts` preprocessor, which can be installed with
+#     cargo install mdbook-alerts
+[preprocessor.alerts]
