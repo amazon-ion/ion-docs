@@ -28,5 +28,11 @@
     - [E-expressions](binary/e_expressions.md)
     - [Annotations](binary/annotations.md)
     - [NOP](binary/nop.md)
+<!--
+    The todo.md page is a placeholder target for links we haven't populated yet.
+    Only pages that are listed in `SUMMARY.md` will be shown to users; todo.md
+    includes a link to create a new GitHub issue, so it would be helpful for
+    users to see it.
+-->
 - [TODO](todo.md)
     
