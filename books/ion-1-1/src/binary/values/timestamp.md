@@ -21,11 +21,11 @@ EB 04
 > *In Ion 1.1, all binary timestamp fields are encoded in local time.*
 
 
-### Short-form Timestamp
+### Short-form Timestamps
 
 If an opcode has a high nibble of `0x8_`, it represents a short-form timestamp. This encoding focuses on making the
 most common timestamp precisions and ranges the most compact; less common precisions can still be expressed via
-the variable-length [long form timestamp](#long-form-timestamp) encoding.
+the variable-length [long form timestamp](#long-form-timestamps) encoding.
 
 Timestamps may be encoded using the short form if they meet all of the following conditions:
 
@@ -42,29 +42,29 @@ either 3 digits (milliseconds), 6 digits (microseconds), or 9 digits (nanosecond
 
 Each opcode with a high nibble of `0x8_` indicates a different precision and offset encoding pair.
 
-| Opcode | Precision        | Serialized size in bytes\* | Offset encoding                             |
-|--------|------------------|----------------------------|---------------------------------------------|
-| `0x80` | Year             | 1                          | Implicitly _Unknown offset_                 |
-| `0x81` | Month            | 2                          |                                             |
-| `0x82` | Day              | 2                          |                                             |
-| `0x83` | Hour and minutes | 4                          | 1 bit to indicate _UTC_ or _Unknown Offset_ |
-| `0x84` | Seconds          | 5                          |                                             |
-| `0x85` | Milliseconds     | 6                          |                                             |
-| `0x86` | Microseconds     | 7                          |                                             |
-| `0x87` | Nanoseconds      | 8                          |                                             |
-| `0x88` | Hour and minutes | 5                          | 7 bits to represent a known offset.**       |
-| `0x89` | Seconds          | 5                          |                                             |
-| `0x8A` | Milliseconds     | 7                          |                                             |
-| `0x8B` | Microseconds     | 8                          |                                             |
-| `0x8C` | Nanoseconds      | 9                          |                                             |
-| `0x8D` | _Reserved_       | --                         |                                             |
-| `0x8E` | _Reserved_       | --                         |                                             |
-| `0x8F` | _Reserved_       | --                         |                                             |
+| Opcode | Precision        | Serialized size in bytes[^short_form_size_in_bytes] | Offset encoding                                                |
+|--------|------------------|:---------------------------------------------------:|----------------------------------------------------------------|
+| `0x80` | Year             |                          1                          | Implicitly _Unknown offset_                                    |
+| `0x81` | Month            |                          2                          |                                                                |
+| `0x82` | Day              |                          2                          |                                                                |
+| `0x83` | Hour and minutes |                          4                          | 1 bit to indicate _UTC_ or _Unknown Offset_                    |
+| `0x84` | Seconds          |                          5                          |                                                                |
+| `0x85` | Milliseconds     |                          6                          |                                                                |
+| `0x86` | Microseconds     |                          7                          |                                                                |
+| `0x87` | Nanoseconds      |                          8                          |                                                                |
+| `0x88` | Hour and minutes |                          5                          | 7 bits to represent a known offset.[^short_form_hours_minutes] |
+| `0x89` | Seconds          |                          5                          |                                                                |
+| `0x8A` | Milliseconds     |                          7                          |                                                                |
+| `0x8B` | Microseconds     |                          8                          |                                                                |
+| `0x8C` | Nanoseconds      |                          9                          |                                                                |
+| `0x8D` | _Reserved_       |                         --                          |                                                                |
+| `0x8E` | _Reserved_       |                         --                          |                                                                |
+| `0x8F` | _Reserved_       |                         --                          |                                                                |
 
-_\* Serialized size in bytes does not include the opcode._
+[^short_form_size_in_bytes]: Serialized size in bytes does not include the opcode.
 
-_\*\* This encoding can also represent `UTC and Unknown Offset`, though
-it is less compact than opcodes `0x83`-`0x87` above._
+[^short_form_hours_minutes]: This encoding can also represent `UTC and Unknown Offset`, though
+it is less compact than opcodes `0x83`-`0x87` above.
 
 The body of a short-form timestamp is encoded as a `FixedUInt` of the size specified by the opcode. This integer is
 then partitioned into bit-fields representing the timestamp's subfields. Note that endianness does not apply here because the
@@ -361,9 +361,9 @@ byte 0   |  0x8C   |
 > Opcodes `0x8D`, `0x8E`, and `0x8F` are illegal; they are reserved for future use.
 
 
-### Long-form Timestamp
+### Long-form Timestamps
 
-Unlike the [short-form timestamp encoding](#short-form-timestamp), which is limited to encoding
+Unlike the [short-form timestamp encoding](#short-form-timestamps), which is limited to encoding
 timestamps in the most commonly referenced timestamp ranges and precisions for which it optimizes,
 the long-form timestamp encoding is capable of representing any valid timestamp.
 

@@ -35,7 +35,7 @@ calling conventions_. (TODO: Link)
 #### E-expression With the Address as a Trailing `FixedUInt`
 
 While E-expressions invoking macro addresses in the range `[0, 63]` can be encoded in a single byte using
-<<e_expression_with_the_address_in_the_opcode, E-expressions with the address in the opcode>>,
+[E-expressions with the address in the opcode](#e-expression-with-the-address-in-the-opcode),
 many applications will benefit from defining more than 64 macros.
 
 The `0x4_` and `0x5_` opcodes can be used to represent over 1 million macro addresses.
