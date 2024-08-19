@@ -15,3 +15,7 @@ defaults:
       layout: default
 plugins:
   - jekyll-redirect-from
+
+# Don't clobber things built into ./_site/books by our MdBookGenerator plugin
+keep_files:
+  - books

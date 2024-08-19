@@ -10,5 +10,7 @@ git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 # file and run `bundle install`. Run Jekyll with `bundle exec`, like so:
 #
 #     bundle exec jekyll serve
-gem "github-pages", group: :jekyll_plugins
-  gem "webrick", "~> 1.7"
+
+gem "jekyll", group: :jekyll_plugins
+gem "jekyll-redirect-from"
+gem "kramdown-parser-gfm"
