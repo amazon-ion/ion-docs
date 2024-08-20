@@ -87,6 +87,12 @@ This document clarifies the semantics of the Amazon Ion string and clob data typ
 
 These terms have particular definitions as it relates to their usage within the Amazon Ion Specification documents.
 
+---
+
+[Ion 1.1 Draft Specification][13]
+
+This document describes a new minor version of the Ion data format.
+
 
 [1]: docs/spec.html
 [2]: docs/binary.html
@@ -100,3 +106,4 @@ These terms have particular definitions as it relates to their usage within the 
 [10]: guides/why.html
 [11]: guides/symbols-guide.html
 [12]: guides/path-extractor-guide.html
+[13]: books/ion-1-1

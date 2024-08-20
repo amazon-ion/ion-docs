@@ -4,7 +4,9 @@ This repository contains the content behind https://amazon-ion.github.io/ion-doc
 
 ## Development
 
-To test locally, you must have [Ruby](https://www.ruby-lang.org/en/documentation/installation/) and [Bundler](https://bundler.io/) installed.
+To test locally, you must have [Ruby](https://www.ruby-lang.org/en/documentation/installation/), 
+[Bundler](https://bundler.io/), [mdbook](https://rust-lang.github.io/mdBook/guide/installation.html),
+and [mdbook-alerts](https://crates.io/crates/mdbook-alerts#user-content-usage) installed.
 
 In the project root directory, run:
 ```shell
