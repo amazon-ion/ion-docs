@@ -29,8 +29,8 @@
   {
     "name": "ion-rust",
     "category": "core",
-    "latest_release_version": "1.0.0-rc.6",
-    "latest_release_date": "2024-06-06",
+    "latest_release_version": "1.0.0-rc.7",
+    "latest_release_date": "2024-08-23",
     "documentation": "https://docs.rs/ion-rs/latest/ion_rs/"
   },
   {
