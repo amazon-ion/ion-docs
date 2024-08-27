@@ -18,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          # This is needed so that the deploy workflow will be triggered for news release commits.
+          # See https://github.com/orgs/community/discussions/26220
+          persist-credentials: false
 
       - name: Generate News Posts
         id: generate_news
