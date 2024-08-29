@@ -7,8 +7,8 @@ leverages the system symbol table, the text encoding that users typically intera
 The system macros are more visible, especially to authors of macros.
 
 This chapter catalogs the system-provided symbols and macros.
-The examples below use unqualified names, which works assuming no other module exports the same
-name, but the unambiguous form `:$ion:macro-name` is always correct.
+The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros_by_example.md).
+<!-- TODO: replace the above link with a TDL-specific reference once we have one. /-->
 
 > [!WARNING]
 > This list is not complete. We expect it to grow and evolve as we gain experience writing macros.
@@ -161,7 +161,7 @@ Used to aggregate multiple values or sub-streams to pass to a single argument, o
 ```
 
 Produces a non-null, unannotated string containing the concatenated content produced by the arguments.
-Nulls (of any type) and annotations are discarded.
+Nulls (of any type) are forbidden. Any annotations on the arguments are discarded.
 
 #### `make_symbol`
 
@@ -185,8 +185,7 @@ Like `make_string` but accepts lobs and produces a blob.
 (make_list (vals*)) -> list
 ```
 
-Produces a non-null, unannotated list by concatenating the _content_ of any number of list or sexp inputs.
-The values `null.list` and `null.sexp` are treated as empty sequences.
+Produces a non-null, unannotated list by concatenating the _content_ of any number of non-null list or sexp inputs.
 
 #### `make_sexp`
 
@@ -210,7 +209,7 @@ templates are not quasi-literals.
 (make_struct (structs*)) -> struct
 ```
 
-Produces a non-null, unannotated struct by combining the fields of any number of structs.
+Produces a non-null, unannotated struct by combining the fields of any number of non-null structs.
 
 ```ion
 (:make_struct { k1: 1, k2: 2} {k3:3} {k4: 4})  ⇒  {k1:1, k2:2, k3:3, k4:4}
@@ -245,6 +244,7 @@ However, it can be used in conjunction with other macros, for example, to repres
 ```
 Produces a non-null, unannotated timestamp at various levels of precision.
 When `offset` is absent, the result has unknown local offset; offset `0` denotes UTC.
+The arguments to this macro may not be any null value.
 
 > [!NOTE]
 > TODO [ion-docs#256](https://github.com/amazon-ion/ion-docs/issues/256) Reconsider offset semantics, perhaps default should be UTC.
