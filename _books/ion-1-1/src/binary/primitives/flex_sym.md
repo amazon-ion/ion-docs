@@ -9,14 +9,17 @@ A `FlexSym` begins with a [`FlexInt`](#flexint); once this integer has been read
 No more bytes follow.
 * **less than zero**, its absolute value represents a number of UTF-8 bytes that follow the `FlexInt`. These bytes
 represent the symbol’s text.
-* **exactly zero**, another byte follows that is an [opcode](opcodes.md). The `FlexSym` parser is not responsible for
+* **exactly zero**, another byte follows that is an [opcode](../opcodes.md)
+or [system symbol](../../modules/system_module.md#system-symbols). The `FlexSym` parser is not responsible for
 evaluating this opcode, only returning it—the caller will decide whether the opcode is legal in the current context.
 Example usages of the opcode include:
-  * Representing SID `$0` as `0xA0`.
-  * Representing the empty string (`""`) as `0x90`.
+  * Representing SID `$0` as `0x60`.
+  * Representing system symbols (`0x61`-`0xDF`), where the system symbol ID is biased by `0x60`.
+    * Note that the empty symbol (i.e. the symbol `''`) is now a system symbol and can be referenced this way.
   * When used to encode a struct field name, the opcode can invoke a macro that will evaluate to a struct whose key/value
 pairs are spliced into the parent [struct](../values/struct.md).
-  * In a <<delimited_structs, delimited struct>>, terminating the sequence of `(field name, value)` pairs with `0xF0`.
+    * Valid opcodes for invoking a macro are `0x00`-`0x5F`, `0xEE`, `0xEF`, and `0xF5`.
+  * In a [delimited struct](../values/struct.md#delimited-encoding), terminating the sequence of `(field name, value)` pairs with `0xF0`.
 
 #### `FlexSym` encoding of symbol ID `$10`
 ```
@@ -45,8 +48,8 @@ pairs are spliced into the parent [struct](../values/struct.md).
               ┌─── The leading FlexInt ends in a `1`,
               │    no more FlexInt bytes follow.
               │
-0 0 0 0 0 0 0 1   10010000
+0 0 0 0 0 0 0 1   01110111
 └─────┬─────┘     └───┬──┘
-  2's comp.     opcode 0x90:
-  zero           empty symbol
+  2's comp.           FixedInt 0x77
+  zero                System SID 23, the empty symbol
 ```
