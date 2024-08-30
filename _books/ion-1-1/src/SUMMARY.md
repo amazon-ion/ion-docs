@@ -3,6 +3,8 @@
 - [Introduction](./introduction.md)
 - [What's new](./whats_new.md)
 - [Macros by example](macros_by_example.md)
+- [Modules](modules.md)
+    - [System Module](modules/system_module.md)   
 - [Binary encoding](binary/encoding.md)
     - [Encoding primitives](binary/primitives.md)
         - [`FlexUInt`](binary/primitives/flex_uint.md)

@@ -61,3 +61,22 @@ address that is decoded is biased by the number of addresses that can be encoded
 | `0xE1` | 0 to 255             | 0      |
 | `0xE2` | 256 to 65,791        | 256    |
 | `0xE3` | 65,792 to infinity   | 65,792 |
+
+
+### System Symbols
+
+<!-- TODO: Add link to "system-module" page somewhere in this section. /-->
+
+System symbols (that is, symbols defined in the system module) can be encoded using the `0xEF` opcode followed by a _negative_ 1-byte `FixedInt`.
+(Positive values are used for [system macro invocations](../e_expressions.md#system-macro-invocations).)
+
+Unlike Ion 1.0, symbols are not required to use the lowest available SID for a given text, and system symbols 
+_MAY_ be encoded using other SIDs.
+
+##### Encoding of the system symbol `$ion`
+```plain
+┌──── Opcode 0xEF indicates a system symbol or macro invocation
+│  ┌─── FixedInt -1 indicates system symbol 1
+│  │
+EF FF
+```
