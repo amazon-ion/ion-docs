@@ -93,14 +93,6 @@ The `macro` clause defines a new macro. See _[Defining macros](macros/defining_m
 
 Literals appear in `code blocks`. Terminals are described in _italic text_.
 
-<div>
-<style>
-table  {
-  border: none;
-  border-collapse: collapse;
-}
-</style>
-
 | Production           |     | Body                                                   |
 |----------------------|-----|--------------------------------------------------------|
 | module               | ::= | `(module ` module-name-decl module-body `)`            |
@@ -120,5 +112,3 @@ table  {
 | macro-name-decl      | ::= | macro-name-ref \| `null`                               |
 | macro-name           | ::= | _unannotated idenfitier symbol_                        |
 | qualified-macro-name | ::= | module-name `::` macro-name                            |
-
-</div>

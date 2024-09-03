@@ -44,10 +44,10 @@ To specify an encoding, the [parameter name](#parameter-names) is annotated with
 
 | Tagless encodings                    | Description                                                       |
 |--------------------------------------|-------------------------------------------------------------------|
-| `flex_int`                           | Variable-width, signed int                                         |
-| `flex_uint`                          | Variable-width, unsigned int                                       |
-| `int8`  `int16`   `int32`   `int64`  | Fixed-width, signed int                                            |
-| `uint8` `uint16`  `uint32`  `uint64` | Fixed-width, unsigned int                                          |
+| `flex_int`                           | Variable-width, signed int                                        |
+| `flex_uint`                          | Variable-width, unsigned int                                      |
+| `int8`  `int16`   `int32`   `int64`  | Fixed-width, signed int                                           |
+| `uint8` `uint16`  `uint32`  `uint64` | Fixed-width, unsigned int                                         |
 | `float16` `float32` `float64`        | Fixed-width float                                                 |
 | `flex_symbol`                        | [`FlexSym`](../binary/primitives/flex_sym.md)-encoded SID or text |
 
@@ -70,6 +70,8 @@ If an argument expression expands to a number of values that the cardinality for
 ### Macro signatures
 
 A macro signature is an s-expression containing a series of parameter definitions.
+
+<!-- TODO; grammar and examples -->
 
 ### Template definition language (TDL)
 

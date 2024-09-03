@@ -6,6 +6,10 @@ src = "src"
 title = "The Ion 1.1 Draft Specification"
 default-theme = "light"
 
+[output.html.fold]
+enable = true
+level = 1
+
 # Enables the `mdbook-alerts` preprocessor, which can be installed with
 #     cargo install mdbook-alerts
 [preprocessor.alerts]
