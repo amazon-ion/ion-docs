@@ -6,6 +6,12 @@ src = "src"
 title = "The Ion 1.1 Draft Specification"
 default-theme = "light"
 
+[output.html.fold]
+# Makes the sections in navigation pane collapsable.
+enable = true
+# By default, 1 level of depth below the current viewing level is expanded.
+level = 1
+
 # Enables the `mdbook-alerts` preprocessor, which can be installed with
 #     cargo install mdbook-alerts
 [preprocessor.alerts]

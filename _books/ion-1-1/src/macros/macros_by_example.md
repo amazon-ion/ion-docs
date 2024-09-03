@@ -330,7 +330,7 @@ spliced into the surrounding container:
 (first (:values left right) last) ⇒ (first left right last)
 ```
 
-This also applies wherever a [tagged type](binary/values.md) can appear inside an E-expression:
+This also applies wherever a [tagged type](../binary/values.md) can appear inside an E-expression:
 
 ```ion
 (first (:values (:values left right) (:values)) last) ⇒ (first left right last)
@@ -455,37 +455,34 @@ becomes empty.
 > This termination rule is under discussion; see <https://github.com/amazon-ion/ion-docs/issues/201>
 
 
-### Empty Streams: `void`
+### Empty Streams: `none`
 
 The empty stream is an important edge case that requires careful handling and communication.
-We'll use the term _void_ to mean “empty stream”. We’ll even mint the word _voidable_ to
-describe parameters that can accept empty streams, like the ``*``s above.
-
-Correspondingly, the built-in macro `void` accepts no values and produces an empty stream:
+The built-in macro `none` accepts no values and produces an empty stream:
 
 ```ion
-(:int_list (:void)) ⇒ []
-(:int_list 1 (:void) 2) ⇒ [1, 2]
-[(:void)]   ⇒ []
-{a:(:void)} ⇒ {}
+(:int_list (:none)) ⇒ []
+(:int_list 1 (:none) 2) ⇒ [1, 2]
+[(:none)]   ⇒ []
+{a:(:none)} ⇒ {}
 ```
 
-When used as a macro argument, a `void` invocation (like any other expression) counts as one
+When used as a macro argument, a `none` invocation (like any other expression) counts as one
 argument:
 
 ```ion
-(:pi (:void)) ⇒ _error: 'pi' expects 0 arguments, given 1_
+(:pi (:none)) ⇒ _error: 'pi' expects 0 arguments, given 1_
 ```
 
-The special form `(:)` is an [empty argument group](todo.md), similar to
-`(:void)` but used specifically to express the absence of an argument:
+The special form `(:)` is an [empty argument group](../todo.md), similar to
+`(:none)` but used specifically to express the absence of an argument:
 
 ```ion
 (:int_list (:)) ⇒ []
 (:int_list 1 (:) 2) ⇒ [1, 2]
 ```
 
-TIP: While `void` and `values` both produce the empty stream, the former is preferred for
+TIP: While `none` and `values` both produce the empty stream, the former is preferred for
 clarity of intent and terminology.
 
 
@@ -515,7 +512,7 @@ might refer to them as _singleton streams_ or just _singletons_ colloquially.
 #### Zero-or-One
 
 A parameter with the modifier `?` has _zero-or-one cardinality_, which is much like
-exactly-one cardinality, except the parameter is voidable. That is, it accepts an empty-stream
+exactly-one cardinality, except the parameter accepts an empty-stream
 argument as a way to denote an absent parameter.
 
 ```ion
@@ -524,7 +521,7 @@ argument as a way to denote an absent parameter.
   {degrees: degrees, scale: scale})
 ```
 
-Since the scale is voidable, we can pass it void:
+Since the scale accepts the empty stream, we can pass it an empty argument group:
 
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96, scale:F}
@@ -533,28 +530,28 @@ Since the scale is voidable, we can pass it void:
 
 Note that the result’s `scale` field has disappeared because no value was provided. It would be
 more useful to fill in a default value, and to do that we introduce a special form that can
-detect void:
+detect the empty stream:
 
 ```ion
 (macro temperature
   (decimal::degrees symbol::scale?)
-  {degrees: degrees, scale: (if_void scale (literal K) scale)})
+  {degrees: degrees, scale: (if_none scale (literal K) scale)})
 ```
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96,  scale:F}
 (:temperature 283 (:)) ⇒ {degrees:283, scale:K}
 ```
 
-The `if_empty` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
-the first being a stream to check. If and only if that stream is void (it produces no
-values), the second sub-expression is expanded and its results are returned by the `if_empty`
+The `if_none` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
+the first being a stream to check. If and only if that stream is empty (it produces no
+values), the second sub-expression is expanded and its results are returned by the `if_none`
 expression. Otherwise, the third sub-expression is expanded and returned.
 
 > [!NOTE]
-> Exactly one branch is expanded, because otherwise the void stream might be used in a context
+> Exactly one branch is expanded, because otherwise the empty stream might be used in a context
 > that requires a value, resulting in an errant expansion error.
 
-To refine things a bit further, trailing voidable arguments can be omitted entirely:
+To refine things a bit further, trailing arguments that accept the empty stream can be omitted entirely:
 
 ```ion
 (:temperature 283) ⇒ {degrees:283, scale:K}
@@ -583,7 +580,7 @@ expression that produces the desired values:
 (:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ```
 
-Here we use a non-empty [empty argument group](todo.md) `(: ...)` to delimit
+Here we use a non-empty [empty argument group](../todo.md) `(: ...)` to delimit
 the multiple elements of the `amount` stream.
 
 
@@ -631,7 +628,7 @@ Thank you to my Patreon supporters:
 The non-rest versions of multi-value parameters require some kind of delimiting
 syntax to contain the applicable sub-expressions. For the tagged-type parameters we've seen
 so far, you _could_ use `:values` or some other macro to produce the stream, but that doesn't
-work for [tagless types](todo.md).
+work for [tagless types](../todo.md).
 The preferred syntax, supporting all argument types, is a special delimiting form
 called an _argument group_. Here is a macro to illustrate:
 
@@ -687,7 +684,7 @@ As usual, the text format mirrors this constraint.
 
 ### Optional Arguments
 
-When a trailing parameter is voidable, an invocation can omit its corresponding argument expression,
+When a trailing parameter accepts the empty stream, an invocation can omit its corresponding argument expression,
 as long as no following parameter is being given an expression. We’ve seen
 this as applied to final `*` parameters, but it also applies to `?`
 parameters:
@@ -698,14 +695,14 @@ parameters:
   (make_list a b c d e f))
 ```
 
-Since `d`, `e`, and `f` are all voidable, they can be omitted by invokers. But `c` is required so
+Since `d`, `e`, and `f` all accept the empty stream, they can be omitted by invokers. But `c` is required so
 `a` and `b` must always be present, at least as an empty group:
 
 ```ion
 (:optionals (:) (:) "value for c") ⇒ ["value for c"]
 ```
 
-Now `c` receives the string `"value for c"` while the other parameters are all void.
+Now `c` receives the string `"value for c"` while the other parameters are all empty.
 If we want to provide `e`, then we must also provide a group for `d`:
 
 ```ion

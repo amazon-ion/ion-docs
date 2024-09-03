@@ -2,7 +2,7 @@
 ## Encoding Expressions
 
 > [!NOTE]
-> This chapter focuses on the binary encoding of e-expressions. [_Macros by example_](../macros_by_example.md) explains what they are and how they are used.
+> This chapter focuses on the binary encoding of e-expressions. [_Macros by example_](../macros/macros_by_example.md) explains what they are and how they are used.
 
 ### E-expression with the address in the opcode
 
@@ -285,7 +285,7 @@ considered "shapes" rather than types because while their encoding is always sta
 produced by their expansion is not. A single macro can produce streams of varying length and containing values of
 different Ion types depending on the arguments provided in the invocation.
 
-See [Macro Shapes](macros_by_example.md#macro-shapes) for more information.
+See [Macro Shapes](../macros/macros_by_example.md#macro-shapes) for more information.
 
 ### Encoding E-expressions With Multiple Arguments
 

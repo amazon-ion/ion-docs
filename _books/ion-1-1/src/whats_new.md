@@ -173,13 +173,13 @@ or container constructors (list, sexp, struct syntax containing E-expressions) c
 the macro's definition. The resulting stream is then expanded into the resulting Ion data model.
 
 At the top level, the stream becomes individual top-level values. Consider for illustrative purposes an E-expression
-`(:values 1 2 3)` that evaluates to the stream `1`, `2`, `3` and `(:void)` that evaluates to the empty stream. In the
-following examples, `values` and `void` are the names of the macros being invoked and each line is equivalent.
+`(:values 1 2 3)` that evaluates to the stream `1`, `2`, `3` and `(:none)` that evaluates to the empty stream. In the
+following examples, `values` and `none` are the names of the macros being invoked and each line is equivalent.
 
 **Top-level e-expressions**
 ```ion
 // Encoding
-a (:values 1 2 3) b (:void) c
+a (:values 1 2 3) b (:none) c
 
 // Evaluates to
 a 1 2 3 b c
@@ -190,7 +190,7 @@ Within a list or S-expression, the stream becomes additional child elements in t
 **E-expressions in lists**
 ```ion
 // Encoding
-[a, (:values 1 2 3), b, (:void), c]
+[a, (:values 1 2 3), b, (:none), c]
 
 // Evaluates to
 [a, 1, 2, 3, b, c]
@@ -198,7 +198,7 @@ Within a list or S-expression, the stream becomes additional child elements in t
 
 **E-expressions in S-expressions**
 ```ion
-(a (:values 1 2 3) b (:void) c)
+(a (:values 1 2 3) b (:none) c)
 (a 1 2 3 b c)
 ```
 
@@ -216,7 +216,7 @@ field all together). In the following examples, let us define `(:make_struct c 5
   b: 4,
   (:make_struct c 5),
   d: 6,
-  e: (:void)
+  e: (:none)
 }
 
 // Evaluates to
@@ -305,7 +305,7 @@ the begining of the local macro table.
 // In text, system macros are always addressable by name.
 // In binary, system macros may be invoked using a separate
 // opcode.
-(:$ion:void)
+(:$ion:none)
 ```
 
 ### Macro definition language
@@ -321,7 +321,7 @@ and _one or more_. Furthermore the template defines what type of argument can be
 * Specific [_macro shaped arguments_](todo.md) to allow for structural composition of macros and efficient encoding in binary.
 
 The [macro definition](todo.md) includes a *template body* that defines how the macro is expanded. In the language, system macros, macros defined in previously defined modules in the encoding context, and macros defined previously in the current module are available to be invoked with `(name ...)` syntax where `name` is
-the macro to be invoked. Certain names in the expression syntax are reserved for special forms (for example, `literal` and `if_empty`). When a macro name is shadowed by a special form, or is ambiguous with respect to all
+the macro to be invoked. Certain names in the expression syntax are reserved for special forms (for example, `literal` and `if_none`). When a macro name is shadowed by a special form, or is ambiguous with respect to all
 macros visible, it can always be qualified with `(':module:name' ...)` syntax where `module` is the name of the module
 and `name` is the offset or name of the macro. Referring to a previously defined macro name _within_ a module may be
 qualified with `(':name' ...)` syntax.
