@@ -1,6 +1,8 @@
 ## Macros
 
-Like other self-describing formats, Ion 1.0 makes it possible to write a stream with truly arbitrary content--no formal schema required. However, in practice all applications have a de facto schema, with each stream sharing large amounts of predictable structure and recurring values. This means that Ion readers and writers often spend substantial resources processing undifferentiated data.
+Like other self-describing formats, Ion 1.0 makes it possible to write a stream with truly arbitrary content--no formal schema required.
+However, in practice all applications have a _de facto_ schema, with each stream sharing large amounts of predictable structure and recurring values.
+This means that Ion readers and writers often spend substantial resources processing undifferentiated data.
 
 Consider this example excerpt from a webserver's log file:
 
