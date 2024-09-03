@@ -65,9 +65,7 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 | 41 | `delta`                         |
 | 42 | `flatten`                       |
 | 43 | `sum`                           |
-| 44 | `symbol_table`                  |
 | 45 | `add_symbols`                   |
-| 46 | `macro_table`                   |
 | 47 | `add_macros`                    |
 | 48 | `comment`                       |
 | 49 | `flex_symbol`                   |
@@ -463,7 +461,7 @@ $ion_symbol_table::{
 #### Local Symtab Appending
 
 ```ion
-(macro lst_append (string::symbols*)
+(macro add_symbols (string::symbols*)
     (if_none symbols
              (none)                      // Produce nothing if no symbols provided.
              $ion_symbol_table::{
@@ -486,7 +484,7 @@ $ion_symbol_table::{
 #### Local Macro Table Appending
 
 ```ion
-(macro lmt_append (template_macros*)
+(macro add_macros (template_macros*)
     (if_none template_macros
         (none)              // Produce nothing if no symbols provided.
         $ion_encoding::(

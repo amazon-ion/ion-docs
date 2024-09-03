@@ -83,14 +83,7 @@ Macro definitions being added to the macro table must have a unique name. If a m
 
 ### `macro`
 
-The `macro` clause defines a new macro.
-
-#### Syntax
-```ion
-(macro name signature template)
-```
-
-For more information, see _[Defining macros](macros/defining_macros.md)_.
+The `macro` clause defines a new macro. See _[Defining macros](macros/defining_macros.md)_.
 
 <!-- TODO: `import` -->
 <!-- TODO: `module` -->
@@ -100,12 +93,19 @@ For more information, see _[Defining macros](macros/defining_macros.md)_.
 
 Literals appear in `code blocks`. Terminals are described in _italic text_.
 
+<div>
+<style>
+table  {
+  border: none;
+  border-collapse: collapse;
+}
+</style>
+
 | Production           |     | Body                                                   |
 |----------------------|-----|--------------------------------------------------------|
-| module               | ::= | `(module ` module-name module-body `)`                 |
+| module               | ::= | `(module ` module-name-decl module-body `)`            |
 | module-body          | ::= | import* module* symtab? mactab?                        |
 | import               | ::= | `(import` module-name catalog-name catalog-version `)` |
-| module               | ::= | `(module ` module-name `)`                             |
 | symtab               | ::= | `(symbol_table ` symtab-item* `)`                      |
 | symtab-item          | ::= | module-name \| symbol-def-seq                          |
 | symbol-def-seq       | ::= | _a list of unannotated text values (string/symbol)_    |
@@ -116,6 +116,9 @@ Literals appear in `code blocks`. Terminals are described in _italic text_.
 | catalog-name         | ::= | _unannotated string_                                   |
 | catalog-version      | ::= | _unannotated int_                                      |
 | module-name          | ::= | _unannotated idenfitier symbol_                        |
-| macro-ref            | ::= | macro-name \| qualified-macro-name                     |
+| macro-ref            | ::= | macro-name \| qualified-macro-name \| macro-address    |
+| macro-name-decl      | ::= | macro-name-ref \| `null`                               |
 | macro-name           | ::= | _unannotated idenfitier symbol_                        |
-| qualified-macro-name | ::= | _annotated idenfitier symbol_                          |
+| qualified-macro-name | ::= | module-name `::` macro-name                            |
+
+</div>

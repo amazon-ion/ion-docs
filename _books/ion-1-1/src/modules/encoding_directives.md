@@ -23,10 +23,8 @@ When the reader advances beyond the encoding directive, the module it defined be
 
 ### Modules
 
-
-
-
 In the context of an encoding directive, the encoding module is named `$ion_encoding`.
 
-The encoding directive may preserve symbols or macros that were defined in the previous encoding direc 
+The encoding directive may preserve symbols or macros that were defined in the previous encoding directive.
+<!-- TODO -->
 
