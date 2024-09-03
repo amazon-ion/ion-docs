@@ -7,7 +7,7 @@ leverages the system symbol table, the text encoding that users typically intera
 The system macros are more visible, especially to authors of macros.
 
 This chapter catalogs the system-provided symbols and macros.
-The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros_by_example.md).
+The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros/macros_by_example.md).
 <!-- TODO: replace the above link with a TDL-specific reference once we have one. /-->
 
 > [!WARNING]
@@ -20,72 +20,70 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 <!-- make the tables align to the side of the page /-->
 <style>table { margin: 1em;}</style>
 
-| ID | Text                                           |
-|---:|:-----------------------------------------------|
-|  1 | `$ion`                                         |
-|  2 | `$ion_1_0`                                     |
-|  3 | `$ion_symbol_table`                            |
-|  4 | `name`                                         |
-|  5 | `version`                                      |
-|  6 | `imports`                                      |
-|  7 | `symbols`                                      |
-|  8 | `max_id`                                       |
-|  9 | `$ion_shared_symbol_table`                     |
-| 10 | `$ion_encoding`                                |
-| 11 | `$ion_literal`                                 |
-| 12 | `$ion_shared_module`                           |
-| 13 | `macro`                                        |
-| 14 | `macro_table`                                  |
-| 15 | `symbol_table`                                 |
-| 16 | `module`                                       |
-| 17 | `retain`                                       |
-| 18 | `export`                                       |
-| 19 | `catalog_key`                                  |
-| 20 | `use`                                          |
-| 21 | `load`                                         |
-| 22 | `import`                                       |
-| 23 | _&lt;empty string>_ (i.e. `''`)                |
-| 24 | `literal`                                      |
-| 25 | `if_void`                                      |
-| 26 | `if_single`                                    |
-| 27 | `if_multi`                                     |
-| 28 | `for`                                          |
-| 29 | `fail`                                         |
-| 30 | `values`                                       |
-| 31 | `annotate`                                     |
-| 32 | `make_string`                                  |
-| 33 | `make_symbol`                                  |
-| 34 | `make_blob`                                    |
-| 35 | `make_decimal`                                 |
-| 36 | `make_timestamp`                               |
-| 37 | `make_list`                                    |
-| 38 | `make_sexp`                                    |
-| 39 | `make_struct`                                  |
-| 40 | `parse_ion`                                    |
-| 41 | `repeat`                                       |
-| 42 | `delta`                                        |
-| 43 | `flatten`                                      |
-| 44 | `sum`                                          |
-| 45 | `local_symtab` (or maybe just `symbol_table`?) |
-| 46 | `lst_append` (or maybe just `add_symbols`?)    |
-| 47 | `local_mactab` (or maybe just `macro_table`?)  |
-| 48 | `lmt_append` (or maybe just `add_macro`?)      |
-| 49 | `comment`                                      |
-| 50 | `var_symbol`                                   |
-| 51 | `var_string`                                   |
-| 52 | `var_int`                                      |
-| 53 | `var_uint`                                     |
-| 54 | `uint8`                                        |
-| 55 | `uint16`                                       |
-| 56 | `uint32`                                       |
-| 57 | `uint64`                                       |
-| 58 | `int8`                                         |
-| 59 | `int16`                                        |
-| 60 | `int32`                                        |
-| 61 | `int64`                                        |
-| 62 | `float16`                                      |
-| 63 | `float32`                                      |
-| 64 | `float64`                                      |
+| ID | Text                            |
+|---:|:--------------------------------|
+|  1 | `$ion`                          |
+|  2 | `$ion_1_0`                      |
+|  3 | `$ion_symbol_table`             |
+|  4 | `name`                          |
+|  5 | `version`                       |
+|  6 | `imports`                       |
+|  7 | `symbols`                       |
+|  8 | `max_id`                        |
+|  9 | `$ion_shared_symbol_table`      |
+| 10 | `$ion_encoding`                 |
+| 11 | `$ion_literal`                  |
+| 12 | `$ion_shared_module`            |
+| 13 | `macro`                         |
+| 14 | `macro_table`                   |
+| 15 | `symbol_table`                  |
+| 16 | `module`                        |
+| 17 | `retain`                        |
+| 18 | `export`                        |
+| 19 | `catalog_key`                   |
+| 20 | `import`                        |
+| 21 | _&lt;empty string>_ (i.e. `''`) |
+| 22 | `literal`                       |
+| 23 | `if_none`                       |
+| 24 | `if_some`                       |
+| 25 | `if_single`                     |
+| 26 | `if_multi`                      |
+| 27 | `for`                           |
+| 28 | `fail`                          |
+| 29 | `values`                        |
+| 30 | `annotate`                      |
+| 31 | `make_string`                   |
+| 32 | `make_symbol`                   |
+| 33 | `make_blob`                     |
+| 34 | `make_decimal`                  |
+| 35 | `make_timestamp`                |
+| 36 | `make_list`                     |
+| 37 | `make_sexp`                     |
+| 38 | `make_struct`                   |
+| 39 | `parse_ion`                     |
+| 40 | `repeat`                        |
+| 41 | `delta`                         |
+| 42 | `flatten`                       |
+| 43 | `sum`                           |
+| 44 | `symbol_table`                  |
+| 45 | `add_symbols`                   |
+| 46 | `macro_table`                   |
+| 47 | `add_macros`                    |
+| 48 | `comment`                       |
+| 49 | `flex_symbol`                   |
+| 50 | `flex_int`                      |
+| 52 | `flex_uint`                     |
+| 53 | `uint8`                         |
+| 54 | `uint16`                        |
+| 55 | `uint32`                        |
+| 56 | `uint64`                        |
+| 57 | `int8`                          |
+| 58 | `int16`                         |
+| 59 | `int32`                         |
+| 60 | `int64`                         |
+| 61 | `float16`                       |
+| 62 | `float32`                       |
+| 63 | `float64`                       |
 
  _Logical Parameter Type Names_ (possible in Ion 1.2?)
 
@@ -116,34 +114,31 @@ This allows the Ion 1.1 system symbol table to be relatively large without takin
 
 ### System Macros
 
-
-
 #### System Macro Addresses
 
-
-|  ID | Text                                           |
-|----:|:-----------------------------------------------|
-|   0 | `values`                                       |
-|   1 | `annotate`                                     |
-|   2 | `make_string`                                  |
-|   3 | `make_symbol`                                  |
-|   4 | `make_blob`                                    |
-|   5 | `make_decimal`                                 |
-|   6 | `make_timestamp`                               |
-|   7 | `make_list`                                    |
-|   8 | `make_sexp`                                    |
-|   9 | `make_struct`                                  |
-|  10 | `parse_ion`                                    |
-|  11 | `repeat`                                       |
-|  12 | `delta`                                        |
-|  13 | `flatten`                                      |
-|  14 | `sum`                                          |
-|  15 | `import`                                       |
-|  16 | `local_symtab` (or maybe just `symbol_table`?) |
-|  17 | `lst_append` (or maybe just `add_symbols`?)    |
-|  18 | `local_mactab` (or maybe just `macro_table`?)  |
-|  19 | `lmt_append` (or maybe just `add_macros`?)     |
-|  20 | `comment`                                      |
+| ID | Text             |
+|---:|:-----------------|
+|  0 | `none`           |
+|  1 | `values`         |
+|  2 | `annotate`       |
+|  3 | `make_string`    |
+|  4 | `make_symbol`    |
+|  5 | `make_blob`      |
+|  6 | `make_decimal`   |
+|  7 | `make_timestamp` |
+|  8 | `make_list`      |
+|  9 | `make_sexp`      |
+| 10 | `make_struct`    |
+| 11 | `parse_ion`      |
+| 12 | `repeat`         |
+| 13 | `delta`          |
+| 14 | `flatten`        |
+| 15 | `sum`            |
+| 16 | `symbol_table`   |
+| 17 | `add_symbols`    |
+| 18 | `macro_table`    |
+| 19 | `add_macros`     |
+| 20 | `comment`        |
 
 #### `values`
 
@@ -187,6 +182,13 @@ Like `make_string` but accepts lobs and produces a blob.
 
 Produces a non-null, unannotated list by concatenating the _content_ of any number of non-null list or sexp inputs.
 
+```ion
+(:make_list)                  => []
+(:make_list (1 2))            => [1, 2]
+(:make_list (1 2) [3, 4])     => [1, 2, 3, 4]
+(:make_list ((1 2)) [[3, 4]]) => [(1 2), [3, 4]]
+```
+
 #### `make_sexp`
 
 ```ion
@@ -198,8 +200,10 @@ This is the only way to produce an S-expression from a template: unlike lists, S
 templates are not quasi-literals.
 
 ```ion
-(:make_sexp)      ⇒ ()
-(:make_sexp null) ⇒ (null)
+(:make_sexp)                  => ()
+(:make_sexp (1 2))            => (1 2)
+(:make_sexp (1 2) [3, 4])     => (1 2 3 4)
+(:make_sexp ((1 2)) [[3, 4]]) => ((1 2) [3, 4])
 ```
 
 
@@ -212,7 +216,11 @@ templates are not quasi-literals.
 Produces a non-null, unannotated struct by combining the fields of any number of non-null structs.
 
 ```ion
-(:make_struct { k1: 1, k2: 2} {k3:3} {k4: 4})  ⇒  {k1:1, k2:2, k3:3, k4:4}
+(:make_struct)    => {}
+(:make_struct
+  {k1: 1, k2: 2}
+  {k3:3}
+  {k4: 4})        =>  {k1:1, k2:2, k3:3, k4:4}
 ```
 
 #### `make_decimal`
@@ -228,19 +236,19 @@ However, it can be used in conjunction with other macros, for example, to repres
 ```ion
 (macro usd (cents) (annotate (literal USD) (make_decimal cents -2))
 
-
-(:usd 199)  ⇒  USD::1.99
+(:usd 199) =>  USD::1.99
 ```
-
 
 #### `make_timestamp`
 
 ```ion
 (make_timestamp (int::year 
-                  uint8::month uint8::day 
-                  uint8::hour  uint8::minute decimal::second 
-                  int::offset_minutes))
-  -> timestamp
+                 uint8::month
+                 uint8::day
+                 uint8::hour
+                 uint8::minute
+                 decimal::second
+                 int::offset_minutes)) -> timestamp
 ```
 Produces a non-null, unannotated timestamp at various levels of precision.
 When `offset` is absent, the result has unknown local offset; offset `0` denotes UTC.
@@ -254,9 +262,14 @@ Example:
 ```ion
 (macro ts_today 
        (uint8::hour uint8::minute uint32::seconds_millis)
-       (make_timestamp 2022 04 28 hour minute (decimal seconds_millis -3) 0))
+       (make_timestamp
+         2022
+         4
+         28
+         hour
+         minute
+         (decimal seconds_millis -3) 0))
 ```
-
 
 #### `annotate`
 
@@ -308,14 +321,12 @@ The `flatten` system macro flattens one or more sequence values into a stream of
 (flatten (sequence+)) -> any
 ```
 Produces a stream with the contents of all the `sequence` values.
-Any `null.sexp` or `null.list` is treated as an empty sequence.
 Any annotations on the `sequence` values are discarded.
 
 ```ion
 (:flatten [a, b, c] (d e f)) => a b c d e f
-(:flatten [[], null.list] null.sexp foo::()) => [] null.list
+(:flatten [[], null.list] foo::()) => [] null.list
 ```
-
 
 The `flatten` macro can also be used to splice the content of one list or s-expression into another list or s-expression.
 ```ion
@@ -332,6 +343,63 @@ Produces the sum of all the integer arguments.
 ```ion
 (:sum 1 2 3) => 6
 (:sum (:)) => 0
+```
+
+#### `for`
+
+```ion
+(for name_and_values template) -> any*
+```
+
+`name_and_values` is a list or s-expression containing one or more s-expressions of the form `(name value1 value2 ... valueN)`. The first value is a symbol to act as a variable name. The remaining values in the s-expression will be visited one at a time; for each value, expansion will produce a copy of the `template` argument expression with any appearance of the variable name replaced by the value.
+
+For example:
+
+```ion
+(:for
+  (($word               // Variable name
+     foo bar baz))      // Values over which to iterate
+  (values $word $word)) // Template expression; `$word` will be replaced
+=>
+foo foo bar bar baz baz
+```
+
+Multiple s-expressions can be specified. The streams will be iterated over in lockstep.
+
+```ion
+(:for
+  (($x 1 2 3)  // for $x in...
+   ($y 4 5 6)) // for $y in...
+  ($x $y))     // Template; `$x` and `$y` will be replaced
+=>
+(1 4)
+(2 5)
+(3 6)
+```
+Iteration will end when the shortest stream is exhausted.
+```ion
+(:for
+  ($x 1 2)   // for $x in...
+  ($y 3 4 5) // for $y in...
+  ($x $y))   // Template; `$x` and `$y` will be replaced
+=>
+(1 3)
+(2 4)
+// no more output, `x` is exhausted
+```
+
+Names defined inside a `for` shadow names in the parent scope.
+
+```ion
+(macro triple ($x)
+  (for
+    (($x // Shadows macro argument `$x`
+      1 2 3))
+  )
+)
+(:triple 1)
+=>
+1 1 1
 ```
 
 #### `parse_ion`
@@ -377,16 +445,18 @@ This macro is optimized for representing symbols-list with minimal space.
 
 (macro local_symtab (import::imports* string::symbols*)
     $ion_symbol_table::{
-        imports:(if_void imports (values) [imports]),
-        symbols:(if_void symbols (values) [symbols]), 
+        imports: (if_none imports (none) [imports]),
+        symbols: (if_none symbols (none) [symbols]),
     })
 ```
 
 ```ion
 (:local_symtab ("my.symtab" 4) (: "newsym" "another"))
 =>
-$ion_symbol_table::{ imports:[{name:"my.symtab", version:4}],
-symbols:["newsym", "another"] }
+$ion_symbol_table::{
+  imports: [{name:"my.symtab", version:4}],
+  symbols: ["newsym", "another"]
+}
 ```
 
 
@@ -394,8 +464,8 @@ symbols:["newsym", "another"] }
 
 ```ion
 (macro lst_append (string::symbols*)
-    (if_void symbols 
-             (void)                  // Produce nothing if no symbols provided.
+    (if_none symbols
+             (none)                      // Produce nothing if no symbols provided.
              $ion_symbol_table::{
                  imports: (literal $ion_symbol_table),
                  symbols: [symbols]
@@ -408,17 +478,17 @@ symbols:["newsym", "another"] }
 (:lst_append "newsym" "another") =>
 
 $ion_symbol_table::{ 
-  imports:$ion_symbol_table,
-  symbols:["newsym", "another"] 
+  imports: $ion_symbol_table,
+  symbols: ["newsym", "another"]
 }
 ```
 
 #### Local Macro Table Appending
 
 ```ion
-(macro lmt_append (sexp::template_macros*)
-    (if_void template_macros
-        (values)                  // Produce nothing if no symbols provided.
+(macro lmt_append (template_macros*)
+    (if_none template_macros
+        (none)              // Produce nothing if no symbols provided.
         $ion_encoding::(
             (retain *)
             (module syms2 (symbol_table ["s3", "s4"]))

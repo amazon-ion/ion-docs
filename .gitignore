@@ -27,3 +27,6 @@ tags
 
 ### Java Builds (to test grammar) copy the grammar to here
 grammar/IonText.g4
+
+### `mdbook` build target
+_books/**/book/
