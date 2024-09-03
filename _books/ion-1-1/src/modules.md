@@ -15,7 +15,7 @@ In Ion 1.1, each stream has an [encoding module](modules/encoding_module.md)--th
 
 Many of the grammatical elements used to define modules and macros are _identifiers_--symbols that do not require quotation marks.
 
-More explicitly, an identifier is a sequence of one or more ASCII letters, digits, or the characters `$` (dollar sign) or `_` (underscore), not starting with a digit.
+More explicitly, an identifier is a sequence of one or more ASCII letters, digits, or the characters `$` (dollar sign) or `_` (underscore), not starting with a digit. It also cannot be of the form `$\d+`, which is the syntax for symbol IDs. (For example: `$3`, `$10`, `$458`, etc.)
 
 ## Defining a module
 
