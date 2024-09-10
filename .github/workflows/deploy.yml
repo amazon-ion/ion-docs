@@ -5,6 +5,8 @@ permissions:
   pages: write
 
 on:
+  # Allow manual starting of this workflow, including using `gh workflow run` in the release news workflow
+  workflow_dispatch:
   push:
     branches: [ gh-pages ]
 

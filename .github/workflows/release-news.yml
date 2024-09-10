@@ -18,11 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          # This is needed so that the deploy workflow will be triggered for news release commits.
-          # See https://github.com/orgs/community/discussions/26220
-          persist-credentials: false
-
       - name: Generate News Posts
         id: generate_news
         shell: bash
@@ -38,3 +33,14 @@ jobs:
           git config user.email github-actions@github.com
           git commit -m "${{ steps.generate_news.outputs.generated_commit_message }}"
           git push
+
+      - name: Deploy Changes
+        if: ${{ steps.generate_news.outputs.changes > 0 }}
+        # If you use the GITHUB_TOKEN to push code, it won't trigger any on-push
+        # workflows, so we manually the workflow here.
+        # We can't just call the workflow directly because we need the workflow to run
+        # on the new commit, not the GITHUB_REF for this workflow.
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run .github/workflows/deploy.yml -R "${{ github.repository }}"
