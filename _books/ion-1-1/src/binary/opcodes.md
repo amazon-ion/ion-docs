@@ -31,13 +31,13 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |                  | `A`        | `null.null`                                          |
 |                  | `B`        | Typed nulls                                          |
 |                  | `C`-`D`    | NOP                                                  |
-|                  | `E`        | _Reserved_                                           |
+|                  | `E`        | System symbol                                        |
 |                  | `F`        | System macro invocation                              |
 | `0xF_`           | `0`        | Delimited container end                              |
 |                  | `1`        | Delimited list start                                 |
 |                  | `2`        | Delimited S-expression start                         |
 |                  | `3`        | Delimited struct start                               |
-|                  | `4`        | _Reserved_                                           |
+|                  | `4`        | E-expression with `FlexUInt` macro address           |
 |                  | `5`        | E-expression with `FlexUInt` length prefix           |
 |                  | `6`        | Integer with `FlexUInt` length prefix                |
 |                  | `7`        | Decimal with `FlexUInt` length prefix                |
