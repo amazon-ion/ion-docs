@@ -102,23 +102,22 @@ Address : 142918
 
 </div>
 
-The opcode is `0xEE`. The macro address is given as a trailing [FlexUInt](primitives/fixed_uint.md) with no bias.
+The opcode is `0xF4`. The macro address is given as a trailing [FlexUInt](primitives/fixed_uint.md) with no bias.
 
 
 ## System Macro Invocations
 
-E-expressions that invoke a [system macro](../modules/system_module.md#system-macro-addresses) can be encoded using the `0xEF` opcode followed by a _positive_ 1-byte `FixedInt`.
-(Negative values are used for [system_symbols](values/symbol.md#system-symbols).)
+E-expressions that invoke a [system macro](../modules/system_module.md#system-macro-addresses) can be encoded using the `0xEF` opcode followed by a 1-byte `FixedUInt` representing an index in the [system macro table](../modules/system_module.md#system-macros).
 
 ##### Encoding of the system macro `values`
 ```
 ┌──── Opcode 0xEF indicates a system symbol or macro invocation
-│  ┌─── FixedInt 0 indicates macro 0 from the system macro table
+│  ┌─── FixedInt 1 indicates macro 1 from the system macro table
 │  │
-EF 00
+EF 01
 ```
 
-In addition, system macros MAY be invoked using any of the `0x00`-`0x5F` or `0xEE` opcodes, provided that the macro being invoked has been given an address in user macro address space.
+In addition, system macros MAY be invoked using any of the `0x00`-`0x5F` or `0xF4`-`0xF5` opcodes, provided that the macro being invoked has been given an address in user macro address space.
 <!-- TODO: Add or link an example of how this can be done. /-->
 
 ## Tagged E-expression Argument Encoding

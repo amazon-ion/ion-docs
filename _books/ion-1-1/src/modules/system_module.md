@@ -22,6 +22,7 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 
 | ID | Text                            |
 |---:|:--------------------------------|
+|  0 | _&lt;reserved&gt;_              |
 |  1 | `$ion`                          |
 |  2 | `$ion_1_0`                      |
 |  3 | `$ion_symbol_table`             |
