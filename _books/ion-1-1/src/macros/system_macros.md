@@ -4,7 +4,10 @@ Many of the system macros _MAY_ be defined as template macros, and when possible
 Templates are given here as normative example, but system macros are not required to be implemented as template macros.
 
 The macros that can be defined as templates are included as system macros because of their broad applicability, and
-so that Ion implementations can provide optimizations for these macros that can short-circuit the regular macro evaluation.
+so that Ion implementations can provide optimizations for these macros that run directly in the implementations runtime
+environment rather than in the macro evaluator.
+For example, a macro such as [`add_symbols`](#add_symbols) does not produce user values, so an Ion Reader could bypass
+evaluating the template and directly update the encoding context with the new symbols.
 
 ### Stream Constructors
 
@@ -24,12 +27,12 @@ so that Ion implementations can provide optimizations for these macros that can 
 
 This is, essentially, the identity function. 
 It produces a stream from any number of arguments, concatenating the streams produced by the nested expressions.
-Used to aggregate multiple values or sub-streams to pass to a single argument, or to return multiple results.
+Used to aggregate multiple values or sub-streams to pass to a single argument, or to produce multiple results.
 
 #### `flatten`
 
 ```ion
-(macro flatten (sequence+) /* Not representable in TDL */)
+(macro flatten (sequence*) /* Not representable in TDL */)
 ```
 The `flatten` system macro constructs a stream from the content of one or more sequences.
 
@@ -54,10 +57,13 @@ The `flatten` macro can also be used to splice the content of one list or s-expr
 Ion documents may be embedded in other Ion documents using the `parse_ion` macro.
 
 ```ion
-(macro parse_ion (data!) /* Not representable in TDL */)
+(macro parse_ion (uint8::data*) /* Not representable in TDL */)
 ```
 
 The `parse_ion` macro constructs a stream of values by parsing a blob literal or string literal as a single, self-contained Ion document.
+
+The IVM at the beginning of an Ion data stream is sufficient to identify whether it is text or binary, so text Ion
+can be embedded as a blob containing the UTF-8 encoded text.
 
 Embedded text example:
 ```ion
@@ -83,11 +89,8 @@ Embedded binary example:
 > and composing an embedded document from multiple expressions would make it possible to implement recursion in the
 > macro system.
 > 
+> The data argument is evaluated in a clean environment that cannot read anything from the parent document.
 > Allowing context to leak from the outer scope into the document being parsed would also enable recursion.
->
-> Furthermore, `parse_ion` cannot be invoked from a macro body (i.e. in Template Definition Language (TDL)). 
-> (Why not?)
-
 
 ### Value Constructors
 
@@ -97,7 +100,7 @@ Embedded binary example:
 (macro annotate (ann* value) /* Not representable in TDL */)
 ```
 
-Produces the `value` prefixed with the annotations `ann`s.
+Produces the `value` prefixed with the annotations `ann`s[^ann].
 Each `ann` must be a non-null, unannotated string or symbol.
 
 ```ion
@@ -151,8 +154,6 @@ Produces a non-null, unannotated list by concatenating the _content_ of any numb
 ```
 
 Like `make_list` but produces a sexp.
-This is the only way to produce an S-expression from a template: unlike lists, S-expressions in
-templates are not quasi-literals.
 
 ```ion
 (:make_sexp)                  => ()
@@ -177,6 +178,14 @@ Produces a non-null, unannotated struct by combining the fields of any number of
   {k4: 4})        =>  {k1:1, k2:2, k3:3, k4:4}
 ```
 
+#### `make_field`
+
+```ion
+(macro make_field (flex_sym::field_name value) /* Not representable in TDL */)
+```
+
+Produces a non-null, unannotated, single-field struct using the given field name and value.
+
 #### `make_decimal`
 
 ```ion
@@ -187,7 +196,7 @@ This is no more compact than the regular binary encoding for decimals.
 However, it can be used in conjunction with other macros, for example, to represent fixed-point numbers.
 
 ```ion
-(macro usd (cents) (annotate (literal USD) (make_decimal cents -2))
+(macro usd (cents) (.annotate (.literal USD) (.make_decimal cents -2))
 
 (:usd 199) =>  USD::1.99
 ```
@@ -333,7 +342,7 @@ $ion_encoding::(
 ```
 
 #### `set_macros`
-Sets the local symbol table, preserving any symbols in the symbol table.
+Sets the local macro table, preserving any symbols in the symbol table.
 
 ```ion
 (macro set_macros (macros*)
@@ -396,3 +405,13 @@ $ion_encoding::(
   (macro_table $ion_encoding the_module)
 )
 ```
+
+----
+
+<!-- 
+  MdBook will automatically number the footnotes, but it doesn't automatically put them at the bottom of the page.
+  It also does not sort the footnote text in numerical order, so the ordering here must match the ordering the footnotes
+  appear in the main content, or else the footnotes here will appear out of order.
+/-->
+
+[^ann]: The annotations sequence comes first in the macro signature because it parallels how annotations are read from the data stream.

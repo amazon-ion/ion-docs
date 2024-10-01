@@ -7,23 +7,22 @@ leverages the system symbol table, the text encoding that users typically intera
 The system macros are more visible, especially to authors of macros.
 
 This chapter catalogs the system-provided symbols and macros.
-The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros/macros_by_example.md).
-<!-- TODO: replace the above link with a TDL-specific reference once we have one. /-->
+The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros/defining_macros.md#template-definition-language-tdl).
 
 ### Relation to Local Symbol and Macro Tables
 
 In Ion 1.0, the system symbol table is always the first import of the local symbol table.
 However, in Ion 1.1, the system symbol and macro tables have a system address space that is distinct from the local address space.
-When starting an Ion 1.1 segment (i.e. immediately after encountering an `$ion_1_1` version marker), the local symbol
-table is prepopulated with the system symbols. 
-(Why? They can also be used via opcode `EE` which requires the same number of bytes as the `E1` OpCode.) 
+When starting an Ion 1.1 segment (i.e. immediately after encountering an `$ion_1_1` version marker), the local symbol table is prepopulated with the system symbols[^note0]. 
 The local macro table is also prepopulated with the system macros.
-(This time it makes sense because we're actually saving a byte.)
 However, the system symbols and macros are not permanent fixtures of the local symbol and macro tables respectively.
 
 
 When a local macro has the same name as a system macro, it shadows the system macro.
-It is not possible to invoke the system macro unless that system macro has been given an alias in the local macro table.
+In TDL, it is still possible to invoke a shadowed system macro by using a qualified name, such as `$ion::make_string`.
+If a macro in the active local macro table has the same name as a system macro, it is impossible to invoke that system
+macro by name using an E-Expression.
+(It is still possible to invoke the system macro if the local macro table has assigned an alias for that system macro.)
 
 ### System Symbols
 
@@ -51,9 +50,9 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 | 14 | `macro_table`                   |
 | 15 | `symbol_table`                  |
 | 16 | `module`                        |
-| 17 | ~~retain~~                      |
-| 18 | export                          |
-| 19 | ~~catalog_key~~                 |
+| 17 | see [ion-docs#345][1]           |
+| 18 | `export`                        |
+| 19 | see [ion-docs#345][1]           |
 | 20 | `import`                        |
 | 21 | _zero-length text_ (i.e. `''`)  |
 | 22 | `literal`                       |
@@ -63,7 +62,6 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 | 26 | `if_multi`                      |
 | 27 | `for`                           |
 | 28 | `fail`                          |
-| ?? | `none`                          |
 | 29 | `values`                        |
 | 30 | `annotate`                      |
 | 31 | `make_string`                   |
@@ -99,6 +97,8 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 | 61 | `float16`                       |
 | 62 | `float32`                       |
 | 63 | `float64`                       |
+| 64 | `none`                          |
+| 65 | `make_field`                    |
 
 In Ion 1.1 Text, system symbols can never be referenced by symbol ID; `$1` always refers to the first symbol in the user symbol table.
 This allows the Ion 1.1 system symbol table to be relatively large without taking away SID space from the user symbol table.
@@ -129,3 +129,14 @@ This allows the Ion 1.1 system symbol table to be relatively large without takin
 | 19 | [`flatten`](../macros/system_macros.md#flatten)               |
 | 20 | [`sum`](../macros/system_macros.md#sum)                       |
 | 21 | [`comment`](../macros/system_macros.md#comment)               |
+| 22 | [`make_field`](../macros/system_macros.md#make_field)         |
+
+
+----
+
+[1]: https://github.com/amazon-ion/ion-docs/issues/345
+
+[^note0]: System symbols require the same number of bytes whether they are encoded using the system symbol or the user 
+symbol encoding. The reasons the system symbols are initially loaded into the user symbol table are twofold—to be 
+consistent with loading the system macros into user space, and so that implementors can start testing user symbols 
+even before they have implemented support for reading encoding directives. 

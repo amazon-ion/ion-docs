@@ -320,7 +320,7 @@ and _one or more_. Furthermore the template defines what type of argument can be
 * ["Tagless" values](todo.md), whose encodings do not begin with an opcode and are therefore both more compact and less flexible (For example: `flex_int`, `int32`, `float16`).
 * Specific [_macro shaped arguments_](todo.md) to allow for structural composition of macros and efficient encoding in binary.
 
-The [macro definition](todo.md) includes a *template body* that defines how the macro is expanded. In the language, system macros, macros defined in previously defined modules in the encoding context, and macros defined previously in the current module are available to be invoked with `(name ...)` syntax where `name` is
+The [macro definition](defining_macros.md) includes a *template body* that defines how the macro is expanded. In the language, system macros, macros defined in previously defined modules in the encoding context, and macros defined previously in the current module are available to be invoked with `(name ...)` syntax where `name` is
 the macro to be invoked. Certain names in the expression syntax are reserved for special forms (for example, `literal` and `if_none`). When a macro name is shadowed by a special form, or is ambiguous with respect to all
 macros visible, it can always be qualified with `(':module:name' ...)` syntax where `module` is the name of the module
 and `name` is the offset or name of the macro. Referring to a previously defined macro name _within_ a module may be
@@ -335,16 +335,5 @@ introduced in Ion 1.1. An Ion 1.1 implementation should support containing Ion
 
 ## System Symbol Table Changes
 
-The system symbol table in Ion 1.1 adds the following symbols:
-
-| ID | Symbol Text     |
-|----|-----------------|
-| 10 | `$ion_encoding` |
-| 11 | `$ion_literal`  |
-
-<div class="warning">
-These assignments are provisional. Specifically assignments for the macro definition language have not
-been established.
-</div>
-
-System macro identifiers are namespaced separately and therefore do not have entries in the system symbol table.
+The system symbol table in Ion 1.1 replaces the Ion 1.0 symbol table with new symbols. However, the system symbols are
+not required to be in the symbol table—they are always available to use.

@@ -8,7 +8,7 @@ In the case of macro invocations, the elements following the operator are arbitr
 Special forms are "special" precisely because they cannot be expressed as macros and must therefore receive bespoke syntactic treatment.
 Since the elements of macro-invocation expressions are themselves expressions, when you want something to not be evaluated that way, it must be a special form.
 
-Finally, these special forms are part of the template language itself, and are not visible to encoded data;
+Finally, these special forms are part of the template language itself, and are not addressable outside of TDL;
 the E-expression `(:literal foo)` must necessarily refer to some user-defined macro named literal, not to this special form.
 
 
@@ -23,7 +23,10 @@ the E-expression `(:literal foo)` must necessarily refer to some user-defined ma
 ```ion
 (macro USD_price (dollars) (.price dollars (.literal USD)))
 ```
-In this template, we cannot write `(.price dollars USD)` because the symbol `USD` would be treated as an unbound variable reference and a syntax error, so we turn it into literal data by "escaping" it with `literal`. As an aside, there is no need for such a form in E-expressions, because in that context symbols and S-expressions are not "evaluated", and everything is literal except for E-expressions (which are not data, but encoding artifacts).
+In this template, we cannot write `(.price dollars USD)` because the symbol `USD` would be treated as an unbound variable reference and a syntax error, so we turn it into literal data by "escaping" it with `literal`.
+
+> [!TIP] 
+> As an aside, there is no need for such a form in E-expressions, because in that context symbols and S-expressions are not "evaluated", and everything is literal except for E-expressions (which are not data, but encoding artifacts).
 
 ### `if_none`
 
@@ -33,13 +36,19 @@ In this template, we cannot write `(.price dollars USD)` because the symbol `USD
 
 The `if_none` form is if/then/else syntax testing stream emptiness.
 It has three sub-expressions, the first being a stream to check. 
-If and only if that stream is empty (it produces no values), the second sub-expression is expanded and its results are returned by the `if_none` expression. Otherwise, the third sub-expression is expanded and returned.
+If and only if that stream is empty (it produces no values), the second sub-expression is expanded.
+Otherwise, the third sub-expression is expanded. 
+The expanded second or third sub-expression becomes the result that is produced by `if_none`.
 
 > [!Note]
 > Exactly one branch is expanded, because otherwise the empty `stream` might be used in a context that requires a value, resulting in an errant expansion error.
 
 ```ion
-(macro temperature (degrees scale) {degrees: degrees, scale: (.if_none scale (.literal K) scale)})
+(macro temperature (degrees scale) 
+       {
+         degrees: degrees, 
+         scale: (.if_none scale (.literal K) scale),
+       })
 ```
 ```ion
 (:temperature 96 F)     ⇒ {degrees:96,  scale:F}
@@ -52,9 +61,10 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 ```
 
 > [!TIP]
-> You can define a macro that wraps `if_none` to create a void-coalescing operator.
+> You can define a macro that wraps `if_none` to create a none-coalescing operator.
 > ```ion
-> (macro coalesce (maybe_none* else+) (.if_none maybe_none else maybe_none))
+> (macro coalesce (maybe_none* default_expr+) 
+>        (.if_none maybe_none default_expr maybe_none))
 > ```
 
 ### `if_some`
@@ -64,7 +74,8 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 ```
 
 If `stream` evaluates to one or more values, it produces `true_branch`. Otherwise, it produces `false_branch`.
-Exactly one branch is evaluated. The `true_branch` and `false_branch` arguments are only evaluated if they are to be returned.
+Exactly one of `true_branch` and `false_branch` is evaluated.
+The `stream` expression must be expanded enough to determine whether it produces any values, but implementations are not required to fully expand the expression. 
 
 Example:
 ```ion
@@ -102,8 +113,9 @@ Example:
 (macro if_single (expressions* true_branch* false_branch*) /* Not representable in TDL */)
 ```
 
-If `expressions` evaluates to exactly one value, it returns `true_branch`. Otherwise, it returns `false_branch`.
-Exactly one branch is evaluated. The `true_branch` and `false_branch` arguments are only evaluated if they are to be returned.
+If `expressions` evaluates to exactly one value, `if_single` produces the expansion of `true_branch`. Otherwise, it produces the expansion of `false_branch`.
+Exactly one of `true_branch` and `false_branch` is evaluated.
+The `stream` expression must be expanded enough to determine whether it produces exactly one value, but implementations are not required to fully expand the expression.
 
 ### `if_multi`
 
@@ -112,20 +124,23 @@ Exactly one branch is evaluated. The `true_branch` and `false_branch` arguments 
 ```
 
 If `expressions` evaluates to more than one value, it produces `true_branch`. Otherwise, it produces `false_branch`.
-Exactly one branch is evaluated. The `true_branch` and `false_branch` arguments are only evaluated if they are to be returned.
+Exactly one of `true_branch` and `false_branch` is evaluated.
+The `stream` expression must be expanded enough to determine whether it produces more than one value, but implementations are not required to fully expand the expression.
 
 ### `for`
 
 ```ion
-(for name_and_values template)
+(for name_and_expressions template)
 ```
 
-`name_and_values` is a list or s-expression containing one or more s-expressions of the form `(name value1 value2 ... valueN)`. The first value is a symbol to act as a variable name. The remaining values in the s-expression will be visited one at a time; for each value, expansion will produce a copy of the `template` argument expression with any appearance of the variable name replaced by the value.
+`name_and_values` is a list or s-expression containing one or more s-expressions of the form `(name expr0 expr1 ... exprN)`.
+The first value is a symbol to act as a variable name. 
+The remaining expressions in the s-expression will be expanded and concatenated into a single stream; for each value in the stream, the `for` expansion will produce a copy of the `template` argument expression with any appearance of the variable replaced by the value.
 
 For example:
 
 ```ion
-(:for
+(.for
   [($word                    // Variable name
    (.literal foo bar baz))]   // Values over which to iterate
   (.values $word $word))     // Template expression; `$word` will be replaced
@@ -136,7 +151,7 @@ foo foo bar bar baz baz
 Multiple s-expressions can be specified. The streams will be iterated over in lockstep.
 
 ```ion
-(:for
+(.for
   (($x 1 2 3)  // for $x in...
    ($y 4 5 6)) // for $y in...
   ($x $y))     // Template; `$x` and `$y` will be replaced
@@ -147,7 +162,7 @@ Multiple s-expressions can be specified. The streams will be iterated over in lo
 ```
 Iteration will end when the shortest stream is exhausted.
 ```ion
-(:for
+(.for
   [($x 1 2),   // for $x in...
   ($y 3 4 5)] // for $y in...
   ($x $y))   // Template; `$x` and `$y` will be replaced
@@ -180,4 +195,4 @@ The `for` special form can only be invoked in the body of template macro. It is 
 (macro fail (message?) /* Not representable in TDL */)
 ```
 
-Causes macro evaluation to immediately halt and causes the Ion reader to return an error to the user. 
+Causes macro evaluation to immediately halt and causes the Ion reader to raise an error to the user. 
