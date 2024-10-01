@@ -13,7 +13,8 @@ The examples below use unqualified names, which works assuming no other macros w
 
 In Ion 1.0, the system symbol table is always the first import of the local symbol table.
 However, in Ion 1.1, the system symbol and macro tables have a system address space that is distinct from the local address space.
-When starting an Ion 1.1 segment (i.e. immediately after encountering an `$ion_1_1` version marker), the local symbol table is prepopulated with the system symbols[^note0]. 
+When starting an Ion 1.1 segment (i.e. immediately after encountering an `$ion_1_1` version marker),
+the local symbol table is prepopulated with the system symbols[^note0]<a name="footnote-0"></a>. 
 The local macro table is also prepopulated with the system macros.
 However, the system symbols and macros are not permanent fixtures of the local symbol and macro tables respectively.
 
@@ -136,7 +137,11 @@ This allows the Ion 1.1 system symbol table to be relatively large without takin
 
 [1]: https://github.com/amazon-ion/ion-docs/issues/345
 
+<small>
+
 [^note0]: System symbols require the same number of bytes whether they are encoded using the system symbol or the user 
 symbol encoding. The reasons the system symbols are initially loaded into the user symbol table are twofold—to be 
 consistent with loading the system macros into user space, and so that implementors can start testing user symbols 
-even before they have implemented support for reading encoding directives. 
+even before they have implemented support for reading encoding directives.[^](#footnote-0)
+
+</small>

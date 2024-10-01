@@ -100,7 +100,7 @@ Embedded binary example:
 (macro annotate (ann* value) /* Not representable in TDL */)
 ```
 
-Produces the `value` prefixed with the annotations `ann`s[^ann].
+Produces the `value` prefixed with the annotations `ann`s[^ann]<a name="footnote-0"></a>.
 Each `ann` must be a non-null, unannotated string or symbol.
 
 ```ion
@@ -185,6 +185,13 @@ Produces a non-null, unannotated struct by combining the fields of any number of
 ```
 
 Produces a non-null, unannotated, single-field struct using the given field name and value.
+
+This can be used to dynamically construct field names based on macro parameters.
+
+Example:
+```ion
+(macro foo_struct ()
+```
 
 #### `make_decimal`
 
@@ -414,4 +421,4 @@ $ion_encoding::(
   appear in the main content, or else the footnotes here will appear out of order.
 /-->
 
-[^ann]: The annotations sequence comes first in the macro signature because it parallels how annotations are read from the data stream.
+[^ann]: The annotations sequence comes first in the macro signature because it parallels how annotations are read from the data stream.[^](#footnote-0)

@@ -1,9 +1,11 @@
 ## Special Forms
 
-When a template-expression is syntactically an S-expression, its first element must be a symbol that matches either a 
-set of keywords denoting the special forms, or the name of a previously-defined macro.
+When a [TDL expression](defining_macros.md#template-definition-language-tdl) is syntactically an S-expression and its
+first element is the symbol `.`, its next element must be a symbol that matches either a set of keywords denoting the 
+special forms, or the name of a previously-defined macro.
 The interpretation of the S-expression’s remaining elements depends on how the symbol resolves.
-In the case of macro invocations, the elements following the operator are arbitrary template expressions, but for special forms that is not always the case.
+In the case of macro invocations, the elements following the operator are arbitrary TDL expressions, but for special 
+forms that is not always the case.
 
 Special forms are "special" precisely because they cannot be expressed as macros and must therefore receive bespoke syntactic treatment.
 Since the elements of macro-invocation expressions are themselves expressions, when you want something to not be evaluated that way, it must be a special form.
@@ -133,7 +135,7 @@ The `stream` expression must be expanded enough to determine whether it produces
 (for name_and_expressions template)
 ```
 
-`name_and_values` is a list or s-expression containing one or more s-expressions of the form `(name expr0 expr1 ... exprN)`.
+`name_and_expressions` is a list or s-expression containing one or more s-expressions of the form `(name expr0 expr1 ... exprN)`.
 The first value is a symbol to act as a variable name. 
 The remaining expressions in the s-expression will be expanded and concatenated into a single stream; for each value in the stream, the `for` expansion will produce a copy of the `template` argument expression with any appearance of the variable replaced by the value.
 
