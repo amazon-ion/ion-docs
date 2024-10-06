@@ -61,6 +61,8 @@ Ion documents may be embedded in other Ion documents using the `parse_ion` macro
 ```
 
 The `parse_ion` macro constructs a stream of values by parsing a blob literal or string literal as a single, self-contained Ion document.
+All values produced by the expansion of `parse_ion` are application values.
+(I.e. it is as if they are all annotated with `$ion_literal`.) 
 
 The IVM at the beginning of an Ion data stream is sufficient to identify whether it is text or binary, so text Ion
 can be embedded as a blob containing the UTF-8 encoded text.
@@ -190,7 +192,18 @@ This can be used to dynamically construct field names based on macro parameters.
 
 Example:
 ```ion
-(macro foo_struct ()
+(macro foo_struct (extra_name extra_value)
+       (make_struct 
+         {
+           foo_a: 1,
+           foo_b: 2,
+         }
+         (make_field (make_string "foo_" extra_name) extra_value)
+       ))
+```
+Then:
+```ion
+(:foo_struct c 3) => { foo_a: 1, foo_b: 2, foo_c: 3 }
 ```
 
 #### `make_decimal`
