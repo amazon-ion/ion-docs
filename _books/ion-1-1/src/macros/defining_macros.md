@@ -56,16 +56,68 @@ To specify an encoding, the [parameter name](#parameter-names) is annotated with
 
 A parameter name may optionally be followed by a _cardinality modifier_. This is a sigil that indicates how many values the parameter expects the corresponding argument expression to produce when it is evaluated.
 
-| Modifier | Cardinality         |
-|:--------:|---------------------|
-|   `!`    | exactly-one value   |
-|   `?`    | zero-or-one value   |
-|   `+`    | one-or-more values  |
-|   `*`    | zero-or-more values |
+| Modifier |         Cardinality | Accepts single expression | Accepts empty group | Accepts populated group |
+|:--------:|--------------------:|:-------------------------:|:-------------------:|:-----------------------:|
+|   `?`    |   zero-or-one value |             ✅             |          ✅          |            ❌            |
+|   `*`    | zero-or-more values |             ✅             |          ✅          |            ✅            |
+|   `!`    |   exactly-one value |             ✅             |          ❌          |            ❌            |
+|   `+`    |  one-or-more values |             ✅             |          ❌          |            ✅            |
 
 If no modifier is specified, the parameter's cardinality will default to exactly-one.
+An `exactly-one` parameter can only accept a single expression as its argument.
+
+Parameters with a cardinality other than `exactly-one` are called _variadic parameters_.
+Depending on the cardinality, a variadic parameter can accept empty expression group,
+a single expression, and/or a populated expression group.
 
 If an argument expression expands to a number of values that the cardinality forbids, the reader must raise an error.
+
+##### Optional parameters
+
+Parameters with a cardinality that can accept an empty group as an argument (`?` and `*`) are called
+_optional parameters_. In text Ion, their corresponding arguments can be elided from e-expressions and TDL macro
+invocations when they appear in tail position. When an argument is elided, it is treated as though an explicit
+empty group `(::)` had been passed in its place.
+
+In contrast, parameters with a cardinality that cannot accept an empty group (`!` and `+`) are called _required
+parameters_. Required parameters can never be elided.
+
+```ion
+(:set_macros
+    (foo (x y? z*) // `x` is required, `y` and `z` are optional
+        [x, y, z]
+    )
+)
+
+// `z` is a populated expression group
+(:foo 1 2 (:: 3 4 5)) => [1, 2, 3, 4, 5]
+
+// `z` is an empty expression group
+(:foo 1 2 (::))       => [1, 2]
+
+// `z` has been elided
+(:foo 1 2)            => [1, 2]
+
+// `y` and `z` have been elided
+(:foo 1)              => [1]
+
+// `x` cannot be elided
+(:foo)                => ERROR: missing required argument `x`
+```
+
+Optional parameters that are _not_ in tail position cannot be elided, as this would
+cause them to appear in a position corresponding to a different argument.
+
+```ion
+(:set_macros
+    (foo (x? y) // `x` is optional, `y` is required
+        [x, y]
+    )
+)
+(:annotate foo)
+
+(:foo 1)   => ERROR: missing required argument `y`
+```
 
 ### Macro signatures
 
