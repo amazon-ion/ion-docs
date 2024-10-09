@@ -179,8 +179,8 @@ When the macro has a single `exactly-one` parameter, the corresponding encoded a
 ```
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression invoking
 │     the macro at address 0.
-│  ┌─── Argument 'x': opcode 0x61 indicates a 1-byte integer
-│  │   1
+│    ┌─── Argument 'x': opcode 0x61 indicates a 1-byte integer (1)
+│  ┌─┴─┐
 00 61 01
 ```
 
@@ -189,8 +189,8 @@ When the macro has a single `exactly-one` parameter, the corresponding encoded a
 ```
 ┌──── Opcode F4: An e-expression with a trailing FlexUInt address
 │  ┌──── FlexUInt 0: Macro address 0
-│  │  ┌─── Argument 'x': opcode 0x61 indicates a 1-byte integer
-│  │  │   1
+│  │    ┌─── Argument 'x': opcode 0x61 indicates a 1-byte integer (1)
+│  │  ┌─┴─┐
 F4 01 61 01
 ```
 
@@ -218,10 +218,10 @@ bytes in the stream. When no more parameters remain, parsing of the e-expression
 ```
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
-│  ┌─── Argument 'a': opcode 0x61 indicates a 1-byte integer
-│  │      ┌─── Argument 'b': opcode 0x61 indicates a 1-byte integer
-│  │      │    ┌─── Argument 'c': opcode 0x61 indicates a 1-byte integer
-│  │   1  │  2 │   3
+│    ┌─── Argument 'a': opcode 0x61 indicates a 1-byte integer (1)
+│    │     ┌─── Argument 'b': opcode 0x61 indicates a 1-byte integer (2)
+│    │     │     ┌─── Argument 'c': opcode 0x61 indicates a 1-byte integer (3)
+│  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
 00 61 01 61 02 61 03
 ```
 
@@ -229,11 +229,11 @@ bytes in the stream. When no more parameters remain, parsing of the e-expression
 ```
 ┌──── Opcode F4: An e-expression with a trailing FlexUInt address
 │  ┌──── FlexUInt 0: Macro address 0
-│  │  ┌─── Argument 'a': opcode 0x61 indicates a 1-byte integer
-│  │  │     ┌─── Argument 'b': opcode 0x61 indicates a 1-byte integer
-│  │  │     │     ┌─── Argument 'c': opcode 0x61 indicates a 1-byte integer
-│  │  │     │     │
-│  │  │   1 │   2 │   3
+│  │    ┌─── Argument 'a': opcode 0x61 indicates a 1-byte integer (1)
+│  │    │     ┌─── Argument 'b': opcode 0x61 indicates a 1-byte integer (2)
+│  │    │     │     ┌─── Argument 'c': opcode 0x61 indicates a 1-byte integer (3)
+│  │    │     │     │
+│  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
 F4 01 61 01 61 02 61 03
 ```
 
@@ -271,7 +271,7 @@ information in their serialized form.
 
 As first demonstrated in _[Encoding multiple exactly-one arguments](#encoding-multiple-exactly-one-arguments)_,
 the bytes of the serialized arguments begin immediately after the opcode and (if separate) the macro address.
-The reader iterates over the parameters declared in the macro signature from left to right. For each parameter,
+The reader iterates over the parameters in the macro signature in the order they are declared. For each parameter,
 the reader uses the parameter's declared encoding to interpret the next bytes in the stream. When no more parameters
 remain, parsing is complete.
 
@@ -361,13 +361,28 @@ in the body of the macro.
 
 ```ion
 (:add_macros
-    (pi () 3.14159265) // A constant `pi`
+  // Defines a constant 'hostname'
+  (hostname () "abc123.us_west.example.com")
 
-    (circle_area (pi::Pi radius) (multiply Pi radius radius))
-    //            └── ERROR: cannot use a constant as a macro shape
+  (http_ok (hostname::server page)
+  //           └── ERROR: cannot use a constant as a macro shape
+     {
+        server: (%server),
+        page: (%page),
+        message: OK,
+        status: 200,
+     }
+  )
 
-    (circle_area (radius) (multiply (.pi) radius radius))
-    //   OK: invokes `pi` as needed ──┘
+  (http_ok (page)
+    {
+      server: (.hostname),
+      //           └── OK: invokes constant as needed
+      page: (%page),
+      message: OK,
+      status: 200,
+    }
+  )
 )
 ```
 
@@ -405,61 +420,50 @@ has been read.
 |-----------------------|-----------------------------|
 | `()`                  | _&lt;No variadics, no AEB>_ |
 | `(a b c)`             | _&lt;No variadics, no AEB>_ |
-| `(a b c?)`            | `0b------cc`                |
-| `(a b* c?)`           | `0b----ccbb`                |
-| `(a+ b* c?)`          | `0b--ccbbaa`                |
-| `(a+ b c?)`           | `0b----ccaa`                |
-| `(a+ b* c? d*)`       | `0bddccbbaa`                |
-| `(a+ b* c? d* e)`     | `0bddccbbaa`                |
-| `(a+ b* c? d* e f?)`  | `0bddccbbaa 0b------ff`     |
-| `(a+ b* c? d* e+ f?)` | `0bddccbbaa 0b----ffee`     |
+| `(a b c?)`            | `------cc`                  |
+| `(a b* c?)`           | `----ccbb`                  |
+| `(a+ b* c?)`          | `--ccbbaa`                  |
+| `(a+ b c?)`           | `----ccaa`                  |
+| `(a+ b* c? d*)`       | `ddccbbaa`                  |
+| `(a+ b* c? d* e)`     | `ddccbbaa`                  |
+| `(a+ b* c? d* e f?)`  | `ddccbbaa ------ff`         |
+| `(a+ b* c? d* e+ f?)` | `ddccbbaa ----ffee`         |
 
 Each pair of bits in the AEB indicates what kind of expression to expect in the corresponding argument position.
 
-| Bit sequence | Meaning                                                                                                                           |
-|:------------:|:----------------------------------------------------------------------------------------------------------------------------------|
-|     `00`     | An **[empty expression group](#empty-groups)**. No bytes are present in the corresponding argument position.                      |
-|     `01`     | A **single expression** of the declared encoding is present in the corresponding argument position.                               |
-|     `10`     | A **[populated expression group](#populated-groups)** of the declared encoding is present in the corresponding argument position. |
-|     `11`     | _Reserved_. A bitmap entry with this bit sequence is illegal in Ion 1.1.                                                          |
+| Bit sequence | Meaning                                                                                                                  | `?` | `*` | `+` |
+|:------------:|:-------------------------------------------------------------------------------------------------------------------------|:---:|:---:|:---:|
+|     `00`     | An **empty stream**. No bytes are present in the corresponding argument position.                                        |  ✅  |  ✅  |  ❌  |
+|     `01`     | A **single expression** of the declared encoding is present in the corresponding argument position.                      |  ✅  |  ✅  |  ✅  |
+|     `10`     | A **[expression group](#expression-groups)** of the declared encoding is present in the corresponding argument position. |  ❌  |  ✅  |  ✅  |
+|     `11`     | _Reserved_. A bitmap entry with this bit sequence is illegal in Ion 1.1.                                                 |  ❌  |  ❌  |  ❌  |
+
+As noted in the table above:
+* An empty stream (`00`) cannot be used to encode an argument for a parameter with a cardinality of `one-or-more`.
+* An expression group (`10`) cannot be used to encode an argument for a parameter with a cardinality of `zero-or-one`.
 
 #### Expression groups
 
-##### Empty groups
+This section describes the encoding of an expression group. For an explanation of what an expression group is and how to use it,
+see _[Expression groups](../todo.md)_.
 
-If a parameter has a cardinality of `zero-or-one` or `zero-or-more`, callers can choose to pass an
-empty expression group as the corresponding argument. This is done by setting the bit sequence `00`
-in the appropriate position in the [Argument Encoding Bitmap](#argument-encoding-bitmap-aeb).
-
-##### Populated groups
-
-If a parameter has a cardinality of `zero-or-more` or `one-or-more`, callers can choose to pass a
-populated expression group as the corresponding argument instead of a single expression. This is
-done by setting the bit sequence `10` in the appropriate position in the
-[Argument Encoding Bitmap](#argument-encoding-bitmap-aeb) and then writing an
-[expression sequence](#expression-sequence) in the corresponding argument position to indicate
-how many bytes part of this group.
-
-##### Expression sequence
-
-An _expression sequence_ begins with a [`FlexUInt`](primitives/flex_uint.md). If the `FlexUInt`'s value
+An expression group begins with a [`FlexUInt`](primitives/flex_uint.md). If the `FlexUInt`'s value
 is:
-* **greater than zero**, then it represents the number of bytes used to encode this expression sequence. The reader
+* **greater than zero**, then it represents the number of bytes used to encode the rest of the expression group. The reader
   should continue reading expressions of the declared encoding until that number of bytes has been consumed.
-* **zero**, then it indicates that this is a delimited expression sequence and the processing varies according to
+* **zero**, then it indicates that this is a delimited expression group and the processing varies according to
   whether the declared encoding is tagged or tagless. If the encoding is:
-  * a **[tagged](#tagged-encoding)**, then each expression in the group begins with an opcode. The reader
+  * **[tagged](#tagged-encoding)**, then each expression in the group begins with an opcode. The reader
     must consume tagged expressions until it encounters a terminating `END` opcode (`0xF0`).
-  * a **[tagless](#tagless-encodings)**, then each expression in the group has no leading opcode; there is no
+  * **[tagless](#tagless-encodings)**, then each expression in the group has no leading opcode; there is no
     way to encode the terminating `END`. Instead, the sequence is broken into 'chunks' that each have a
     `FlexUInt` length prefix. The reader will continue reading chunks until it encounters a length prefix of
     `FlexUInt` `0`, indicating the end of the chunk series. Each chunk in the series must be self-contained;
     an expression of the declared encoding may not be split across multiple chunks.
 
-> [!Note]
-> Despite the name, it is possible to encode an empty expression group using this syntax.
-> However, doing so will always be significantly less efficient than using the
-> [Argument Encoding Bitmap](#argument-encoding-bitmap-aeb).
+> [!TIP]
+> While it is legal to write an empty expression group for `zero-or-more` parameters,
+> it is always more efficient to set the parameter's AEB bits to `00` instead.
 
 #### Example encoding of tagged `zero-or-one` with empty group
 
@@ -541,7 +545,7 @@ is:
 00 01 61 01
 ```
 
-#### Example encoding of tagged `zero-or-more` with populated group
+#### Example encoding of tagged `zero-or-more` with expression group
 ```ion
 (:add_macros
   (foo (a*) ...)
@@ -555,18 +559,18 @@ is:
 ```
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
-│  ┌──── AEB: 0b------aa; a=10, populated expression group
-│  │  ┌──── FlexUInt 6: 6-byte expression sequence
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 6: 6-byte expression group
 │  │  │    ┌──── Opcode 0x61 indicates a 1-byte int (1)
 │  │  │    │     ┌──── Opcode 0x61 indicates a 1-byte int (2)
 │  │  │    │     │     ┌─── Opcode 0x61 indicates a 1-byte int (3)
 │  │  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
 00 02 0D 61 01 61 02 61 03
          └───────┬───────┘
-      6-byte expression sequence
+      6-byte expression group body
 ```
 
-#### Example encoding of tagged `zero-or-more` with delimited group
+#### Example encoding of tagged `zero-or-more` with delimited expression group
 ```ion
 (:add_macros
   (foo (a*) ...)
@@ -580,8 +584,8 @@ is:
 ```
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
-│  ┌──── AEB: 0b------aa; a=10, populated expression group
-│  │  ┌──── FlexUInt 0: delimited expression sequence
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 0: delimited expression group
 │  │  │    ┌──── Opcode 0x61 indicates a 1-byte int (1)
 │  │  │    │     ┌──── Opcode 0x61 indicates a 1-byte int (2)
 │  │  │    │     │     ┌─── Opcode 0x61 indicates a 1-byte int (3)
@@ -589,7 +593,7 @@ is:
 │  │  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐ │
 00 02 01 61 01 61 02 61 03 F0
          └───────┬───────┘
-        expression sequence
+        expression group body
 ```
 
 #### Example encoding of tagged `one-or-more` with single expression
@@ -612,7 +616,7 @@ is:
 00 01 61 01
 ```
 
-#### Example encoding of tagged `one-or-more` with populated group
+#### Example encoding of tagged `one-or-more` with expression group
 ```ion
 (:add_macros
   (foo (a+) ...)
@@ -626,18 +630,18 @@ is:
 ```
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
-│  ┌──── AEB: 0b------aa; a=10, populated expression group
-│  │  ┌──── FlexUInt 6: 6-byte expression sequence
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 6: 6-byte expression group
 │  │  │  ┌──── Opcode 0x61 indicates a 1-byte int
 │  │  │  │     ┌──── Opcode 0x61 indicates a 1-byte int
 │  │  │  │     │     ┌─── Opcode 0x61 indicates a 1-byte int
 │  │  │  │   1 │  2  │   3
 00 02 0D 61 01 61 02 61 03
          └───────┬───────┘
-      6-byte expression sequence
+      6-byte expression group body
 ```
 
-#### Example encoding of tagged `one-or-more` with delimited group
+#### Example encoding of tagged `one-or-more` with delimited expression group
 ```ion
 (:add_macros
   (foo (a+) ...)
@@ -651,8 +655,8 @@ is:
 ```
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
-│  ┌──── AEB: 0b------aa; a=10, populated expression group
-│  │  ┌──── FlexUInt 0: delimited expression sequence
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 0: delimited expression group
 │  │  │  ┌──── Opcode 0x61 indicates a 1-byte int
 │  │  │  │     ┌──── Opcode 0x61 indicates a 1-byte int
 │  │  │  │     │     ┌─── Opcode 0x61 indicates a 1-byte int
@@ -660,5 +664,55 @@ is:
 │  │  │  │   1 │  2  │   3  │
 00 02 01 61 01 61 02 61 03 F0
          └───────┬───────┘
-        expression sequence
+        expression group body
+```
+
+#### Example encoding of tagless `zero-or-more` with expression group
+```ion
+(:add_macros
+  (foo (uint8::a*) ...)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 3: 3-byte expression group
+│  │  │  ┌──── uint8 1
+│  │  │  │  ┌──── uint8 2
+│  │  │  │  │  ┌─── uint8 3
+│  │  │  │  │  │
+00 02 07 01 02 03
+         └──┬───┘
+   expression group body
+```
+
+#### Example encoding of tagless `zero-or-more` with delimited expression group
+```ion
+(:add_macros
+  (foo (uint8::a*) ...)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 0: Delimited expression group
+│  │  │  ┌──── FlexUInt 3: 3-byte chunk
+│  │  │  │            ┌──── FlexUInt 2: 2-byte chunk
+│  │  │  │            │       ┌──── FlexUInt 0: End of group
+│  │  │  │            │       │
+00 02 01 07 01 02 03 05 04 05 01
+            └──┬───┘    └─┬─┘
+            chunk 1    chunk 2
 ```
