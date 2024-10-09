@@ -147,9 +147,9 @@ and have a cardinality of [_exactly-one_](../macros/defining_macros.md#parameter
 
 ### Tagged encoding
 
-When a macro parameter does not specify an encoding (that is: the parameter name is not annotated), arguments
+When a macro parameter does not specify an encoding (the parameter name is not annotated), arguments
 passed to that parameter use the 'tagged' encoding. The argument begins with a leading [opcode](opcodes.md)
-that dictates how many bytes follow and how they should be interpreted.
+that dictates how to interpret the bytes that follow.
 
 This is the same encoding used for values in other Ion 1.1 contexts like lists, s-expressions, or at the top level.
 
@@ -159,7 +159,7 @@ A parameter with a cardinality of [_exactly-one_](../macros/defining_macros.md#p
 argument to be encoded as a single expression of the parameter's declared encoding. (The following section will explore the
 available encodings in greater depth; for now, our examples will be limited to parameters using the [_tagged encoding_](#tagged-encoding).)
 
-When the macro has a single parameter, the corresponding encoded argument follows the opcode and (if separate) the encoded address.
+When the macro has a single `exactly-one` parameter, the corresponding encoded argument follows the opcode and (if separate) the encoded address.
 
 #### Example encoding of an e-expression with a tagged, `exactly-one` argument
 
@@ -198,7 +198,7 @@ F4 01 61 01
 
 If the macro has more than one parameter, a reader would iterate over the parameters declared in the macro signature
 from left to right. For each parameter, the reader would use the parameter's declared encoding to interpret the next
-bytes in the stream. When no more parameters remain, parsing is complete.
+bytes in the stream. When no more parameters remain, parsing of the e-expression's arguments is complete.
 
 #### Example encoding of an e-expression with multiple tagged, `exactly-one` arguments
 
@@ -496,8 +496,8 @@ is:
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
 │  ┌──── AEB: 0b------aa; a=01, single expression
-│  │  ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int
-│  │  │   1
+│  │    ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int (1)
+│  │  ┌─┴─┐
 00 01 61 01
 ```
 
@@ -536,8 +536,8 @@ is:
 ┌──── Opcode 0x00 is less than 0x40; this is an e-expression
 │     invoking the macro at address 0.
 │  ┌──── AEB: 0b------aa; a=01, single expression
-│  │  ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int
-│  │  │   1
+│  │    ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int (1)
+│  │  ┌─┴─┐
 00 01 61 01
 ```
 
@@ -557,10 +557,10 @@ is:
 │     invoking the macro at address 0.
 │  ┌──── AEB: 0b------aa; a=10, populated expression group
 │  │  ┌──── FlexUInt 6: 6-byte expression sequence
-│  │  │  ┌──── Opcode 0x61 indicates a 1-byte int
-│  │  │  │     ┌──── Opcode 0x61 indicates a 1-byte int
-│  │  │  │     │     ┌─── Opcode 0x61 indicates a 1-byte int
-│  │  │  │   1 │  2  │   3
+│  │  │    ┌──── Opcode 0x61 indicates a 1-byte int (1)
+│  │  │    │     ┌──── Opcode 0x61 indicates a 1-byte int (2)
+│  │  │    │     │     ┌─── Opcode 0x61 indicates a 1-byte int (3)
+│  │  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
 00 02 0D 61 01 61 02 61 03
          └───────┬───────┘
       6-byte expression sequence
@@ -582,11 +582,11 @@ is:
 │     invoking the macro at address 0.
 │  ┌──── AEB: 0b------aa; a=10, populated expression group
 │  │  ┌──── FlexUInt 0: delimited expression sequence
-│  │  │  ┌──── Opcode 0x61 indicates a 1-byte int
-│  │  │  │     ┌──── Opcode 0x61 indicates a 1-byte int
-│  │  │  │     │     ┌─── Opcode 0x61 indicates a 1-byte int
-│  │  │  │     │     │      ┌─── Opcode 0xF0 is delimited end
-│  │  │  │   1 │  2  │   3  │
+│  │  │    ┌──── Opcode 0x61 indicates a 1-byte int (1)
+│  │  │    │     ┌──── Opcode 0x61 indicates a 1-byte int (2)
+│  │  │    │     │     ┌─── Opcode 0x61 indicates a 1-byte int (3)
+│  │  │    │     │     │   ┌─── Opcode 0xF0 is delimited end
+│  │  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐ │
 00 02 01 61 01 61 02 61 03 F0
          └───────┬───────┘
         expression sequence

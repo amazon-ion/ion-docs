@@ -114,7 +114,6 @@ cause them to appear in a position corresponding to a different argument.
         [x, y]
     )
 )
-(:annotate foo)
 
 (:foo 1)   => ERROR: missing required argument `y`
 ```
