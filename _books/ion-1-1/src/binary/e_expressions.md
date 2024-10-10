@@ -123,7 +123,7 @@ F4 04 47 86
 
 ### System Macro Invocations
 
-E-expressions that invoke a [system macro](../modules/system_module.md#system-macro-addresses) can be encoded using the `0xEF` opcode followed by a 1-byte `FixedUInt` representing an index in the [system macro table](../modules/system_module.md#system-macros).
+E-expressions that invoke a [system macro](../modules/system_module.md#system-macros) can be encoded using the `0xEF` opcode followed by a 1-byte `FixedUInt` representing an index in the [system macro table](../modules/system_module.md#system-macros).
 
 ##### Encoding of the system macro `values`
 ```

@@ -56,19 +56,17 @@ To specify an encoding, the [parameter name](#parameter-names) is annotated with
 
 A parameter name may optionally be followed by a _cardinality modifier_. This is a sigil that indicates how many values the parameter expects the corresponding argument expression to produce when it is evaluated.
 
-| Modifier |         Cardinality | Accepts single expression | Accepts empty group | Accepts populated group |
-|:--------:|--------------------:|:-------------------------:|:-------------------:|:-----------------------:|
-|   `?`    |   zero-or-one value |             ✅             |          ✅          |            ❌            |
-|   `*`    | zero-or-more values |             ✅             |          ✅          |            ✅            |
-|   `!`    |   exactly-one value |             ✅             |          ❌          |            ❌            |
-|   `+`    |  one-or-more values |             ✅             |          ❌          |            ✅            |
+| Modifier |         Cardinality |
+|:--------:|--------------------:|
+|   `?`    |   zero-or-one value |
+|   `*`    | zero-or-more values |
+|   `!`    |   exactly-one value |
+|   `+`    |  one-or-more values |
 
 If no modifier is specified, the parameter's cardinality will default to exactly-one.
 An `exactly-one` parameter can only accept a single expression as its argument.
 
 Parameters with a cardinality other than `exactly-one` are called _variadic parameters_.
-Depending on the cardinality, a variadic parameter can accept empty expression group,
-a single expression, and/or a populated expression group.
 
 If an argument expression expands to a number of values that the cardinality forbids, the reader must raise an error.
 
