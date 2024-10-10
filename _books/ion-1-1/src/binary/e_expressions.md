@@ -31,19 +31,20 @@ Note that the opcode alone tells us which macro is being invoked, but it does no
 reader to parse any arguments that may follow. The parsing of arguments is described in detail in the section _Macro
 calling conventions_. (TODO: Link)
 
-
-#### E-expression With the Address as a Trailing `FixedUInt`
+#### E-expressions with biased `FixedUInt` addresses
 
 While E-expressions invoking macro addresses in the range `[0, 63]` can be encoded in a single byte using
 [E-expressions with the address in the opcode](#e-expression-with-the-address-in-the-opcode),
-many applications will benefit from defining more than 64 macros.
+many applications will benefit from defining more than 64 macros. The `0x4_` and `0x5_` opcodes
+can be used to represent macro addresses up to 1,052,734. In both encodings, the address is biased by
+the total number of addresses with lower opcodes.
 
-The `0x4_` and `0x5_` opcodes can be used to represent over 1 million macro addresses.
-If the high nibble of the opcode is `0x4_`, then a biased address follows as a 1-byte FixedUInt.
-If the high nibble of the opcode is `0x5_`, then a biased address follows as a 2-byte FixedUInt.
-In both cases, the address is biased by the total number of addresses with lower opcodes.
-For `0x4_`, the bias is `256 * low_nibble + 64` (or `(low_nibble shift-left 8) + 64`).
-For `0x5_`, the bias is `65536 * low_nibble + 4160`.
+If the high nibble of the opcode is `0x4_`, then a biased address follows as a 1-byte [`FixedUInt`](primitives/fixed_uint.md).
+For `0x4_`, the bias is `256 * low_nibble + 64` (or `(low_nibble << 8) + 64`).
+
+If the high nibble of the opcode is `0x5_`, then a biased address follows as a 2-byte [`FixedUInt`](primitives/fixed_uint.md).
+
+For `0x5_`, the bias is `65536 * low_nibble + 4160` (or `(low_nibble << 16) + 4160`)
 
 #### Invocation of macro address `841`
 ```
@@ -96,18 +97,33 @@ Address : 142918
 
 #### E-expression with the address as a trailing `FlexUInt`
 
-<div class="warning">
+The opcode `0xF4` indicates an e-expression whose address is encoded as a trailing [`FlexUInt`](primitives/flex_uint.md) with no bias.
+This encoding is less compact for addresses that can be encoded using opcodes `0x5F` and below, but it is the
+only encoding that can be used for macro addresses greater than 1,052,734.
 
-> This section needs more details.
+##### Invocation of macro address `4`
+```
+┌──── Opcode F4 indicates an e-expression with a trailing `FlexUInt` macro address
+│
+│
+F4 09
+   │
+   └─── FlexUInt 4
+```
 
-</div>
+##### Invocation of macro address `1_100_000`
+```
+┌──── Opcode F4 indicates an e-expression with a trailing `FlexUInt` macro address
+│
+│
+F4 04 47 86
+   └──┬───┘
+      └─── FlexUInt 1,100,000
+```
 
-The opcode is `0xF4`. The macro address is given as a trailing [FlexUInt](primitives/fixed_uint.md) with no bias.
+### System Macro Invocations
 
-
-## System Macro Invocations
-
-E-expressions that invoke a [system macro](../modules/system_module.md#system-macro-addresses) can be encoded using the `0xEF` opcode followed by a 1-byte `FixedUInt` representing an index in the [system macro table](../modules/system_module.md#system-macros).
+E-expressions that invoke a [system macro](../modules/system_module.md#system-macros) can be encoded using the `0xEF` opcode followed by a 1-byte `FixedUInt` representing an index in the [system macro table](../modules/system_module.md#system-macros).
 
 ##### Encoding of the system macro `values`
 ```
@@ -120,326 +136,585 @@ EF 01
 In addition, system macros MAY be invoked using any of the `0x00`-`0x5F` or `0xF4`-`0xF5` opcodes, provided that the macro being invoked has been given an address in user macro address space.
 <!-- TODO: Add or link an example of how this can be done. /-->
 
-## Tagged E-expression Argument Encoding
+## E-expression argument encoding
 
-When a macro parameter has a tagged type, the encoding of that parameter's corresponding argument in an E-expression
-is identical to how it would be encoded anywhere else in an Ion stream: it has a leading [opcode](#opcodes) that
-dictates how many bytes follow and how they should be interpreted. This is very flexible, but makes it possible
-for writers to encode values that conflict with the parameter's declared type. Because of this, the macro expander will
-read the argument and then check its type against the parameter's declared type. If it does not match, the macro
-expander must raise an error.
+The example invocations in prior sections have demonstrated how to encode an invocation of the simplest
+form of macro--one with no parameters. This section explains how to encode macro invocations when they take
+parameters of different encodings and cardinalities.
 
-Macro `foo` (defined below) is used in this section's subsequent examples to demonstrate the encoding of tagged-type
-arguments.
+To begin, we will examine how arguments are encoded when all of the macro's parameters use the [_tagged encoding_](#tagged-encoding)
+and have a cardinality of [_exactly-one_](../macros/defining_macros.md#parameter-cardinalities).
 
-#### Definition of example macro `foo` at address `0`
-```
-(macro
-    foo           // Macro name
-    (number::x!)  // Parameters
-    /*...*/       // Template (elided)
+### Tagged encoding
+
+When a macro parameter does not specify an encoding (the parameter name is not annotated), arguments
+passed to that parameter use the 'tagged' encoding. The argument begins with a leading [opcode](opcodes.md)
+that dictates how to interpret the bytes that follow.
+
+This is the same encoding used for values in other Ion 1.1 contexts like lists, s-expressions, or at the top level.
+
+### Encoding a single `exactly-one` argument
+
+A parameter with a cardinality of [_exactly-one_](../macros/defining_macros.md#parameter-cardinalities) expects its corresponding
+argument to be encoded as a single expression of the parameter's declared encoding. (The following section will explore the
+available encodings in greater depth; for now, our examples will be limited to parameters using the [_tagged encoding_](#tagged-encoding).)
+
+When the macro has a single `exactly-one` parameter, the corresponding encoded argument follows the opcode and (if separate) the encoded address.
+
+#### Example encoding of an e-expression with a tagged, `exactly-one` argument
+
+##### Macro definition
+```ion
+(:set_macros
+  (foo (x) /*...*/)
 )
 ```
 
-#### Encoding of e-expression `(:foo 3.14e)`
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0x6B indicates a 2-byte float; an IEEE-754 half-precision float follows
-│  │
-00 6B 47 42
-      └─┬─┘
-      3.14e0
-
-// The macro expander confirms that `3.14e0` (a `float`) matches the expected type: `number`.
+##### Text e-expression
+```ion
+(:foo 1)
 ```
 
-#### Encoding of e-expression `(:foo 9)`
+##### Binary e-expression with the address in the opcode
 ```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0x61 indicates a 1-byte integer. A 1-byte FixedInt follows.
-│  │  ┌──── A 1-byte FixedInt: 9
-00 61 09
-
-// The macro expander confirms that `9` (an `int`) matches the expected type: `number`.
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression invoking
+│     the macro at address 0.
+│    ┌─── Argument 'x': opcode 0x61 indicates a 1-byte integer (1)
+│  ┌─┴─┐
+00 61 01
 ```
 
-#### Encoding of e-expression `(:foo $10::9)`
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0xE4 indicates a single annotation with symbol address. A FlexUInt follows.
-│  │  ┌──── Symbol address: FlexUInt 10 ($10); an opcode for the annotated value follows.
-│  │  │  ┌──── Opcode 0x61 indicates a 1-byte integer
-│  │  │  │   ┌──── 1-byte FixedInt 9
-00 E4 15 61 09
 
-// The macro expander confirms that `$10::9` (an annotated `int`) matches the expected type: `number`.
+##### Binary e-expression using a trailing `FlexUInt` address
+```
+┌──── Opcode F4: An e-expression with a trailing FlexUInt address
+│  ┌──── FlexUInt 0: Macro address 0
+│  │    ┌─── Argument 'x': opcode 0x61 indicates a 1-byte integer (1)
+│  │  ┌─┴─┐
+F4 01 61 01
 ```
 
-#### Encoding of e-expression `(:foo null.int)`
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0xEB indicates a typed null. A 1-byte FixedUInt follows indicating the type.
-│  │  ┌──── Null type: FixedUInt: 1; integer
-00 EB 01
+### Encoding multiple `exactly-one` arguments
 
-// The macro expander confirms that `null.int` matches the expected type: `number`.
-```
+If the macro has more than one parameter, a reader would iterate over the parameters declared in the macro signature
+from left to right. For each parameter, the reader would use the parameter's declared encoding to interpret the next
+bytes in the stream. When no more parameters remain, parsing of the e-expression's arguments is complete.
 
-#### Encoding of e-expression `(:foo null)`
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a tagged number as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0xEA represents an untyped null (aka `null.null`)
-00 EA
+#### Example encoding of an e-expression with multiple tagged, `exactly-one` arguments
 
-// The macro expander confirms that `null` matches the expected type: `number`
-```
-
-#### Encoding of e-expression `(:foo (:bar))`
-```
-// A second macro definition at address 1
-(macro
-    bar // Macro name
-    ()  // Parameters
-    5   // Template; invocations of `bar` always expand to `5`.
+##### Macro definition
+```ion
+(:set_macros
+  (foo (a b c) /*...*/)
 )
-
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a tagged int as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0x01 is less than 0x40, so it is an E-expression invoking the macro
-│  │     at address 1: `bar`. `bar` takes no parameters, so no bytes follow.
-00 01
-
-// The macro expander confirms that the expansion of `(:bar)` (that is: `5`) matches
-// the expected type: `number`.
 ```
 
-#### Encoding of e-expression `(:foo "hello")`
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0, `foo`. `foo` takes a tagged int as a parameter (`x`), so an opcode follows.
-│  ┌──── Opcode 0x95 indicates a 5-byte string. 5 UTF-8 bytes follow.
-│  │  h  e  l  l  o
-00 95 68 65 6C 6C 6F
-      └──────┬─────┘
-        UTF-8 bytes
-
-// ERROR: Expected a `number` for `foo` parameter `x`, but found `string`
+##### Text e-expression
+```ion
+(:foo 1 2 3)
 ```
 
+##### Binary e-expression with the address in the opcode
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│    ┌─── Argument 'a': opcode 0x61 indicates a 1-byte integer (1)
+│    │     ┌─── Argument 'b': opcode 0x61 indicates a 1-byte integer (2)
+│    │     │     ┌─── Argument 'c': opcode 0x61 indicates a 1-byte integer (3)
+│  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+00 61 01 61 02 61 03
+```
 
-#### Tagless Encodings
+##### Binary e-expression using a trailing `FlexUInt` address
+```
+┌──── Opcode F4: An e-expression with a trailing FlexUInt address
+│  ┌──── FlexUInt 0: Macro address 0
+│  │    ┌─── Argument 'a': opcode 0x61 indicates a 1-byte integer (1)
+│  │    │     ┌─── Argument 'b': opcode 0x61 indicates a 1-byte integer (2)
+│  │    │     │     ┌─── Argument 'c': opcode 0x61 indicates a 1-byte integer (3)
+│  │    │     │     │
+│  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+F4 01 61 01 61 02 61 03
+```
 
-<div class="warning">
+### Tagless Encodings
 
-> This section was obsolete and needs to be rewritten.
-
-</div>
-
-In contrast to <<tagged_encodings, tagged encodings>>, _tagless encodings_ do not begin with an opcode. This means
-that they are potentially more compact than a tagged type, but are also less flexible. Because tagless encodings
+In contrast to the [`tagged encoding`](#tagged-encoding), _tagless encodings_ do not begin with an opcode.
+This means that they are potentially more compact than a tagged type, but are also less flexible. Because tagless encodings
 do not have an opcode, they cannot represent E-expressions, annotation sequences, or `null` values of any kind.
 
-Tagless types include the <<primitive_encodings, primitive types>> and <<macro_shapes, macro shapes>>.
+Tagless encodings are comprised of the [primitive encodings](#primitive-encodings) and [macro shapes](#macro-shapes).
 
+#### Primitive encodings
 
-##### Primitive Types
+Primitive encodings are self-delineating, either by having a statically known size in bytes or by including length
+information in their serialized form.
 
-Primitive types are self-delineating, either by having a statically known size in bytes or by including length
-information in their encoding.
+| Ion type | Primitive encoding | Size in bytes | Encoding                                                                                                              |
+|----------|--------------------|:-------------:|-----------------------------------------------------------------------------------------------------------------------|
+| `int`    | `uint8`            |       1       | [`FixedUInt`](primitives/fixed_uint.md)                                                                               |
+|          | `uint16`           |       2       |                                                                                                                       |
+|          | `uint32`           |       4       |                                                                                                                       |
+|          | `uint64`           |       8       |                                                                                                                       |
+|          | `flex_uint`        |   variable    | [`FlexUInt`](primitives/flex_uint.md)                                                                                 |
+|          | `int8`             |       1       | [`FixedInt`](primitives/fixed_int.md)                                                                                 |
+|          | `int16`            |       2       |                                                                                                                       |
+|          | `int32`            |       4       |                                                                                                                       |
+|          | `int64`            |       8       |                                                                                                                       |
+|          | `flex_int`         |   variable    | [`FlexInt`](primitives/flex_int.md)                                                                                   |
+| `float`  | `float16`          |       2       | [Little-endian IEEE-754 half-precision float](https://en.wikipedia.org/wiki/Half-precision_floating-point_format)     |
+|          | `float32`          |       4       | [Little-endian IEEE-754 single-precision float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) |
+|          | `float64`          |       8       | [Little-endian IEEE-754 double-precision float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) |
+| `symbol` | `flex_sym`         |   variable    | [`FlexSym`](primitives/flex_sym.md)                                                                                   |
 
-Primitive types include:
+#### Example encoding of an e-expression with primitive, `exactly-one` arguments
 
-| Ion type | Primitive type   | Size in bytes | Encoding                                                                                                              |
-|----------|------------------|---------------|-----------------------------------------------------------------------------------------------------------------------|
-| `int`    | `uint8`          | 1             | [`FixedUInt`](#fixeduint)                                                                                             |
-|          | `uint16`         | 2             |                                                                                                                       |
-|          | `uint32`         | 4             |                                                                                                                       |
-|          | `uint64`         | 8             |                                                                                                                       |
-|          | `compact_uint`   | variable      | [`FlexUInt`](#flexuint)                                                                                               |
-|          | `int8`           | 1             | [`FixedInt`](#fixedint)                                                                                               |
-|          | `int16`          | 2             |                                                                                                                       |
-|          | `int32`          | 4             |                                                                                                                       |
-|          | `int64`          | 8             |                                                                                                                       |
-|          | `compact_int`    | variable      | [`FlexInt`](#flexint)                                                                                                 |  
-| `float`  | `float16`        | 2             | [Little-endian IEEE-754 half-precision float](https://en.wikipedia.org/wiki/Half-precision_floating-point_format)     |
-|          | `float32`        | 4             | [Little-endian IEEE-754 single-precision float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) |
-|          | `float64`        | 8             | [Little-endian IEEE-754 double-precision float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) |
-| `symbol` | `compact_symbol` | variable      | [`FlexSym`](#flexsym)                                                                                                 |
+As first demonstrated in _[Encoding multiple exactly-one arguments](#encoding-multiple-exactly-one-arguments)_,
+the bytes of the serialized arguments begin immediately after the e-expression's opcode and (if separate) the macro address.
+The reader iterates over the parameters in the macro signature in the order they are declared. For each parameter,
+the reader uses the parameter's declared encoding to interpret the next bytes in the stream. When no more parameters
+remain, parsing is complete.
 
-##### Macro Shapes
-
-<div class="warning">
-
-> This section was obsolete and needs to be rewritten.
-
-</div>
-
-The term _macro shape_ describes a macro that is being used as the encoding of an E-expression argument. They are
-considered "shapes" rather than types because while their encoding is always statically known, the types of data
-produced by their expansion is not. A single macro can produce streams of varying length and containing values of
-different Ion types depending on the arguments provided in the invocation.
-
-See [Macro Shapes](../macros/macros_by_example.md#macro-shapes) for more information.
-
-### Encoding E-expressions With Multiple Arguments
-
-E-expression arguments corresponding to each parameter are encoded one after the other moving from left to right.
-
-#### $1
+##### Macro definition
+```ion
+(:set_macros
+  (foo (flex_uint::a int8::b uint16::c) /*...*/)
+)
 ```
-(macro foo             // Macro name
-  (                    // Parameters
-    string::a
-    compact_symbol::b
-    uint16::c
+
+##### Text e-expression
+```ion
+(:foo 1 2 3)
+```
+
+##### Binary e-expression with the address in the opcode
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌─── Argument 'a': FlexUInt 1
+│  │  ┌─── Argument 'b': 1-byte FixedInt 2
+│  │  │    ┌─── Argument 'c': 2-byte FixedUInt 3
+│  │  │  ┌─┴─┐
+00 03 02 03 00
+```
+
+##### Binary e-expression using a trailing `FlexUInt` address
+```
+┌──── Opcode F4: An e-expression with a trailing FlexUInt address
+│  ┌──── FlexUInt 0: Macro address 0
+│  │  ┌─── Argument 'a': FlexUInt 1
+│  │  │  ┌─── Argument 'b': 1-byte FixedInt 2
+│  │  │  │    ┌─── Argument 'c': 2-byte FixedUInt 3
+│  │  │  │  ┌─┴─┐
+F4 01 03 02 03 00
+```
+
+#### Macro shapes
+
+The term _macro shape_ describes a macro that is being used as the encoding of an E-expression argument.
+A parameter using a macro shape as its encoding is sometimes called a _macro-shaped parameter_. For example,
+consider the following two macro definitions.
+
+The `point2D` macro takes two `flex_int`-encoded values as arguments.
+```ion
+(macro point2D (flex_int::$x flex_int::$y)
+  {
+    x: $x,
+    y: $y,
+  }
+)
+```
+
+The `line` macro takes a pair of `point2D` invocations as arguments.
+```ion
+(macro line (point2D::$start point2D::$end)
+  {
+    start: $start,
+    end: $end,
+  }
+)
+```
+
+Normally an e-expression would begin with an opcode and an address communicating what comes next.
+However, when we're reading the argument for a macro-shaped parameter, the macro being invoked
+is inferred from the parent macro signature instead. As such, there is no need to include an
+opcode or address.
+
+```
+┌──── Opcode 0x01 is less than 0x40; this is an e-expression
+│     invoking the macro at address 1: `line`
+│    ┌─── Argument $start: an implicit invocation of macro `point2D`
+│    │     ┌─── Argument $end: an implicit invocation of macro `point2D`
+│  ┌─┴─┐ ┌─┴─┐
+00 03 05 07 09
+   │  │  │  └────   $end/$y: FlexInt 4
+   │  │  └───────   $end/$x: FlexInt 3
+   │  └────────── $start/$y: FlexInt 2
+   └───────────── $start/$x: FlexInt 1
+```
+
+Any macro can be used as a macro shape except for _constants_--macros which take zero parameters.
+Constants cannot be used as a macro shape because their serialized representation would be empty,
+making it impossible to encode them in [expression groups](#expression-groups). However, this
+limitation does not sacrifice any expressiveness; the desired constant can always be invoked directly
+in the body of the macro.
+
+```ion
+(:add_macros
+  // Defines a constant 'hostname'
+  (hostname () "abc123.us_west.example.com")
+
+  (http_ok (hostname::server page)
+  //           └── ERROR: cannot use a constant as a macro shape
+     {
+        server: (%server),
+        page: (%page),
+        message: OK,
+        status: 200,
+     }
   )
-  /* ... */            // Body (elided)
+
+  (http_ok (page)
+    {
+      server: (.hostname),
+      //           └── OK: invokes constant as needed
+      page: (%page),
+      message: OK,
+      status: 200,
+    }
+  )
 )
 ```
 
-#### $1
+### Encoding variadic arguments
+
+The preceding sections have described how to (de)serialize the various parameter encodings,
+but these parameters have always had the same [cardinality](../macros/defining_macros.md#parameter-cardinalities):
+`exactly-one`.
+
+This section explains how to encode e-expressions invoking a macro whose signature contains
+_variadic parameters_--parameters with a cardinality of `zero-or-one`, `zero-or-more`, or `one-or-more`.
+
+#### Argument Encoding Bitmap (AEB)
+
+If a macro signature has one or more variadic parameters, then e-expressions invoking that macro will include an additional
+construct: the _Argument Encoding Bitmap (AEB)_. This little-endian byte sequence precedes the first serialized argument
+and indicates how each argument corresponding to a variadic parameter has been encoded.
+
+Each variadic parameter in the signature is assigned two bits in the AEB. This means that the reader can statically determine
+how many AEB bytes to expect in the e-expression by examining the signature.
+
+| Number of variadic parameters | AEB byte length |
+|:-----------------------------:|:---------------:|
+|               0               |        0        |
+|            1 to 4             |        1        |
+|            5 to 8             |        2        |
+|            9 to 12            |        3        |
+|              `N`              | `ceiling(N/4)`  |
+
+Bits in the AEB are assigned from least significant to most significant and correspond to the variadic parameters in the signature
+from left to right. This allows the reader to right-shift away the bits of each variadic parameter when its corresponding argument
+has been read.
+
+| Example Signature     | AEB Layout                  |
+|-----------------------|-----------------------------|
+| `()`                  | _&lt;No variadics, no AEB>_ |
+| `(a b c)`             | _&lt;No variadics, no AEB>_ |
+| `(a b c?)`            | `------cc`                  |
+| `(a b* c?)`           | `----ccbb`                  |
+| `(a+ b* c?)`          | `--ccbbaa`                  |
+| `(a+ b c?)`           | `----ccaa`                  |
+| `(a+ b* c? d*)`       | `ddccbbaa`                  |
+| `(a+ b* c? d* e)`     | `ddccbbaa`                  |
+| `(a+ b* c? d* e f?)`  | `ddccbbaa ------ff`         |
+| `(a+ b* c? d* e+ f?)` | `ddccbbaa ----ffee`         |
+
+Each pair of bits in the AEB indicates what kind of expression to expect in the corresponding argument position.
+
+| Bit sequence | Meaning                                                                                                                  | `?` | `*` | `+` |
+|:------------:|:-------------------------------------------------------------------------------------------------------------------------|:---:|:---:|:---:|
+|     `00`     | An **empty stream**. No bytes are present in the corresponding argument position.                                        |  ✅  |  ✅  |  ❌  |
+|     `01`     | A **single expression** of the declared encoding is present in the corresponding argument position.                      |  ✅  |  ✅  |  ✅  |
+|     `10`     | A **[expression group](#expression-groups)** of the declared encoding is present in the corresponding argument position. |  ❌  |  ✅  |  ✅  |
+|     `11`     | _Reserved_. A bitmap entry with this bit sequence is illegal in Ion 1.1.                                                 |  ❌  |  ❌  |  ❌  |
+
+As noted in the table above:
+* An empty stream (`00`) cannot be used to encode an argument for a parameter with a cardinality of `one-or-more`.
+* An expression group (`10`) cannot be used to encode an argument for a parameter with a cardinality of `zero-or-one`.
+
+#### Expression groups
+
+This section describes the encoding of an expression group. For an explanation of what an expression group is and how to use it,
+see _[Expression groups](../todo.md)_.
+
+An expression group begins with a [`FlexUInt`](primitives/flex_uint.md). If the `FlexUInt`'s value
+is:
+* **greater than zero**, then it represents the number of bytes used to encode the rest of the expression group. The reader
+  should continue reading expressions of the declared encoding until that number of bytes has been consumed.
+* **zero**, then it indicates that this is a delimited expression group and the processing varies according to
+  whether the declared encoding is tagged or tagless. If the encoding is:
+  * **[tagged](#tagged-encoding)**, then each expression in the group begins with an opcode. The reader
+    must consume tagged expressions until it encounters a terminating `END` opcode (`0xF0`).
+  * **[tagless](#tagless-encodings)**, then the expression group is a delimited sequence of 'chunks' that each
+    have a `FlexUInt` length prefix and a body comprised of one or more expressions of the declared encoding.
+    The reader will continue reading chunks until it encounters a length prefix of `FlexUInt` `0` (`0x01`),
+    indicating the end of the chunk sequence. Each chunk in the sequence must be self-contained;
+    an expression of the declared encoding may not be split across multiple chunks.
+    See _[Example encoding of tagless `zero-or-more` with delimited expression group](#example-encoding-of-tagless-zero-or-more-with-delimited-expression-group)_
+    for an illustration.
+
+> [!TIP]
+> While it is legal to write an empty expression group for `zero-or-more` parameters,
+> it is always more efficient to set the parameter's AEB bits to `00` instead.
+
+#### Example encoding of tagged `zero-or-one` with empty group
+
+```ion
+(:add_macros
+  (foo (a?) /*...*/)
+)
 ```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0, `foo`. `foo`'s first parameter is a string, so an opcode follows.
-│
-│  ┌──── Opcode 0x95 indicates a 5-byte string. 5 UTF-8 bytes follow.
+
+```ion
+(:foo) // `a` is implicitly empty
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa
+│  │     a=00, empty expression group
+00 00
+```
+
+#### Example encoding of tagged `zero-or-one` with single expression
+```ion
+(:add_macros
+  (foo (a?) /*...*/)
+)
+```
+
+```ion
+(:foo 1)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=01, single expression
+│  │    ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int (1)
+│  │  ┌─┴─┐
+00 01 61 01
+```
+
+#### Example encoding of tagged `zero-or-more` with empty group
+
+```ion
+(:add_macros
+  (foo (a*) /*...*/)
+)
+```
+
+```ion
+(:foo) // `a` is implicitly empty
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=00, empty expression group
 │  │
-│  │                 ┌──── `foo`'s second parameter is a compact_symbol, so a `FlexSym` follows.
-│  │                 │     FlexSym -3: 3 bytes of UTF-8 text follow.
-│  │                 │
-│  │                 │           ┌──── `foo`'s third parameter is a uint16, so a 2-byte
-│  │                 │           │     2-byte `FixedUInt` follows.
-│  │                 │           │     FixedUInt: 512
-│  │  h  e  l  l  o  │   b  a  z │
-00 95 68 65 6C 6C 6F FD 62 61 7A 00 20
-      └──────┬─────┘    └───┬──┘
-        UTF-8 bytes    UTF-8 bytes
+00 00
 ```
 
-
-### Argument Encoding Bitmap (AEB)
-
-<div class="warning">
-
-> This section was obsolete and needs to be rewritten.
-
-</div>
-
-### Expression Groups
-
-Grouped parameters can be encoded using either a <<length_prefixed_expression_groups, length-prefixed>> or
-<<delimited_expression_groups, delimited>> expression group encoding.
-
-The example encodings in the following sections refer to this macro definition:
-
-#### $1
-```
-(macro
-    foo          // Macro name
-    (int::x*)    // Parameters; `x` is a grouped parameter
-    /*...*/      // Body (elided)
+#### Example encoding of tagged `zero-or-more` with single expression
+```ion
+(:add_macros
+  (foo (a*) /*...*/)
 )
 ```
 
-#### Length-prefixed Expression Groups
-
-If a grouped parameter's <<argument_encoding_bitmap, AEB bits>> are `0b10`, then the argument expressions belonging
-to that parameter will be prefixed by a `FlexUInt` indicating the number of bytes used to encode them.
-
-#### $1
+```ion
+(:foo 1)
 ```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
-│     so an argument encoding bitmap (AEB) follows.
-│  ┌──── AEB: 0b0000_0010; the arguments for grouped parameter `x` have been encoded
-│  │     as a length-prefixed expression group. A FlexUInt length prefix follows.
-│  │  ┌──── FlexUInt: 6; the next 6 bytes are an `int` expression group.
-│  │  │
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=01, single expression
+│  │    ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int (1)
+│  │  ┌─┴─┐
+00 01 61 01
+```
+
+#### Example encoding of tagged `zero-or-more` with expression group
+```ion
+(:add_macros
+  (foo (a*) /*...*/)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 6: 6-byte expression group
+│  │  │    ┌──── Opcode 0x61 indicates a 1-byte int (1)
+│  │  │    │     ┌──── Opcode 0x61 indicates a 1-byte int (2)
+│  │  │    │     │     ┌─── Opcode 0x61 indicates a 1-byte int (3)
+│  │  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
 00 02 0D 61 01 61 02 61 03
-         └─┬─┘ └─┬─┘ └─┬─┘
-           1     2     3
+         └───────┬───────┘
+      6-byte expression group body
 ```
 
-[#delimited_expression_groups]
-#### Delimited Expression Groups
-
-If a grouped parameter's <<argument_encoding_bitmap, AEB bits>> are `0b11`, then the argument expressions belonging
-to that parameter will be encoded in a delimited sequence.
-Delimited sequences are encoded differently for <<tagged_encodings,tagged types>> and
-<<tagless_encodings, tagless types>>.
-
-##### Delimited Tagged Expression Groups
-
-Tagged type encodings begin with an <<opcodes, opcode>>; a delimited sequence of tagged arguments is terminated by
-the closing delimiter opcode, `0xF0`.
-
-#### $1
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
-│     so an argument encoding bitmap (AEB) follows.
-│  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
-│  │     as a delimited expression group. A series of tagged `int` expressions follow.
-│  │                    ┌──── Opcode 0xF0 ends the expression group.
-│  │                    │
-00 03 61 01 61 02 61 03 F0
-      └─┬─┘ └─┬─┘ └─┬─┘
-        1     2     3
-```
-
-##### Delimited Tagless Expression Groups
-
-Tagless type encodings do not have an opcode, and so cannot use the closing delimiter opcode--`0xF0` is a valid first
-byte for many tagless encodings.
-
-Instead, tagless expressions are grouped into 'pages', each of which is prefixed by a [`FlexUInt`](#flexuint)
-representing a count (not a byte-length) of the expressions that follow. If a prefix has a count of zero, that marks
-the end of the sequence of pages.
-
-#### $1
-```
-(macro
-    compact_foo          // Macro name
-    (compact_int::x*)    // Parameters; `x` is a grouped parameter
-    /*...*/              // Body (elided)
+#### Example encoding of tagged `zero-or-more` with delimited expression group
+```ion
+(:add_macros
+  (foo (a*) /*...*/)
 )
 ```
 
-#### $1
-```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
-│     so an argument encoding bitmap (AEB) follows.
-│  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
-│  │     as a delimited expression group. Count-prefixed pages of `compact_int`
-│  │     expressions follow.
-│  │   ┌──── Count prefix: FlexUInt 3; 3 `compact_int`s follow.
-│  │   │          ┌──── Count prefix: FlexUInt 0; no more pages follow.
-│  │   │          │
-00 03 07 03 05 07 01
-         └──┬───┘
-         First page: 1, 2, 3
+```ion
+(:foo 1 2 3)
 ```
 
-#### $1
 ```
-┌──── The opcode is less than 0x40, so it is an E-expression invoking the macro at
-│     address 0: `foo`. `foo` takes a group of int expressions as a parameter (`x`),
-│     so an argument encoding bitmap (AEB) follows.
-│  ┌──── AEB: 0b0000_0011; the arguments for grouped parameter `x` have been encoded
-│  │     as a delimited expression group. Count-prefixed pages of `compact_int`
-│  │     expressions follow.
-│  │   ┌──── Count prefix: FlexUInt 2; 2 `compact_int`s follow.
-│  │   │        ┌──── Count prefix: FlexUInt 1; a single `compact_int` follows.
-│  │   │        │    ┌──── Count prefix: FlexUInt 0; no more pages follow.
-│  │   │        │    │
-00 03 05 03 05 03 07 01
-         └─┬─┘    └─ Second page: 3
-           │
-         First page: 1, 2
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 0: delimited expression group
+│  │  │    ┌──── Opcode 0x61 indicates a 1-byte int (1)
+│  │  │    │     ┌──── Opcode 0x61 indicates a 1-byte int (2)
+│  │  │    │     │     ┌─── Opcode 0x61 indicates a 1-byte int (3)
+│  │  │    │     │     │   ┌─── Opcode 0xF0 is delimited end
+│  │  │  ┌─┴─┐ ┌─┴─┐ ┌─┴─┐ │
+00 02 01 61 01 61 02 61 03 F0
+         └───────┬───────┘
+        expression group body
+```
+
+#### Example encoding of tagged `one-or-more` with single expression
+```ion
+(:add_macros
+  (foo (a+) /*...*/)
+)
+```
+
+```ion
+(:foo 1)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=01, single expression
+│  │  ┌──── Argument 'a': opcode 0x61 indicates a 1-byte int
+│  │  │   1
+00 01 61 01
+```
+
+#### Example encoding of tagged `one-or-more` with expression group
+```ion
+(:add_macros
+  (foo (a+) /*...*/)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 6: 6-byte expression group
+│  │  │  ┌──── Opcode 0x61 indicates a 1-byte int
+│  │  │  │     ┌──── Opcode 0x61 indicates a 1-byte int
+│  │  │  │     │     ┌─── Opcode 0x61 indicates a 1-byte int
+│  │  │  │   1 │  2  │   3
+00 02 0D 61 01 61 02 61 03
+         └───────┬───────┘
+      6-byte expression group body
+```
+
+#### Example encoding of tagged `one-or-more` with delimited expression group
+```ion
+(:add_macros
+  (foo (a+) /*...*/)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 0: delimited expression group
+│  │  │  ┌──── Opcode 0x61 indicates a 1-byte int
+│  │  │  │     ┌──── Opcode 0x61 indicates a 1-byte int
+│  │  │  │     │     ┌─── Opcode 0x61 indicates a 1-byte int
+│  │  │  │     │     │      ┌─── Opcode 0xF0 is delimited end
+│  │  │  │   1 │  2  │   3  │
+00 02 01 61 01 61 02 61 03 F0
+         └───────┬───────┘
+        expression group body
+```
+
+#### Example encoding of tagless `zero-or-more` with expression group
+```ion
+(:add_macros
+  (foo (uint8::a*) /*...*/)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 3: 3-byte expression group
+│  │  │  ┌──── uint8 1
+│  │  │  │  ┌──── uint8 2
+│  │  │  │  │  ┌─── uint8 3
+│  │  │  │  │  │
+00 02 07 01 02 03
+         └──┬───┘
+   expression group body
+```
+
+#### Example encoding of tagless `zero-or-more` with delimited expression group
+```ion
+(:add_macros
+  (foo (uint8::a*) /*...*/)
+)
+```
+
+```ion
+(:foo 1 2 3)
+```
+
+```
+┌──── Opcode 0x00 is less than 0x40; this is an e-expression
+│     invoking the macro at address 0.
+│  ┌──── AEB: 0b------aa; a=10, expression group
+│  │  ┌──── FlexUInt 0: Delimited expression group
+│  │  │  ┌──── FlexUInt 3: 3-byte chunk of uint8 expressions
+│  │  │  │            ┌──── FlexUInt 2: 2-byte chunk of uint8 expressions
+│  │  │  │            │       ┌──── FlexUInt 0: End of group
+│  │  │  │            │       │
+00 02 01 07 01 02 03 05 04 05 01
+            └──┬───┘    └─┬─┘
+            chunk 1    chunk 2
 ```
