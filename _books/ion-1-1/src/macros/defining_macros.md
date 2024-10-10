@@ -115,7 +115,8 @@ cause them to appear in a position corresponding to a different argument.
     )
 )
 
-(:foo 1)   => ERROR: missing required argument `y`
+(:foo (::) 1) => [(::), 1] => [1]
+(:foo 1)                   => ERROR: missing required argument `y`
 ```
 
 ### Macro signatures

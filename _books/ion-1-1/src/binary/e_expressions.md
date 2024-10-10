@@ -166,7 +166,7 @@ When the macro has a single `exactly-one` parameter, the corresponding encoded a
 ##### Macro definition
 ```ion
 (:set_macros
-  (foo (x) ...)
+  (foo (x) /*...*/)
 )
 ```
 
@@ -205,7 +205,7 @@ bytes in the stream. When no more parameters remain, parsing of the e-expression
 ##### Macro definition
 ```ion
 (:set_macros
-  (foo (a b c) ...)
+  (foo (a b c) /*...*/)
 )
 ```
 
@@ -270,7 +270,7 @@ information in their serialized form.
 #### Example encoding of an e-expression with primitive, `exactly-one` arguments
 
 As first demonstrated in _[Encoding multiple exactly-one arguments](#encoding-multiple-exactly-one-arguments)_,
-the bytes of the serialized arguments begin immediately after the opcode and (if separate) the macro address.
+the bytes of the serialized arguments begin immediately after the e-expression's opcode and (if separate) the macro address.
 The reader iterates over the parameters in the macro signature in the order they are declared. For each parameter,
 the reader uses the parameter's declared encoding to interpret the next bytes in the stream. When no more parameters
 remain, parsing is complete.
@@ -278,7 +278,7 @@ remain, parsing is complete.
 ##### Macro definition
 ```ion
 (:set_macros
-  (foo (flex_uint::a int8::b uint16) ...)
+  (foo (flex_uint::a int8::b uint16::c) /*...*/)
 )
 ```
 
@@ -356,7 +356,7 @@ opcode or address.
 Any macro can be used as a macro shape except for _constants_--macros which take zero parameters.
 Constants cannot be used as a macro shape because their serialized representation would be empty,
 making it impossible to encode them in [expression groups](#expression-groups). However, this
-limitation not sacrifice any expressiveness; the desired constant can always be invoked directly
+limitation does not sacrifice any expressiveness; the desired constant can always be invoked directly
 in the body of the macro.
 
 ```ion
@@ -398,7 +398,7 @@ _variadic parameters_--parameters with a cardinality of `zero-or-one`, `zero-or-
 #### Argument Encoding Bitmap (AEB)
 
 If a macro signature has one or more variadic parameters, then e-expressions invoking that macro will include an additional
-construct: the _Argument Encoding Bitmap (AEB)_. This is a little-endian byte sequence precedes the first serialized argument
+construct: the _Argument Encoding Bitmap (AEB)_. This little-endian byte sequence precedes the first serialized argument
 and indicates how each argument corresponding to a variadic parameter has been encoded.
 
 Each variadic parameter in the signature is assigned two bits in the AEB. This means that the reader can statically determine
@@ -455,11 +455,13 @@ is:
   whether the declared encoding is tagged or tagless. If the encoding is:
   * **[tagged](#tagged-encoding)**, then each expression in the group begins with an opcode. The reader
     must consume tagged expressions until it encounters a terminating `END` opcode (`0xF0`).
-  * **[tagless](#tagless-encodings)**, then each expression in the group has no leading opcode; there is no
-    way to encode the terminating `END`. Instead, the sequence is broken into 'chunks' that each have a
-    `FlexUInt` length prefix. The reader will continue reading chunks until it encounters a length prefix of
-    `FlexUInt` `0`, indicating the end of the chunk series. Each chunk in the series must be self-contained;
+  * **[tagless](#tagless-encodings)**, then the expression group is a delimited sequence of 'chunks' that each
+    have a `FlexUInt` length prefix and a body comprised of one or more expressions of the declared encoding.
+    The reader will continue reading chunks until it encounters a length prefix of `FlexUInt` `0` (`0x01`),
+    indicating the end of the chunk sequence. Each chunk in the sequence must be self-contained;
     an expression of the declared encoding may not be split across multiple chunks.
+    See _[Example encoding of tagless `zero-or-more` with delimited expression group](#example-encoding-of-tagless-zero-or-more-with-delimited-expression-group)_
+    for an illustration.
 
 > [!TIP]
 > While it is legal to write an empty expression group for `zero-or-more` parameters,
@@ -469,7 +471,7 @@ is:
 
 ```ion
 (:add_macros
-  (foo (a?) ...)
+  (foo (a?) /*...*/)
 )
 ```
 
@@ -488,7 +490,7 @@ is:
 #### Example encoding of tagged `zero-or-one` with single expression
 ```ion
 (:add_macros
-  (foo (a?) ...)
+  (foo (a?) /*...*/)
 )
 ```
 
@@ -509,7 +511,7 @@ is:
 
 ```ion
 (:add_macros
-  (foo (a*) ...)
+  (foo (a*) /*...*/)
 )
 ```
 
@@ -528,7 +530,7 @@ is:
 #### Example encoding of tagged `zero-or-more` with single expression
 ```ion
 (:add_macros
-  (foo (a*) ...)
+  (foo (a*) /*...*/)
 )
 ```
 
@@ -548,7 +550,7 @@ is:
 #### Example encoding of tagged `zero-or-more` with expression group
 ```ion
 (:add_macros
-  (foo (a*) ...)
+  (foo (a*) /*...*/)
 )
 ```
 
@@ -573,7 +575,7 @@ is:
 #### Example encoding of tagged `zero-or-more` with delimited expression group
 ```ion
 (:add_macros
-  (foo (a*) ...)
+  (foo (a*) /*...*/)
 )
 ```
 
@@ -599,7 +601,7 @@ is:
 #### Example encoding of tagged `one-or-more` with single expression
 ```ion
 (:add_macros
-  (foo (a+) ...)
+  (foo (a+) /*...*/)
 )
 ```
 
@@ -619,7 +621,7 @@ is:
 #### Example encoding of tagged `one-or-more` with expression group
 ```ion
 (:add_macros
-  (foo (a+) ...)
+  (foo (a+) /*...*/)
 )
 ```
 
@@ -644,7 +646,7 @@ is:
 #### Example encoding of tagged `one-or-more` with delimited expression group
 ```ion
 (:add_macros
-  (foo (a+) ...)
+  (foo (a+) /*...*/)
 )
 ```
 
@@ -670,7 +672,7 @@ is:
 #### Example encoding of tagless `zero-or-more` with expression group
 ```ion
 (:add_macros
-  (foo (uint8::a*) ...)
+  (foo (uint8::a*) /*...*/)
 )
 ```
 
@@ -695,7 +697,7 @@ is:
 #### Example encoding of tagless `zero-or-more` with delimited expression group
 ```ion
 (:add_macros
-  (foo (uint8::a*) ...)
+  (foo (uint8::a*) /*...*/)
 )
 ```
 
@@ -708,8 +710,8 @@ is:
 │     invoking the macro at address 0.
 │  ┌──── AEB: 0b------aa; a=10, expression group
 │  │  ┌──── FlexUInt 0: Delimited expression group
-│  │  │  ┌──── FlexUInt 3: 3-byte chunk
-│  │  │  │            ┌──── FlexUInt 2: 2-byte chunk
+│  │  │  ┌──── FlexUInt 3: 3-byte chunk of uint8 expressions
+│  │  │  │            ┌──── FlexUInt 2: 2-byte chunk of uint8 expressions
 │  │  │  │            │       ┌──── FlexUInt 0: End of group
 │  │  │  │            │       │
 00 02 01 07 01 02 03 05 04 05 01
