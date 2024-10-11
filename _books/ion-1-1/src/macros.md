@@ -7,9 +7,31 @@ This means that Ion readers and writers often spend substantial resources proces
 Consider this example excerpt from a webserver's log file:
 
 ```ion
-{method: GET, statusCode: 200, status: "OK", protocol: https, clientIp: ip_addr::"192.168.1.100", resource: "index.html"}
-{method: GET, statusCode: 200, status: "OK", protocol: https, clientIp: ip_addr::"192.168.1.100", resource: "images/funny.jpg"}
-{method: GET, statusCode: 200, status: "OK", protocol: https, clientIp: ip_addr::"192.168.1.101", resource: "index.html"}
+{
+  method: GET,
+  statusCode: 200,
+  status: "OK",
+  protocol: https,
+  clientIp: ip_addr::"192.168.1.100",
+  resource: "index.html"
+}
+{
+  method: GET,
+  statusCode: 200,
+  status: "OK",
+  protocol: https,
+  clientIp:
+  ip_addr::"192.168.1.100",
+  resource: "images/funny.jpg"
+}
+{
+  method: GET,
+  statusCode: 200,
+  status: "OK",
+  protocol: https,
+  clientIp: ip_addr::"192.168.1.101",
+  resource: "index.html"
+}
 ```
 
 _Macros_ allow users to define fill-in-the-blank templates for their data. This enables applications to focus on encoding and decoding the parts of the data that are distinctive, eliding the work needed to encode the boilerplate.

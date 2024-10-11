@@ -15,9 +15,9 @@ It is illegal for an annotations sequence to appear before any of the following:
 ### Annotations With Symbol Addresses
 Opcodes `0xE4` through `0xE6` indicate one or more annotations encoded as symbol addresses. If the opcode is:
 
-* `0xE4`, a single [`FlexUInt`](#flexuint)-encoded symbol address follows.
-* `0xE5`, two [`FlexUInt`](#flexuint)-encoded symbol addresses follow.
-* `0xE6`, a [`FlexUInt`](#flexuint) follows that represents the number of bytes needed to encode
+* `0xE4`, a single [`FlexUInt`](primitives/flex_uint.md#flexuint)-encoded symbol address follows.
+* `0xE5`, two [`FlexUInt`](primitives/flex_uint.md#flexuint)-encoded symbol addresses follow.
+* `0xE6`, a [`FlexUInt`](primitives/flex_uint.md#flexuint) follows that represents the number of bytes needed to encode
 the annotations sequence, which can be made up of any number of `FlexUInt` symbol addresses.
 
 ##### Encoding of `$10::false`
@@ -51,7 +51,7 @@ E5 07 15 17 19 6F
 
 ### Annotations With `FlexSym` Text
 
-Opcodes `0xE7` through `0xE9` indicate one or more annotations encoded as [`FlexSym`](#flexsym)s.
+Opcodes `0xE7` through `0xE9` indicate one or more annotations encoded as [`FlexSym`](primitives/flex_sym#flexsym)s.
 
 If the opcode is:
 

@@ -1242,7 +1242,7 @@ hljs.registerLanguage("ion", function () {
                 version_marker: "$ion_1_0 $ion_1_1",
                 literal: "true false null +inf -inf nan",
                 keyword: 'module macro symbol_table macro_table $ion_symbol_table $ion_encoding flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
-                system_macro: "literal annotate make_string void values set_macros add_macros set_symbols add_symbols use"
+                system_macro: "for annotate make_string none values set_macros add_macros set_symbols add_symbols use"
             }, i = [n.C_LINE_COMMENT_MODE, n.C_BLOCK_COMMENT_MODE], t = [n.QUOTE_STRING_MODE, n.C_NUMBER_MODE],
             a = {end: ",", endsWithParent: !0, excludeEnd: !0, contains: t, keywords: e}, l = {
                 begin: "{",

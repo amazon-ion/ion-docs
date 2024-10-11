@@ -317,20 +317,20 @@ consider the following two macro definitions.
 
 The `point2D` macro takes two `flex_int`-encoded values as arguments.
 ```ion
-(macro point2D (flex_int::$x flex_int::$y)
+(macro point2D (flex_int::x flex_int::y)
   {
-    x: $x,
-    y: $y,
+    x: (%x),
+    y: (%y),
   }
 )
 ```
 
 The `line` macro takes a pair of `point2D` invocations as arguments.
 ```ion
-(macro line (point2D::$start point2D::$end)
+(macro line (point2D::start point2D::end)
   {
-    start: $start,
-    end: $end,
+    start: (%start),
+    end: (%end),
   }
 )
 ```

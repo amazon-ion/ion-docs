@@ -13,6 +13,20 @@ A macro is defined using a `macro` clause within a [module](../modules.md)'s [`m
 | [`signature`](#macro-signatures)                | An s-expression enumerating the parameters this macro accepts.                                            |
 | [`template`](#template-definition-language-tdl) | A template definition language (TDL) expression that can be evaluated to produce zero or more Ion values. |
 
+#### Example macro clause
+```ion
+//      ┌─── name
+//      │     ┌─── signature
+//     ┌┴┐ ┌──┴──┐
+(macro foo (x y z)
+  {           // ─┐
+    x: (%x),  //  │
+    y: (%y),  //  ├─ template
+    z: (%z),  //  │
+  }           // ─┘
+)
+```
+
 ### Macro names
 
 Syntactically, macro names are [identifiers](../modules.md#identifiers). Each macro name in a macro table must be unique.
@@ -21,12 +35,22 @@ In some circumstances, it may not make sense to name a macro. (For example, when
 
 ### Macro Parameters
 
-Macros accept zero or more parameters.
+A _parameter_ is a named stream of Ion values. The stream's contents are determined by the macro's invocation.
+A macro's parameters are declared in the [macro signature](#macro-signatures).
 
-Each parameter is comprised of three elements:
-1. A name
-2. An encoding
-3. A cardinality
+Each parameter declaration is comprised of three elements:
+1. A [name](#parameter-names)
+2. An optional [encoding](#parameter-encodings)
+3. An optional [cardinality](#parameter-cardinalities)
+
+#### Example parameter declaration
+```ion
+//     ┌─── encoding
+//     │      ┌─── name
+//     │      │┌─── cardinality
+// ┌───┴───┐  ││
+   flex_uint::x*
+```
 
 #### Parameter names
 
@@ -51,6 +75,13 @@ To specify an encoding, the [parameter name](#parameter-names) is annotated with
 | `float16` `float32` `float64`        | Fixed-width float                                                 |
 | `flex_symbol`                        | [`FlexSym`](../binary/primitives/flex_sym.md)-encoded SID or text |
 
+When writing text Ion, the declared encoding does not affect how values are serialized.
+However, it does constrain the domain of values that that parameter will accept.
+When transcribing from text to binary, it must be possible to serialize all values passed as an argument using the parameter's declared encoding.
+This means that parameters with a primitive encoding cannot be annotated or a `null` of any type.
+If an `int` or a `float` is being passed to a parameter with a fixed-width encoding,
+that value must fit within the range of values that can be represented by that width.
+For example, the value `256` cannot be passed to a parameter with an encoding of `uint8` because a `uint8` can only represent values in the range `[0, 255]`.
 
 #### Parameter cardinalities
 
@@ -64,7 +95,7 @@ A parameter name may optionally be followed by a _cardinality modifier_. This is
 |   `+`    |  one-or-more values |
 
 If no modifier is specified, the parameter's cardinality will default to exactly-one.
-An `exactly-one` parameter can only accept a single expression as its argument.
+An `exactly-one` parameter will always expand to a stream containing a single value.
 
 Parameters with a cardinality other than `exactly-one` are called _variadic parameters_.
 
@@ -72,7 +103,7 @@ If an argument expression expands to a number of values that the cardinality for
 
 ##### Optional parameters
 
-Parameters with a cardinality that can accept an empty group as an argument (`?` and `*`) are called
+Parameters with a cardinality that can accept an empty expression group as an argument (`?` and `*`) are called
 _optional parameters_. In text Ion, their corresponding arguments can be elided from e-expressions and TDL macro
 invocations when they appear in tail position. When an argument is elided, it is treated as though an explicit
 empty group `(::)` had been passed in its place.
@@ -119,7 +150,20 @@ cause them to appear in a position corresponding to a different argument.
 
 ### Macro signatures
 
-A macro signature is an s-expression containing a series of parameter definitions.
+A macro's _signature_ is the ordered sequence of parameters which an invocation of that macro must define.
+Syntactically, the signature is an s-expression of [parameter declarations](#macro-parameters).
+
+#### Example macro signature
+```ion
+(w flex_uint::x* float16::y? z+)
+```
+
+| Name |  Encoding   |  Cardinality   |
+|:----:|:-----------:|:--------------:|
+| `w`  |  `tagged`   | `exactly-one`  |
+| `x`  | `flex_uint` | `zero-or-more` |
+| `y`  |  `float16`  | `zero-or-one`  |
+| `z`  |  `tagged`   | `one-or-more`  |
 
 <!-- TODO; grammar and examples -->
 
