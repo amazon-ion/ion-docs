@@ -11,7 +11,7 @@ Special forms are "special" precisely because they cannot be expressed as macros
 Since the elements of macro-invocation expressions are themselves expressions, when you want something to not be evaluated that way, it must be a special form.
 
 Finally, these special forms are part of the template language itself, and are not addressable outside of TDL;
-the E-expression `(:literal foo)` must necessarily refer to some user-defined macro named literal, not to this special form.
+the E-expression `(:if_none foo bar baz)` must necessarily refer to some user-defined macro named `if_none`, not to the special form of the same name.
 
 
 > [!TODO]
@@ -19,16 +19,6 @@ the E-expression `(:literal foo)` must necessarily refer to some user-defined ma
 > to be a special form.
 > Candidates to be moved to system macros are `if_*` and `fail`.
 > Additionally, the system macro `parse_ion` may need to be classified as a special form since it only accepts literals.
-
-### `literal`
-
-```ion
-(macro USD_price (dollars) (.price dollars (.literal USD)))
-```
-In this template, we cannot write `(.price dollars USD)` because the symbol `USD` would be treated as an unbound variable reference and a syntax error, so we turn it into literal data by "escaping" it with `literal`.
-
-> [!TIP] 
-> As an aside, there is no need for such a form in E-expressions, because in that context symbols and S-expressions are not "evaluated", and everything is literal except for E-expressions (which are not data, but encoding artifacts).
 
 ### `if_none`
 
@@ -48,8 +38,8 @@ The expanded second or third sub-expression becomes the result that is produced 
 ```ion
 (macro temperature (degrees scale) 
        {
-         degrees: degrees, 
-         scale: (.if_none scale (.literal K) scale),
+         degrees: (%degrees),
+         scale: (.if_none (%scale) K (%scale)),
        })
 ```
 ```ion
@@ -57,7 +47,7 @@ The expanded second or third sub-expression becomes the result that is produced 
 (:temperature 283 (::)) ⇒ {degrees:283, scale:K}
 ```
 
-To refine things a bit further, trailing voidable arguments can be omitted entirely:
+To refine things a bit further, trailing optional arguments can be omitted entirely:
 ```ion
 (:temperature 283) ⇒ {degrees:283, scale:K}
 ```
@@ -66,7 +56,7 @@ To refine things a bit further, trailing voidable arguments can be omitted entir
 > You can define a macro that wraps `if_none` to create a none-coalescing operator.
 > ```ion
 > (macro coalesce (maybe_none* default_expr+) 
->        (.if_none maybe_none default_expr maybe_none))
+>        (.if_none (%maybe_none) (%default_expr) (%maybe_none)))
 > ```
 
 ### `if_some`
@@ -81,9 +71,9 @@ The `stream` expression must be expanded enough to determine whether it produces
 
 Example:
 ```ion
-(macro foo ($foo)
+(macro foo (x)
        {
-         foo: (.if_some $foo [$foo] null)
+         foo: (.if_some (%x) [(%x)] null)
        })
 ```
 
@@ -93,13 +83,13 @@ Example:
 (:foo (:: 2 3)) => { foo: [2, 3] }
 ```
 
-The `false_branch` parameter may be elided, allowing `if_some` to serve as a _map-if-not-void_ function.
+The `false_branch` parameter may be elided, allowing `if_some` to serve as a _map-if-not-none_ function.
 
 Example:
 ```ion
-(macro foo ($foo)
+(macro foo (x)
        {
-         foo: (.if_some $foo [$foo])
+         foo: (.if_some (%x) [(%x)])
        })
 ```
 
@@ -143,9 +133,9 @@ For example:
 
 ```ion
 (.for
-  [($word                    // Variable name
-   (.literal foo bar baz))]   // Values over which to iterate
-  (.values $word $word))     // Template expression; `$word` will be replaced
+  [(word                     // Variable name
+   foo bar baz)]             // Values over which to iterate
+  (.values (%word) (%word))) // Template expression; `(%word)` will be replaced
 =>
 foo foo bar bar baz baz
 ```
@@ -154,9 +144,9 @@ Multiple s-expressions can be specified. The streams will be iterated over in lo
 
 ```ion
 (.for
-  (($x 1 2 3)  // for $x in...
-   ($y 4 5 6)) // for $y in...
-  ($x $y))     // Template; `$x` and `$y` will be replaced
+  ((x 1 2 3)   // for x in...
+   (y 4 5 6))  // for y in...
+  ((%x) (%y))) // Template; `(%x)` and `(%y)` will be replaced
 =>
 (1 4)
 (2 5)
@@ -165,9 +155,9 @@ Multiple s-expressions can be specified. The streams will be iterated over in lo
 Iteration will end when the shortest stream is exhausted.
 ```ion
 (.for
-  [($x 1 2),   // for $x in...
-  ($y 3 4 5)] // for $y in...
-  ($x $y))   // Template; `$x` and `$y` will be replaced
+  [(x 1 2),    // for x in...
+   (y 3 4 5)]  // for y in...
+  ((%x) (%y))) // Template; `(%x)` and `(%y)` will be replaced
 =>
 (1 3)
 (2 4)
@@ -177,16 +167,19 @@ Iteration will end when the shortest stream is exhausted.
 Names defined inside a `for` shadow names in the parent scope.
 
 ```ion
-(macro triple ($x)
+(macro triple (x)
+  //           └─── Parameter `x` is declared here...
   (.for
-    (($x // Shadows macro argument `$x`
-      1 2 3))
-    $x
+  //    ...but the `for` expression introduces a
+  //  ┌─── new variable of the same name here.
+    ((x a b c))
+    (%x)
+  //  └─── This refers to the `for` expression's `x`, not the parameter.
   )
 )
-(:triple 1)
+(:triple 1) // Argument `1` is ignored
 =>
-1 1 1
+a b c
 ```
 
 The `for` special form can only be invoked in the body of template macro. It is not valid to use as an E-Expression.

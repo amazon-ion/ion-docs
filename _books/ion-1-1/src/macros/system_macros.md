@@ -79,7 +79,6 @@ Embedded text example:
 => foo bar
 ```
 
-
 Embedded binary example:
 ```ion
 (:parse_ion {{ 4AEB6qNmb2+jYmFy }} )
@@ -198,7 +197,7 @@ Example:
            foo_a: 1,
            foo_b: 2,
          }
-         (make_field (make_string "foo_" extra_name) extra_value)
+         (make_field (make_string "foo_" (%extra_name)) (%extra_value))
        ))
 ```
 Then:
@@ -216,7 +215,7 @@ This is no more compact than the regular binary encoding for decimals.
 However, it can be used in conjunction with other macros, for example, to represent fixed-point numbers.
 
 ```ion
-(macro usd (cents) (.annotate (.literal USD) (.make_decimal cents -2))
+(macro usd (cents) (.annotate USD (.make_decimal cents -2))
 
 (:usd 199) =>  USD::1.99
 ```
@@ -250,7 +249,7 @@ Example:
          28
          hour
          minute
-         (.make_decimal seconds_millis -3) 0))
+         (.make_decimal (%seconds_millis) -3) 0))
 ```
 
 ### Encoding Utility Macros
@@ -325,8 +324,8 @@ Sets the local symbol table, preserving any macros in the macro table.
 ```ion
 (macro set_symbols (symbols*)
        $ion_encoding::(
-         ((.literal symbol_table) [symbols])
-         ((.literal macro_table $ion_encoding))
+         (symbol_table [(%symbols)])
+         (macro_table $ion_encoding)
        ))
 ```
 
@@ -346,8 +345,8 @@ Appends symbols to the local symbol table, preserving any macros in the macro ta
 ```ion
 (macro add_symbols (symbols*)
        $ion_encoding::(
-         ((.literal symbol_table $ion_encoding) [symbols])
-         ((.literal macro_table $ion_encoding))
+         (symbol_table $ion_encoding [(%symbols)])
+         (macro_table $ion_encoding)
        ))
 ```
 
@@ -367,8 +366,8 @@ Sets the local macro table, preserving any symbols in the symbol table.
 ```ion
 (macro set_macros (macros*)
        $ion_encoding::(
-         ((.literal symbol_table $ion_encoding)) 
-         ((.literal macro_table) macros)
+         (symbol_table $ion_encoding)
+         (macro_table (%macros))
        ))
 ```
 
@@ -388,8 +387,8 @@ Appends macros to the local macro table, preserving any symbols in the symbol ta
 ```ion
 (macro add_macros (macros*)
        $ion_encoding::(
-         ((.literal symbol_table $ion_encoding))
-         ((.literal macro_table $ion_encoding) macros)
+         (symbol_table $ion_encoding)
+         (macro_table $ion_encoding (%macros))
        ))
 ```
 
@@ -409,9 +408,9 @@ Appends the content of the given module to the encoding context.
 ```ion
 (macro use (catalog_key version?)
        $ion_encoding::(
-         ((.literal import the_module) catalog_key (.if_void version 1 version)) 
-         ((.literal symbol_table $ion_encoding the_module))
-         ((.literal macro_table $ion_encoding the_module))
+         (import the_module catalog_key (.if_none (%version) 1 (%version)))
+         (symbol_table $ion_encoding the_module)
+         (macro_table $ion_encoding the_module)
        ))
 ```
 
