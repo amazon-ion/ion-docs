@@ -38,14 +38,14 @@ _Macros_ allow users to define fill-in-the-blank templates for their data. This 
 
 Using this macro definition:
 ```ion
-(macro getOk ($clientIp $resource)
+(macro getOk (clientIp resource)
   {
     method: GET,
     statusCode: 200,
     status: "OK",
-    protocol: (literal https),
-    clientIp: (annotate "ip_addr" $clientIp),
-    resource: "index.html"
+    protocol: https,
+    clientIp: (.annotate "ip_addr" (%clientIp)),
+    resource: (%resource)
   })
 ```
 

@@ -47,7 +47,7 @@ The expanded second or third sub-expression becomes the result that is produced 
 (:temperature 283 (::)) ⇒ {degrees:283, scale:K}
 ```
 
-To refine things a bit further, trailing voidable arguments can be omitted entirely:
+To refine things a bit further, trailing optional arguments can be omitted entirely:
 ```ion
 (:temperature 283) ⇒ {degrees:283, scale:K}
 ```
@@ -83,7 +83,7 @@ Example:
 (:foo (:: 2 3)) => { foo: [2, 3] }
 ```
 
-The `false_branch` parameter may be elided, allowing `if_some` to serve as a _map-if-not-void_ function.
+The `false_branch` parameter may be elided, allowing `if_some` to serve as a _map-if-not-none_ function.
 
 Example:
 ```ion
@@ -134,7 +134,7 @@ For example:
 ```ion
 (.for
   [(word                     // Variable name
-   (.literal foo bar baz))]  // Values over which to iterate
+   foo bar baz)]             // Values over which to iterate
   (.values (%word) (%word))) // Template expression; `(%word)` will be replaced
 =>
 foo foo bar bar baz baz

@@ -215,7 +215,7 @@ This is no more compact than the regular binary encoding for decimals.
 However, it can be used in conjunction with other macros, for example, to represent fixed-point numbers.
 
 ```ion
-(macro usd (cents) (.annotate (.literal USD) (.make_decimal cents -2))
+(macro usd (cents) (.annotate USD (.make_decimal cents -2))
 
 (:usd 199) =>  USD::1.99
 ```
