@@ -177,7 +177,7 @@ This macro's template is an s-expression beginning with `.make_string`, so it an
 (:website_url "gp/cart") ⇒ "https://www.amazon.com/gp/cart"
 ```
 
-In TDL, it is legal for a macro invocation to appear anywhere that a value could appaer.
+In TDL, it is legal for a macro invocation to appear anywhere that a value could appear.
 In this example, an invocation of `make_string` is being passed as an argument to an invocation of `website_url`.
 
 ```ion
@@ -521,7 +521,7 @@ Since the scale accepts the empty stream, we can pass it an empty argument group
 
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96, scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283}
+(:temperature 283 (::)) ⇒ {degrees:283}
 ```
 
 Note that the result’s `scale` field has disappeared because no value was provided. It would be
@@ -536,7 +536,7 @@ more useful to fill in a default value, which we can achieve with the `default` 
 ```
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96,  scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283, scale:K}
+(:temperature 283 (::)) ⇒ {degrees:283, scale:K}
 ```
 
 To refine things a bit further, trailing arguments that accept the empty stream can be omitted entirely:
@@ -564,9 +564,9 @@ Instead, we need a single
 expression that produces the desired values:
 
 ```ion
-(:prices (:) JPY)          ⇒ // empty stream
+(:prices (::) JPY)          ⇒ // empty stream
 (:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
-(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ```
 
 Here we use a non-empty [argument group](../todo.md) `(:: /*...*/)` to delimit
@@ -586,9 +586,9 @@ A parameter with the modifier `+` has _`one-or-more` cardinality_, which works l
 ```
 
 ```ion
-(:prices (:) JPY)          ⇒ // Error: `+` parameter received the empty stream
+(:prices (::) JPY)          ⇒ // Error: `+` parameter received the empty stream
 (:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
-(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ```
 
 On the final parameter, `+` collects the remaining (one or more) arguments:
@@ -862,10 +862,10 @@ and you can't use a macro invocation as an _element_ of an argument group:
 (:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
   ⇒ // Error: Argument group expected, found :make_points
 
-(:scatterplot (: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
+(:scatterplot (:: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
   ⇒ // Error: sexp expected with args for 'point', found :make_points
 
-(:scatterplot (: (3 17) (:point 395 23) (15 48) (2023 5)) "hour" "widgets")
+(:scatterplot (:: (3 17) (:point 395 23) (15 48) (2023 5)) "hour" "widgets")
   ⇒ // Error: sexp expected with args for 'point', found :point
 ```
 
