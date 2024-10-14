@@ -11,8 +11,8 @@ symbols to represent code in a Lisp-like fashion. In this document, the fundamen
 explore is the _macro definition_, denoted using an S-expression of the form `(macro name …)`
 where `macro` is a keyword and `name` must be a symbol denoting the macro's name.
 
-NOTE: S-expressions of that shape only declare macros when they occur in the context of an encoding
-module, which is the topic of a chapter to come. We will completely ignore modules for now, and
+NOTE: S-expressions of that shape only declare macros when they occur in the context of an [encoding
+module](../modules/encoding_module.md). We will completely ignore modules for now, and
 the examples below omit this context to keep things simple.
 
 
@@ -61,12 +61,12 @@ _macro expansion_ or just _expansion_. This happens transparently to
 Ion-consuming applications: the stream of values in both cases are the same. The documents have
 the same content, encoded in two different ways. It’s reasonable to think of `(:pi)` as a custom
 encoding for `3.141592653589793`, and the notation’s similarity to S-expressions leads us to the
-term “encoding expression”.
+term “encoding expression” (or "e-expression").
 
 > [!NOTE]
-> Any Ion 1.1 document with macros can be fully-expanded into an equivalent Ion 1.0 document.
+> Any Ion 1.1 document with macros can be fully expanded into an equivalent Ion 1.0 document.
 
-We can streamline future examples with a couple conventions. First, assume that any E-expression
+We can streamline future examples with a couple of conventions. First, assume that any E-expression
 is occurring within an Ion 1.1 document; second, we use the relation notation, `⇒`, to mean “expands to”.
 So we can say:
 
@@ -74,23 +74,19 @@ So we can say:
 (:pi) ⇒ 3.141592653589793
 ```
 
-
-## Simple Templates
+## Parameters and variable expansion
 
 Most macros are not constant--they accept inputs that determine their results.
 
 ```ion
-(macro price
-  (a c)                           // signature
-  { amount: a, currency: c })     // template
+(macro passthrough
+  (x)   // signature
+  (%x)  // template
+)
 ```
 
-This macro has a signature that declares two parameters, named `a` and `c`, and it
-therefore accepts two arguments when invoked.
-
-```ion
-(:price 99 USD) ⇒ { amount: 99, currency: USD }
-```
+This macro has a signature that declares a parameter called `x`, and it therefore requires one argument to be passed in when it is invoked.
+This creates a variable (i.e. named data) called `x` that can be referred to within the context of the template.
 
 > [!NOTE]
 > We are careful to distinguish between the views from “inside” and “outside” the macro:
@@ -98,75 +94,96 @@ therefore accepts two arguments when invoked.
 > inputs, while _arguments_ are the data provided to a macro at the point of invocation.
 > In other words, we have “formal” parameters and “actual” arguments.
 
-The struct
-in this macro is our first non-trivial _template_, an expression in Ion’s new domain-specific language
-for defining macro functions. This expression language treats Ion scalar values (except for
-symbols) as literals, giving the decimal in ``pi``’s template its intended meaning. Expressions
-that are structs are interpreted _almost_ literally: the field names are literal, but the field
-“values” are arbitrary expressions. This is why the `amount` and `currency` field names show up
-as-is in the expansion. We call these almost-literal forms _quasi-literals_.
+The body of this macro is our first non-trivial _template_, an expression in Ion’s new domain-specific language for defining macro functions.
+This template definition language (TDL) treats Ion scalar values as literals, giving the decimal in `pi`’s template its intended meaning.
 
-The template language also treats lists quasi-literally, and every element inside the list is an
-expression. Here’s a silly macro to illustrate:
+In this example, the template expression `(%x)` is a _variable expansion_ in the form `(%variable_name)`.
+During macro evaluation, variable expansions are replaced by the contents of the referenced variable.
+Because this macro's template is an expansion of its only parameter, `x`, invoking the macro will produce the same value it was given as an argument.
 
 ```ion
-(macro reverse (a b) [b, a])
-```
-```ion
-(:reverse first 1990) ⇒ [1990, first]
+(:passthrough 1)         => 1
+(:passthrough "foo")     => "foo"
+(:passthrough [a, b, c]) => [a, b, c]
 ```
 
-The sub-expressions in these templates demonstrate that the expression language treats symbols as
-variable references. The symbols in the templates above (`a` and `c` in `price`; `a` and `b`
-in `reverse`) refer to the parameters of their respective surrounding macros, and during
-expansion they are “filled in” with the values supplied by the invocation of the macro.
+## Simple Templates
 
-These names are part of the macro language that have no relation to data encoded using the macro:
+Here's a more realistic macro:
 
 ```ion
-(:reverse c {amount:a, currency:c}) ⇒ [{amount:a, currency:c}, c]
+(macro price
+  (a c)                             // signature
+  { amount: (%a), currency: (%c) }) // template
 ```
 
-Symbols in an E-expression are _not_ part of the expression language and do not reference macro
-parameters or any other named entity.
-From the point of view of ``reverse``’s template, the inputs are literal data.
-
-E-expressions can nest, so we could also encode the same data using `price`:
+This macro has a signature that declares two parameters named `a` and `c`. It therefore accepts two arguments when invoked.
 
 ```ion
-(:reverse first (:price a c))
-  ⇒ (:reverse first {amount:a, currency:c})
-  ⇒ [{amount:a, currency:c}, first]
+(:price 99 USD) ⇒ { amount: 99, currency: USD }
 ```
 
-As the example suggests, expansion steps proceed "inside out" and the outer macro receives the
-results from the inner invocation.
+Template expressions that are structs are interpreted _almost_ literally;
+the field names are literal--is why the `amount` and `currency` field names show up as-is in the expansion--but the field “values” are arbitrary expressions.
+We call these almost-literal forms _quasi-literals_.
+
+The template definition language also treats lists quasi-literally, and every element inside the list is anexpression.
+Here’s a silly macro to illustrate:
+
+```ion
+(macro two_item_list (a b) [(%a), (%b)])
+```
+```ion
+(:two_item_list foo bar) ⇒ [foo, bar]
+```
+
+E-expressions can accept other e-expressions as arguments. For example:
+
+```ion
+(:two_item_list (:price 99 USD) foo)
+//              └──────┬──────┘
+//                     └─── passing another e-expression as an argument
+```
+
+Expansion happens from the "inside out".
+The outer e-expression receives the results from the expansion of the inner e-expression.
+
+```ion
+(:two_item_list (:price 99 USD) foo)
+
+  // First, the inner invocation of `price` is expanded...
+  => (:two_item_list {amount: 99, currency: USD} foo)
+
+  // ...and then the outer invocation of `two_item_list` is expanded.
+  => [{amount: 99, currency: USD}, foo]
+```
 
 
 ## Invoking Macros from Templates
 
-Template expressions that are S-expressions are _operator invocations_, where the operators are
-either macros or _special forms_. We start with the former:
+Templates are able to invoke other macros.
+In TDL, an s-expression starting with a `.` and an [identifier](../modules.md#identifiers) is an _operator invocation_,
+where operators are either macros or [_special forms_](special_forms.md), which we'll explore later.
 
 ```ion
 (macro website_url
   (path)
-  (make_string "https://www.amazon.com/" path))
+  (.make_string "https://www.amazon.com/" (%path)))
 ```
-
-In this case, the S-expression `(make_string …)` is an invocation of the system macro (that is, a
-built-in function) `make_string`, which concatenates its arguments to produce a single string:
+This macro's template is an s-expression beginning with `.make_string`, so it an invocation of a macro called `make_string`.
+`make_string` is a [_system macro_](system_macros.md) (a built-in function) which concatenates its arguments to produce a single string.
 
 ```ion
 (:website_url "gp/cart") ⇒ "https://www.amazon.com/gp/cart"
 ```
 
-In the template language, macro invocations can appear almost anywhere:
+In TDL, it is legal for a macro invocation to appear anywhere that a value could appear.
+In this example, an invocation of `make_string` is being passed as an argument to an invocation of `website_url`.
 
 ```ion
 (macro detail_page_url
   (asin)
-  (website_url (make_string "dp/" asin)))
+  (.website_url (.make_string "dp/" (%asin))))
 ```
 
 ```ion
@@ -174,20 +191,22 @@ In the template language, macro invocations can appear almost anywhere:
 ```
 
 > [!NOTE]
-> While this doesn’t look like much of an improvement, the full string takes 38 bytes to encode,
-> but the macro invocation takes as few as 12 bytes.
-
-Careful readers will note that templates can use `[…]` and `{…}` notation to construct lists and
-structs, but `(…)` doesn't construct S-expressions. This gap is filled by the built-in macro
-`make_sexp` which accepts any number of arguments and puts them in a sexp:
-
-```ion
-(macro double_sexp (val) (make_sexp val val))
-```
-```ion
-(:make_sexp true 19.3 null) ⇒ (true 19.3 null)
-(:double_sexp double) ⇒ (double double)
-```
+> This may not look like much of an improvement, but the full string
+> ```ion
+> "https://www.amazon.com/dp/B08KTZ8249"
+> ```
+> takes 38 bytes to encode while the macro invocation
+> ```ion
+> (:detail_page_url "B08KTZ8249")
+> ```
+> takes as few as 12 bytes in binary Ion.
+> While text Ion spells out the macro name to be human-friendly, the binary Ion encoding uses the macro's integer address instead.
+> Here's an illustration:
+> ```ion
+> (:1 "B08KTZ8249")
+> ```
+> This makes the e-expression both more compact and faster to decode.
+> Readers can also avoid the cost of repeatedly validating the UTF-8 bytes of substrings that are 'baked into' the macro definition.
 
 
 ## E-expressions Versus S-expressions
@@ -201,57 +220,19 @@ defined by the macro. This all happens as the Ion document is parsed, transparen
 of the document. In casual terms, E-expressions are expanded away before the application sees
 the data.
 
-Within the template-expression language, you can define new macros in terms of other macros, and
-those invocations are written as S-expressions. Unlike E-expressions, these are normal Ion data
-structures, consumed by the Ion system and interpreted as code. Further, they only exist in the
-context of a macro definition, inside an encoding module, while E-expressions can occur
-_anywhere_ in an Ion document.
+Within the template definition language, you can define new macros in terms of other macros, and those invocations are written as S-expressions.
+Unlike E-expressions, TDL macro invocations are normal Ion data structures, consumed by the Ion system and interpreted as TDL.
+Further, TDL macro invocations only have meaning in the context of a macro definition, inside an encoding module,
+while E-expressions can occur _anywhere_ in an Ion document.
 
 > [!WARNING]
-> It's entirely possible to write a macro that can generate all or part of a macro
-> definition. We don't recommend that you spend time considering such things at this point.
+> It's entirely possible to write a macro that can generate all or part of a macro definition.
+> We don't recommend that you spend time considering such things at this point.
 
 These two invocation forms are syntactically aligned in their calling convention, but are
 distinct in context and "immediacy". E-expressions occur anywhere and are invoked immediately,
 as they are parsed. S-expression invocations occur only within macro definitions, and are only
 invoked if and when that code path is ever executed by invocation of the surrounding macro.
-
-
-## Special Form: `literal`
-
-When a template-expression is syntactically an S-expression, its first
-element must be a symbol that matches either a set of keywords denoting the special forms, or the
-name of a previously-defined macro. The interpretation of the S-expression’s remaining elements
-depends on how the symbol resolves. In the case of macro invocations, we’ve seen above that the
-following elements are (so far!) arbitrary template expressions, but for special forms that’s not
-always the case. The `literal` form makes this clear:
-
-```ion
-(macro USD_price (dollars) (price dollars (literal USD)))
-```
-```ion
-(:USD_price 12.99) ⇒ { amount: 12.99, currency: USD }
-```
-
-In this template, we can’t just write `(price dollars USD)` because the symbol `USD` would be
-treated as an unbound variable reference and a syntax error, so we turn it into literal data by
-“escaping” it with `literal`.
-
-The critical point is that special forms are “special” precisely because they cannot be expressed
-as macros and must therefore receive bespoke syntactic treatment. Since the elements of
-macro-invocation expressions are themselves expressions, when you want something to _not_ be
-evaluated that way, it must be a special form.
-
-Finally, these special forms are part of the template language itself, and are not visible to
-encoded data: the E-expression `(:literal foo)` must necessarily refer to some user-defined macro
-named `literal`, not to this special form. As an aside, there is no need for such a form in
-E-expressions, because in that context symbols and S-expressions are not “evaluated”, and
-everything is literal except for E-expressions (which are not data, but encoding artifacts).
-
-> [!NOTE]
-> Ion 1.1 defines a number of built-in macros and special forms. While this document covers
-> the highlights, it is not a complete reference to all features.
-
 
 ### Rest Parameters
 
@@ -262,31 +243,41 @@ single string:
 ```ion
 (:make_string)                 ⇒ ""
 (:make_string "a")             ⇒ "a"
-(:make_string "a" "b"    )     ⇒ "ab"
+(:make_string "a" "b")         ⇒ "ab"
 (:make_string "a" "b" "c")     ⇒ "abc"
 (:make_string "a" "b" "c" "d") ⇒ "abcd"
 ```
 
-To make this work, the definition of make_string is effectively:
+To make this work, the declaration of `make_string` is effectively:
 
 ```ion
-(macro make_string (parts*) …)
+(macro make_string (parts*) /*...*/)
 ```
 
-This says that `parts` is comprised of zero or more argument expressions.
-The `*` cardinality modifier, when applied to a final parameter, declares that
-“all the rest” of the arguments will be passed to that one name.
+The `*` is a _[cardinality](#cardinality)_ modifier.
+A parameter's cardinality dictates both the number of argument expressions it can accept and the number of values its expansion can produce.
 
-> [!NOTE]
-> The Ion grammar treats identifiers like `text` and operators like `*` as separate tokens
-> regardless of whether they are separated by whitespace. We think it's easier to read without
-> whitespace and will use that convention from now on.
+In the examples so far, all parameters have had a cardinality of `exactly-one`, which is the default.
+The `parts` parameter has a cardinality of `zero-or-more`, meaning:
+1. It can accept `zero-or-more` argument expressions.
+2. When expanded, it will produce `zero-or-more` values.
 
-At this point our distinction between parameters and arguments becomes apparent, since
+When the final parameter in the macro signature is `zero-or-more`, "all of the rest" of the argument expressions will be passed to that parameter.
+
+```ion
+(:make_string)
+//           └── 0 argument expressions passed to `parts`
+(:make_string "a")
+//            └┬┘
+//             └── 1 argument expression passed to `parts`
+(:make_string "a" "b" "c" "d")
+//            └──────┬──────┘
+//                   └── 4 argument expressions passed to `parts`
+```
+
+At this point our distinction between parameters and arguments becomes more apparent, since
 they are no longer one-to-one: this macro with one parameter can be invoked with one argument, or
-twenty, or none. We describe the acceptable number of expressions for a parameter as its
-_cardinality_. In the examples so far, all parameters have had _exactly-one_ cardinality, while
-`parts` has _zero-or-more_ cardinality. We’ll see additional cardinalities soon!
+twenty, or none.
 
 > [!TIP]
 > To declare a final parameter that requires at least one rest-argument, use the `+` modifier.
@@ -295,7 +286,7 @@ _cardinality_. In the examples so far, all parameters have had _exactly-one_ car
 ### Arguments and results are streams
 
 The inputs to and results from a macro are modeled as streams of values.
-When a macro is invoked, each argument produces a stream of values,
+When a macro is invoked, each argument expression produces a stream of values,
 and within the macro definition, each parameter name refers to the corresponding stream,
 not to a specific value. The declared cardinality of a parameter constrains the number of
 elements produced by its stream, and is verified by the macro expansion system.
@@ -306,7 +297,7 @@ produce a single value, various macros and special forms can produce zero or mor
 We have everything we need to illustrate this, via another system macro, `values`:
 
 ```ion
-(macro values (vals*) vals)
+(macro values (vals*) (%vals))
 ```
 
 ```ion
@@ -315,14 +306,19 @@ We have everything we need to illustrate this, via another system macro, `values
 (:values)             ⇒ _nothing_
 ```
 
-The `values` macro accepts any number of arguments and returns their values, effectively a
-multi-value identity function. We can use this to explore how streams combine in E-expressions.
+The `values` macro accepts any number of arguments and returns their values; it is effectively a multi-value identity function.
+We can use this to explore how streams combine in E-expressions.
 
 
 #### Splicing in encoded data
 
-When an E-expression occurs at top-level or within a list or S-expression, the results are
-spliced into the surrounding container:
+At the top level, an e-expression's resulting values become top-level values.
+
+```ion
+(:values 1 2 3) => 1 2 3
+```
+
+When an E-expression appears within a list or S-expression, the resulting values are spliced into the surrounding container:
 
 ```ion
 [first, (:values), last]          ⇒ [first, last]
@@ -341,13 +337,13 @@ returns too-few or too-many values.
 
 ```ion
 (macro reverse (a b)
-  [b, a])
+  [(%b), (%a)])
 ```
 
 ```ion
-(:reverse (:values 5 USD))   ⇒ _error: 'reverse' expects 2 arguments, given 1_
-(:reverse 5 (:values) USD)   ⇒ _error: 'reverse' expects 2 arguments, given 3_
-(:reverse (:values 5 6) USD) ⇒ _error: argument 'a' expects 1 value, given 2_
+(:reverse (:values 5 USD))   ⇒ // Error: 'reverse' expects 2 arguments, given 1
+(:reverse 5 (:values) USD)   ⇒ // Error: 'reverse' expects 2 arguments, given 3
+(:reverse (:values 5 6) USD) ⇒ // Error: argument 'a' expects 1 value, given 2
 ```
 
 In this example, the parameters expect exactly one argument, producing exactly one value. When
@@ -357,8 +353,11 @@ rest-parameter to `make_string`, which we'll expand here in steps:
 
 ```ion
 (:make_string (:values) a (:values b (:values c) d) e)
+//              ^^^^^^ next
   ⇒ (:make_string a (:values b (:values c) d) e)
+//                               ^^^^^^ next
   ⇒ (:make_string a (:values b c d) e)
+//                    ^^^^^^ next
   ⇒ (:make_string a b c d e)
   ⇒ "abcde"
 ```
@@ -382,7 +381,7 @@ structs, which are merged into the surrounding container:
 { a:1, (:values {b:2}), z:3 }       ⇒ { a:1, b:2, z:3 }
 { a:1, (:values {b:2} {z:3}), z:3 } ⇒ { a:1, b:2, z:3, z:3 }
 
-{ a:1, (:values key "value") } ⇒ _error: struct expected for splicing into struct_
+{ a:1, (:values key "value") } ⇒ // Error: struct expected for splicing into struct
 ```
 
 
@@ -393,12 +392,8 @@ stream-splicing occurs within the template language, making it trivial to conver
 list:
 
 ```ion
-(macro list_of
-  (vals*)
-  [ vals ])
-(macro clumsy_bag
-  (elts*)
-  { '': elts })
+(macro list_of (vals*) [ (%vals) ])
+(macro clumsy_bag (elts*) { '': (%elts) })
 ```
 ```ion
 (:list_of)   ⇒ []
@@ -408,61 +403,60 @@ list:
 (:clumsy_bag true 2) ⇒ {'':true, '':2}
 ```
 
-TODO: demonstrate splicing in TDL macro invocations
+<!-- TODO: demonstrate splicing in TDL macro invocations -->
 
 ### Mapping templates over streams: `for`
 
-Another way to produce a stream is via a mapping form. The `for` special form evaluates a
+Another way to produce a stream is via a mapping form. The `for` [special form](special_forms.md) evaluates a
 template once for each value provided by a stream or streams. Each time, a local variable is
 created and bound to the next value on the stream.
 
 ```ion
-(macro prices
-  (currency amounts*)
-  (for [(amt amounts)]                          // <1>
-    (price amt currency)))
+(macro prices (currency amounts*)
+  (.for
+    // Binding pairs
+    [(amt (%amounts))]
+    //└┬┘ └────┬───┘
+    // │       └─── stream to map over
+    // └─────────── variable name
+
+    // Template
+    (.price (%amt) (%currency))
+  )
+)
 ```
 
-<1> The first subform of `for` is a list of binding pairs, S-expressions containing a variable
-names and a template expressions. Here, that template expression is simply a parameter
-reference, so each individual value from the `amounts` is bound to the name `amt` before the
-`price` invocation is expanded.
+The first subform of `for` is a list of binding pairs, S-expressions containing a variable
+names and a series of TDL expressions. Here, that TDL expression series is a single parameter expansion,
+so each individual value from the `amounts` stream is bound to the name `amt` before the `price` invocation is expanded.
 
-```
+```ion
 (:prices GBP 10 9.99 12.)
   ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP} {amount:12., currency:GBP}
 ```
 
-More than one stream can be iterated in parallel, and iteration terminates when any stream
-becomes empty.
+More than one stream can be iterated in parallel, and iteration terminates when any stream becomes empty.
 
 ```ion
-(macro zip (front* back*)  // <1>
-  (for [(f front),
-        (b back)]
-    [f, b]))
-```
+(macro zip (front* back*)
+  (.for [(f (%front)),
+        (b (%back))]
+    [(%f), (%b)]))
 
-<1> The `*` means that the parameter accepts any number of values; see
-[Zero-or-more](#zero-or-more).
-
-```ion
 (:zip (:values 1 2 3) (:values a b))
   ⇒ [1, a] [2, b]
 ```
 
-> [!NOTE]
-> This termination rule is under discussion; see <https://github.com/amazon-ion/ion-docs/issues/201>
-
-
-### Empty Streams: `none`
+### Empty streams: `none`
 
 The empty stream is an important edge case that requires careful handling and communication.
 The built-in macro `none` accepts no values and produces an empty stream:
 
 ```ion
-(:int_list (:none)) ⇒ []
-(:int_list 1 (:none) 2) ⇒ [1, 2]
+(macro list_of (items*) [(%items)])
+
+(:list_of (:none)) ⇒ []
+(:list_of 1 (:none) 2) ⇒ [1, 2]
 [(:none)]   ⇒ []
 {a:(:none)} ⇒ {}
 ```
@@ -471,15 +465,15 @@ When used as a macro argument, a `none` invocation (like any other expression) c
 argument:
 
 ```ion
-(:pi (:none)) ⇒ _error: 'pi' expects 0 arguments, given 1_
+(:pi (:none)) ⇒ // Error: 'pi' expects 0 arguments, given 1
 ```
 
-The special form `(:)` is an [empty argument group](../todo.md), similar to
+The special form `(::)` is an empty argument expression group, similar to
 `(:none)` but used specifically to express the absence of an argument:
 
 ```ion
-(:int_list (:)) ⇒ []
-(:int_list 1 (:) 2) ⇒ [1, 2]
+(:int_list (::)) ⇒ []
+(:int_list 1 (::) 2) ⇒ [1, 2]
 ```
 
 TIP: While `none` and `values` both produce the empty stream, the former is preferred for
@@ -493,16 +487,16 @@ controlled by the parameter's cardinality. So far we have seen the default exact
 and the `*` (zero-or-more) cardinality modifiers, and in total there are four:
 
 
-| Modifier | Cardinality         |
-|:--------:|---------------------|
-|   `!`    | exactly-one value   |
-|   `?`    | zero-or-one value   |
-|   `+`    | one-or-more values  |
-|   `*`    | zero-or-more values |
+| Modifier | Cardinality           |
+|:--------:|-----------------------|
+|   `!`    | `exactly-one` value   |
+|   `?`    | `zero-or-one` value   |
+|   `+`    | `one-or-more` values  |
+|   `*`    | `zero-or-more` values |
 
 #### Exactly-One
 
-Many parameters expect exactly one value and thus have _exactly-one cardinality_.
+Many parameters expect exactly one value and thus have _`exactly-one` cardinality_.
 This is the default cardinality, but the `!` modifier can be used for clarity.
 
 This cardinality means that the parameter requires a stream producing a single value, so one
@@ -511,45 +505,39 @@ might refer to them as _singleton streams_ or just _singletons_ colloquially.
 
 #### Zero-or-One
 
-A parameter with the modifier `?` has _zero-or-one cardinality_, which is much like
+A parameter with the modifier `?` has _`zero-or-one` cardinality_, which is much like
 exactly-one cardinality, except the parameter accepts an empty-stream
 argument as a way to denote an absent parameter.
 
 ```ion
-(macro temperature
-  (decimal::degrees symbol::scale?)]
-  {degrees: degrees, scale: scale})
+(macro temperature (degrees scale?)
+  {
+    degrees: (%degrees),
+    scale: (%scale)
+  })
 ```
 
 Since the scale accepts the empty stream, we can pass it an empty argument group:
 
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96, scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283}
+(:temperature 283 (::)) ⇒ {degrees:283}
 ```
 
 Note that the result’s `scale` field has disappeared because no value was provided. It would be
-more useful to fill in a default value, and to do that we introduce a special form that can
-detect the empty stream:
+more useful to fill in a default value, which we can achieve with the `default` system macro:
 
 ```ion
-(macro temperature
-  (decimal::degrees symbol::scale?)
-  {degrees: degrees, scale: (if_none scale (literal K) scale)})
+(macro temperature (degrees scale?)
+  {
+    degrees: (%degrees),
+    scale: (.default (%scale) K)
+  })
 ```
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96,  scale:F}
-(:temperature 283 (:)) ⇒ {degrees:283, scale:K}
+(:temperature 283 (::)) ⇒ {degrees:283, scale:K}
 ```
-
-The `if_none` form is if/then/else syntax testing stream emptiness. It has three sub-expressions,
-the first being a stream to check. If and only if that stream is empty (it produces no
-values), the second sub-expression is expanded and its results are returned by the `if_none`
-expression. Otherwise, the third sub-expression is expanded and returned.
-
-> [!NOTE]
-> Exactly one branch is expanded, because otherwise the empty stream might be used in a context
-> that requires a value, resulting in an errant expansion error.
 
 To refine things a bit further, trailing arguments that accept the empty stream can be omitted entirely:
 
@@ -557,62 +545,63 @@ To refine things a bit further, trailing arguments that accept the empty stream 
 (:temperature 283) ⇒ {degrees:283, scale:K}
 ```
 
+> [!TIP]
+> The `default` macro is implemented with the help of a special form that can detect the empty stream: [`if_none`](special_forms.md#if_none).
 
 #### Zero-or-More
 
-A parameter with the modifier `*` has _zero-or-more cardinality_.
+A parameter with the modifier `*` has _`zero-or-more` cardinality_.
 
 ```ion
-(macro prices
-  (number::amount* symbol::currency)
-  (for [(amt amount)]
-    (price amt currency)))
+(macro prices (amount* currency)
+  (.for [(amt (%amount))]
+    (.price (%amt) (%currency))))
 ```
 
-When `*` is on a non-final parameter, we cannot take the “all the rest” of the arguments
+When `*` is on a non-final parameter, we cannot take “all the rest” of the arguments
 and must use a different calling convention to draw the boundaries of the stream.
 Instead, we need a single
 expression that produces the desired values:
 
 ```ion
-(:prices (:) JPY)          ⇒ _void_
+(:prices (::) JPY)          ⇒ // empty stream
 (:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
-(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ```
 
-Here we use a non-empty [empty argument group](../todo.md) `(: ...)` to delimit
+Here we use a non-empty [argument group](../todo.md) `(:: /*...*/)` to delimit
 the multiple elements of the `amount` stream.
 
 
 #### One-or-More
 
-A parameter with the modifier `+` has _one-or-more cardinality_, which works like `*` except
-the resulting stream must produce at least one value. To continue using our `prices` example:
+A parameter with the modifier `+` has _`one-or-more` cardinality_, which works like `*` except:
+1. `+` parameters cannot accept the empty stream
+2. When expanded, `+` parameters must produce at least one value. To continue using our `prices` example:
 
 ```ion
-(macro prices
-  (number::amount+ symbol::currency)
-  (for [(amt amount)]
-    (price amt currency)))
+(macro prices (amount+ currency)
+  (.for [(amt (%amount))]
+    (.price (%amt) (%currency))))
 ```
 
 ```ion
-(:prices (:) JPY) ⇒ _error: at least one value expected for + parameter_
+(:prices (::) JPY)          ⇒ // Error: `+` parameter received the empty stream
 (:prices 54 CAD)           ⇒ {amount:54, currency:CAD}
-(:prices (: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
+(:prices (:: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ```
 
 On the final parameter, `+` collects the remaining (one or more) arguments:
 
 ```ion
-(macro thanks (text::names+)
-  (make_string "Thank you to my Patreon supporters:\n"
-    (for [(n names)]
-      (make_string "  * " n "\n"))))
+(macro thanks (names+)
+  (.make_string "Thank you to my Patreon supporters:\n"
+    (.for [(name (%names))]
+      (.make_string "  * " (%name) "\n"))))
 ```
 
 ```ion
-(:thanks) ⇒ _error: at least one value expected for + parameter_
+(:thanks) ⇒ // Error: at least one value expected for + parameter
 
 (:thanks Larry Curly Moe) =>
 '''\
@@ -628,18 +617,18 @@ Thank you to my Patreon supporters:
 The non-rest versions of multi-value parameters require some kind of delimiting
 syntax to contain the applicable sub-expressions. For the tagged-type parameters we've seen
 so far, you _could_ use `:values` or some other macro to produce the stream, but that doesn't
-work for [tagless types](../todo.md).
+work for [tagless types](#tagless-and-fixed-width-types).
 The preferred syntax, supporting all argument types, is a special delimiting form
 called an _argument group_. Here is a macro to illustrate:
 
 ```ion
 (macro prices
   (amount* currency)
-  (for [(amt amount)]
-    (price amt currency)))
+  (.for [(amt (%amount))]
+    (.price (%amt) (%currency))))
 ```
 
-The parameter `amount` accepts any number of `number`s.
+The parameter `amount` accepts any number of argument expressions.
 It's easy to provide exactly one:
 
 ```ion
@@ -647,28 +636,27 @@ It's easy to provide exactly one:
 ```
 
 To provide a non-singleton stream of values, use an _argument group_.
-Inside an E-expression, a group starts with the digraph `(:` similar to a macro
-invocation, but without a macro reference:
+Inside an E-expression, a group starts with `(::`
 
 ```ion
-(:prices (:) GBP)       ⇒ _void_
-(:prices (: 1) GBP)     ⇒ {amount:1, currency:GBP}
-(:prices (: 1 2 3) GBP) ⇒ {amount:1, currency:GBP}
-                          {amount:2, currency:GBP}
-                          {amount:3, currency:GBP}
+(:prices (::) GBP)       ⇒ _void_
+(:prices (:: 1) GBP)     ⇒ {amount:1, currency:GBP}
+(:prices (:: 1 2 3) GBP) ⇒ {amount:1, currency:GBP}
+                           {amount:2, currency:GBP}
+                           {amount:3, currency:GBP}
 ```
 
 Within the group, the invocation can have any number of expressions that align
-with the parameter type.
+with the parameter's encoding.
 The macro parameter produces the results of those expressions, concatenated into a
 single stream, and the expander verifies that each value on that stream is acceptable by the
-parameter’s declared type.
+parameter’s declared encoding.
 
 ```ion
-(:prices (: 1 (:values 2 3) 4) GBP) ⇒ {amount:1, currency:GBP}
-                                      {amount:2, currency:GBP}
-                                      {amount:3, currency:GBP}
-                                      {amount:4, currency:GBP}
+(:prices (:: 1 (:values 2 3) 4) GBP) ⇒ {amount:1, currency:GBP}
+                                       {amount:2, currency:GBP}
+                                       {amount:3, currency:GBP}
+                                       {amount:4, currency:GBP}
 ```
 
 Argument groups may only appear inside macro invocations where the corresponding
@@ -690,27 +678,26 @@ this as applied to final `*` parameters, but it also applies to `?`
 parameters:
 
 ```ion
-(macro optionals
-  (a* b? c! d* e? f*)
-  (make_list a b c d e f))
+(macro optionals (a* b? c! d* e? f*)
+  (.make_list a b c d e f))
 ```
 
 Since `d`, `e`, and `f` all accept the empty stream, they can be omitted by invokers. But `c` is required so
 `a` and `b` must always be present, at least as an empty group:
 
 ```ion
-(:optionals (:) (:) "value for c") ⇒ ["value for c"]
+(:optionals (::) (::) "value for c") ⇒ ["value for c"]
 ```
 
 Now `c` receives the string `"value for c"` while the other parameters are all empty.
 If we want to provide `e`, then we must also provide a group for `d`:
 
 ```ion
-(:optionals (:) (:) "value for c" (:) "value for e")
+(:optionals (::) (::) "value for c" (::) "value for e")
   ⇒ ["value for c", "value for e"]
 ```
 
-### Tagless and fixed-Width types
+### Tagless and fixed-width types
 
 In Ion 1.0, the binary encoding of every value starts off with a “type tag”, an opcode that indicates
 the data-type of the next value and thus the interpretation of the following octets of data. In general,
@@ -736,10 +723,10 @@ The following tagless types are available:
 
 | Tagless type                         | Description                          |
 |--------------------------------------|--------------------------------------|
-| `var_symbol`                         | Tagless symbol (SID or text)         |
-| `var_string`                         | Tagless string                       |
-| `var_int`                            | Tagless, variable-width signed int   |
-| `var_uint`                           | Tagless, variable-width unsigned int |
+| `flex_symbol`                        | Tagless symbol (SID or text)         |
+| `flex_string`                        | Tagless string                       |
+| `flex_int`                           | Tagless, variable-width signed int   |
+| `flex_uint`                          | Tagless, variable-width unsigned int |
 | `int8`  `int16`   `int32`   `int64`  | Fixed-width signed int               |
 | `uint8` `uint16`  `uint32`  `uint64` | Fixed-width unsigned int             |
 | `float16` `float32` `float64`        | Fixed-width float                    |
@@ -748,24 +735,23 @@ The following tagless types are available:
 To define a tagless parameter, just declare one of the primitive types:
 
 ```ion
-(macro point
-  (var_int::x var_int::y)
-  {x: x, y: y})
+(macro point (flex_int::x flex_int::y)
+  {x: (%x), y: (%y)})
 ```
 ```ion
 (:point 3 17) ⇒ {x:3, y:17}
 ```
 
-The type constraint has no real benefit here in text, as primitive types aim to improve the binary
+The tagless encoding has no real benefit here in text, as primitive types aim to improve the binary
 encoding.
 
 This density comes at the cost of flexibility. Primitive types cannot be annotated or null, and
 arguments cannot be expressed using macros, like we’ve done before:
 
 ```ion
-(:point null.int 17)   ⇒ _error: primitive var_int does not accept nulls_
-(:point a::3 17)       ⇒ _error: primitive var_int does not accept annotations_
-(:point (:values 1) 2) ⇒ _error: cannot use macro for a primitive argument_
+(:point null.int 17)   ⇒ // Error: primitive flex_int does not accept nulls
+(:point a::3 17)       ⇒ // Error: primitive flex_int does not accept annotations
+(:point (:values 1) 2) ⇒ // Error: cannot use macro for a primitive argument
 ```
 
 While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
@@ -775,15 +761,13 @@ binary E-expression.
 For the same reasons, supplying a (non-rest) tagless parameter with no value,
 or with more than one value, can only be expressed by using an argument group.
 
-// TODO: Add examples of non-single cardinality and use of groups.
-
 A subset of the primitive types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
 
 ```ion
 (macro byte_array
   (uint8::bytes*)
-  [bytes])
+  [(%bytes)])
 ```
 
 Invocations of this macro are encoded as a sequence of untagged octets, because the
@@ -792,8 +776,8 @@ invocation is written using normal ints:
 
 ```ion
 (:byte_array 0 1 2 3 4 5 6 7 8) ⇒ [0, 1, 2, 3, 4, 5, 6, 7, 8]
-(:byte_array 9 -10 11)          ⇒ _error: -10 is not a valid uint8_
-(:byte_array 256)               ⇒ _error: 256 is not a valid uint8_
+(:byte_array 9 -10 11)          ⇒ // Error: -10 is not a valid uint8
+(:byte_array 256)               ⇒ // Error: 256 is not a valid uint8
 ```
 
 As above, Ion text doesn’t have syntax specifically denoting “8-bit unsigned integers”, so to
@@ -819,35 +803,24 @@ eliminate a fair amount:
 [(:point 3 17), (:point 395 23), (:point 15 48), (:point 2023 5), …]
 ```
 
-This eliminates all the ``x``s and ``y``s, but leaves repeated macro invocations. We can try to
-wrap this in another macro, but we find the type constraints insufficient, since the tightest we
-can go is `struct`, and things aren’t really any better:
-
-```ion
-(macro scatterplot (struct::points*)
-  [points])
-```
-```ion
-(:scatterplot (:point 3 17) (:point 395 23) (:point 15 48) (:point 2023 5) …)
-```
+This eliminates all the `x`s and `y`s, but leaves repeated macro invocations.
 
 What we’d like is to eliminate the `point` calls and just write a stream of pairs, something
 like:
 
-```
+```ion
 (:scatterplot (3 17) (395 23) (15 48) (2023 5) …)
 ```
 
-We can achieve exactly that with a macro-shaped parameter, in which we use the `point` macro as a
-pseudo-type:
+We can achieve exactly that with a macro-shaped parameter, in which we use the `point` macro as an encoding:
 
 ```ion
-(macro scatterplot (point::points*)  // <1>
-  [points])
+(macro scatterplot (point::points*)
+//                  ^^^^^
+  [(%points)])
 ```
 
-<1> `point` is not one of the built-in types, so this is a reference to the macro of that name
-defined earlier.
+`point` is not one of the built-in encodings, so this is a reference to the macro of that name defined earlier.
 
 ```ion
 (:scatterplot (3 17) (395 23) (15 48) (2023 5))
@@ -858,7 +831,7 @@ defined earlier.
 Each argument S-expression like `(3 17)` is _implicitly an
 E-expression_ invoking the `point` macro. The argument mirrors the shape of the inner macro,
 without repeating its name. Further, expansion of the implied ``point``s happens automatically,
-so the overall behavior is just like the preceding struct-based variant and the `points`
+so the overall behavior is just like the preceding variant and the `points`
 parameter produces a stream of structs.
 
 The binary encoding of macro-shaped parameters are similarly tagless, eliding any opcodes
@@ -869,11 +842,11 @@ as needed:
 
 ```ion
 (macro scatterplot
-  (point::points+ string::x_label string::y_label)
-  { points: [points], x_label: x_label, y_label: y_label })
+  (point::points+ flex_string::x_label flex_string::y_label)
+  { points: [(%points)], x_label: (%x_label), y_label: (%y_label) })
 ```
 ```ion
-(:scatterplot (: (3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
+(:scatterplot (:: (3 17) (395 23) (15 48) (2023 5)) "hour" "widgets")
   ⇒
   {
     points: [{x:3, y:17}, {x:395, y:23}, {x:15, y:48}, {x:2023, y:5}],
@@ -887,13 +860,13 @@ and you can't use a macro invocation as an _element_ of an argument group:
 
 ```ion
 (:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
-  ⇒ _error: Argument group expected, found :make_points_
+  ⇒ // Error: Argument group expected, found :make_points
 
-(:scatterplot (: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
-  ⇒ _error: sexp expected with args for 'point', found :make_points_
+(:scatterplot (:: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
+  ⇒ // Error: sexp expected with args for 'point', found :make_points
 
-(:scatterplot (: (3 17) (:point 395 23) (15 48) (2023 5)) "hour" "widgets")
-  ⇒ _error: sexp expected with args for 'point', found :point_
+(:scatterplot (:: (3 17) (:point 395 23) (15 48) (2023 5)) "hour" "widgets")
+  ⇒ // Error: sexp expected with args for 'point', found :point
 ```
 
 This limitation mirrors the binary encoding, where both the argument group and the individual

@@ -9,7 +9,7 @@
 /* Comment */
 .hljs-comment,
 .hljs-quote {
-  color: #575757;
+  color: #969696;
 }
 
 /* Red */
@@ -48,14 +48,30 @@
 .hljs-title,
 .hljs-version_marker, /* Ion-specific */
 .hljs-system_macro,   /* Ion-specific */
+.hljs-e_expression_macro_name,
 .hljs-section {
   color: #0030f2;
+}
+
+.hljs-macro_definition_name {
+  color: #0030f2;
+  text-decoration: underline;
+}
+
+.hljs-tdl_macro_invocation_name {
+  color: #0030f2;
+  font-style: oblique 10deg;
 }
 
 /* Purple */
 .hljs-keyword,
 .hljs-selector-tag {
   color: #9d00ec;
+}
+
+.hljs-variable_expansion {
+  color: DeepPink;
+
 }
 
 .hljs {
