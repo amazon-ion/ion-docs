@@ -1256,9 +1256,26 @@ hljs.registerLanguage("ion", function () {
                 }, n.inherit(a, {begin: /:/})].concat(i),
                 illegal: "\\S"
             }, s = {begin: "\\[", end: "\\]", contains: [n.inherit(a)], illegal: "\\S"};
-        return t.push(l, s), i.forEach((function (n) {
+        var variable_expansion = {
+            className: "variable_expansion",
+            begin: /\(%/, // Starts with a '(%'
+            end: /\)/, // Ends with ')'
+        };
+        var e_expression_macro_name = {
+            className: "e_expression_macro_name",
+            begin: /(?<=\(:)\w+/,
+        };
+        var macro_definition_name = {
+            className: "macro_definition_name",
+            begin: /(?<=\(macro\s+)\w+/,
+        };
+        var tdl_macro_invocation_name = {
+            className: "tdl_macro_invocation_name",
+            begin: /(?<=\(\.)\w+/,
+        };
+        return t.push(l, s, variable_expansion, e_expression_macro_name, macro_definition_name, tdl_macro_invocation_name), i.forEach((function (n) {
             t.push(n)
-        })), {name: "JSON", contains: t, keywords: e, illegal: "\\S"}
+        })), {name: "Ion", contains: t, keywords: e, illegal: "\\S"}
     }
 }());
 hljs.registerLanguage("java", function () {
