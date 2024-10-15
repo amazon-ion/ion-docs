@@ -32,74 +32,74 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 <!-- make the tables align to the side of the page /-->
 <style>table { margin: 1em;}</style>
 
-| ID | Text                            |
-|---:|:--------------------------------|
-|  0 | _&lt;reserved&gt;_              |
-|  1 | `$ion`                          |
-|  2 | `$ion_1_0`                      |
-|  3 | `$ion_symbol_table`             |
-|  4 | `name`                          |
-|  5 | `version`                       |
-|  6 | `imports`                       |
-|  7 | `symbols`                       |
-|  8 | `max_id`                        |
-|  9 | `$ion_shared_symbol_table`      |
-| 10 | `$ion_encoding`                 |
-| 11 | `$ion_literal`                  |
-| 12 | `$ion_shared_module`            |
-| 13 | `macro`                         |
-| 14 | `macro_table`                   |
-| 15 | `symbol_table`                  |
-| 16 | `module`                        |
-| 17 | see [ion-docs#345][1]           |
-| 18 | `export`                        |
-| 19 | see [ion-docs#345][1]           |
-| 20 | `import`                        |
-| 21 | _zero-length text_ (i.e. `''`)  |
-| 22 | `literal`                       |
-| 23 | `if_none`                       |
-| 24 | `if_some`                       |
-| 25 | `if_single`                     |
-| 26 | `if_multi`                      |
-| 27 | `for`                           |
-| 28 | `fail`                          |
-| 29 | `values`                        |
-| 30 | `annotate`                      |
-| 31 | `make_string`                   |
-| 32 | `make_symbol`                   |
-| 33 | `make_blob`                     |
-| 34 | `make_decimal`                  |
-| 35 | `make_timestamp`                |
-| 36 | `make_list`                     |
-| 37 | `make_sexp`                     |
-| 38 | `make_struct`                   |
-| 39 | `parse_ion`                     |
-| 40 | `repeat`                        |
-| 41 | `delta`                         |
-| 42 | `flatten`                       |
-| 43 | `sum`                           |
-| 44 | `set_symbols`                   |
-| 45 | `add_symbols`                   |
-| 46 | `set_macros`                    |
-| 47 | `add_macros`                    |
-| 48 | `use`                           |
-| 49 | `comment`                       |
-| 50 | `flex_symbol`                   |
-| 51 | `flex_int`                      |
-| 52 | `flex_uint`                     |
-| 53 | `uint8`                         |
-| 54 | `uint16`                        |
-| 55 | `uint32`                        |
-| 56 | `uint64`                        |
-| 57 | `int8`                          |
-| 58 | `int16`                         |
-| 59 | `int32`                         |
-| 60 | `int64`                         |
-| 61 | `float16`                       |
-| 62 | `float32`                       |
-| 63 | `float64`                       |
-| 64 | `none`                          |
-| 65 | `make_field`                    |
+| ID | Text                           |
+|---:|:-------------------------------|
+|  0 | _&lt;reserved&gt;_             |
+|  1 | `$ion`                         |
+|  2 | `$ion_1_0`                     |
+|  3 | `$ion_symbol_table`            |
+|  4 | `name`                         |
+|  5 | `version`                      |
+|  6 | `imports`                      |
+|  7 | `symbols`                      |
+|  8 | `max_id`                       |
+|  9 | `$ion_shared_symbol_table`     |
+| 10 | `$ion_encoding`                |
+| 11 | `$ion_literal`                 |
+| 12 | `$ion_shared_module`           |
+| 13 | `macro`                        |
+| 14 | `macro_table`                  |
+| 15 | `symbol_table`                 |
+| 16 | `module`                       |
+| 17 | see [ion-docs#345][1]          |
+| 18 | `export`                       |
+| 19 | see [ion-docs#345][1]          |
+| 20 | `import`                       |
+| 21 | _zero-length text_ (i.e. `''`) |
+| 22 | `literal`                      |
+| 23 | `if_none`                      |
+| 24 | `if_some`                      |
+| 25 | `if_single`                    |
+| 26 | `if_multi`                     |
+| 27 | `for`                          |
+| 28 | `default`                      |
+| 29 | `values`                       |
+| 30 | `annotate`                     |
+| 31 | `make_string`                  |
+| 32 | `make_symbol`                  |
+| 33 | `make_blob`                    |
+| 34 | `make_decimal`                 |
+| 35 | `make_timestamp`               |
+| 36 | `make_list`                    |
+| 37 | `make_sexp`                    |
+| 38 | `make_struct`                  |
+| 39 | `parse_ion`                    |
+| 40 | `repeat`                       |
+| 41 | `delta`                        |
+| 42 | `flatten`                      |
+| 43 | `sum`                          |
+| 44 | `set_symbols`                  |
+| 45 | `add_symbols`                  |
+| 46 | `set_macros`                   |
+| 47 | `add_macros`                   |
+| 48 | `use`                          |
+| 49 | `meta`                         |
+| 50 | `flex_symbol`                  |
+| 51 | `flex_int`                     |
+| 52 | `flex_uint`                    |
+| 53 | `uint8`                        |
+| 54 | `uint16`                       |
+| 55 | `uint32`                       |
+| 56 | `uint64`                       |
+| 57 | `int8`                         |
+| 58 | `int16`                        |
+| 59 | `int32`                        |
+| 60 | `int64`                        |
+| 61 | `float16`                      |
+| 62 | `float32`                      |
+| 63 | `float64`                      |
+| 64 | `none`                         |
+| 65 | `make_field`                   |
 
 In Ion 1.1 Text, system symbols can never be referenced by symbol ID; `$1` always refers to the first symbol in the user symbol table.
 This allows the Ion 1.1 system symbol table to be relatively large without taking away SID space from the user symbol table.
@@ -129,8 +129,9 @@ This allows the Ion 1.1 system symbol table to be relatively large without takin
 | 18 | [`delta`](../macros/system_macros.md#delta)                   |
 | 19 | [`flatten`](../macros/system_macros.md#flatten)               |
 | 20 | [`sum`](../macros/system_macros.md#sum)                       |
-| 21 | [`comment`](../macros/system_macros.md#comment)               |
+| 21 | [`meta`](../macros/system_macros.md#meta)                     |
 | 22 | [`make_field`](../macros/system_macros.md#make_field)         |
+| 22 | [`default`](../macros/system_macros.md#default)               |
 
 
 ----

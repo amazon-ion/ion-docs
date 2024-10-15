@@ -53,10 +53,14 @@ To refine things a bit further, trailing optional arguments can be omitted entir
 ```
 
 > [!TIP]
-> You can define a macro that wraps `if_none` to create a none-coalescing operator.
+> If you're using `if_none` to specify an expression to default to, you can use the [`default`](system_macros.md#default) system macro to be more concise.
 > ```ion
-> (macro coalesce (maybe_none* default_expr+) 
->        (.if_none (%maybe_none) (%default_expr) (%maybe_none)))
+> (macro temperature (degrees scale)
+>     {
+>       degrees: (%degrees),
+>       scale: (.default (%scale) K),
+>     }
+> )
 > ```
 
 ### `if_some`
@@ -184,10 +188,3 @@ a b c
 
 The `for` special form can only be invoked in the body of template macro. It is not valid to use as an E-Expression.
 
-### `fail`
-
-```ion
-(macro fail (message?) /* Not representable in TDL */)
-```
-
-Causes macro evaluation to immediately halt and causes the Ion reader to raise an error to the user. 
