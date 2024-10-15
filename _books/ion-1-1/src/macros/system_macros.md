@@ -429,7 +429,7 @@ Appends the content of the given module to the encoding context.
 ```ion
 (macro use (catalog_key version?)
        $ion_encoding::(
-         (import the_module catalog_key (.if_none (%version) 1 (%version)))
+         (import the_module catalog_key (.default (%version) 1))
          (symbol_table $ion_encoding the_module)
          (macro_table $ion_encoding the_module)
        ))
