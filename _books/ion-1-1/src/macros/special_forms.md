@@ -184,10 +184,3 @@ a b c
 
 The `for` special form can only be invoked in the body of template macro. It is not valid to use as an E-Expression.
 
-### `fail`
-
-```ion
-(macro fail (message?) /* Not representable in TDL */)
-```
-
-Causes macro evaluation to immediately halt and causes the Ion reader to raise an error to the user. 

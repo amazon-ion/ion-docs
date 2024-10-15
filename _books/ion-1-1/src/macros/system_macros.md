@@ -29,6 +29,24 @@ This is, essentially, the identity function.
 It produces a stream from any number of arguments, concatenating the streams produced by the nested expressions.
 Used to aggregate multiple values or sub-streams to pass to a single argument, or to produce multiple results.
 
+#### `default`
+
+```ion
+(macro default (expr* default_expr*)
+    // If `expr` is empty...
+    (.if_none (%expr)
+        // then expand `default_expr` instead.
+        (%default_expr)
+        // If it wasn't empty, then expand `expr`.
+        (%expr)
+    )
+)
+```
+
+`default` tests `expr` to determine whether it expands to the empty stream.
+If it does not, `default` will produce the expansion of `expr`.
+If it does, `default` will produce the expansion of `default_expr` instead.
+
 #### `flatten`
 
 ```ion
@@ -297,19 +315,22 @@ Examples:
 (:sum (:)) => 0
 ```
 
-#### `comment`
+#### `meta`
 
 ```ion
-(macro comment (anything*) (.none))
+(macro meta (anything*) (.none))
 ```
 
-The `comment` macro accepts any values and emits nothing.
-It can be used for comments that must be syntactically valid Ion.
+The `meta` macro accepts any values and emits nothing.
+It allows writers to encode data that will be not be surfaced to most readers.
+Readers can be configured to intercept calls to `meta`, allowing them to read the otherwise invisible data.
+
+When transcribing from one format to another, writers should preserve invocations of `meta` when possible.
 
 Example:
 ```ion
 (:values
-    (:comment equivalent to {foo:1,foo:2})
+    (:meta {author: "Mike Smith", email: "mikesmith@example.com"})
     {foo:2,foo:1}
 )
 =>
