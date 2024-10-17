@@ -50,7 +50,7 @@ macro-addr         ::= unannotated-uint
 
 Macro references are resolved to a specific macro as follows:
 
-* An unqualified _macro-name_ is looked up within the exported macros, and if not found, then the system module.
+* An unqualified _macro-name_ is looked up within the exported macros, and if not found, then the active encoding module's macro table.
   If it maps to a macro, that’s the resolution of the reference.
   Otherwise, an error is signaled due to an unbound reference.
 * An anonymous local reference  (`__address__`) is resolved by index in the exported macro array.
@@ -61,17 +61,17 @@ Macro references are resolved to a specific macro as follows:
 
 > [!WARNING]
 > An unqualified macro name can change meaning in the middle of a module if you choose to shadow the
-> name of a system macro. The system macros are imported and used with that meaning, then a declaration
-> shadows that name and gives it a new meaning.
+> name of a system macro. To unambiguously refer to the system module, use the qualified reference syntax: `__$ion__::__system-macro-name__`.
 
 
 ### `import`
 
 ```bnf
-import ::= '(import ' module-name catalog-key ')'
+import ::= '(import ' module-binding catalog-key ')'
+catalog-key ::= module-name module-version?
 ```
 
-An import binds a lexically scoped module name to a shared symbol table that is identified by a catalog key—that is a `(name, version)` pair. The `version` of the catalog key is optional—when omitted, the version is implicitly 1.
+An import binds a lexically scoped module name to a shared module that is identified by a catalog key—a `(name, version)` pair. The `version` of the catalog key is optional—when omitted, the version is implicitly 1.
 
 In Ion 1.0, imports may be substituted with a different version if an exact match is not found.
 In Ion 1.1, however, all imports require an exact match to be found in the reader's catalog;
@@ -102,12 +102,12 @@ symbol-table       ::= '(symbol_table' symbol-table-entry* ')'
 
 symbol-table-entry ::= module-name | symbol-list
 
-symbol-list        ::= '[' (symbol | string)* ']'
+symbol-list        ::= '[' ((symbol | string)',')* ']'
 ```
 
 The `symbol_table` clause assembles a list of text values for the module to export.
 It takes any number of arguments, each of which may be the name of visible module or a list of symbol-texts.
-The symbol table is  a list of symbol-texts by concatenating the symbol tables of named modules and lists of symbol/string values.
+The symbol table is a list of symbol-texts by concatenating the symbol tables of named modules and lists of symbol/string values.
 
 Where a module name occurs, its symbol table is appended.
 (The module name must refer to another module that is visible to the current module.)
@@ -116,7 +116,7 @@ Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always required exac
 Where a list occurs, it must contain only non-null, unannotated strings and symbols.
 The text of these strings and/or symbols are appended to the symbol table.
 Upon encountering any non-text value, null value, or annotated value in the list, the implementation shall signal an error.  
-To create an intentional gap in the symbol table, one may use `$0`.
+To add a symbol with unknown text to the symbol table, one may use `$0`.
 
 All modules have a symbol table, so when a module has no `symbol_table` clause, the module has an empty symbol table. 
 
@@ -143,7 +143,7 @@ If module `foo`'s symbol table were `[d, e, f]`, then the symbol table defined b
 ```ion
 ["a", "b", "c", "d", "e", "f", "g", "h", "i"]
 ```
-
+This is an Ion 1.0 symbol table that imports two shared symbol tables and then declares some symbols of its own.
 
 ```ion
 $ion_1_0

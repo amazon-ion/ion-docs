@@ -19,7 +19,7 @@ The interface to a module consists of:
 * its _exported symbols_, an array of strings denoting symbol content
 * its _exported macros_, an array of `<name, macro>` pairs, where all names are unique identifiers (or null).
 
-The spec version is external to the macro body and the precise way it is determined depends on the type of module being defined. This is explained in further detail in [Module Versioning](#module-versioning).
+The spec version is external to the module body and the precise way it is determined depends on the type of module being defined. This is explained in further detail in [Module Versioning](#module-versioning).
 
 The exported symbol array is denoted by the `symbol_table` clause of a module definition, and
 by the `symbols` field of a shared symbol table.
@@ -30,7 +30,7 @@ allocated to macros or macro bindings in the order they are declared.
 The exported symbols and exported macros are defined in the [module body](body.md).
 
 
-## Types of Modules
+## Types of modules
 
 There are multiple types of modules.
 All modules share the same interface, but vary in their implementation in order to support a variety of different use cases.
@@ -105,5 +105,5 @@ identifier-start ::= letter
                    | '$_' 
                    | '$$' 
 
-identifier-char ::= letter | number | '$' | '_'
+identifier-char ::= letter | digit | '$' | '_'
 ```
