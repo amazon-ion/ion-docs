@@ -165,8 +165,261 @@ Syntactically, the signature is an s-expression of [parameter declarations](#mac
 | `y`  |  `float16`  | `zero-or-one`  |
 | `z`  |  `tagged`   | `one-or-more`  |
 
-<!-- TODO; grammar and examples -->
-
 ### Template definition language (TDL)
 
-<!-- TODO -->
+The macro's _template_ is a single Ion value that defines how a reader should expand invovations of the macro.
+Ion 1.1 introduces a template definition language (TDL) to express this process in terms of the macro's parameters.
+TDL is a small language with only a few constructs.
+
+A TDL _expression_ can be any of the following:
+1. A literal [Ion scalar](#ion-scalars)
+2. A macro invocation
+3. A variable expansion
+4. A quasi-literal Ion container
+5. A [special form](special_forms.md)
+
+In terms of its encoding, TDL is "just Ion."
+As you shall see in the following sections, the constructs it introduces are written as s-expressions with a distinguishing leading value or values.
+
+A [grammar](#tdl-grammar) for TDL can be found at the end of this chapter.
+
+#### Ion scalars
+
+Ion scalars are interpreted literally. These include values of any type except `list`, `sexp`, and `struct`.
+`null` values of any type—even `null.list`, `null.sexp`, and `null.struct`—are also interpreted literally.
+
+##### Examples
+These macros are constants; they take no parameters.
+When they are invoked, they expand to a stream of a single value: the Ion scalar acting as the template expression.
+```ion
+$ion_encoding::(
+  (macro_table
+    (macro greeting () "hello")
+    (macro birthday () 1996-10-11)
+    // Annotations are also literal
+    (macro price () USD::29.95)
+  )
+)
+
+(:greeting) => "hello"
+(:birthday) => 1996-10-11
+(:price)    => USD::29.95
+```
+
+#### Macro invocations
+
+Macro invocations call an existing macro.
+The invoked macro could be a [system macro](system_macros.md), a macro imported from a [shared module](../todo.md), or a macro previously defined in the current scope.
+
+Syntactically, a macro invocation is an s-expression whose first value is the operator `.` and whose second value is a macro reference.
+
+##### Grammar
+```bnf
+macro-invocation   ::= '(.' macro-ref macro-arg* ')'
+
+special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
+
+macro-ref          ::= (module-name '::')? (macro-name | macro-address)
+
+macro-arg          ::= expression | arg-group
+
+macro-name         ::= ion-identifier
+
+macro-address      ::= unsigned-ion-integer
+
+arg-group          ::= '(::' expression* ')'
+```
+
+##### Invocation syntax illustration
+```ion
+// Invoking a macro defined in the same module by name.
+(.macro_name              arg1 arg2 /*...*/ argN)
+
+// Invoking a macro defined in another module by name.
+(.module_name::macro_name arg1 arg2 /*...*/ argN)
+
+// Invoking a macro defined in the same module by its address.
+(.0              arg1 arg2 /*...*/ argN)
+
+// Invoking a macro defined in a different module by its address.
+(.module_name::0 arg1 arg2 /*...*/ argN)
+```
+
+##### Examples
+```ion
+$ion_encoding::(
+  (macro_table
+    // Calls the system macro `values`, allowing it to produce a stream of three values.
+    (macro nephews () (.values Huey Dewey Louie))
+
+    // Calls a macro previously defined in this module, splicing its result
+    // stream into a list.
+    (macro list_of_nephews () [(.nephews)])
+  )
+)
+
+(:nephews)         => Huey Dewey Louie
+(:list_of_nephews) => [Huey, Dewey, Louie]
+```
+
+> [!IMPORTANT]
+> **There are no forward references in TDL.**
+>  If a macro definition includes an invocation of a name or address that is not already valid, the reader must raise an error.
+>
+> ```ion
+> $ion_encoding::(
+>   (macro_table
+>     (macro list_of_nephews () [(.nephews)])
+>     //                          ^^^^^^^^
+>     // ERROR: Calls a macro that has not yet been defined in this module.
+>     (macro nephews () (.values Huey Dewey Louie))
+>   )
+> )
+> ```
+
+#### Variable expansion
+
+Templates can insert the contents of a macro parameter into their output by using a _variable expansion_,
+an s-expression whose first value is the operator `%` and whose second and final value is the variable name of the parameter to expand.
+
+If the variable name does not match one of the declared macro parameters, the implementation must raise an error.
+
+##### Grammar
+```bnf
+variable-expansion ::= '(%' variable-name ')'
+
+variable-name      ::= ion-identifier
+```
+
+##### Examples
+
+```ion
+$ion_encoding::(
+  (macro_table
+    // Produces a stream that repeats the content of parameter `x` twice.
+    (macro twice (x*) (.values (%x) (%x)))
+  )
+)
+
+(:twice foo)     => foo foo
+(:twice "hello") => "hello" "hello"
+(:twice 1 2 3)   => 1 2 3 1 2 3
+```
+
+#### Quasi-literal Ion containers
+
+When an Ion container appears in a template definition, it is interpreted _almost_ literally.
+
+Each nested value in the container is inspected.
+* **If the value is an Ion scalar**, it is added to the output as-is.
+* **If the value is a variable expansion**, the stream bound to that variable name is added to the output.
+    The variable expansion literal (for example: `(%name)`) is discarded.
+* **If the value is a macro invocation**, the invocation is evaluated and the resulting stream is added to the output.
+    The macro invocation literal (for example: `(.name 1 2 3)`) is discarded.
+* **If the value is a container**, the reader will recurse into the container and repeat this process.
+
+##### Expansion within a sequence
+
+When the container is a list or s-expression, the values in the nested expression's expansion are spliced into the sequence at the site of the expression.
+If the expansion was empty, no values are spliced into the container.
+
+```ion
+$ion_encoding::(
+  (macro_table
+    (macro bookend_list (x y*) [(%x), (%y), (%x)])
+    (macro bookend_sexp (x y*) ((%x) (%y) (%x)))
+  )
+)
+
+(:bookend_list ! a b c) => ['!', a, b, c, '!']
+(:bookend_sexp ! a b c) => (! a b c !)
+
+(:bookend_sexp !) => (! !)
+```
+
+##### Expansion within a struct
+
+When the container is a struct, the expansion of each field value is paired with the corresponding field name.
+If the expansion produces a single value, a single field with that name will be spliced into the parent struct.
+If the expansion produces multiple values, a field with that name will be created for each value and spliced into the parent struct.
+If the expansion was empty, no fields are spliced into the parent struct.
+
+##### Examples
+
+```ion
+$ion_encoding::(
+  (macro_table
+    (macro resident (id names*)
+        {
+            town: "Riverside",
+            id: (.make_string "123-" (%id)),
+            name: (%names)
+        }
+     )
+  )
+)
+
+(:resident "abc" "Alice") =>
+{
+  town: "Riverside",
+  id: "123-abc",
+  name: "Alice"
+}
+
+(:resident "def" "John" "Jacob" "Jingleheimer" "Schmidt") =>
+{
+  town: "Riverside",
+  id: "123-def",
+  name: "John",
+  name: "Jacob",
+  name: "Jingleheimer",
+  name: "Schmidt",
+}
+
+(:resident "ghi") =>
+{
+  town: "Riverside",
+  id: "123-ghi",
+}
+```
+
+#### Special forms
+
+```bnf
+special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
+```
+
+Special forms are similar to macro invocations, but they have their own expansion rules.
+See [_Special forms_](special_forms.md) for the list of special forms and a description of each.
+
+Note that unlike macro expansions, special forms cannot accept argument groups.
+
+#### TDL Grammar
+```bnf
+expression         ::= ion-scalar | ion-ql-container | operation | variable-expansion
+
+ion-scalar         ::= ; <Any Ion scalar value>
+
+ion-ql-container   ::= ; <An Ion container quasi-literal>
+
+operation          ::= macro-invocation | special-form
+
+variable-expansion ::= '(%' variable-name ')'
+
+variable-name      ::= ion-identifier
+
+macro-invocation   ::= '(.' macro-ref macro-arg* ')'
+
+special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
+
+macro-ref          ::= (module-name '::')? (macro-name | macro-address)
+
+macro-arg          ::= expression | arg-group
+
+macro-name         ::= ion-identifier
+
+macro-address      ::= ion-unsigned-integer
+
+arg-group          ::= '(::' expression* ')'
+```
+

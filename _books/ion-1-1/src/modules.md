@@ -85,10 +85,6 @@ Macro definitions being added to the macro table must have a unique name. If a m
 
 The `macro` clause defines a new macro. See _[Defining macros](macros/defining_macros.md)_.
 
-<!-- TODO: `import` -->
-<!-- TODO: `module` -->
-<!-- TODO: `export` -->
-
 ## Grammar
 
 Literals appear in `code blocks`. Terminals are described in _italic text_.
@@ -103,7 +99,7 @@ Literals appear in `code blocks`. Terminals are described in _italic text_.
 | symbol-def-seq       | ::= | _a list of unannotated text values (string/symbol)_    |
 | mactab               | ::= | `(macro_table ` mactab-item* `)`                       |
 | mactab-item          | ::= | module-name \| macro-def \| macro-export               |
-| macro-def            | ::= | `(macro ` macro-name signature tdl-template `)`        |
+| macro-def            | ::= | `(macro ` macro-name signature tdl-expression `)`      |
 | macro-export         | ::= | `(export ` macro-ref macro-name? `)`                   |
 | catalog-name         | ::= | _unannotated string_                                   |
 | catalog-version      | ::= | _unannotated int_                                      |

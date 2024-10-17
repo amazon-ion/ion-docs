@@ -58,6 +58,7 @@
   text-decoration: underline;
 }
 
+.hljs-tdl_macro_invocation_address,
 .hljs-tdl_macro_invocation_name {
   color: #0030f2;
   font-style: oblique 10deg;
