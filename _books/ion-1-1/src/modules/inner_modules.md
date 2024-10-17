@@ -1,4 +1,4 @@
-# Inner Modules
+# Inner modules
 
 Inner modules are defined within another module, and can be referenced only within the enclosing module.
 Their scope is lexical; they can be referenced immediately following their definition, up until the end of the containing module.
@@ -71,7 +71,7 @@ $ion_shared_module::$ion_1_1::(
 Inner modules can also be used for organization of symbols.
 ```ion
 $ion_encoding::(
-  (module diary      (symbol_table [cheese,  yogurt, milk]))
+  (module dairy      (symbol_table [cheese,  yogurt, milk]))
   (module grains     (symbol_table [cereal,  bread,  rice]))
   (module vegetables (symbol_table [carrots, celery, peas]))
   (module meat       (symbol_table [chicken, mutton, beef]))

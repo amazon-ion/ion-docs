@@ -1,4 +1,4 @@
-# Shared Modules
+# Shared modules
 
 Shared modules exist independently of the documents that use them.
 They are identified by a _catalog key_ consisting of a string name and an integer version.
@@ -29,7 +29,7 @@ $ion_1_1::("org.example.geometry" 2
 )
 ```
 
-The system module provides a convenient macro ([`use`](../macros/system_macros.md#use)) to append a shared module to the current encoding module.
+The system module provides a convenient macro ([`use`](../macros/system_macros.md#use)) to append a shared module to the encoding module.
 ```ion
 $ion_1_1
 (:use "org.example.geometry" 2)

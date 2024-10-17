@@ -1,4 +1,4 @@
-# Ion 1.1 Modules
+# Ion 1.1 modules
 
 In Ion 1.0, each stream has a [symbol table](https://amazon-ion.github.io/ion-docs/docs/symbols.html#processing-of-symbol-tables). The symbol table stores text values that can be referred to by their integer index in the table, providing a much more compact representation than repeating the full UTF-8 text bytes each time the value is used. Symbol tables do not store any other information used by the reader or writer.
 
@@ -11,7 +11,7 @@ Ion 1.1 also introduces the concept of a _module_, an organizational unit that h
 
 In Ion 1.1, each stream has an [encoding module](modules/encoding_module.md)—the active `(symbol table, macro table)` pair that is being used to encode the stream.
 
-## Module Interface
+## Module interface
 
 The interface to a module consists of:
 
@@ -43,7 +43,7 @@ All modules share the same interface, but vary in their implementation in order 
 | [Shared Module](modules/shared_modules.md)    | Defining symbols and macros outside of the data stream         |
 
 
-## Module Versioning
+## Module versioning
 
 Every module definition has a _spec version_ that determines the syntax and semantics of the module body.
 A module’s spec version is expressed in terms of a specific Ion version; the meaning of the module is as defined by that version of the Ion specification.

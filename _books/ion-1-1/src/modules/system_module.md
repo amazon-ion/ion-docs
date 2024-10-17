@@ -1,4 +1,4 @@
-# The System Module
+# The system module
 
 The symbols and macros of the system module `$ion` are available everywhere within an Ion document,
 with the version of that module being determined by the spec-version of each segment.
@@ -9,7 +9,7 @@ The system macros are more visible, especially to authors of macros.
 This chapter catalogs the system-provided symbols and macros.
 The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros/defining_macros.md#template-definition-language-tdl).
 
-### Relation to Local Symbol and Macro Tables
+### Relation to local symbol and macro tables
 
 In Ion 1.0, the system symbol table is always the first import of the local symbol table.
 However, in Ion 1.1, the system symbol and macro tables have a system address space that is distinct from the local address space.

@@ -1,4 +1,4 @@
-# Defining Modules
+# Defining modules
 
 A module is defined by four kinds of subclauses which, if present, always appear in the same order.
 
@@ -8,18 +8,20 @@ A module is defined by four kinds of subclauses which, if present, always appear
 4. `macro_table` - an exported list of macro definitions
 
 
-### Internal Environment
+### Internal environment
 
 The body of a module tracks an internal environment by which macro references are resolved.
 This environment is constructed incrementally by each clause in the definition and consists of:
 
 * the _visible modules_, a map from identifier to module
+* the _exported symbols_, an array containing symbol texts
 * the _exported macros_, an array containing name/macro pairs
 
 Before any clauses of the module definition are examined, the initial environment is as follows:
 
-* The visible modules map `$ion` to the system module for the appropriate spec version.
-  Inside an encoding directive, the visible modules also maps `$ion_encoding` to the current encoding module.
+* The visible modules map binds `$ion` to the system module for the appropriate spec version.
+  Inside an encoding directive, the visible modules map also binds `$ion_encoding` to the active encoding module
+  (the encoding module that was active when the encoding directive was encountered).
   For an inner module, it also includes the modules previously made available by the enclosing
   module (via `import` or `module`).
 * The macro table and symbol table are empty.
@@ -31,6 +33,7 @@ Each clause affects the environment as follows:
   An error must be signaled if the name already appears in the visible modules.
 * A `module` declaration defines a new module and assigns it a name in the visible modules.
   An error must be signaled if the name already appears in the visible modules.
+* A `symbol_table` declaration defines the exported symbols.
 * A `macro_table` declaration defines the exported macros.
 
 ### Resolving Macro References
@@ -50,25 +53,32 @@ macro-addr         ::= unannotated-uint
 
 Macro references are resolved to a specific macro as follows:
 
-* An unqualified _macro-name_ is looked up within the exported macros, and if not found, then the active encoding module's macro table.
-  If it maps to a macro, that’s the resolution of the reference.
+* An unqualified _macro-name_ is looked up within the exported macros, and if not found, then the 
+  active encoding module's macro table. If it maps to a macro, that’s the resolution of the reference.
   Otherwise, an error is signaled due to an unbound reference.
-* An anonymous local reference  (`__address__`) is resolved by index in the exported macro array.
+* An anonymous local reference  (_macro-addr_) is resolved by index in the exported macro array.
   If the address exceeds the array boundary, an error is signaled due to an invalid reference.
-* A qualified reference (`__module__::__name-or-address__`) resolves solely against the referenced module.
+* A qualified reference (_qualified-ref_) resolves solely against the referenced module.
   If the module name does not exist in the visible modules, an error is signaled due to an unbound reference.
   Otherwise, the name or address is resolved within that module’s exported macro array.
 
 > [!WARNING]
 > An unqualified macro name can change meaning in the middle of a module if you choose to shadow the
-> name of a system macro. To unambiguously refer to the system module, use the qualified reference syntax: `__$ion__::__system-macro-name__`.
+> name of a system macro. To unambiguously refer to the system module, use the qualified reference syntax: `$ion::<system-macro-name>`.
 
 
 ### `import`
 
 ```bnf
-import ::= '(import ' module-binding catalog-key ')'
-catalog-key ::= module-name module-version?
+import             ::= '(import ' module-name catalog-key ')'
+
+module-name        ::= unannotated-identifier-symbol
+
+catalog-key        ::= catalog-name catalog-version?
+
+catalog-name       ::= string
+
+catalog-version    ::= int // positive, unannotated
 ```
 
 An import binds a lexically scoped module name to a shared module that is identified by a catalog key—a `(name, version)` pair. The `version` of the catalog key is optional—when omitted, the version is implicitly 1.
@@ -102,7 +112,9 @@ symbol-table       ::= '(symbol_table' symbol-table-entry* ')'
 
 symbol-table-entry ::= module-name | symbol-list
 
-symbol-list        ::= '[' ((symbol | string)',')* ']'
+symbol-list        ::= '[' ( symbol-text ',' )* ']'
+
+symbol-text        ::= symbol | string
 ```
 
 The `symbol_table` clause assembles a list of text values for the module to export.
@@ -113,12 +125,31 @@ Where a module name occurs, its symbol table is appended.
 (The module name must refer to another module that is visible to the current module.)
 Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always required exact matches for imported modules.
 
+> [!TIP]
+> In an encoding directive, the active encoding module `$ion_encoding` can be added to the symbol table in order to 
+> retain the symbols from the active encoding module. 
+> `$ion_encoding` can occur anywhere in the `symbol_table` clause, so in Ion 1.1 it is possible to append and prepend to
+> the symbol table.
+
 Where a list occurs, it must contain only non-null, unannotated strings and symbols.
 The text of these strings and/or symbols are appended to the symbol table.
 Upon encountering any non-text value, null value, or annotated value in the list, the implementation shall signal an error.  
 To add a symbol with unknown text to the symbol table, one may use `$0`.
 
-All modules have a symbol table, so when a module has no `symbol_table` clause, the module has an empty symbol table. 
+All modules have a symbol table, so when a module has no `symbol_table` clause, the module has an empty symbol table.
+
+#### Symbol zero `$0`
+
+
+Symbol zero (i.e. `$0`) is a special symbol that is not assigned text by any symbol table, even the system symbol table.
+Symbol zero always has unknown text, and can be useful in synthesizing symbol identifiers where the text image of the symbol is not known in a particular operating context.
+
+All symbol tables (even an empty symbol table) can be thought of as implicitly containing `$0`.
+However, `$0` precedes all symbol tables rather than belonging to any symbol table.
+When adding the exported symbols from one module to the symbol table of another, the preceding `$0` is not copied into the destination symbol table (because it is not part of the source symbol table). 
+
+It is important to note that `$0` is only semantically equivalent to itself and to locally-declared SIDs with unknown text.
+It is not semantically equivalent to SIDs with unknown text from shared symbol tables, so replacing such SIDs with `$0` is a destructive operation to the semantics of the data.
 
 #### Processing
 
@@ -228,6 +259,7 @@ When the macro declaration uses a name, an error must be signaled if it already 
 An `export` clause declares a name for an existing macro and appends the macro to the macro table.
 * If the reference to the existing macro is followed by a name, the existing macro is appended to the exported
   macro array with the latter name instead of the original name, if any.
+  In this way, an anonymous macro can be given a name.
   An error must be signaled if that name already appears in the exported macro array.
 * If the reference to the existing macro is followed by `null`, the macro is appended to the exported macro array 
   without a name, regardless of whether the macro has a name.

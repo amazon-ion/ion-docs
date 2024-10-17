@@ -1,24 +1,24 @@
-# Module Grammar
+# Module grammar
 
 ```bnf
 encoding-directive ::= '$ion_encoding::(' module-body ')'
-                   
+
 shared-module      ::= '$ion_shared_module::' ion-version-marker '::(' catalog-key module-body ')'
 
 ion-version-marker ::= '$ion_1_0' | '$ion_1_1'
 
-module-body        ::= import* inline-module* symbol-table? macro-table?
+module-body        ::= import* inner-module* symbol-table? macro-table?
 
 import             ::= '(import ' module-name catalog-key ')'
 
 catalog-key        ::= catalog-name catalog-version?
 
-catalog-version    ::= int // positive, unannotated
-
 catalog-name       ::= string
 
+catalog-version    ::= int // positive, unannotated
+
 inner-module       ::= '(module' module-name import* symbol-table? macro-table? ')'
-                             
+
 module-name        ::= unannotated-identifier-symbol
 
 
@@ -29,7 +29,9 @@ symbol-table       ::= '(symbol_table' symbol-table-entry* ')'
 
 symbol-table-entry ::= module-name | symbol-list
 
-symbol-list        ::= '[' (symbol | string)* ']'
+symbol-list        ::= '[' ( symbol-text ',' )* ']'
+
+symbol-text        ::= symbol | string
 
 
 // Macro Tables
@@ -40,7 +42,7 @@ macro-table-entry       ::= macro-definition
                           | macro-export
                           | module-name
                      
-macro-definition        ::= '(macro' macro-name-declaration signature template-expression ')'
+macro-definition        ::= '(macro' macro-name-declaration signature tdl-expression ')'
 
 macro-export            ::= '(export' qualified-macro-ref macro-name-declaration? ')'
 

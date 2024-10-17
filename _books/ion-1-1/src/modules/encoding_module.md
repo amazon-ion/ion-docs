@@ -1,4 +1,4 @@
-# The Encoding module
+# The encoding module
 
 The _encoding module_ is the module that is currently being used to encode the data stream. 
 When the stream begins, the encoding module is the [system module](system_module.md).
@@ -8,7 +8,7 @@ An encoding directive is an s-expression annotated with `$ion_encoding`; its nes
 
 When the reader advances beyond an encoding directive, the module it defined becomes the new encoding module.
 
-In the context of an encoding directive, the current encoding module is named `$ion_encoding`.
+In the context of an encoding directive, the active encoding module is named `$ion_encoding`.
 The encoding directive may preserve symbols or macros that were defined in the previous encoding directive by referencing `$ion_encoding`.
 The `$ion_encoding` module may only be imported to an encoding directive, and it is done so automatically and implicitly.
 
@@ -30,7 +30,7 @@ $ion_encoding::(
 )
 ```
 
-#### Adding symbols to the current encoding module
+#### Adding symbols to the encoding module
 The implicitly imported `$ion_encoding` is used to append to the current symbol and macro tables.
 
 ```ion
@@ -49,6 +49,9 @@ $ion_encoding::(
 // ...
 
 $ion_encoding::(
+  // The first argument of the symbol_table clause is the module name '$ion_encoding',
+  // which adds the symbols from the active encoding module to the new encoding module.
+  // The '$ion_encoding' argument in the macro_table clause behaves similarly.
   (symbol_table $ion_encoding 
                 [
                   "d", // $4
@@ -67,3 +70,6 @@ $ion_encoding::(
 $ion_encoding::()
 ```
 The absence of the `symbol_table` and `macro_table` clauses is interpreted as empty symbol and macro tables.
+
+Note that this is different from the behaviour of an IVM. 
+When an IVM is encountered, the encoding module is set to the system module.
