@@ -63,8 +63,8 @@ Macro references are resolved to a specific macro as follows:
   Otherwise, the name or address is resolved within that module’s exported macro array.
 
 > [!WARNING]
-> An unqualified macro name can change meaning in the middle of a module if you choose to shadow the
-> name of a macro in active encoding module. To unambiguously refer to the active encoding module, 
+> An unqualified macro name can change meaning in the middle of an encoding module if you choose to shadow the
+> name of a macro in the active encoding module. To unambiguously refer to the active encoding module, 
 > use the qualified reference syntax: `$ion_encoding::<macro-name>`.
 
 
