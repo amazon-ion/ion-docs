@@ -1,4 +1,4 @@
-# Ion 1.1 Modules
+# Ion 1.1 modules
 
 In Ion 1.0, each stream has a [symbol table](https://amazon-ion.github.io/ion-docs/docs/symbols.html#processing-of-symbol-tables). The symbol table stores text values that can be referred to by their integer index in the table, providing a much more compact representation than repeating the full UTF-8 text bytes each time the value is used. Symbol tables do not store any other information used by the reader or writer.
 
@@ -9,7 +9,86 @@ Ion 1.1 also introduces the concept of a _module_, an organizational unit that h
 > [!TIP]
 > You can think of an Ion 1.0 symbol table as a module with an empty macro table.
 
-In Ion 1.1, each stream has an [encoding module](modules/encoding_module.md)--the active `(symbol table, macro table)` pair that is being used to encode the stream.
+In Ion 1.1, each stream has an [encoding module](modules/encoding_module.md)—the active `(symbol table, macro table)` pair that is being used to encode the stream.
+
+## Module interface
+
+The interface to a module consists of:
+
+* its _spec version_, denoting the Ion version used to define the module
+* its _exported symbols_, an array of strings denoting symbol content
+* its _exported macros_, an array of `<name, macro>` pairs, where all names are unique identifiers (or null).
+
+The spec version is external to the module body and the precise way it is determined depends on the type of module being defined. This is explained in further detail in [Module Versioning](#module-versioning).
+
+The exported symbol array is denoted by the `symbol_table` clause of a module definition, and
+by the `symbols` field of a shared symbol table.
+
+The exported macro array is denoted by the module’s `macro_table` clause, with addresses
+allocated to macros or macro bindings in the order they are declared.
+
+The exported symbols and exported macros are defined in the [module body](body.md).
+
+
+## Types of modules
+
+There are multiple types of modules.
+All modules share the same interface, but vary in their implementation in order to support a variety of different use cases.
+
+| Module Type                                   | Purpose                                                        |
+|:----------------------------------------------|:---------------------------------------------------------------|
+| [Encoding Module](modules/encoding_module.md) | Defining the local encoding context                            |
+| [System Module](modules/system_module.md)     | Defining system symbols and macros                             |
+| [Inner Module](modules/inner_modules.md)      | Organizing symbols and macros and limiting the scope of macros |
+| [Shared Module](modules/shared_modules.md)    | Defining symbols and macros outside of the data stream         |
+
+
+## Module versioning
+
+Every module definition has a _spec version_ that determines the syntax and semantics of the module body.
+A module’s spec version is expressed in terms of a specific Ion version; the meaning of the module is as defined by that version of the Ion specification.
+
+The spec version for an encoding module is implicitly derived from the Ion version of its containing segment.
+The spec version for a shared module is denoted via a required annotation.
+The spec version of an inner module is always the same as its containing module.
+The spec version of a system module is the Ion version in which it was specified.
+
+To ensure that all consumers of a module can properly understand it, a module can only import
+shared modules defined with the same or earlier spec version.
+
+#### Examples
+The spec version of a shared module must be declared explicitly using an annotation of the form `$ion_1_N`.
+This allows the module to be serialized using any version of Ion, and its meaning will not change.
+
+```ion
+$ion_shared_module::
+$ion_1_1::("com.example.symtab" 3
+           (symbol_table ...)
+           (macro_table ...))
+```
+
+The spec version of an encoding module is always the same as the Ion version of its enclosing segment.
+
+```ion
+$ion_1_1
+$ion_encoding::(
+  // Module semantics specified by Ion 1.1
+  ...
+)
+
+// ...
+
+$ion_1_3
+$ion_encoding::(
+  // Module semantics specified by Ion 1.3
+  ...
+)
+//...                  // Assuming no IVM
+$ion_encoding::(
+  // Module semantics specified by Ion 1.3
+  ...
+)
+```
 
 ## Identifiers
 
@@ -17,94 +96,14 @@ Many of the grammatical elements used to define modules and macros are _identifi
 
 More explicitly, an identifier is a sequence of one or more ASCII letters, digits, or the characters `$` (dollar sign) or `_` (underscore), not starting with a digit. It also cannot be of the form `$\d+`, which is the syntax for symbol IDs. (For example: `$3`, `$10`, `$458`, etc.)
 
-## Defining a module
+```bnf
+identifier ::= identifier-start identifier-char*
 
-A module has four kinds of subclauses:
+identifier-start ::= letter 
+                   | '_' 
+                   | '$' letter 
+                   | '$_' 
+                   | '$$' 
 
-1. `symbol_table` - an exported list of text values.
-2. `macro_table` - an exported list of macro definitions.
-3. `module` - a nested module definition.
-4. `import` - a reference to a shared module definition
-
-<!-- TODO: `export` -->
-
-### `symbol_table`
-
-The `symbol_table` clause assembles a list of text values for the module to export. It takes any number of arguments.
-
-#### Syntax
-```ion
-(symbol_table arg1 arg2 ... argN)
+identifier-char ::= letter | digit | '$' | '_'
 ```
-
-#### Processing
-
-When the `symbol_table` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
-
-For each `arg`:
-* **If the `arg` is a list of text values**, the nested text values are appended to the end of the symbol table being constructed.
-  * When `null`, `null.string`, `null.symbol`, or `$0` appear in the list of text values, this creates a symbol with unknown text.
-  * The presence of any other Ion value in the list raises an error.
-* **If the `arg` is the name of a module**, the symbols in that module's symbol table are appended to the end of the symbol table being constructed.
-* **If the `arg` is anything else**, the reader must raise an error.
-
-#### Example `symbol_table`
-
-```ion
-(symbol_table         // Constructs an empty symbol table (list)
-  ["a", b, 'c']       // The text values in this list are appended to the table
-  foo                 // Module `foo`'s symbol table values are appended to the table
-  ['''g''', "h", i])  // The text values in this list are appended to the table
-```
-If module `foo`'s symbol table were `[d, e, f]`, then the symbol table defined by the above clause would be:
-```ion
-["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-```
-
-### `macro_table`
-
-The `macro_table` clause assembles a list of macro definitions for the module to export. It takes any number of arguments.
-
-#### Syntax
-```ion
-(macro_table arg1 arg2 ... argN)
-```
-#### Processing
-
-When the `macro_table` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
-
-For each `arg`:
-* **If the `arg` is a `macro` clause**, the clause is processed and the resulting macro definition is appended to the end of the macro table being constructed.
-* **If the `arg` is the name of a module**, the macro definitions in that module's macro table are appended to the end of the macro table being constructed.
-* **If the `arg` is anything else**, the reader must raise an error.
-
-
-Macro definitions being added to the macro table must have a unique name. If a macro is added whose name conflicts with one already present in the table, the reader must raise an error.
-
-### `macro`
-
-The `macro` clause defines a new macro. See _[Defining macros](macros/defining_macros.md)_.
-
-## Grammar
-
-Literals appear in `code blocks`. Terminals are described in _italic text_.
-
-| Production           |     | Body                                                   |
-|----------------------|-----|--------------------------------------------------------|
-| module               | ::= | `(module ` module-name-decl module-body `)`            |
-| module-body          | ::= | import* module* symtab? mactab?                        |
-| import               | ::= | `(import` module-name catalog-name catalog-version `)` |
-| symtab               | ::= | `(symbol_table ` symtab-item* `)`                      |
-| symtab-item          | ::= | module-name \| symbol-def-seq                          |
-| symbol-def-seq       | ::= | _a list of unannotated text values (string/symbol)_    |
-| mactab               | ::= | `(macro_table ` mactab-item* `)`                       |
-| mactab-item          | ::= | module-name \| macro-def \| macro-export               |
-| macro-def            | ::= | `(macro ` macro-name signature tdl-expression `)`      |
-| macro-export         | ::= | `(export ` macro-ref macro-name? `)`                   |
-| catalog-name         | ::= | _unannotated string_                                   |
-| catalog-version      | ::= | _unannotated int_                                      |
-| module-name          | ::= | _unannotated idenfitier symbol_                        |
-| macro-ref            | ::= | macro-name \| qualified-macro-name \| macro-address    |
-| macro-name-decl      | ::= | macro-name-ref \| `null`                               |
-| macro-name           | ::= | _unannotated idenfitier symbol_                        |
-| qualified-macro-name | ::= | module-name `::` macro-name                            |
