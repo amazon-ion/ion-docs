@@ -385,6 +385,8 @@ $ion_encoding::(
 
 ```bnf
 special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
+
+special-form-name  ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi'
 ```
 
 Special forms are similar to macro invocations, but they have their own expansion rules.
