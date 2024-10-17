@@ -1,4 +1,4 @@
-## The System Module
+# The System Module
 
 The symbols and macros of the system module `$ion` are available everywhere within an Ion document,
 with the version of that module being determined by the spec-version of each segment.
