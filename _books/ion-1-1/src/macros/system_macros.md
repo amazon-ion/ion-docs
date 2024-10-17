@@ -61,7 +61,7 @@ Any null arguments will be ignored.
 
 Examples:
 ```ion
-(:flatten [a, b, c] (d e f)) => a b c d e f
+(:flatten [a, b, c] (d e f))       => a b c d e f
 (:flatten [[], null.list] foo::()) => [] null.list
 ```
 
@@ -193,8 +193,8 @@ Produces a non-null, unannotated struct by combining the fields of any number of
 (:make_struct)    => {}
 (:make_struct
   {k1: 1, k2: 2}
-  {k3:3}
-  {k4: 4})        =>  {k1:1, k2:2, k3:3, k4:4}
+  {k3: 3}
+  {k4: 4})        => {k1:1, k2:2, k3:3, k4:4}
 ```
 
 #### `make_field`
@@ -282,7 +282,7 @@ The `repeat` system macro can be used for efficient run-length encoding.
 Produces a stream that repeats the specified `value` expression(s) `n` times.
 
 ```ion
-(:repeat 5 0) => 0 0 0 0 0
+(:repeat 5 0)          => 0 0 0 0 0
 (:repeat 2 true false) => true false true false
 ```
 
@@ -312,7 +312,7 @@ Produces the sum of all the integer arguments.
 Examples:
 ```ion
 (:sum 1 2 3) => 6
-(:sum (:)) => 0
+(:sum (:))   => 0
 ```
 
 #### `meta`

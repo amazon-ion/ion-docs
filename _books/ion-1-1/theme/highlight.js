@@ -1236,46 +1236,82 @@ hljs.registerLanguage("ini", function () {
 }());
 hljs.registerLanguage("ion", function () {
     "use strict";
+
     return function (n) {
-        var e = {
-                $pattern: /[\w$]+/, // Highlighted keywords/literals/etc can contain a `$`
-                version_marker: "$ion_1_0 $ion_1_1",
-                literal: "true false null +inf -inf nan",
-                keyword: 'module macro symbol_table macro_table $ion_symbol_table $ion_encoding flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
-                system_macro: "for annotate make_string none values set_macros add_macros set_symbols add_symbols use"
-            }, i = [n.C_LINE_COMMENT_MODE, n.C_BLOCK_COMMENT_MODE], t = [n.QUOTE_STRING_MODE, n.C_NUMBER_MODE],
-            a = {end: ",", endsWithParent: !0, excludeEnd: !0, contains: t, keywords: e}, l = {
-                begin: "{",
-                end: "}",
-                contains: [{
-                    className: "attr",
-                    begin: /"/,
-                    end: /"/,
-                    contains: [n.BACKSLASH_ESCAPE],
-                    illegal: "\\n"
-                }, n.inherit(a, {begin: /:/})].concat(i),
-                illegal: "\\S"
-            }, s = {begin: "\\[", end: "\\]", contains: [n.inherit(a)], illegal: "\\S"};
-        var variable_expansion = {
+        const ion_keywords = {
+            $pattern: /[\w$]+/, // Highlighted keywords/literals/etc can contain a `$`
+            version_marker: "$ion_1_0 $ion_1_1",
+            literal: "true false null +inf -inf nan",
+            keyword: 'module macro symbol_table macro_table $ion_symbol_table $ion_encoding flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
+            system_macro: "for annotate make_string none values set_macros add_macros set_symbols add_symbols use"
+        }, comment_modes = [n.C_LINE_COMMENT_MODE, n.C_BLOCK_COMMENT_MODE];
+
+        const variable_expansion = {
             className: "variable_expansion",
             begin: /\(%/, // Starts with a '(%'
             end: /\)/, // Ends with ')'
         };
-        var e_expression_macro_name = {
+        const e_expression_macro_name = {
             className: "e_expression_macro_name",
-            begin: /(?<=\(:)\w+/,
+            begin: /(?<=\(:)(\w+::)?\w+/,
         };
-        var macro_definition_name = {
+        const macro_definition_name = {
             className: "macro_definition_name",
             begin: /(?<=\(macro\s+)\w+/,
         };
-        var tdl_macro_invocation_name = {
-            className: "tdl_macro_invocation_name",
-            begin: /(?<=\(\.)\w+/,
+        const tdl_macro_invocation_address = {
+            className: "tdl_macro_invocation_address",
+            begin: /(?<=\(\.)([a-zA-Z_$]+::)?\d+(?=\s|\))/,
         };
-        return t.push(l, s, variable_expansion, e_expression_macro_name, macro_definition_name, tdl_macro_invocation_name), i.forEach((function (n) {
-            t.push(n)
-        })), {name: "Ion", contains: t, keywords: e, illegal: "\\S"}
+        const tdl_macro_invocation_name = {
+            className: "tdl_macro_invocation_name",
+            begin: /(?<=\(\.)([a-zA-Z_$]+::)?[a-zA-Z]\w*(?=\s|\))/,
+        };
+
+        // This is the same regex that highlight.js vends for numbers, but it disallows numbers without a digit
+        // before the decimal point. Ion doesn't allow that syntax, and that matcher conflicted with TDL
+        // macro invocations using an address.
+        const number_mode = {
+            begin: "(-?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?)([eE][-+]?\\d+)?)",
+            className: "number"
+        };
+        // Use highlight.js' built-in mode or quoted strings. Modify this if/when we want to support long-form strings.
+        const quoted_string_mode = n.QUOTE_STRING_MODE;
+
+        const ion_modes = [
+            variable_expansion,
+            e_expression_macro_name,
+            macro_definition_name,
+            tdl_macro_invocation_address,
+            tdl_macro_invocation_name,
+            quoted_string_mode,
+            number_mode,
+        ];
+
+        const field_value_mode = {
+            end: ",",
+            endsWithParent: !0,
+            excludeEnd: !0,
+            contains: ion_modes,
+            keywords: ion_keywords
+        };
+
+        const struct_mode = {
+            begin: "{",
+            end: "}",
+            contains: [{
+                className: "attr",
+                begin: /"/,
+                end: /"/,
+                contains: [n.BACKSLASH_ESCAPE],
+                illegal: "\\n"
+            }, n.inherit(field_value_mode, {begin: /:/})].concat(comment_modes),
+            illegal: "\\S"
+        };
+        const list_mode = {begin: "\\[", end: "\\]", contains: [n.inherit(field_value_mode)], illegal: "\\S"};
+
+        ion_modes.push(struct_mode, list_mode, ...comment_modes);
+        return {name: "Ion", contains: ion_modes, keywords: ion_keywords, illegal: "\\S"};
     }
 }());
 hljs.registerLanguage("java", function () {
