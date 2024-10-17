@@ -215,9 +215,7 @@ Syntactically, a macro invocation is an s-expression whose first value is the op
 
 ##### Grammar
 ```bnf
-macro-invocation   ::= '(.' macro-ref macro-arg* ')'
-
-special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
+macro-invocation   ::= '(.' macro-ref macro-arg* ')',
 
 macro-ref          ::= (module-name '::')? (macro-name | macro-address)
 
