@@ -64,7 +64,8 @@ Macro references are resolved to a specific macro as follows:
 
 > [!WARNING]
 > An unqualified macro name can change meaning in the middle of a module if you choose to shadow the
-> name of a system macro. To unambiguously refer to the system module, use the qualified reference syntax: `$ion::<system-macro-name>`.
+> name of a macro in active encoding module. To unambiguously refer to the active encoding module, 
+> use the qualified reference syntax: `$ion_encoding::<macro-name>`.
 
 
 ### `import`
