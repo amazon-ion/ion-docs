@@ -167,7 +167,7 @@ Syntactically, the signature is an s-expression of [parameter declarations](#mac
 
 ### Template definition language (TDL)
 
-The macro's _template_ is a single Ion value that defines how a reader should expand invovations of the macro.
+The macro's _template_ is a single Ion value that defines how a reader should expand invocations of the macro.
 Ion 1.1 introduces a template definition language (TDL) to express this process in terms of the macro's parameters.
 TDL is a small language with only a few constructs.
 
@@ -209,23 +209,24 @@ $ion_encoding::(
 #### Macro invocations
 
 Macro invocations call an existing macro.
-The invoked macro could be a [system macro](system_macros.md), a macro imported from a [shared module](../todo.md), or a macro previously defined in the current scope.
+The invoked macro could be a [system macro](system_macros.md), a macro imported from a 
+[shared module](../modules/shared_modules.md), or a macro previously defined in the current scope.
 
 Syntactically, a macro invocation is an s-expression whose first value is the operator `.` and whose second value is a macro reference.
 
 ##### Grammar
 ```bnf
-macro-invocation   ::= '(.' macro-ref macro-arg* ')',
+macro-invocation   ::= '(.' macro-ref macro-arg* ')'
 
 macro-ref          ::= (module-name '::')? (macro-name | macro-address)
 
-macro-arg          ::= expression | arg-group
+macro-arg          ::= expression | expression-group
 
 macro-name         ::= ion-identifier
 
 macro-address      ::= unsigned-ion-integer
 
-arg-group          ::= '(::' expression* ')'
+expression-group   ::= '(..' expression* ')'
 ```
 
 ##### Invocation syntax illustration
@@ -393,33 +394,3 @@ Special forms are similar to macro invocations, but they have their own expansio
 See [_Special forms_](special_forms.md) for the list of special forms and a description of each.
 
 Note that unlike macro expansions, special forms cannot accept argument groups.
-
-#### TDL Grammar
-```bnf
-expression         ::= ion-scalar | ion-ql-container | operation | variable-expansion
-
-ion-scalar         ::= ; <Any Ion scalar value>
-
-ion-ql-container   ::= ; <An Ion container quasi-literal>
-
-operation          ::= macro-invocation | special-form
-
-variable-expansion ::= '(%' variable-name ')'
-
-variable-name      ::= ion-identifier
-
-macro-invocation   ::= '(.' macro-ref macro-arg* ')'
-
-special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
-
-macro-ref          ::= (module-name '::')? (macro-name | macro-address)
-
-macro-arg          ::= expression | arg-group
-
-macro-name         ::= ion-identifier
-
-macro-address      ::= ion-unsigned-integer
-
-arg-group          ::= '(::' expression* ')'
-```
-
