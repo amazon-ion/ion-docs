@@ -27,7 +27,7 @@ In Ion text, symbols are represented in three ways:
     This representation can denote any symbol text.
   * __Identifier__: an unquoted sequence of one or more ASCII letters, digits, 
     or the characters `$` (dollar sign) or `_` (underscore), not starting with
-    a digit.
+    a digit and not including the keywords `null`, `nan`, `true`, and `false`.
   * __Operator__: an unquoted sequence of one or more of the following nineteen 
     ASCII characters: `` !#%&*+-./;<=>?@^`|~ ``
     Operators can only be used as (direct) elements of an S-expression.
