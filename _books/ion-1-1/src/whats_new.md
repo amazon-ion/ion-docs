@@ -109,7 +109,7 @@ Benchmarks have shown that in aggregate, these encoding changes are between 1.25
 `VarUInt` and `VarInt` encodings depending on the host architecture.
 
 Ion 1.1 supplants [Ion 1.0's `Int` encoding primitive](https://amazon-ion.github.io/ion-docs/docs/binary.html#uint-and-int-fields)
-with a new encoding called [`FixedInt`]((binary/primitives/fixed_int.md)), which uses two's complement notation instead of sign-and-magnitude.
+with a new encoding called [`FixedInt`](binary/primitives/fixed_int.md), which uses two's complement notation instead of sign-and-magnitude.
 A corresponding [`FixedUInt`](binary/primitives/fixed_uint.md) primitive has also been introduced; its encoding is the same as
 [Ion 1.0's `UInt` primitive](https://amazon-ion.github.io/ion-docs/docs/binary.html#uint-and-int-fields).
 
