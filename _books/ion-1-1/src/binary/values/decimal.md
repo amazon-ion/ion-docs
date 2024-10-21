@@ -12,15 +12,15 @@ Decimal values that require more than 15 bytes can be encoded using the variable
 
 `0xEB 0x03` represents `null.decimal`.
 
-##### Encoding of decimal `0d0`
+##### Encoding of decimal `0`
 ```
 ┌──── Opcode in range 70-7F indicates a decimal
 │┌─── Low nibble 0 indicates a zero-byte
-││    decimal; 0d0
+││    decimal; 0
 70
 ```
 
-##### Encoding of decimal `7d0`
+##### Encoding of decimal `7`
 ```
 ┌──── Opcode in range 70-7F indicates a decimal
 │┌─── Low nibble 2 indicates a 2-byte decimal
@@ -50,7 +50,7 @@ F7 05 FD 7F
    └─────── Decimal length: FlexUInt 2
 ```
 
-##### Encoding of `0d3`, which has a coefficient of zero
+##### Encoding of `0e3`, which has a coefficient of zero
 ```
 ┌──── Opcode in range 70-7F indicates a decimal
 │┌─── Low nibble 1 indicates a 1-byte decimal
@@ -59,7 +59,7 @@ F7 05 FD 7F
    └────── Exponent: FlexInt 3; no more bytes follow, so the coefficient is implicitly 0
 ```
 
-##### Encoding of `-0d3`, which has a coefficient of negative zero
+##### Encoding of `-0e3`, which has a coefficient of negative zero
 ```
 ┌──── Opcode in range 70-7F indicates a decimal
 │┌─── Low nibble 2 indicates a 2-byte decimal
