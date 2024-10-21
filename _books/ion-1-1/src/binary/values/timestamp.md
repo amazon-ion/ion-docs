@@ -84,10 +84,10 @@ The `Month` and `Day` subfields are one-based; `0` is not a valid month or day.
 |     `H`     |               5               | Hour                              |
 |     `m`     |               6               | Minute                            |
 |     `o`     |               7               | Offset                            |
-|     `U`     |               1               | Unknown (`0`) or UTC (`1`) offset |
+|     `U`     |               1               | UTC (`1`) offset or none (`0`)    |
 |     `s`     |               6               | Second                            |
 |     `f`     | 10 (ms)<br>20 (μs)<br>30 (ns) | Fractional second                 |
-|     `.`     |              n/a              | Unused                            |
+|     `.`     |              n/a              | Not used                          |
 
 We will denote the timestamp encoding as follows with each byte ordered vertically from top to bottom. The
 respective bits are denoted using the letter codes defined in the table above.
