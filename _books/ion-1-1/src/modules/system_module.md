@@ -131,7 +131,7 @@ This allows the Ion 1.1 system symbol table to be relatively large without takin
 | 20 | 0x14 | [`sum`](../macros/system_macros.md#sum)                       |
 | 21 | 0x15 | [`meta`](../macros/system_macros.md#meta)                     |
 | 22 | 0x16 | [`make_field`](../macros/system_macros.md#make_field)         |
-| 22 | 0x17 | [`default`](../macros/system_macros.md#default)               |
+| 23 | 0x17 | [`default`](../macros/system_macros.md#default)               |
 
 
 ----
