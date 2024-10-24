@@ -100,6 +100,7 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 | 63 | 0x3F | `float64`                      |
 | 64 | 0x40 | `none`                         |
 | 65 | 0x41 | `make_field`                   |
+
 In Ion 1.1 Text, system symbols can never be referenced by symbol ID; `$1` always refers to the first symbol in the user symbol table.
 This allows the Ion 1.1 system symbol table to be relatively large without taking away SID space from the user symbol table.
 
