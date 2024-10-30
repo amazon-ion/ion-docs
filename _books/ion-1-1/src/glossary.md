@@ -20,7 +20,7 @@ Not all declarations are definitions: some introduce new names for existing enti
 The specification of a new entity.
 
 **directive**<br/>
-A keyword or unit of data in an Ion document that affects the encoding environment, and thus the way the document's data is decoded.
+A keyword or unit of data in an Ion document that affects the encoding environment, and thus the way the document's data is encoded and decoded.
 In Ion 1.0 there are two directives: _Ion version markers_, and the _symbol table directives_.
 Ion 1.1 adds _encoding directives_.
 
@@ -44,10 +44,10 @@ Ion 1.0 this consists of the current symbol table; in Ion 1.1 this is expanded t
 spec version, the current macro table, and a collection of available modules.
 
 **encoding expression**<br/>
-The invocation of a macro in encoded data, aka E-expression.
+The invocation of a macro in encoded data, aka e-expression.
 Starts with a macro reference denoting the function to invoke.
-The Ion text format uses "smile syntax" `(:macro ...)` to denote E-expressions. 
-Ion binary devotes a large number of opcodes to E-expressions, so they can be compact.
+The Ion text format uses "smile syntax" `(:macro ...)` to denote e-expressions. 
+Ion binary devotes a large number of opcodes to e-expressions, so they can be compact.
 
 **encoding module**<br/>
 A _module_ whose symbol table and macro table can be used directly in the user data stream.
@@ -59,7 +59,7 @@ _Encoding expressions_ and values are both considered expressions, whereas NOP, 
 **expression group**<br/>
 A grouping of zero or more _expressions_ that together form one _argument_.
 The concrete syntax for passing a stream of expressions to a macro parameter.
-In a text _E-expression_, a group starts with the trigraph `(::` and ends with `)`, similar to an S-expression.
+In a text _e-expression_, a group starts with the trigraph `(::` and ends with `)`, similar to an S-expression.
 In _template definition language_, a group is written as an S-expression starting with `..` (two dots).
 
 **inner module**<br/>
@@ -105,12 +105,13 @@ A macro parameter that is not _optional_ and therefore requires an argument at e
 **rest parameter**<br/>
 A macro parameter—always the final parameter—declared with `*` or `+` cardinality,
 that accepts all remaining individual arguments to the macro as if they were in an implicit _argument group_.
+Applies to Ion text and TDL.
 Similar to "varargs" parameters in Java and other languages.
 
 **segment**<br/>
-A contiguous partition of a _document_ that uses the same _active encoding module_. Segment boundaries
-are caused by directives: an IVM starts a new segment, while `$ion_symbol_table` and `$ion_encoding`
-directives end segments (with a new one starting immediately afterward).
+A contiguous partition of a _document_ that uses the same _active encoding module_.
+Segment boundaries are caused by directives: an IVM starts a new segment (ending the prior segment, if any),
+while `$ion_symbol_table` and `$ion_encoding` directives end segments (with a new one starting immediately afterward).
 
 **shared module**<br/>
 A module that exists independent of the data stream of an Ion document. It is identified by a
@@ -118,15 +119,14 @@ name and version so that it can be imported by other modules.
 
 **signature**<br/>
 The part of a macro definition that specifies its "calling convention", in terms of the shape,
-type, and cardinality of arguments it accepts, and the type and cardinality of the results it
-produces.
+type, and cardinality of arguments it accepts.
 
 **symbol table directive**<br/>
 A top-level struct annotated with `$ion_symbol_table`.  Defines a new encoding environment
 without any macros.  Valid in Ion 1.0 and 1.1.
 
-**system E-Expression**<br/>
-An _E-Expression_ that invokes a _macro_ from the _system-module_ rather than from the _active encoding module_.
+**system e-expression**<br/>
+An _e-expression_ that invokes a _macro_ from the _system-module_ rather than from the _active encoding module_.
 
 **system macro**<br/>
 A macro provided by the Ion implementation via the system module `$ion`.
@@ -150,6 +150,7 @@ The part of a macro definition that expresses its transformation of inputs to re
 
 **template definition language**<br/>
 An Ion-based, domain-specific language that declaratively specifies the output produced by a _macro_.
+Template definition language uses only the Ion data model (i.e. valid Ion 1.0 syntax).
 
 **unqualified macro reference**<br/>
 A macro reference that consists of either a macro name or numeric address, without a qualifying module name. 
