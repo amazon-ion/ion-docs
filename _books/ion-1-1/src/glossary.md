@@ -8,9 +8,11 @@ The active encoding module is set by a _directive_.
 The sub-expression(s) within a macro invocation, corresponding to exactly one of the macro's parameters.
 
 **cardinality**<br/>
-Describes the number of values that a parameter will accept when the macro is invoked.
-One of zero-or-one, exactly-one, zero-or-more, or one-or-more.
-Specified in a signature by one of the modifiers `?`, `!`, `*`, or `+`.
+Describes both the number of argument expressions that a parameter will accept when the macro is invoked,
+and the number of values that the parameter may expand to during evaluation.
+A parameter's cardinality can be `zero-or-one`, `exactly-one`, `zero-or-more`, or `one-or-more`,
+specified in a signature by one of the modifiers `?`, `!`, `*`, or `+` respectively.
+If no modifier is specified, cardinality defaults to `exactly-one`.
 
 **declaration**<br/>
 The association of a name with an entity (for example, a module or macro). See also _definition_. 
