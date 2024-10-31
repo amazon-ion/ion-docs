@@ -160,4 +160,4 @@ A macro reference that consists of either a macro name or numeric address, witho
 These are resolved using lexical scope and must always be unambiguous.
 
 **variable expansion**<br/>
-In _TDL_, a special form that causes the expanded _arguments_ for the given _parameter_ to be substituted into the _template_.
+In _TDL_, a special form that causes all argument expression(s) for the given _parameter_ to be expanded and the result of the expansion to be substituted into the _template_.
