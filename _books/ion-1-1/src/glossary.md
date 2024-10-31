@@ -79,7 +79,8 @@ Specifies a macro in terms of a _signature_ and a _template_.
 
 **macro reference**<br/>
 Identifies a macro for invocation or exporting. Must always be unambiguous. Lexically
-scoped, and never a "forward reference" to a macro that is declared later in the document.
+scoped. Cannot be a "forward reference" to a macro that is declared later in the document;
+these are not legal.
 
 **module**<br/>
 The data entity that defines and exports both symbols and macros.
