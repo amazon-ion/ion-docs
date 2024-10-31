@@ -91,7 +91,7 @@ and how the bytes that follow should be interpreted.
 
 **optional parameter**<br/>
 A parameter that can have its corresponding subform(s) omitted when the macro is invoked.
-A parameter is optional if it is _voidable_ and all following arguments are also voidable.
+A parameter is optional if both it and the parameters that follow it in the macro signature can accept an empty stream.
 
 **parameter**<br/>
 A named input to a macro, as defined by its signature.
