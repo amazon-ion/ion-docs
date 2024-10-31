@@ -13,7 +13,6 @@
     - [Shared modules](modules/shared_modules.md)
     - [Inner modules](modules/inner_modules.md)
     - [The system module](modules/system_module.md)
-    - [Grammar](modules/grammar.md)
 - [Binary encoding](binary/encoding.md)
     - [Encoding primitives](binary/primitives.md)
         - [`FlexUInt`](binary/primitives/flex_uint.md)
@@ -39,6 +38,8 @@
     - [E-expressions](binary/e_expressions.md)
     - [Annotations](binary/annotations.md)
     - [NOP](binary/nop.md)
+- [Grammar](grammar.md)
+- [Glossary](glossary.md)
 <!--
     The todo.md page is a placeholder target for links we haven't populated yet.
     Only pages that are listed in `SUMMARY.md` will be shown to users; todo.md
