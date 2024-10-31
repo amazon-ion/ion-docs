@@ -153,7 +153,7 @@ The part of a macro definition that expresses its transformation of inputs to re
 
 **template definition language**<br/>
 An Ion-based, domain-specific language that declaratively specifies the output produced by a _macro_.
-Template definition language uses only the Ion data model (i.e. valid Ion 1.0 syntax).
+Template definition language uses only the Ion data model.
 
 **unqualified macro reference**<br/>
 A macro reference that consists of either a macro name or numeric address, without a qualifying module name. 
