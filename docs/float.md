@@ -108,6 +108,6 @@ the following text forms all map to the same `binary64` value:
 
 <!-- References -->
 [docs]: {{ site.baseurl }}/docs.html
-[rounding]: http://ampl.com/REFS/rounding.pdf
-[clinger]: http://www.cesura17.net/~will/professional/research/papers/howtoread.pdf
-[printing-fp]: http://www.cs.indiana.edu/~dyb/pubs/FP-Printing-PLDI96.pdf
+[rounding]: https://ampl.com/_archive/first-website/REFS/rounding.pdf
+[clinger]: https://dl.acm.org/doi/10.1145/93548.93557
+[printing-fp]: https://dl.acm.org/doi/10.1145/231379.231397
