@@ -38,6 +38,7 @@
     - [E-expressions](binary/e_expressions.md)
     - [Annotations](binary/annotations.md)
     - [NOP](binary/nop.md)
+- [Security considerations](security-considerations.md)
 - [Grammar](grammar.md)
 - [Glossary](glossary.md)
 <!--
