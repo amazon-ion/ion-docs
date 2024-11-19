@@ -65,10 +65,13 @@ $ion_1_1
 Implementations of Ion 1.1 _MUST_ have some mechanism by which to mitigate data expansion attacks.
 
 The macro evaluator of Ion 1.1 implementations _SHOULD_ have a (possibly configurable) limit on the number of values 
-produced by the expansion of a macro or e-expression. If the macro evaluator reaches that limit, evaluation should halt 
+produced by the expansion of any macro or e-expression. If the macro evaluator reaches that limit, evaluation should halt 
 and the reader should signal an error. This is similar to the [Token Bucket Algorithm](https://en.wikipedia.org/wiki/Token_bucket),
 but instead of refilling the bucket, the bucket starts at the maximum capacity whenever the reader begins evaluating an
-e-expression that is not nested in any other e-expression at any other depth.
+e-expression that is not nested in any other e-expression at any other depth. In order to prevent a malicious input that
+produces no values (for example, `(macro sneaky_lolz () (.meta (.lolz)))`), tokens _SHOULD_ be consumed at every level of
+expansion, including special forms and TDL macro invocations. Expansions that are skipped are not required to consume 
+tokens (since they are not expanded), but an empty expansion _MUST_ consume at least one token.
 
 ```ion
 $ion_1_1
@@ -86,23 +89,27 @@ $ion_1_1
 {
   // Fill bucket here
   foo: (:make_string "foo" "bar")
-  // Fill bucket here
-  bar: (:make_string "a" "b")
+  // Fill bucket here.
+  // Consume one token for each value produced by repeat and for each value produced by make_string
+  bar: (:make_string (:repeat 16 "na") " batman!")
 }
 ```
 
 
 ## Remote code execution
 
-Remote code execution (RCE) attacks allow an attacker to remotely execute malicious code on a computer.
+The template definition language (TDL) is a domain specific programming language used to declare template macros 
+in Ion 1.1. It is intentionally limited in its capabilities—it cannot recurse and does not support forward references.
+In general, it supports combining Ion values to produce other Ion values, but it does not support arbitrary computation
+on those values.
 
-The template definition language (TDL) is a type of code, and by invoking e-expressions in the body of an Ion document, 
-an attacker can cause the recipient to execute arbitrary TDL when reading the document.
+Remote code execution (RCE) attacks allow an attacker to remotely execute malicious code on a computer. By invoking 
+e-expressions in the body of an Ion document, an attacker can cause the recipient to execute arbitrary TDL (code)
+when reading the document.
 
-This is unlikely to be a concern in practice because TDL is not arbitrary code.
+This is unlikely to be a concern in practice because TDL is not _arbitrary_ code.
 TDL is intentionally not Turing complete, to make it impossible to perform arbitrary computation.
 It also has a very limited domain—it can only transform/produce Ion data model values.
-
 While it could be possible to attempt a denial-of-service attack using TDL, TDL expansion is guaranteed to terminate in
 a finite number of steps, and implementations can additionally limit the expansion size (as described above).
 
@@ -152,5 +159,6 @@ that could exhaust the memory of the receiving system and lead to a denial of se
 Although Ion 1.1 does not specify a maximum size for symbol tables or macro tables, Ion implementations _MAY_ impose 
 upper bounds on the size of symbol tables, macro tables, module bindings, and any other direct or indirect component of
 the encoding context.
+An implementation _MAY_ allow limits to be configurable by an application that uses the Ion implementation.
 Any limits imposed _SHOULD_ be described in the public documentation of an Ion implementation, unless the limits are
 unknown and/or are dependent on the underlying runtime environment.
