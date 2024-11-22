@@ -1242,7 +1242,7 @@ hljs.registerLanguage("ion", function () {
             $pattern: /[\w$]+/, // Highlighted keywords/literals/etc can contain a `$`
             version_marker: "$ion_1_0 $ion_1_1",
             literal: "true false null +inf -inf nan",
-            keyword: 'module macro symbol_table macro_table $ion_symbol_table $ion_encoding flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
+            keyword: 'import export module macro symbol_table macro_table $ion $ion_symbol_table $ion_encoding flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
             system_macro: "for annotate make_string none values set_macros add_macros set_symbols add_symbols use"
         }, comment_modes = [n.C_LINE_COMMENT_MODE, n.C_BLOCK_COMMENT_MODE];
 
@@ -1253,7 +1253,7 @@ hljs.registerLanguage("ion", function () {
         };
         const e_expression_macro_name = {
             className: "e_expression_macro_name",
-            begin: /(?<=\(:)(\w+::)?\w+/,
+            begin: /(?<=\(:)(\w+::)*\w+/,
         };
         const macro_definition_name = {
             className: "macro_definition_name",
@@ -1261,11 +1261,11 @@ hljs.registerLanguage("ion", function () {
         };
         const tdl_macro_invocation_address = {
             className: "tdl_macro_invocation_address",
-            begin: /(?<=\(\.)([a-zA-Z_$]+::)?\d+(?=\s|\))/,
+            begin: /(?<=\(\.)([a-zA-Z_$]+::)*\d+(?=\s|\))/,
         };
         const tdl_macro_invocation_name = {
             className: "tdl_macro_invocation_name",
-            begin: /(?<=\(\.)([a-zA-Z_$]+::)?[a-zA-Z]\w*(?=\s|\))/,
+            begin: /(?<=\(\.)([a-zA-Z_$]+::)*[a-zA-Z]\w*(?=\s|\))/,
         };
 
         // This is the same regex that highlight.js vends for numbers, but it disallows numbers without a digit

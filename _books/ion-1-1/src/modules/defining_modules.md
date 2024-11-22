@@ -7,32 +7,27 @@ A module is defined by four kinds of subclauses which, if present, always appear
 3. `symbol_table` - an exported list of text values
 4. `macro_table` - an exported list of macro definitions
 
+The lexical name given to a module definition must be an [identifier](../modules.md#identifiers).
+However, it may not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
 
 ### Internal environment
 
 The body of a module tracks an internal environment by which macro references are resolved.
 This environment is constructed incrementally by each clause in the definition and consists of:
 
-* the _visible modules_, a map from identifier to module
+* the _module bindings_, a map from identifier to module definition
 * the _exported symbols_, an array containing symbol texts
 * the _exported macros_, an array containing name/macro pairs
 
-Before any clauses of the module definition are examined, the initial environment is as follows:
-
-* The visible modules map binds `$ion` to the system module for the appropriate spec version.
-  Inside an encoding directive, the visible modules map also binds `$ion_encoding` to the active encoding module
-  (the encoding module that was active when the encoding directive was encountered).
-  For an inner module, it also includes the modules previously made available by the enclosing
-  module (via `import` or `module`).
-* The macro table and symbol table are empty.
+Before any clauses of the module definition are examined, each of these is empty.
 
 Each clause affects the environment as follows:
 
-* An `import` declaration retrieves a shared module from the implementation’s catalog, assigns
-  it a name in the visible modules, and makes its macros available for use.
-  An error must be signaled if the name already appears in the visible modules.
-* A `module` declaration defines a new module and assigns it a name in the visible modules.
-  An error must be signaled if the name already appears in the visible modules.
+* An `import` declaration retrieves a shared module from the implementation’s catalog and binds a name to it,
+  making its macros available for use.
+  An error must be signaled if the name already appears in the module bindings.
+* A `module` declaration defines a new module and binds a name to it.
+  An error must be signaled if the name already appears in the module bindings.
 * A `symbol_table` declaration defines the exported symbols.
 * A `macro_table` declaration defines the exported macros.
 
@@ -53,19 +48,22 @@ macro-addr         ::= unannotated-uint
 
 Macro references are resolved to a specific macro as follows:
 
-* An unqualified _macro-name_ is looked up within the exported macros, and if not found, then the 
-  active encoding module's macro table. If it maps to a macro, that’s the resolution of the reference.
-  Otherwise, an error is signaled due to an unbound reference.
-* An anonymous local reference  (_macro-addr_) is resolved by index in the exported macro array.
+* An unqualified _macro-name_ is looked up in the following locations:
+    1. in the macros already exported in this module's `macro_table`
+    2. in the [default_module](encoding_modules.md#default-module)
+    3. in the [system module](system_module.md)
+
+  If it maps to a macro, that’s the resolution of the reference. Otherwise, an error is signaled due to an unbound reference.
+
+* An anonymous local reference (_macro-addr_) is resolved by index in the exported macro array.
   If the address exceeds the array boundary, an error is signaled due to an invalid reference.
 * A qualified reference (_qualified-ref_) resolves solely against the referenced module.
-  If the module name does not exist in the visible modules, an error is signaled due to an unbound reference.
-  Otherwise, the name or address is resolved within that module’s exported macro array.
+  First, the module name must be resolved to a module definition.
+    * If the module name is in the module bindings, it resolves to the corresponding module definition.
+    * If the module name is not in the module bindings, resolution is attempted recursively upwards through the parent scopes.
+    * If the search reaches the top level without resolving to a module, an error is signaled due to an unbound reference.
 
-> [!WARNING]
-> An unqualified macro name can change meaning in the middle of an encoding module if you choose to shadow the
-> name of a macro in the active encoding module. To unambiguously refer to the active encoding module, 
-> use the qualified reference syntax: `$ion_encoding::<macro-name>`.
+  Next, the name or address is resolved within that module definition’s exported macro table.
 
 
 ### `import`
@@ -82,7 +80,8 @@ catalog-name       ::= string
 catalog-version    ::= int // positive, unannotated
 ```
 
-An import binds a lexically scoped module name to a shared module that is identified by a catalog key—a `(name, version)` pair. The `version` of the catalog key is optional—when omitted, the version is implicitly 1.
+An import binds a lexically scoped module name to a shared module that is identified by a catalog key—a `(name, version)` pair.
+The `version` of the catalog key is optional—when omitted, the version is implicitly 1.
 
 In Ion 1.0, imports may be substituted with a different version if an exact match is not found.
 In Ion 1.1, however, all imports require an exact match to be found in the reader's catalog;

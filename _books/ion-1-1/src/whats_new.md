@@ -15,13 +15,35 @@ compact.
 
 ## Backwards compatibility
 
-Ion 1.1 is backwards compatible with Ion 1.0. While their encodings are distinct, they share the same data model--any data that can be produced and read by an application in Ion 1.1 has an equivalent representation in Ion 1.0.
+Ion 1.0 and Ion 1.1 share the same data model.
+Any data that can be represented in Ion 1.0 can also be represented with full fidelity in Ion 1.1 and vice-versa.
+This means that it is always possible to convert data from one version to the other without risk of data loss.
 
-Ion 1.1 is *not* required to preserve Ion 1.0 binary encodings in Ion 1.1 encoding contexts (i.e., the type codes and
-lower-level encodings are not preserved in the new version). The Ion Version Marker (IVM) is used to denote the
-different versions of the syntax. Ion 1.1 does retain text compatibility with Ion 1.0 in that the changes are a strict
-superset of the grammar, however due to the updated system symbol table, symbol IDs referred to using the `$n` syntax
-for symbols beyond the 1.0 system symbol table are not compatible.
+Ion 1.1 readers must be able to understand both Ion 1.0 and Ion 1.1 data.
+
+The text encoding grammar of Ion 1.1 is a superset of Ion 1.0's text encoding grammar.
+Any Ion 1.0 text data can also be parsed by an Ion 1.1 text parser.
+However, because Ion 1.1 has a different system symbol table,
+symbol IDs in an Ion 1.0 stream do not always refer to the same text as the same symbol ID in an Ion 1.1 stream.
+(For example: in an Ion 1.0 stream, `$4` is always the text `"name"`. However, it may or may not be `"name"` in an Ion 1.1 stream.)
+
+Ion 1.1's binary encoding is substantially different from Ion 1.0's binary encoding.
+Many changes have been made to make values more compact, faster to read and/or faster to write.
+Ion 1.0's [type descriptors](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats)
+have been supplanted by Ion 1.1's more general
+[opcodes](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats),
+which have been organized to prioritize the most commonly used encodings and make leveraging macros as inexpensive as possible.
+
+In both text and binary Ion 1.1, the Ion Version Marker syntax is syntactically compatible with Ion 1.0's version marker syntax.
+This means that an Ion 1.0-only reader can correctly identify when a stream uses Ion 1.1 (allowing it to report an error),
+and an Ion 1.1 reader can correctly "downshift" to expecting Ion 1.0 data when it encounters a stream using Ion 1.0.
+
+Two streams using different Ion versions can be safely concatenated together provided that they are both text or both binary.
+A concatenated stream containing both Ion 1.0 and Ion 1.1 can only be fully read by a reader that supports Ion 1.1.
+
+Upgrading an existing application to Ion 1.1 often requires little-to-no code changes,
+as APIs typically operate at the data model level ("write an integer")
+rather than at the encoding level ("write `0x64` followed by four Little-Endian bytes").
 
 ## Text syntax changes
 
@@ -30,7 +52,7 @@ Ion 1.1 text *must* use the `$ion_1_1` version marker at the top-level of the da
 The only syntax change for the text format is the introduction of *encoding expression* (*E-expression*) syntax, which
 allows for the invocation of macros in the data stream. This syntax is grammatically similar to S-expressions, except that
 these expressions are opened with `(:` and closed with `)`. For example, `(:a 1 2)` would expand the macro named `a` with the
-arguments `1` and `2`. See the <<sec:whatsnew-eexp, Macros, Templates, and Encoding-Expressions>> section for details.
+arguments `1` and `2`. See the _[Macros, templates, and encoding expressions](#macros-templates-and-encoding-expressions)_ section for details.
 
 This syntax is allowed anywhere an Ion value is allowed:
 
@@ -49,8 +71,11 @@ This syntax is allowed anywhere an Ion value is allowed:
 {c: (:bop d)}
 ```
 
-E-expressions are also grammatically allowed in the field name position of a struct and when used there, indicate that
-the expression should expand to a struct value that is merged into the enclosing struct:
+<!--
+    TODO: Link to an explanation.
+    We have a section describing expansion mechanics in TDL, but not in e-expressions.
+-->
+E-expressions may also appear in the field name position of a struct.
 
 **E-Expression in field position of struct**
 ```ion
@@ -62,9 +87,6 @@ the expression should expand to a struct value that is merged into the enclosing
 }
 ```
 
-In the above example, the E-expression `(:foo 1 2)` must evaluate into a struct that will be merged between the `b`
-field and the `c` field. If it does not evaluate to a struct, then the above is an error.
-
 ## Binary encoding changes
 
 Ion 1.1 binary encoding reorganizes the type descriptors to support compact E-expressions, make certain encodings
@@ -74,9 +96,9 @@ sequence `0xE0 0x01 0x01 0xEA`.
 ### Inlined symbolic tokens
 
 In binary Ion 1.0, symbol values, field names, and annotations are required to be encoded using a symbol ID in the local
-symbol table. For some use cases (e.g., as write-once, read-maybe logs) this creates a burden on the writer and may not
+symbol table. For some use cases (e.g. write-once, read-maybe logs) this creates a burden on the writer and may not
 actually be efficient for an application. Ion 1.1 introduces optional binary syntax for encoding inline UTF-8 sequences
-for these tokens which can allow an encoder to have flexibility in whether and when to add a given symbolic token to the
+for these tokens which can allow an encoder to have flexibility in whether and when to add a given text value to the
 symbol table.
 
 Ion text requires no change for this feature as it already had inline symbolic tokens without using the local symbol
@@ -118,12 +140,15 @@ symbol IDs and symbolic tokens with inline text.
 
 ### Type encoding changes
 
-All Ion types use the new low-level encodings as specified in the previous section. Many of the opcodes used in Ion 1.0
-have been re-organized primarily to make E-expressions compact.
+All Ion types use the new low-level encoding primitives described in the previous section.
+Ion 1.0's [type descriptors](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats)
+have been supplanted by Ion 1.1's more general
+[opcodes](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats),
+which have been organized to prioritize the most commonly used encodings and make leveraging macros as inexpensive as possible.
 
-Typed `null` values are now [encoded in two bytes using the `0xEB` opcode].
+Typed `null` values are now [encoded in two bytes using the `0xEB` opcode](binary/values/null.md#nulls).
 
-[Lists](binary/values/list.md) and [S-expressions](binary/values/eexp.md) have two encodings:
+[Lists](binary/values/list.md) and [S-expressions](binary/values/sexp.md) have two encodings:
 a length-prefixed encoding and a new delimited form that ends with the `0xF0` opcode.
 
 [Struct](binary/values/struct.md) values have the option of encoding their field names as
@@ -157,9 +182,9 @@ A non-biased, arbitrary length timestamp with packed bit encoding is defined for
 
 ### Encoding expressions in binary
 
-In binary, [E-expressions](todo.md) are encoded with an opcode that includes the _macro identifier_ or an opcode that
+In binary, [E-expressions](binary/e_expressions.md) are encoded with an opcode that includes the _macro identifier_ or an opcode that
 specifies a `FlexUInt` for the macro identifier.
-The identifier is followed by the [encoding of the arguments to the E-expression](binary/e_expressions.md).
+The identifier is followed by the [encoding of the arguments to the E-expression](binary/e_expressions.md#e-expression-argument-encoding).
 The macro's definition statically determines how the arguments are to be laid out.
 An argument may be a full Ion value with a leading opcode (sometimes called a "tagged" value), or it could be a lower-level encoding (e.g., a fixed width integer or `FlexInt`/`FlexUInt`).
 
@@ -185,6 +210,7 @@ a (:values 1 2 3) b (:none) c
 a 1 2 3 b c
 ```
 
+<!-- TODO: Move this (or copy it) to a dedicated section on e-expression expansion -->
 Within a list or S-expression, the stream becomes additional child elements in the collection.
 
 **E-expressions in lists**
@@ -230,46 +256,39 @@ field all together). In the following examples, let us define `(:make_struct c 5
 }
 ```
 
-### Encoding context and modules
+### Modules
 
-In Ion 1.0, there is a single _encoding context_ which is the local symbol table. In Ion 1.1, the _encoding context_
-becomes the following:
+Ion 1.0 uses symbol tables to group together related text values.
+In order to also accommodate macros, Ion 1.1 also introduces _modules_, a named organizational unit that contains:
+* **An exported symbol table**, a list of text values used to compactly encode symbol tokens like field names, annotations, and symbol values.
+* **An exported macro table**, a list of macro definitions used to compactly encode complete values or partially populated containers.
+* **An unexported nested modules map**, a set of unique module names and their associated module definitions.
 
-* The local symbol table which is a list of strings. This is used to encode/decode symbolic tokens.
+While Ion 1.0 does not have modules, it is reasonable to think of Ion 1.0's local symbol table as a module that only has symbols,
+and whose macro table and nested modules map are permanently empty.
 
-* The local macro table which is a list of macros. This is used to reference macros that can be invoked by
-E-expressions.
+Modules can be imported from the catalog (they subsume shared symbol tables) or defined locally.
 
-* A mapping of a string name to *module* which is an organizational unit of symbol definitions and macro definitions.
-  Within the encoding context, this name is unique and used to address a module's contents either as the list of symbols
-  to install into the local symbol table, the list of macros to install into the local macro table, or to qualify the
-  name of a macro in a text E-expression or the definition of a macro.
+### Directives
 
-The *module* is a new concept in Ion 1.1. It contains:
+_Directives_ modify the encoding context.
+Syntactically, a directive is a top-level s-expression annotated with `$ion`.
+Its first child value is an operation name.
+The operation determines what changes will be made to the encoding context and which clauses may legally follow.
 
-* A list of strings representing the symbol table of the module.
-
-* A list of macro definitions.
-
-Modules can be imported from the catalog (they subsume shared symbol tables), but can also be defined locally. Modules
-are referenced as a group to allocate entries in the local symbol table and local macro table (e.g., the local symbol
-table is initially, implicitly allocated with the symbols in the `$ion` module).
-
-Ion 1.1 introduces a new system value (an _encoding directive_) for the encoding context (see the *_TBD_* section for
-details.)
-
-**Ion encoding directive example**
 ```ion
-$ion_encoding::{
-  modules:         [ /* module declarations - including imports */ ],
-  install_symbols: [ /* names of declared modules */ ],
-  install_macros:  [ /* names of declared modules */ ]
-}
+$ion::
+(operation_name
+    (clause_1 /*...*/)
+    (clause_2 /*...*/)
+    /*...*/
+    (clause_N /*...*/))
 ```
 
-<div class="warning">
-This is still being actively worked and is provisional.
-</div>
+In Ion v1.1, there are three supported directive operations:
+1. [`module`](modules/directives.md#module-directives)
+2. [`import`](modules/directives.md#import-directives)
+3. [`encoding`](modules/directives.md#encoding-directives)
 
 ### Macro definitions
 
@@ -320,7 +339,7 @@ and _one or more_. Furthermore the template defines what type of argument can be
 * ["Tagless" values](todo.md), whose encodings do not begin with an opcode and are therefore both more compact and less flexible (For example: `flex_int`, `int32`, `float16`).
 * Specific [_macro shaped arguments_](todo.md) to allow for structural composition of macros and efficient encoding in binary.
 
-The [macro definition](defining_macros.md) includes a *template body* that defines how the macro is expanded. In the language, system macros, macros defined in previously defined modules in the encoding context, and macros defined previously in the current module are available to be invoked with `(name ...)` syntax where `name` is
+The [macro definition](macros/defining_macros.md) includes a *template body* that defines how the macro is expanded. In the language, system macros, macros defined in previously defined modules in the encoding context, and macros defined previously in the current module are available to be invoked with `(name ...)` syntax where `name` is
 the macro to be invoked. Certain names in the expression syntax are reserved for special forms (for example, `literal` and `if_none`). When a macro name is shadowed by a special form, or is ambiguous with respect to all
 macros visible, it can always be qualified with `(':module:name' ...)` syntax where `module` is the name of the module
 and `name` is the offset or name of the macro. Referring to a previously defined macro name _within_ a module may be
