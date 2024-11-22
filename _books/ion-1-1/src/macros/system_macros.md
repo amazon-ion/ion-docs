@@ -333,7 +333,7 @@ For normative examples, see [`repeat`](https://github.com/amazon-ion/ion-tests/t
 #### `delta`
 
 ```ion
-(macro delta (deltas) /* Not representable in TDL */)
+(macro delta (deltas*) /* Not representable in TDL */)
 ```
 
 The `delta` system macro can be used for directed delta encoding.
