@@ -4,7 +4,7 @@ Shared modules exist independently of the documents that use them.
 They are identified by a _catalog key_ consisting of a string name and an integer version.
 
 The self-declared catalog-names of shared modules are generally long, since they must be more-or-less globally unique.
-When imported by another module, they are given local symbolic names by import declarations.
+When imported by another module, they are given local symbolic names (a "binding") by import declarations.
 
 They have a spec version that is explicit via annotation, and a content version derived from the catalog version.
 The spec version of a shared module must be declared explicitly using an annotation of the form `$ion_1_N`.
