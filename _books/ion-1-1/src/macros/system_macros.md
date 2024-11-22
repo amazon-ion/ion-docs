@@ -345,7 +345,7 @@ outputₙ₊₁ = outputₙ + deltaₙ₊₁
 
 Example:
 ```ion
-(:delta 1000 1 2 3 -4) => 1000 1011 1013 1016 1012
+(:delta 1000 1 2 3 -4) => 1000 1001 1003 1006 1002
 ```
 
 For normative examples, see [`delta`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/delta.ion) in the Ion conformance test suite.
