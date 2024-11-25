@@ -281,12 +281,18 @@ For normative examples, see [`make_decimal`](https://github.com/amazon-ion/ion-t
 Produces a non-null, unannotated timestamp at various levels of precision.
 When `offset` is absent, the result has unknown local offset; offset `0` denotes UTC.
 
+The `make_timestamp` macro has rules that cannot be expressed in the macro signature because it must construct a 
+valid Ion timestamp value.
+
 The arguments to this macro may not be any null value.
+The evaluated argument for the `year` parameter must be an integer from 1 to 9999 inclusive.
+The evaluated argument for the `month` parameter, if present, must be an integer from 1 to 12 inclusive.
+The evaluated argument for the `day` parameter, if present, must be an integer that is a valid, 1-indexed day for the given month.
+The evaluated argument for the `hour` parameter, if present, must be an integer from 0 to 23 inclusive.
+The evaluated argument for the `day` parameter, if present, must be an integer from 0 to 59 inclusive.
 The evaluated argument for the `second` parameter, if present, must be a decimal or integer value that is greater than
 or equal to zero and less than 60. The evaluated arguments for all other parameters, if present, must be integer values.
 
-The `make_timestamp` macro has additional rules (that cannot be expressed in the macro signature) because it must
-construct a valid Ion timestamp value.
 The `offset_minutes` and `hour` parameters may only be present if `minute` is present. Aside from `offset_minutes`, if 
 any evaluated argument is present, the evaluated arguments for all parameters to the left must also be present.
 The precision of the constructed timestamp is determined by which parameters have non-empty arguments.
