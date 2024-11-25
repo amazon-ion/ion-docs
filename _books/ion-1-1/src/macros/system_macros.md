@@ -19,6 +19,8 @@ evaluating the template and directly update the encoding context with the new sy
 
 `none` accepts no values and produces nothing (an empty stream).
 
+For normative examples, see [`none`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/none.ion) in the Ion conformance test suite.
+
 #### `values`
 
 ```ion
@@ -28,6 +30,8 @@ evaluating the template and directly update the encoding context with the new sy
 This is, essentially, the identity function. 
 It produces a stream from any number of arguments, concatenating the streams produced by the nested expressions.
 Used to aggregate multiple values or sub-streams to pass to a single argument, or to produce multiple results.
+
+For normative examples, see [`values`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/values.ion) in the Ion conformance test suite.
 
 #### `default`
 
@@ -46,6 +50,8 @@ Used to aggregate multiple values or sub-streams to pass to a single argument, o
 `default` tests `expr` to determine whether it expands to the empty stream.
 If it does not, `default` will produce the expansion of `expr`.
 If it does, `default` will produce the expansion of `default_expr` instead.
+
+For normative examples, see [`values`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/values.ion) in the Ion conformance test suite.
 
 #### `flatten`
 
@@ -69,6 +75,8 @@ The `flatten` macro can also be used to splice the content of one list or s-expr
 ```ion
 [1, 2, (:flatten [a, b]), 3, 4] => [1, 2, a, b, 3, 4]
 ```
+
+For normative examples, see [`flatten`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/flatten.ion) in the Ion conformance test suite.
 
 #### `parse_ion`
 
@@ -111,6 +119,8 @@ Embedded binary example:
 > The data argument is evaluated in a clean environment that cannot read anything from the parent document.
 > Allowing context to leak from the outer scope into the document being parsed would also enable recursion.
 
+For normative examples, see [`parse_ion`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/parse_ion.ion) in the Ion conformance test suite.
+
 ### Value Constructors
 
 #### `annotate`
@@ -126,6 +136,8 @@ Each `ann` must be a non-null, unannotated string or symbol.
 (:annotate (: "a2") a1::true) => a2::a1::true
 ```
 
+For normative examples, see [`annotate`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/annotate.ion) in the Ion conformance test suite.
+
 #### `make_string`
 
 ```ion
@@ -135,6 +147,8 @@ Each `ann` must be a non-null, unannotated string or symbol.
 Produces a non-null, unannotated string containing the concatenated content produced by the arguments.
 Nulls (of any type) are forbidden. Any annotations on the arguments are discarded.
 
+For normative examples, see [`make_string`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_string.ion) in the Ion conformance test suite.
+
 #### `make_symbol`
 
 ```ion
@@ -143,6 +157,8 @@ Nulls (of any type) are forbidden. Any annotations on the arguments are discarde
 
 Like `make_string` but produces a symbol.
 
+For normative examples, see [`make_symbol`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_symbol.ion) in the Ion conformance test suite.
+
 #### `make_blob`
 
 ```ion
@@ -150,6 +166,8 @@ Like `make_string` but produces a symbol.
 ```
 
 Like `make_string` but accepts lobs and produces a blob.
+
+For normative examples, see [`make_blob`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_blob.ion) in the Ion conformance test suite.
 
 #### `make_list`
 
@@ -166,6 +184,8 @@ Produces a non-null, unannotated list by concatenating the _content_ of any numb
 (:make_list ((1 2)) [[3, 4]]) => [(1 2), [3, 4]]
 ```
 
+For normative examples, see [`make_list`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_list.ion) in the Ion conformance test suite.
+
 #### `make_sexp`
 
 ```ion
@@ -180,6 +200,8 @@ Like `make_list` but produces a sexp.
 (:make_sexp (1 2) [3, 4])     => (1 2 3 4)
 (:make_sexp ((1 2)) [[3, 4]]) => ((1 2) [3, 4])
 ```
+
+For normative examples, see [`make_sexp`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_sexp.ion) in the Ion conformance test suite.
 
 #### `make_struct`
 
@@ -197,13 +219,17 @@ Produces a non-null, unannotated struct by combining the fields of any number of
   {k4: 4})        => {k1:1, k2:2, k3:3, k4:4}
 ```
 
+For normative examples, see [`make_struct`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_struct.ion) in the Ion conformance test suite.
+
 #### `make_field`
 
 ```ion
-(macro make_field (flex_sym::field_name value) /* Not representable in TDL */)
+(macro make_field (field_name value) /* Not representable in TDL */)
 ```
 
 Produces a non-null, unannotated, single-field struct using the given field name and value.
+
+The `field_name` parameter may be (or evaluate to) any non-null text value, and the `value` parameter may be (or evaluate to) any single value.
 
 This can be used to dynamically construct field names based on macro parameters.
 
@@ -223,14 +249,18 @@ Then:
 (:foo_struct c 3) => { foo_a: 1, foo_b: 2, foo_c: 3 }
 ```
 
+For normative examples, see [`make_struct`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_struct.ion) in the Ion conformance test suite.
+
 #### `make_decimal`
 
 ```ion
-(macro make_decimal (flex_int::coefficient flex_int::exponent) /* Not representable in TDL */)
+(macro make_decimal (coefficient exponent) /* Not representable in TDL */)
 ```
 
 This is no more compact than the regular binary encoding for decimals.
 However, it can be used in conjunction with other macros, for example, to represent fixed-point numbers.
+
+Both `coefficient` and `exponent` must be (or evaluate to) a single integer value. 
 
 ```ion
 (macro usd (cents) (.annotate USD (.make_decimal cents -2))
@@ -238,20 +268,34 @@ However, it can be used in conjunction with other macros, for example, to repres
 (:usd 199) =>  USD::1.99
 ```
 
+> [!NOTE]
+> It is not possible to use `make_decimal` to construct any negative zero value because Ion integers do not have signed zero.
+
+For normative examples, see [`make_decimal`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_decimal.ion) in the Ion conformance test suite.
+
 #### `make_timestamp`
 
 ```ion
-(macro make_timestamp (uint16::year
-                       uint8::month?
-                       uint8::day?
-                       uint8::hour?
-                       uint8::minute?
-                       /*decimal*/ second?
-                       int16::offset_minutes?) /* Not representable in TDL */)
+(macro make_timestamp (year month? day? hour? minute? second? offset_minutes?) /* Not representable in TDL */)
 ```
 Produces a non-null, unannotated timestamp at various levels of precision.
 When `offset` is absent, the result has unknown local offset; offset `0` denotes UTC.
+
+The `make_timestamp` macro has rules that cannot be expressed in the macro signature because it must construct a 
+valid Ion timestamp value.
+
 The arguments to this macro may not be any null value.
+The evaluated argument for the `year` parameter must be an integer from 1 to 9999 inclusive.
+The evaluated argument for the `month` parameter, if present, must be an integer from 1 to 12 inclusive.
+The evaluated argument for the `day` parameter, if present, must be an integer that is a valid, 1-indexed day for the given month.
+The evaluated argument for the `hour` parameter, if present, must be an integer from 0 to 23 inclusive.
+The evaluated argument for the `day` parameter, if present, must be an integer from 0 to 59 inclusive.
+The evaluated argument for the `second` parameter, if present, must be a decimal or integer value that is greater than
+or equal to zero and less than 60. The evaluated arguments for all other parameters, if present, must be integer values.
+
+The `offset_minutes` and `hour` parameters may only be present if `minute` is present. Aside from `offset_minutes`, if 
+any evaluated argument is present, the evaluated arguments for all parameters to the left must also be present.
+The precision of the constructed timestamp is determined by which parameters have non-empty arguments.
 
 > [!NOTE]
 > TODO [ion-docs#256](https://github.com/amazon-ion/ion-docs/issues/256) Reconsider offset semantics, perhaps default should be UTC.
@@ -270,6 +314,8 @@ Example:
          (.make_decimal (%seconds_millis) -3) 0))
 ```
 
+For normative examples, see [`make_timestamp`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/make_timestamp.ion) in the Ion conformance test suite.
+
 ### Encoding Utility Macros
 
 #### `repeat`
@@ -277,43 +323,52 @@ Example:
 The `repeat` system macro can be used for efficient run-length encoding.
 
 ```ion
-(macro repeat (n! value+) /* Not representable in TDL */)
+(macro repeat (n! value*) /* Not representable in TDL */)
 ```
 Produces a stream that repeats the specified `value` expression(s) `n` times.
+
+The evaluated argument for `n` must be a non-null integer value that is equal to or greater than zero. 
 
 ```ion
 (:repeat 5 0)          => 0 0 0 0 0
 (:repeat 2 true false) => true false true false
 ```
 
+For normative examples, see [`repeat`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/repeat.ion) in the Ion conformance test suite.
+
 #### `delta`
 
-> [!NOTE]
-> 🚧 Name still TBD 🚧
+```ion
+(macro delta (deltas*) /* Not representable in TDL */)
+```
 
 The `delta` system macro can be used for directed delta encoding.
-
-```ion
-(macro delta (flex_int::initial! flex_int::deltas+) /* Not representable in TDL */)
+It produces a stream that is equal in length to the `deltas` argument, defined by the recurrence relation:
+```
+output₀ = delta₀
+outputₙ₊₁ = outputₙ + deltaₙ₊₁
 ```
 
 Example:
 ```ion
-(:delta 10 1 2 3 -4) => 11 13 16 12
+(:delta 1000 1 2 3 -4) => 1000 1001 1003 1006 1002
 ```
+
+For normative examples, see [`delta`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/delta.ion) in the Ion conformance test suite.
 
 #### `sum`
 
 ```ion
-(macro sum (i*) /* Not representable in TDL */)
+(macro sum (a b) /* Not representable in TDL */)
 ```
-Produces the sum of all the integer arguments.
+Produces the sum of two non-null integer arguments.
 
 Examples:
 ```ion
-(:sum 1 2 3) => 6
-(:sum (:))   => 0
+(:sum 1 2) => 3
 ```
+
+For normative examples, see [`sum`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/sum.ion) in the Ion conformance test suite.
 
 #### `meta`
 
@@ -336,6 +391,8 @@ Example:
 =>
 {foo:2,foo:1}
 ```
+
+For normative examples, see [`meta`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/meta.ion) in the Ion conformance test suite.
 
 ### Updating the Encoding Context
 
@@ -360,6 +417,8 @@ $ion_encoding::(
 )
 ```
 
+For normative examples, see [`set_symbols`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/set_symbols.ion) in the Ion conformance test suite.
+
 #### `add_symbols`
 Appends symbols to the local symbol table, preserving any macros in the macro table.
 
@@ -380,6 +439,8 @@ $ion_encoding::(
   (macro_table $ion_encoding)
 )
 ```
+
+For normative examples, see [`add_symbols`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/add_symbols.ion) in the Ion conformance test suite.
 
 #### `set_macros`
 Sets the local macro table, preserving any symbols in the symbol table.
@@ -402,6 +463,8 @@ $ion_encoding::(
 )
 ```
 
+For normative examples, see [`set_macros`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/set_macros.ion) in the Ion conformance test suite.
+
 #### `add_macros`
 Appends macros to the local macro table, preserving any symbols in the symbol table.
 
@@ -422,6 +485,8 @@ $ion_encoding::(
   (macro_table $ion_encoding (macro pi () 3.14159))
 )
 ```
+
+For normative examples, see [`add_macros`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/add_macros.ion) in the Ion conformance test suite.
 
 #### `use`
 Appends the content of the given module to the encoding context.
@@ -445,6 +510,8 @@ $ion_encoding::(
   (macro_table $ion_encoding the_module)
 )
 ```
+
+For normative examples, see [`use`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/use.ion) in the Ion conformance test suite.
 
 ----
 
