@@ -15,7 +15,7 @@ $ion::
     (clause_N /*...*/))
 ```
 
-In Ion v1.1, there are three supported directive operations:
+In Ion 1.1, there are three supported directive operations:
 1. [`module`](#module-directives)
 2. [`import`](#import-directives)
 3. [`encoding`](#encoding-directives)
@@ -59,6 +59,8 @@ $ion::
     "com.example.bar" // Module name
     2)                // Module version
 ```
+The `version` can be omitted. When it is not specified, it defaults to `1`.
+
 If the catalog does contain an exact match, this operation raises an error.
 
 ## `encoding` directives
@@ -76,4 +78,4 @@ $ion::
 
 The new encoding module sequence takes effect immediately after the directive and remains the same until the next `encoding` directive or Ion version marker.
 
-Note that the [default module](encoding_modules.md#default-module) is always implicitly at the head of the encoding module sequence.
+Note that the [default module](encoding_modules.md#the-default-module) is always implicitly at the head of the encoding module sequence.

@@ -1,8 +1,8 @@
 # Glossary
 
 **active encoding module**<br/>
-The _encoding module_ whose symbol table and macro table are available in the current _segment_ of an Ion _document_.
-The active encoding module is set by a _directive_.
+An _encoding module_ whose symbol table and macro table are available in the current _segment_ of an Ion _document_.
+The sequence of active encoding modules is set by an _encoding directive_.
 
 **argument**<br/>
 The sub-expression(s) within a macro invocation, corresponding to exactly one of the macro's parameters.

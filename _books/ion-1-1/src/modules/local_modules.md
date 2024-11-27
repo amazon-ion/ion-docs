@@ -7,7 +7,7 @@ They can be defined either:
 2. **Inside another module**, in which case the enclosing scope is the parent module.
    The parent module can be a shared or local module.
 
-Local modules always have a symbolic name given at the point of definition, also known as a "binding."
+Local modules always have a symbolic name given at the point of definition, also known as a _binding_.
 It is legal for a module binding to "shadow" a module binding in its parent scope by using the same name.
 
 ```ion
@@ -40,7 +40,8 @@ $ion::
 )
 ```
 
-The only exception to this rule is at the top level; stream-level bindings can be redefined.
+The only exception to this rule is at the top level.
+Stream-level bindings are mutable, while bindings inside a module are immutable.
 
 ```ion
 $ion::
@@ -55,7 +56,6 @@ $ion::
 ```
 
 Local modules inherit their spec version from the enclosing scope.
-Unlike shared modules, local modules have no content version.
 Local modules automatically have access to modules previously declared in their enclosing scope using `module` or `import`.
 
 ### Examples

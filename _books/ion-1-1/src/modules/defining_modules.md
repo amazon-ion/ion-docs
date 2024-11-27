@@ -8,7 +8,7 @@ A module is defined by four kinds of subclauses which, if present, always appear
 4. `macro_table` - an exported list of macro definitions
 
 The lexical name given to a module definition must be an [identifier](../modules.md#identifiers).
-However, it may not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
+However, it must not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
 
 ### Internal environment
 
@@ -50,7 +50,7 @@ Macro references are resolved to a specific macro as follows:
 
 * An unqualified _macro-name_ is looked up in the following locations:
     1. in the macros already exported in this module's `macro_table`
-    2. in the [default_module](encoding_modules.md#default-module)
+    2. in the [default_module](encoding_modules.md#the-default-module)
     3. in the [system module](system_module.md)
 
   If it maps to a macro, that’s the resolution of the reference. Otherwise, an error is signaled due to an unbound reference.
@@ -91,7 +91,7 @@ if an exact match is not found, the implementation must signal an error.
 
 ### `module`
 
-The `module` clause defines a new module that is contained in the current module.
+The `module` clause defines a new local module that is contained in the current module.
 
 ```bnf
 inner-module ::= '(module' module-name import* symbol-table? macro-table? ')'
@@ -101,7 +101,7 @@ Inner modules automatically have access to modules previously declared in the co
 The new module (and its exported symbols and macros) is available to any following `module`, `symbol_table`, and
 `macro_table` clauses in the enclosing container. 
 
-See [inner modules](inner_modules.md) for full explanation.
+See [local modules](local_modules.md) for full explanation.
 
 ### `symbol_table`
 

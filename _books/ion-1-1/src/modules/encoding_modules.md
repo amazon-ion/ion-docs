@@ -7,27 +7,35 @@ A writer can modify this sequence by emitting an [encoding directive](directives
 By logically concatenating the encoding modules' symbol and macro tables respectively,
 they can be viewed as unified local symbol and macro tables.
 
-For example, consider this encoding directive:
+For example, consider these module definitions and the subsequent encoding directive:
 ```ion
 $ion::
+(module mod_a
+    (symbol_table ["a", "b", "c"])
+    (macro_table
+        (macro foo () Foo)
+        (macro bar () Bar)))
+$ion::
+(module mod_b
+    (symbol_table ["c", "d", "e"])
+    (macro_table
+        (macro baz () Baz)
+        (macro quux () Quux)))
+$ion::
+(module mod_c
+    (symbol_table ["f", "g", "h"])
+    (macro_table
+        (macro quuz () Quuz)
+        (macro foo () Foo2)))
+
+$ion::
 (encoding
-    (module mod_a
-        (symbol_table ["a", "b", "c"])
-        (macro_table
-            (macro foo () Foo)
-            (macro bar () Bar)))
-    (module mod_b
-        (symbol_table ["c", "d", "e"])
-        (macro_table
-            (macro baz () Baz)
-            (macro quux () Quux)))
-    (module mod_c
-        (symbol_table ["f", "g", "h"])
-        (macro_table
-            (macro quuz () Quuz)
-            (macro foo () Foo2)))))
+    mod_a
+    mod_b
+    mod_c)
 ```
-It produces the encoding module sequence `mod_a mod_b mod_c`.
+It produces the encoding module sequence `_ mod_a mod_b mod_c`.
+(The [default module](#the-default-module), `_`, is always implicitly at the head of the encoding sequence.)
 
 The segment's local symbol table, formed by logically concatenating the symbol tables of `mod_a`,
 `mod_b`, and `mod_c` in that order, is:
@@ -93,7 +101,7 @@ $ion::
 (:mod_b::bar) // ERROR: `mod_b` is not in the encoding module sequence
 ```
 
-## Default module
+## The default module
 
 The default module, `_`, is an empty top-level module that is implicitly defined at the beginning of every stream.
 
@@ -150,10 +158,12 @@ $ion_1_1
 (:bar) // Equivalent to `(:_::bar)`
 ```
 
+`_` can also be redefined by an [`import`](directives.md#import-directives) directive.
+
 ## Default encoding module sequence
 
 At the beginning of a stream, the encoding module sequence contains two modules:
-1. the [default module](#default-module), `_`
+1. the [default module](#the-default-module), `_`
 2. the [system module](system_module.md), `$ion`
 
 Recall that a segment's symbol and macro tables are logical concatenations of those found in the segment's encoding modules.
