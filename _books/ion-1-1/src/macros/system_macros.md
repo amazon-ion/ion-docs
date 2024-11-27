@@ -88,7 +88,7 @@ Ion documents may be embedded in other Ion documents using the `parse_ion` macro
 
 The `parse_ion` macro constructs a stream of values by parsing a blob literal or string literal as a single, self-contained Ion document.
 All values produced by the expansion of `parse_ion` are application values.
-(I.e. it is as if they are all annotated with `$ion_literal`.) 
+(i.e. it is as if they are all annotated with `$ion_literal`.)
 
 The IVM at the beginning of an Ion data stream is sufficient to identify whether it is text or binary, so text Ion
 can be embedded as a blob containing the UTF-8 encoded text.
@@ -98,7 +98,7 @@ Embedded text example:
 (:parse_ion
     '''
     $ion_1_1
-    $ion_encoding::((symbol_table ["foo" "bar"]]))
+    $ion::(module _ (symbol_table ["foo" "bar"]]))
     $1 $2
     '''
 )
@@ -397,13 +397,14 @@ For normative examples, see [`meta`](https://github.com/amazon-ion/ion-tests/tre
 ### Updating the Encoding Context
 
 #### `set_symbols`
-Sets the local symbol table, preserving any macros in the macro table.
+Redefines the default module's symbol table, preserving any macros in its macro table.
 
 ```ion
 (macro set_symbols (symbols*)
-       $ion_encoding::(
+       $ion::
+       (module _
          (symbol_table [(%symbols)])
-         (macro_table $ion_encoding)
+         (macro_table _)
        ))
 ```
 
@@ -411,22 +412,24 @@ Example:
 ```ion
 (:set_symbols foo bar)
 =>
-$ion_encoding::(
+$ion::
+(module _
   (symbol_table [foo, bar])
-  (macro_table $ion_encoding)
+  (macro_table _)
 )
 ```
 
 For normative examples, see [`set_symbols`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/set_symbols.ion) in the Ion conformance test suite.
 
 #### `add_symbols`
-Appends symbols to the local symbol table, preserving any macros in the macro table.
+Appends symbols to the default module's symbol table, preserving any macros in its macro table.
 
 ```ion
 (macro add_symbols (symbols*)
-       $ion_encoding::(
-         (symbol_table $ion_encoding [(%symbols)])
-         (macro_table $ion_encoding)
+       $ion::
+       (module _
+         (symbol_table _ [(%symbols)])
+         (macro_table _)
        ))
 ```
 
@@ -434,21 +437,23 @@ Example:
 ```ion
 (:add_symbols foo bar)
 =>
-$ion_encoding::(
-  (symbol_table $ion_encoding [foo, bar])
-  (macro_table $ion_encoding)
+$ion::
+(module _
+  (symbol_table _ [foo, bar])
+  (macro_table _)
 )
 ```
 
 For normative examples, see [`add_symbols`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/add_symbols.ion) in the Ion conformance test suite.
 
 #### `set_macros`
-Sets the local macro table, preserving any symbols in the symbol table.
+Sets the default module's macro table, preserving any symbols in its symbol table.
 
 ```ion
 (macro set_macros (macros*)
-       $ion_encoding::(
-         (symbol_table $ion_encoding)
+       $ion::
+       (module _
+         (symbol_table _)
          (macro_table (%macros))
        ))
 ```
@@ -457,8 +462,9 @@ Example:
 ```ion
 (:set_macros (macro pi () 3.14159))
 =>
-$ion_encoding::(
-  (symbol_table $ion_encoding)
+$ion::
+(module _
+  (symbol_table _)
   (macro_table (macro pi () 3.14159))
 )
 ```
@@ -466,13 +472,14 @@ $ion_encoding::(
 For normative examples, see [`set_macros`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/set_macros.ion) in the Ion conformance test suite.
 
 #### `add_macros`
-Appends macros to the local macro table, preserving any symbols in the symbol table.
+Appends macros to the default module's macro table, preserving any symbols in its symbol table.
 
 ```ion
 (macro add_macros (macros*)
-       $ion_encoding::(
-         (symbol_table $ion_encoding)
-         (macro_table $ion_encoding (%macros))
+       $ion::
+       (module _
+         (symbol_table _)
+         (macro_table _ (%macros))
        ))
 ```
 
@@ -480,23 +487,25 @@ Example:
 ```ion
 (:add_macros (macro pi () 3.14159))
 =>
-$ion_encoding::(
-  (symbol_table $ion_encoding)
-  (macro_table $ion_encoding (macro pi () 3.14159))
+$ion::
+(module _
+  (symbol_table _)
+  (macro_table _ (macro pi () 3.14159))
 )
 ```
 
 For normative examples, see [`add_macros`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/add_macros.ion) in the Ion conformance test suite.
 
 #### `use`
-Appends the content of the given module to the encoding context.
+Appends the content of the given module to the default module.
 
 ```ion
 (macro use (catalog_key version?)
-       $ion_encoding::(
+       $ion::
+       (module _
          (import the_module catalog_key (.default (%version) 1))
-         (symbol_table $ion_encoding the_module)
-         (macro_table $ion_encoding the_module)
+         (symbol_table _ the_module)
+         (macro_table _ the_module)
        ))
 ```
 
@@ -504,10 +513,11 @@ Example:
 ```ion
 (:use "org.example.FooModule" 2)
 =>
-$ion_encoding::(
+$ion::
+(module _
   (import the_module "org.example.FooModule" 2)
-  (symbol_table $ion_encoding the_module)
-  (macro_table $ion_encoding the_module)
+  (symbol_table _ the_module)
+  (macro_table _ the_module)
 )
 ```
 

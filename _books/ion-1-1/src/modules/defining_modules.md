@@ -126,10 +126,26 @@ Where a module name occurs, its symbol table is appended.
 Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always required exact matches for imported modules.
 
 > [!TIP]
-> In an encoding directive, the active encoding module `$ion_encoding` can be added to the symbol table in order to 
-> retain the symbols from the active encoding module. 
-> `$ion_encoding` can occur anywhere in the `symbol_table` clause, so in Ion 1.1 it is possible to append and prepend to
-> the symbol table.
+> When redefining a top-level module binding,
+> the binding being redefined can be added to the symbol table in order to retain its symbols.
+> For example:
+>
+> ```ion
+> // Define module `foo`
+> $ion::
+> (module foo
+>     (symbol_table ["b", "c"]))
+>
+> // Redefine `foo` in terms of its former definition
+> $ion::
+> (module foo
+>     (symbol_table
+>         ["a"]
+>         foo // The old definition of `foo` with symbols ["b", "c"]
+>         ["d"]))
+>
+> // Now `foo`'s symbol table is ["a", "b", "c", "d"]
+> ```
 
 Where a list occurs, it must contain only non-null, unannotated strings and symbols.
 The text of these strings and/or symbols are appended to the symbol table.
@@ -188,14 +204,13 @@ Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
 
 ```ion
 $ion_1_1
-$ion_encoding::(
-  (import m1 "com.example.shared1" 1)
-  (import m2 "com.example.shared2" 2)
+(import m1 "com.example.shared1" 1)
+(import m2 "com.example.shared2" 2)
+$ion::
+(module _
   (symbol_table m1 m2 ["s1", "s2"])
 )
 ```
-
-
 
 ### `macro_table`
 

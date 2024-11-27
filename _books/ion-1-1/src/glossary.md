@@ -35,9 +35,8 @@ A document does not necessarily exist as a file, and is not necessarily finite.
 See _encoding expression_.
 
 **encoding directive**<br/>
-In an Ion 1.1 segment, a top-level S-Expression annotated with `$ion_encoding`.
-Defines a new encoding module for the segment immediately following it.
-At the end of the encoding directive, the new _encoding module_ is promoted to be the _active encoding module_.
+In an Ion 1.1 segment, a top-level S-expression annotated with `$ion`.
+Defines a new _encoding module sequence_ for the segment immediately following it.
 The _symbol table directive_ is effectively a less capable alternative syntax.
 
 **encoding environment**<br/>
@@ -112,9 +111,10 @@ Applies to Ion text and TDL.
 Similar to "varargs" parameters in Java and other languages.
 
 **segment**<br/>
-A contiguous partition of a _document_ that uses the same _active encoding module_.
+A contiguous partition of a _document_ that uses the same _encoding module sequence_.
 Segment boundaries are caused by directives: an IVM starts a new segment (ending the prior segment, if any),
-while `$ion_symbol_table` and `$ion_encoding` directives end segments (with a new one starting immediately afterward).
+while `encoding` directives end segments (with a new one starting immediately afterward).
+`import` and `module` directives can also end a segment if they are redefining a module binding that was in the encoding module sequence.
 
 **shared module**<br/>
 A module that exists independent of the data stream of an Ion document. It is identified by a
