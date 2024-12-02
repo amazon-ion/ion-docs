@@ -34,6 +34,7 @@ have been supplanted by Ion 1.1's more general [opcodes](binary/opcodes.md),
 which have been organized to prioritize the most commonly used encodings and make leveraging macros as inexpensive as possible.
 
 In both text and binary Ion 1.1, the Ion Version Marker syntax is compatible with Ion 1.0's version marker syntax.
+
 This means that an Ion 1.0-only reader can correctly identify when a stream uses Ion 1.1 (allowing it to report an error),
 and an Ion 1.1 reader can correctly "downshift" to expecting Ion 1.0 data when it encounters a stream using Ion 1.0.
 
