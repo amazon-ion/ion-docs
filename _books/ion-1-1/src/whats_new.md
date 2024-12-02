@@ -30,11 +30,10 @@ symbol IDs in an Ion 1.0 stream do not always refer to the same text as the same
 Ion 1.1's binary encoding is substantially different from Ion 1.0's binary encoding.
 Many changes have been made to make values more compact, faster to read and/or faster to write.
 Ion 1.0's [type descriptors](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats)
-have been supplanted by Ion 1.1's more general
-[opcodes](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats),
+have been supplanted by Ion 1.1's more general [opcodes](binary/opcodes.md),
 which have been organized to prioritize the most commonly used encodings and make leveraging macros as inexpensive as possible.
 
-In both text and binary Ion 1.1, the Ion Version Marker syntax is syntactically compatible with Ion 1.0's version marker syntax.
+In both text and binary Ion 1.1, the Ion Version Marker syntax is compatible with Ion 1.0's version marker syntax.
 This means that an Ion 1.0-only reader can correctly identify when a stream uses Ion 1.1 (allowing it to report an error),
 and an Ion 1.1 reader can correctly "downshift" to expecting Ion 1.0 data when it encounters a stream using Ion 1.0.
 
@@ -44,6 +43,7 @@ A concatenated stream containing both Ion 1.0 and Ion 1.1 can only be fully read
 Upgrading an existing application to Ion 1.1 often requires little-to-no code changes,
 as APIs typically operate at the data model level ("write an integer")
 rather than at the encoding level ("write `0x64` followed by four Little-Endian bytes").
+However, taking full advantage of macros after upgrading typically requires additional development time.
 
 ## Text syntax changes
 
@@ -142,8 +142,7 @@ symbol IDs and symbolic tokens with inline text.
 
 All Ion types use the new low-level encoding primitives described in the previous section.
 Ion 1.0's [type descriptors](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats)
-have been supplanted by Ion 1.1's more general
-[opcodes](https://amazon-ion.github.io/ion-docs/docs/binary.html#typed-value-formats),
+have been supplanted by Ion 1.1's more general [opcodes](binary/opcodes.md),
 which have been organized to prioritize the most commonly used encodings and make leveraging macros as inexpensive as possible.
 
 Typed `null` values are now [encoded in two bytes using the `0xEB` opcode](binary/values/null.md#nulls).
@@ -259,7 +258,7 @@ field all together). In the following examples, let us define `(:make_struct c 5
 ### Modules
 
 Ion 1.0 uses symbol tables to group together related text values.
-In order to also accommodate macros, Ion 1.1 also introduces _modules_, a named organizational unit that contains:
+In order to also accommodate macros, Ion 1.1 introduces _modules_, a named organizational unit that contains:
 * **An exported symbol table**, a list of text values used to compactly encode symbol tokens like field names, annotations, and symbol values.
 * **An exported macro table**, a list of macro definitions used to compactly encode complete values or partially populated containers.
 * **An unexported nested modules map**, a set of unique module names and their associated module definitions.

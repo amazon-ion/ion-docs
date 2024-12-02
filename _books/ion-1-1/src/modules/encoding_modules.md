@@ -40,19 +40,20 @@ It produces the encoding module sequence `_ mod_a mod_b mod_c`.
 The segment's local symbol table, formed by logically concatenating the symbol tables of `mod_a`,
 `mod_b`, and `mod_c` in that order, is:
 
-| Address | Symbol text |
-|:-------:|-------------|
-|   `0`   | `a`         |
-|   `1`   | `b`         |
-|   `2`   | `c`         |
-|   `3`   | `c`         |
-|   `4`   | `d`         |
-|   `5`   | `e`         |
-|   `6`   | `f`         |
-|   `7`   | `g`         |
-|   `8`   | `h`         |
+| Address | Symbol text            |
+|:-------:|------------------------|
+|   `0`   | _&lt;unknown text&gt;_ |
+|   `1`   | `a`                    |
+|   `2`   | `b`                    |
+|   `3`   | `c`                    |
+|   `4`   | `c`                    |
+|   `5`   | `d`                    |
+|   `6`   | `e`                    |
+|   `7`   | `f`                    |
+|   `8`   | `g`                    |
+|   `9`   | `h`                    |
 
-Notice that no de-duplication takes place; `c` appears in both addresses `3` and `4`.
+Notice that no de-duplication takes place; `c` appears in both addresses `4` and `5`.
 
 The segment's macro table, formed by logically concatenating the macro tables of `mod_a`,
 `mod_b`, and `mod_c` in that order, is:
@@ -172,7 +173,7 @@ the stream's initial symbol and macro tables are identical to those of the syste
 
 This is beneficial because it allows all system macros to be invoked from the stream's macro table
 [in a single byte](../binary/e_expressions.md#e-expression-with-the-address-in-the-opcode)
-rather than [the two-byte sequence](http://localhost:3000/binary/e_expressions.html#system-macro-invocations)
+rather than [the two-byte sequence](../binary/e_expressions#system-macro-invocations)
 needed to invoke them from the system macro table.
 In this way, a writer can define its macros and symbols in a maximally compact fashion at the head of the stream.
 
@@ -203,10 +204,10 @@ $ion::(encoding mod_a mod_b mod_c)
 the encoding sequence is `_ mod_a mod_b mod_c`, and `mod_b` is empty.
 
 ```ion
-(.0) // => Foo
-(.1) // => Bar
-(.2) // => Quux
-(.3) // => Quuz
+(:0) // => Foo
+(:1) // => Bar
+(:2) // => Quux
+(:3) // => Quuz
 ```
 
 If we then add macros to `mod_b`, those macros will immediately become available.
@@ -217,11 +218,11 @@ $ion::
     (macro_table
         (macro baz () Baz)))
 
-(.0) // => Foo
-(.1) // => Bar
-(.2) // => Baz
-(.3) // => Quux
-(.4) // => Quuz
+(:0) // => Foo
+(:1) // => Bar
+(:2) // => Baz
+(:3) // => Quux
+(:4) // => Quuz
 ```
 
 > [!IMPORTANT]
@@ -233,6 +234,7 @@ $ion::
 // If other modules are in use, remove them from the encoding module sequence
 $ion::(encoding)
 ```
-
-Note that this is different from the behaviour of an IVM.
-When an IVM is encountered, the encoding module is set to the system module.
+You can also consider writing an Ion verson marker, which is more compact.
+The behavior is slightly different, however:
+an IVM will also add `$ion` to the encoding module sequence.
+See the [Default encoding module sequence](#default-encoding-module-sequence) section for details.
