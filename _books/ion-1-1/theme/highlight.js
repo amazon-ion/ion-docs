@@ -1242,7 +1242,7 @@ hljs.registerLanguage("ion", function () {
             $pattern: /[\w$]+/, // Highlighted keywords/literals/etc can contain a `$`
             version_marker: "$ion_1_0 $ion_1_1",
             literal: "true false null +inf -inf nan",
-            keyword: 'import export encoding module macro symbol_table macro_table $ion $ion_symbol_table $ion_encoding flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
+            keyword: 'import export encoding module macro symbol_table macro_table $ion $ion_symbol_table flex_uint flex_int uint8 uint16 uint32 uint64 flex_int int8 int16 int32 int64 flex_sym',
             system_macro: "for annotate make_string none values set_macros add_macros set_symbols add_symbols use"
         }, comment_modes = [n.C_LINE_COMMENT_MODE, n.C_BLOCK_COMMENT_MODE];
 

@@ -20,7 +20,7 @@ directive          ::= ivm
 
 symtab-directive   ::=  local-symbol-table     ; As per the Ion 1.0 specification¹
 
-encoding-directive ::= '$ion_encoding::(' module-body ')'
+encoding-directive ::= '$ion::(encoding ' module-name* ')'
 ```
 
 &nbsp;&nbsp;&nbsp;&nbsp;¹[Symbols – Local Symbol Tables](https://amazon-ion.github.io/ion-docs/docs/symbols.html#local-symbol-tables).

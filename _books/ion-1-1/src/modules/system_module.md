@@ -44,7 +44,7 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 |  7 | 0x07 | `symbols`                      |
 |  8 | 0x08 | `max_id`                       |
 |  9 | 0x09 | `$ion_shared_symbol_table`     |
-| 10 | 0x0A | `$ion_encoding`                |
+| 10 | 0x0A | see [ion-docs#345][1]          |
 | 11 | 0x0B | `$ion_literal`                 |
 | 12 | 0x0C | `$ion_shared_module`           |
 | 13 | 0x0D | `macro`                        |

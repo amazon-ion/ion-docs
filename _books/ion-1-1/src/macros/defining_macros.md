@@ -192,7 +192,8 @@ Ion scalars are interpreted literally. These include values of any type except `
 These macros are constants; they take no parameters.
 When they are invoked, they expand to a stream of a single value: the Ion scalar acting as the template expression.
 ```ion
-$ion_encoding::(
+$ion::
+(module _
   (macro_table
     (macro greeting () "hello")
     (macro birthday () 1996-10-11)
@@ -246,7 +247,8 @@ expression-group   ::= '(..' expression* ')'
 
 ##### Examples
 ```ion
-$ion_encoding::(
+$ion::
+(module _
   (macro_table
     // Calls the system macro `values`, allowing it to produce a stream of three values.
     (macro nephews () (.values Huey Dewey Louie))
@@ -266,7 +268,8 @@ $ion_encoding::(
 >  If a macro definition includes an invocation of a name or address that is not already valid, the reader must raise an error.
 >
 > ```ion
-> $ion_encoding::(
+> $ion::
+> (module _
 >   (macro_table
 >     (macro list_of_nephews () [(.nephews)])
 >     //                          ^^^^^^^^
@@ -293,7 +296,8 @@ variable-name      ::= ion-identifier
 ##### Examples
 
 ```ion
-$ion_encoding::(
+$ion::
+(module _
   (macro_table
     // Produces a stream that repeats the content of parameter `x` twice.
     (macro twice (x*) (.values (%x) (%x)))
@@ -323,7 +327,8 @@ When the container is a list or s-expression, the values in the nested expressio
 If the expansion was empty, no values are spliced into the container.
 
 ```ion
-$ion_encoding::(
+$ion::
+(module _
   (macro_table
     (macro bookend_list (x y*) [(%x), (%y), (%x)])
     (macro bookend_sexp (x y*) ((%x) (%y) (%x)))
@@ -346,7 +351,8 @@ If the expansion was empty, no fields are spliced into the parent struct.
 ##### Examples
 
 ```ion
-$ion_encoding::(
+$ion::
+(module _
   (macro_table
     (macro resident (id names*)
         {
