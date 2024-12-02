@@ -204,8 +204,8 @@ Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
 
 ```ion
 $ion_1_1
-(import m1 "com.example.shared1" 1)
-(import m2 "com.example.shared2" 2)
+$ion::(import m1 "com.example.shared1" 1)
+$ion::(import m2 "com.example.shared2" 2)
 $ion::
 (module _
   (symbol_table m1 m2 ["s1", "s2"])
