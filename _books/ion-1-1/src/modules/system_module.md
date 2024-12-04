@@ -7,23 +7,20 @@ leverages the system symbol table, the text encoding that users typically intera
 The system macros are more visible, especially to authors of macros.
 
 This chapter catalogs the system-provided symbols and macros.
-The examples below use unqualified names, which works assuming no other macros with the same name are in scope. The unambiguous form `$ion::macro-name` is always available to use in the [template definition language](../macros/defining_macros.md#template-definition-language-tdl).
+The examples below use unqualified names, which works assuming no other macros with the same name are in scope.
+The unambiguous form `$ion::macro-name` is always available to use.
 
 ### Relation to local symbol and macro tables
 
 In Ion 1.0, the system symbol table is always the first import of the local symbol table.
-However, in Ion 1.1, the system symbol and macro tables have a system address space that is distinct from the local address space.
+However, in Ion 1.1, the system symbol and macro tables have a system address space that is distinct from the 
+local address space, but can optionally be included in the user address space.
+
 When starting an Ion 1.1 segment (i.e. immediately after encountering an `$ion_1_1` version marker),
-the local symbol table is prepopulated with the system symbols[^note0]<a name="footnote-0"></a>. 
-The local macro table is also prepopulated with the system macros.
-However, the system symbols and macros are not permanent fixtures of the local symbol and macro tables respectively.
-
-
-When a local macro has the same name as a system macro, it shadows the system macro.
-In TDL, it is still possible to invoke a shadowed system macro by using a qualified name, such as `$ion::make_string`.
-If a macro in the active local macro table has the same name as a system macro, it is impossible to invoke that system
-macro by name using an E-Expression.
-(It is still possible to invoke the system macro if the local macro table has assigned an alias for that system macro.)
+the system module is in the sequence of active encoding modules immediately following the default module.
+As a result, both the system macros and system symbols are initially included in the local macro and symbol tables[^note0]<a name="footnote-0"></a>.
+The system module is not a permanent fixture in the active encoding modules, so (in contrast to Ion 1.0)
+the system symbols and macros can be removed from the local symbol and macro tables.
 
 ### System Symbols
 
@@ -44,7 +41,7 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 |  7 | 0x07 | `symbols`                      |
 |  8 | 0x08 | `max_id`                       |
 |  9 | 0x09 | `$ion_shared_symbol_table`     |
-| 10 | 0x0A | see [ion-docs#345][1]          |
+| 10 | 0x0A | `encoding`                     |
 | 11 | 0x0B | `$ion_literal`                 |
 | 12 | 0x0C | `$ion_shared_module`           |
 | 13 | 0x0D | `macro`                        |
