@@ -21,7 +21,7 @@ of software evolution.
 
 Ion was built to address rapid development, decoupling, and efficiency
 challenges faced every day while engineering large-scale, service-oriented
-architectures. It has been addressing these challenges within Amazon for nearly
+architectures. It has been addressing these challenges within Amazon for more than
 a decade, and we believe others will benefit as well.
 
 **Available Languages:** [C][ion-c] -- [C#][ion-dotnet] -- [Go][ion-go] -- [Java][ion-java] -- [JavaScript][ion-js] -- [Python][ion-python] -- [Rust][ion-rust]<br>
