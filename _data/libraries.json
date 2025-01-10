@@ -29,8 +29,8 @@
   {
     "name": "ion-rust",
     "category": "core",
-    "latest_release_version": "1.0.0-rc.10",
-    "latest_release_date": "2024-12-13",
+    "latest_release_version": "1.0.0-rc.11",
+    "latest_release_date": "2025-01-09",
     "documentation": "https://docs.rs/ion-rs/latest/ion_rs/"
   },
   {
@@ -50,8 +50,8 @@
   {
     "name": "ion-java-path-extraction",
     "category": "extension",
-    "latest_release_version": "1.4.0",
-    "latest_release_date": "2024-09-19"
+    "latest_release_version": ".1.5.0",
+    "latest_release_date": "2025-01-09"
   },
   {
     "name": "ion-element-kotlin",
