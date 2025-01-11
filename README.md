@@ -70,12 +70,11 @@ To update the narrative document:
 
   
 
-  * Clone `ion-docs` as a sibling directory of this package at
-    `$WORKSPACE/src/ion-docs`.
+  * Clone `ion-docs` as a sibling directory of this package.
     * Alternatively, you can clone it into `~/src/ion-docs`.
     * Alternatively, set the shell-environment variable `ION_DOCS` to the
       location of your clone.
-  * In this directory, run the command `brazil-runtime-exec ./gentex.sh`.
+  * In this directory, run the `generate` target.
     That will update the LaTex at `ion-docs/src/tex/ion-model.tex` and then
     rebuild the PDF.
   * If things look good, commit the modified file(s) in `ion-docs`.
