@@ -127,7 +127,7 @@ Template expressions that are structs are interpreted _almost_ literally;
 the field names are literal--is why the `amount` and `currency` field names show up as-is in the expansion--but the field “values” are arbitrary expressions.
 We call these almost-literal forms _quasi-literals_.
 
-The template definition language also treats lists quasi-literally, and every element inside the list is anexpression.
+The template definition language also treats lists quasi-literally, and every element inside the list is an expression.
 Here’s a silly macro to illustrate:
 
 ```ion
