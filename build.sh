@@ -101,9 +101,16 @@ runConformanceTests() {
         # TODO This should run in a namespace with only this dialect
         runFusion require "/ion_model/testing/dsl" \; load "$test"
     done < <(find ftst/conformance -name '*.ion' -print)
+
+    # TODO Run the suite in ion-tests/conformance
 }
 
 test() {
+    if [[ ! -d ./ion-tests/catalog ]]
+    then
+        fail echo "ion-tests not present. Add a symlink to it in this directory."
+    fi
+
     runUnitTests
     runConformanceTests
 }
