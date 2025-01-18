@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+## Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+## SPDX-License-Identifier: Apache-2.0
+
 # Tests this package
 
 set -o errexit  # Exit if any statement returns a non-true return value.
