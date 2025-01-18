@@ -24,9 +24,9 @@ fail() {
 # Locating dependencies
 
 locateFusion() {
-    if [[ ! -v _FUSION_EXE ]]
+    if [[ -z ${_FUSION_EXE:-} ]]
     then
-        if [[ -v FUSION_HOME ]]
+        if [[ -n ${FUSION_HOME:-} ]]
         then
             _FUSION_EXE=$FUSION_HOME/bin/fusion
             if [[ ! -x $_FUSION_EXE ]]
@@ -85,28 +85,22 @@ locate() {
 # Testing the model
 
 runUnitTests() {
-    local -a testfiles
-    readarray -t testfiles < <(find ftst -name '*.test.fusion' -print)
-    # This doesn't work, and I have no idea why:
-    #find ftst -name '*.test.fusion' -print #| readarray -t testfiles
-
-    for test in "${testfiles[@]}"
+    local test
+    while IFS= read -r test
     do
         echo "----> $test"
         runFusion load "$test"
-    done
+    done < <(find ftst -name '*.test.fusion' -print)
 }
 
 runConformanceTests() {
-    local -a testfiles
-    readarray -t testfiles < <(find ftst/conformance -name '*.ion' -print)
-
-    for test in "${testfiles[@]}"
+    local test
+    while IFS= read -r test
     do
         echo "----> $test"
         # TODO This should run in a namespace with only this dialect
         runFusion require "/ion_model/testing/dsl" \; load "$test"
-    done
+    done < <(find ftst/conformance -name '*.ion' -print)
 }
 
 test() {
