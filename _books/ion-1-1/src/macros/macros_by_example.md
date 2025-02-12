@@ -217,7 +217,7 @@ defined by the macro. This all happens as the Ion document is parsed, transparen
 of the document. In casual terms, E-expressions are expanded away before the application sees
 the data.
 
-Within the template definition language, you can define new macros in terms of other macros, and those invocations are written as S-expressions.
+Within the template definition language (TDL), you can define new macros in terms of other macros, and those invocations are written as S-expressions.
 Unlike E-expressions, TDL macro invocations are normal Ion data structures, consumed by the Ion system and interpreted as TDL.
 Further, TDL macro invocations only have meaning in the context of a macro definition, inside an encoding module,
 while E-expressions can occur _anywhere_ in an Ion document.
