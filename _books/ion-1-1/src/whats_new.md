@@ -224,7 +224,10 @@ Within a list or S-expression, the stream becomes additional child elements in t
 
 **E-expressions in S-expressions**
 ```ion
+// Encoding
 (a (:values 1 2 3) b (:none) c)
+
+// Evaluates to
 (a 1 2 3 b c)
 ```
 
