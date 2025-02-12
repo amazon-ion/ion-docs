@@ -233,7 +233,7 @@ Within a list or S-expression, the stream becomes additional child elements in t
 
 Within a struct at the field name position, the resulting stream must contain structs and each of the fields in those
 structs become fields in the enclosing struct (the value portion is not specified); at the value position, the resulting
-stream of values becomes fields with whatever field name corresponded before the E-expression (empty stream elides the
+stream of values becomes values with whatever field name corresponded before the E-expression (empty stream elides the
 field all together). In the following examples, let us define `(:make_struct c 5)` that evaluates to a single struct
 `{c: 5}`.
 
