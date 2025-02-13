@@ -3,7 +3,7 @@
 If the high nibble of the opcode is `0x9_`, it represents a string. The low nibble of the opcode
 indicates how many UTF-8 bytes follow. Opcode `0x90` represents a string with empty text (`""`).
 
-Strings longer than 15 bytes can be encoded with the `F9` opcode, which takes a [`FlexUInt`](#flexuint)-encoded length
+Strings longer than 15 bytes can be encoded with the `F9` opcode, which takes a [`FlexUInt`](../primitives/flex_uint.md)-encoded length
 after the opcode.
 
 `0xEB x05` represents `null.string`.

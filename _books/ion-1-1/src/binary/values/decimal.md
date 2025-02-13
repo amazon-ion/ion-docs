@@ -3,7 +3,7 @@
 If an opcode has a high nibble of `0x7_`, it represents a decimal. Low nibble values indicate
 the number of trailing bytes used to encode the decimal.
 
-The body of the decimal is encoded as a [`FlexInt`](#flexint) representing its exponent, followed by a `FixedInt`
+The body of the decimal is encoded as a [`FlexInt`](../primitives/flex_int.md) representing its exponent, followed by a `FixedInt`
 representing its coefficient. The width of the coefficient is the total length of the decimal encoding minus the length
 of the exponent. It is possible for the coefficient to have a width of zero, indicating a coefficient of `0`. When
 the coefficient is present but has a value of `0`, the coefficient is `-0`.

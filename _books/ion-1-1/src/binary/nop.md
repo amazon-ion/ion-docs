@@ -4,7 +4,7 @@ A `NOP` (short for "no-operation") is the binary equivalent of whitespace. `NOP`
 but can be used as padding to achieve a desired alignment.
 
 An opcode of `0xEC` indicates a single-byte `NOP` pad. An opcode of `0xED` indicates that a
-[`FlexUInt`](#flexuint) follows that represents the number of additional bytes to skip.
+[`FlexUInt`](primitives/flex_uint.md) follows that represents the number of additional bytes to skip.
 
 It is legal for a `NOP` to appear anywhere that a [value](values.md) can be encoded. It is not legal for a `NOP` to appear in
 annotation sequences or struct field names. If a `NOP` appears in place of a struct field _value_, then the associated

@@ -1,12 +1,11 @@
 ## Integers
 
-Opcodes in the range `0x60` to `0x68` represent an integer. The opcode is followed by a [`FixedInt`](#fixedint) that
+Opcodes in the range `0x60` to `0x68` represent an integer. The opcode is followed by a [`FixedInt`](../primitives/fixed_int.md) that
 represents the integer value. The low nibble of the opcode (`0x_0` to `0x_8`) indicates the size of the `FixedInt`.
 Opcode `0x60` represents integer `0`; no more bytes follow.
 
 Integers that require more than 8 bytes are encoded using the variable-length integer opcode `0xF6`,
-followed by a
-<<flexuint, FlexUInt>> indicating how many bytes of representation data follow.
+followed by a [`FlexUInt`](../primitives/flex_uint.md) indicating how many bytes of representation data follow.
 
 `0xEB 0x01` represents `null.int`.
 

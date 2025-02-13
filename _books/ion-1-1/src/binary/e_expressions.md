@@ -2,7 +2,7 @@
 ## Encoding Expressions
 
 > [!NOTE]
-> This chapter focuses on the binary encoding of e-expressions. [_Macros by example_](../macros/macros_by_example.md) explains what they are and how they are used.
+> This chapter focuses on the binary encoding of e-expressions. The [_Macros_](../macros.md) section explains what they are and how they are used.
 
 ### E-expression with the address in the opcode
 
@@ -28,8 +28,8 @@ corresponding __address__—-an offset within the local macro table.
 ```
 
 Note that the opcode alone tells us which macro is being invoked, but it does not supply enough information for the
-reader to parse any arguments that may follow. The parsing of arguments is described in detail in the section _Macro
-calling conventions_. (TODO: Link)
+reader to parse any arguments that may follow. The parsing of arguments is described in detail in the section
+[_E-expression argument encoding_](#e-expression-argument-encoding).
 
 #### E-expressions with biased `FixedUInt` addresses
 
@@ -98,8 +98,8 @@ Address : 142918
 #### E-expression with the address as a trailing `FlexUInt`
 
 The opcode `0xF4` indicates an e-expression whose address is encoded as a trailing [`FlexUInt`](primitives/flex_uint.md) with no bias.
-This encoding is less compact for addresses that can be encoded using opcodes `0x5F` and below, but it is the
-only encoding that can be used for macro addresses greater than 1,052,734.
+This encoding is less compact for addresses that can be encoded using opcodes `0x5F` and below, but it is one of only two opcodes,
+along with `0xF5`, that can be used for macro addresses greater than 1,052,734.
 
 ##### Invocation of macro address `4`
 ```
@@ -121,6 +121,37 @@ F4 04 47 86
       └─── FlexUInt 1,100,000
 ```
 
+#### E-expression with the address as a `FlexUInt` and length as a trailing `FlexUInt`
+
+The opcode `0xF5` indicates an e-expression whose address is encoded as a [`FlexUInt`](primitives/flex_uint.md) with no bias,
+followed by a `FlexUInt` that represents the length in bytes of the remainder of the expression. Although this encoding is less
+compact than other e-expression encodings, it allows for readers to quickly seek to the end of the expression if the user requires
+only partial evaluation.
+
+##### Invocation of macro address `4` with two tagged arguments
+```
+┌──── Opcode F5 indicates an e-expression with a `FlexUInt` macro address followed by a `FlexUInt` length
+│
+│
+F5 09 07 60 61 01
+   │   │  │ └─┬─┘
+   │   │  │   └─ Tagged integer 1
+   │   │  └─ Tagged integer 0
+   │   └─ FlexUInt 3 (the remaining length of the expression)
+   └─── FlexUInt 4 (the macro address)
+```
+
+##### Invocation of macro address `1_100_000` with no arguments
+```
+┌──── Opcode F5 indicates an e-expression with a `FlexUInt` macro address followed by a `FlexUInt` length
+│
+│
+F5 04 47 86 01
+   └──┬───┘ │
+      │     └─ FlexUInt 0 (the remaining length of the expression)
+      └─── FlexUInt 1,100,000 (the macro address)
+```
+
 ### System Macro Invocations
 
 E-expressions that invoke a [system macro](../modules/system_module.md#system-macros) can be encoded using the `0xEF` opcode followed by a 1-byte `FixedUInt` representing an index in the [system macro table](../modules/system_module.md#system-macros).
@@ -134,7 +165,7 @@ EF 01
 ```
 
 In addition, system macros MAY be invoked using any of the `0x00`-`0x5F` or `0xF4`-`0xF5` opcodes, provided that the macro being invoked has been given an address in user macro address space.
-<!-- TODO: Add or link an example of how this can be done. /-->
+For more information about managing the macro address space, see the [_Modules_](../modules.md) section.
 
 ## E-expression argument encoding
 
@@ -239,7 +270,7 @@ F4 01 61 01 61 02 61 03
 
 ### Tagless Encodings
 
-In contrast to the [`tagged encoding`](#tagged-encoding), _tagless encodings_ do not begin with an opcode.
+In contrast to the [tagged encoding](#tagged-encoding), _tagless encodings_ do not begin with an opcode.
 This means that they are potentially more compact than a tagged type, but are also less flexible. Because tagless encodings
 do not have an opcode, they cannot represent E-expressions, annotation sequences, or `null` values of any kind.
 
@@ -253,14 +284,14 @@ information in their serialized form.
 | Ion type | Primitive encoding | Size in bytes | Encoding                                                                                                              |
 |----------|--------------------|:-------------:|-----------------------------------------------------------------------------------------------------------------------|
 | `int`    | `uint8`            |       1       | [`FixedUInt`](primitives/fixed_uint.md)                                                                               |
-|          | `uint16`           |       2       |                                                                                                                       |
-|          | `uint32`           |       4       |                                                                                                                       |
-|          | `uint64`           |       8       |                                                                                                                       |
+|          | `uint16`           |       2       | [`FixedUInt`](primitives/fixed_uint.md)                                                                               |
+|          | `uint32`           |       4       | [`FixedUInt`](primitives/fixed_uint.md)                                                                               |
+|          | `uint64`           |       8       | [`FixedUInt`](primitives/fixed_uint.md)                                                                               |
 |          | `flex_uint`        |   variable    | [`FlexUInt`](primitives/flex_uint.md)                                                                                 |
 |          | `int8`             |       1       | [`FixedInt`](primitives/fixed_int.md)                                                                                 |
-|          | `int16`            |       2       |                                                                                                                       |
-|          | `int32`            |       4       |                                                                                                                       |
-|          | `int64`            |       8       |                                                                                                                       |
+|          | `int16`            |       2       | [`FixedInt`](primitives/fixed_int.md)                                                                                 |
+|          | `int32`            |       4       | [`FixedInt`](primitives/fixed_int.md)                                                                                 |
+|          | `int64`            |       8       | [`FixedInt`](primitives/fixed_int.md)                                                                                 |
 |          | `flex_int`         |   variable    | [`FlexInt`](primitives/flex_int.md)                                                                                   |
 | `float`  | `float16`          |       2       | [Little-endian IEEE-754 half-precision float](https://en.wikipedia.org/wiki/Half-precision_floating-point_format)     |
 |          | `float32`          |       4       | [Little-endian IEEE-754 single-precision float](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) |
@@ -445,7 +476,7 @@ As noted in the table above:
 #### Expression groups
 
 This section describes the encoding of an expression group. For an explanation of what an expression group is and how to use it,
-see _[Expression groups](../todo.md)_.
+see [_Argument groups_](../macros/macros_by_example.md#argument-groups).
 
 An expression group begins with a [`FlexUInt`](primitives/flex_uint.md). If the `FlexUInt`'s value
 is:

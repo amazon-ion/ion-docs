@@ -7,8 +7,9 @@ how many bytes were used to encode the integer. They differ in the _interpretati
 `FlexUInt`'s bits are unsigned, a `FlexInt`'s bits are encoded using
 [two's complement notation](https://en.wikipedia.org/wiki/Two%27s_complement).
 
-TIP: An implementation could choose to read a `FlexInt` by instead reading a `FlexUInt` and then reinterpreting its bits
-as two's complement.
+> [!Tip]
+> An implementation could choose to read a `FlexInt` by instead reading a `FlexUInt` and then reinterpreting its bits
+> as two's complement.
 
 #### `FlexInt` encoding of `14`
 ```

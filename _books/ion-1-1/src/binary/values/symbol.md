@@ -48,10 +48,10 @@ EB 06
 Symbol values whose text can be found in the local symbol table are encoded using opcodes `0xE1` through `0xE3`:
 
 * `0xE1` represents a symbol whose address in the symbol table (aka its symbol ID) is a 1-byte
-[`FixedUInt`](#fixeduint) that follows the opcode.
-* `0xE2` represents a symbol whose address in the symbol table is a 2-byte [`FixedUInt`](#fixeduint) that follows
+[`FixedUInt`](../primitives/fixed_uint.md) that follows the opcode.
+* `0xE2` represents a symbol whose address in the symbol table is a 2-byte [`FixedUInt`](../primitives/fixed_uint.md) that follows
 the opcode.
-* `0xE3` represents a symbol whose address in the symbol table is a [`FlexUInt`](#flexuint) that follows the opcode.
+* `0xE3` represents a symbol whose address in the symbol table is a [`FlexUInt`](../primitives/flex_uint.md) that follows the opcode.
 
 Writers MUST encode a symbol address in the smallest number of bytes possible. For each opcode above, the symbol
 address that is decoded is biased by the number of addresses that can be encoded in fewer bytes.
