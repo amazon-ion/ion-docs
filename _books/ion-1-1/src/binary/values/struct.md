@@ -13,7 +13,7 @@ If the struct's encoded byte-length is too large to be encoded in a nibble, writ
 to write a variable-length struct. The `0xFD` opcode is followed by a [`FlexUInt`](../primitives/flex_uint.md)
 that indicates the byte length.
 
-Each field in the struct is encoded as a [`FlexUInt`](#flexuint) representing the address of the field name's
+Each field in the struct is encoded as a [`FlexUInt`](../primitives/flex_uint.md) representing the address of the field name's
 text in the symbol table, followed by an opcode-prefixed value.
 
 `0xEB 0x0B` represents `null.struct`.
@@ -113,14 +113,11 @@ D5 01 01 E1 00 61 01
 ### Delimited encoding
 
 Opcode `0xF3` indicates the beginning of a delimited struct. Unlike [length-prefixed structs](#length-prefixed-encoding),
-delimited structs _always_ encode their field names as [`FlexSym`](#flexsym)s.
+delimited structs _always_ encode their field names as [`FlexSym`](../primitives/flex_sym.md)s.
 
 Unlike lists and S-expressions, structs cannot use opcode `0xF0` by itself to indicate the end of the delimited
 container. This is because `0xF0` is a valid `FlexSym` (a symbol with 16 bytes of inline text). To close the delimited
 struct, the writer emits a `0x01` byte (a `FlexSym` escape) followed by the opcode `0xF0`.
-
-> [!NOTE]
-> It is much more compact to write `0xD0`-- the [empty length-prefixed struct](#length-prefixed-encoding-of-an-empty-struct-).
 
 #### Delimited encoding of the empty struct (`{}`)
 ```
@@ -130,6 +127,9 @@ struct, the writer emits a `0x01` byte (a `FlexSym` escape) followed by the opco
 │  │  │    recently opened delimited container
 F3 01 F0
 ```
+
+> [!NOTE]
+> It is much more compact to write `0xD0`—the [empty length-prefixed struct](#length-prefixed-encoding-of-an-empty-struct-).
 
 #### Delimited encoding of `{"foo": 1, $11: 2}`
 ```

@@ -29,13 +29,13 @@ the variable-length [long form timestamp](#long-form-timestamps) encoding.
 
 Timestamps may be encoded using the short form if they meet all of the following conditions:
 
-The year is between 1970 and 2097.:: The year subfield is encoded as the number of years since 1970. 7 bits are
+- **The year is between 1970 and 2097.** The year subfield is encoded as the number of years since 1970. 7 bits are
 dedicated to representing the biased year, allowing timestamps through the year 2097 to be encoded in this form.
-The local offset is either UTC, unknown, or falls between `-14:00` to `+14:00` and is divisible by 15 minutes.
+- **The local offset is either UTC, unknown, or falls between `-14:00` to `+14:00` and is divisible by 15 minutes.**
 7 bits are dedicated to representing the local offset as the number of quarter hours from -56 (that is: offset `-14:00`).
 The value `0b1111111` indicates an unknown offset. At the time of this writing (2024-08T),
 [all real-world offsets fall between `-12:00` and `+14:00` and are multiples of 15 minutes](https://en.wikipedia.org/wiki/List_of_UTC_offsets).
-The fractional seconds are a common precision. The timestamp's fractional second precision (if present) is
+- **The fractional seconds are a common precision.** The timestamp's fractional second precision (if present) is
 either 3 digits (milliseconds), 6 digits (microseconds), or 9 digits (nanoseconds).
 
 #### Opcodes by precision and offset
@@ -45,21 +45,21 @@ Each opcode with a high nibble of `0x8_` indicates a different precision and off
 | Opcode | Precision        | Serialized size in bytes[^short_form_size_in_bytes] | Offset encoding                                                |
 |--------|------------------|:---------------------------------------------------:|----------------------------------------------------------------|
 | `0x80` | Year             |                          1                          | Implicitly _Unknown offset_                                    |
-| `0x81` | Month            |                          2                          |                                                                |
-| `0x82` | Day              |                          2                          |                                                                |
+| `0x81` | Month            |                          2                          | Implicitly _Unknown offset_                                    |
+| `0x82` | Day              |                          2                          | Implicitly _Unknown offset_                                    |
 | `0x83` | Hour and minutes |                          4                          | 1 bit to indicate _UTC_ or _Unknown Offset_                    |
-| `0x84` | Seconds          |                          5                          |                                                                |
-| `0x85` | Milliseconds     |                          6                          |                                                                |
-| `0x86` | Microseconds     |                          7                          |                                                                |
-| `0x87` | Nanoseconds      |                          8                          |                                                                |
+| `0x84` | Seconds          |                          5                          | 1 bit to indicate _UTC_ or _Unknown Offset_                    |
+| `0x85` | Milliseconds     |                          6                          | 1 bit to indicate _UTC_ or _Unknown Offset_                    |
+| `0x86` | Microseconds     |                          7                          | 1 bit to indicate _UTC_ or _Unknown Offset_                    |
+| `0x87` | Nanoseconds      |                          8                          | 1 bit to indicate _UTC_ or _Unknown Offset_                    |
 | `0x88` | Hour and minutes |                          5                          | 7 bits to represent a known offset.[^short_form_hours_minutes] |
-| `0x89` | Seconds          |                          5                          |                                                                |
-| `0x8A` | Milliseconds     |                          7                          |                                                                |
-| `0x8B` | Microseconds     |                          8                          |                                                                |
-| `0x8C` | Nanoseconds      |                          9                          |                                                                |
-| `0x8D` | _Reserved_       |                         --                          |                                                                |
-| `0x8E` | _Reserved_       |                         --                          |                                                                |
-| `0x8F` | _Reserved_       |                         --                          |                                                                |
+| `0x89` | Seconds          |                          5                          | 7 bits to represent a known offset.                            |
+| `0x8A` | Milliseconds     |                          7                          | 7 bits to represent a known offset.                            |
+| `0x8B` | Microseconds     |                          8                          | 7 bits to represent a known offset.                            |
+| `0x8C` | Nanoseconds      |                          9                          | 7 bits to represent a known offset.                            |
+| `0x8D` | _Reserved_       |                         --                          |  --                                                            |
+| `0x8E` | _Reserved_       |                         --                          |  --                                                            |
+| `0x8F` | _Reserved_       |                         --                          |  --                                                            |
 
 [^short_form_size_in_bytes]: Serialized size in bytes does not include the opcode.
 
@@ -111,7 +111,7 @@ read from right to left (also least significant to most significant.)
 
 > [!NOTE]
 > While this encoding may complicate human reading, it guarantees that the timestamp's subfields (`year`, `month`,
-> etc.) occupy the same bit contiguous indexes regardless of how many bytes there are overall. (The last subfield,
+> etc.) occupy the same contiguous bit indexes regardless of how many bytes there are overall. (The last subfield,
 > `fractional_seconds`, always begins at the same bit index when present, but can vary in length according to the
 > precision.) This arrangement allows processors to read the Little-Endian bytes into an integer and then mask the
 > appropriate bit ranges to access the subfields.

@@ -1,5 +1,5 @@
 # Primitives
-This section describes Ion 1.1's binary _encoding primitives_--reusable building blocks
+This section describes Ion 1.1's binary _encoding primitives_—reusable building blocks
 that can be combined to represent more complex constructs.
 
 | Name                                    | Type     | Width                     |
