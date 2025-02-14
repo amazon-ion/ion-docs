@@ -123,7 +123,7 @@ The symbol table is a list of symbol-texts by concatenating the symbol tables of
 
 Where a module name occurs, its symbol table is appended.
 (The module name must refer to another module that is visible to the current module.)
-Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always required exact matches for imported modules.
+Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always requires exact matches for imported modules.
 
 > [!TIP]
 > When redefining a top-level module binding,
@@ -158,7 +158,7 @@ All modules have a symbol table, so when a module has no `symbol_table` clause, 
 
 
 Symbol zero (i.e. `$0`) is a special symbol that is not assigned text by any symbol table, even the system symbol table.
-Symbol zero always has unknown text, and can be useful in synthesizing symbol identifiers where the text image of the symbol is not known in a particular operating context.
+Symbol zero always has unknown text, and can be useful in synthesizing symbol identifiers where the text of the symbol is not known in a particular operating context.
 
 All symbol tables (even an empty symbol table) can be thought of as implicitly containing `$0`.
 However, `$0` precedes all symbol tables rather than belonging to any symbol table.
@@ -218,8 +218,16 @@ Macros are declared after symbols.
 The `macro_table` clause assembles a list of macro definitions for the module to export. It takes any number of arguments.
 All modules have a macro table, so when a module has no `macro_table` clause, the module has an empty macro table.
 
-Most commonly, a macro table entry is a definition of a new macro expansion function, following
-this general shape:
+Most commonly, a macro table entry is a definition of a new macro expansion function, following this general shape:
+
+```ion
+//  ┌─── `macro` keyword
+//  │   ┌─── macro name
+//  │   │     ┌─── signature (s-expression of parameters)
+//  │   │     │         ┌─── template (TDL expression)
+(macro foo (x y z) (.values x y z))
+```
+(See the [_Defining macros_](../macros/defining_macros.md) for details.)
 
 When no name is given, this defines an anonymous macro that can be referenced by its numeric
 address (that is, its index in the enclosing macro table).
@@ -278,8 +286,7 @@ An `export` clause declares a name for an existing macro and appends the macro t
   An error must be signaled if that name already appears in the exported macro array.
 * If the reference to the existing macro is followed by `null`, the macro is appended to the exported macro array 
   without a name, regardless of whether the macro has a name.
-* If the reference to the existing macro is anonymous, the macro is appended to the exported macro array without
-  a name.
+* If the reference to the existing macro is anonymous, the macro is appended to the exported macro array without a name.
 * When the reference to the existing macro uses a name, the name and macro are appended to the exported macro  
   array. An error must be signaled if that name already appears in the exported macro array.
 
