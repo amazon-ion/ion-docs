@@ -225,7 +225,7 @@ Most commonly, a macro table entry is a definition of a new macro expansion func
 //  │   ┌─── macro name
 //  │   │     ┌─── signature (s-expression of parameters)
 //  │   │     │         ┌─── template (TDL expression)
-(macro foo (x y z) (.values x y z))
+(macro foo (x y z) (.values (%x) (%y) (%z))
 ```
 (See the [_Defining macros_](../macros/defining_macros.md) for details.)
 
