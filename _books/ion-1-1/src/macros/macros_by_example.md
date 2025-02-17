@@ -45,9 +45,6 @@ cannot appear unquoted in that context. Ion 1.1 makes use of syntax that is not 
 a reference to a macro, and we say that the E-expression is an invocation of the macro. Here,
 `(:pi)` is an invocation of the macro named `pi`.
 
-> [!NOTE]
-> We also call these “smile expressions” when we’re feeling particularly casual. (:
-
 That document is equivalent to the following, in the sense that they denote the same data:
 
 
@@ -76,7 +73,7 @@ So we can say:
 
 ## Parameters and variable expansion
 
-Most macros are not constant--they accept inputs that determine their results.
+Most macros are not constant—they accept inputs that determine their results.
 
 ```ion
 (macro passthrough
@@ -225,16 +222,12 @@ Unlike E-expressions, TDL macro invocations are normal Ion data structures, cons
 Further, TDL macro invocations only have meaning in the context of a macro definition, inside an encoding module,
 while E-expressions can occur _anywhere_ in an Ion document.
 
-> [!WARNING]
-> It's entirely possible to write a macro that can generate all or part of a macro definition.
-> We don't recommend that you spend time considering such things at this point.
-
 These two invocation forms are syntactically aligned in their calling convention, but are
 distinct in context and "immediacy". E-expressions occur anywhere and are invoked immediately,
 as they are parsed. S-expression invocations occur only within macro definitions, and are only
 invoked if and when that code path is ever executed by invocation of the surrounding macro.
 
-### Rest Parameters
+## Rest Parameters
 
 Sometimes we want a macro to accept an arbitrary number of arguments, in particular _all the rest
 of them_. The `make_string` macro is one of those, concatenating all of its arguments into a
@@ -283,7 +276,7 @@ twenty, or none.
 > To declare a final parameter that requires at least one rest-argument, use the `+` modifier.
 
 
-### Arguments and results are streams
+## Arguments and results are streams
 
 The inputs to and results from a macro are modeled as streams of values.
 When a macro is invoked, each argument expression produces a stream of values,
@@ -403,15 +396,15 @@ list:
 (:clumsy_bag true 2) ⇒ {'':true, '':2}
 ```
 
-<!-- TODO: demonstrate splicing in TDL macro invocations -->
-
-### Mapping templates over streams: `for`
+## Mapping templates over streams: `for`
 
 Another way to produce a stream is via a mapping form. The `for` [special form](special_forms.md) evaluates a
 template once for each value provided by a stream or streams. Each time, a local variable is
 created and bound to the next value on the stream.
 
 ```ion
+(macro price (a c) { amount: (%a), currency: (%c) })
+
 (macro prices (currency amounts*)
   (.for
     // Binding pairs
@@ -447,7 +440,7 @@ More than one stream can be iterated in parallel, and iteration terminates when 
   ⇒ [1, a] [2, b]
 ```
 
-### Empty streams: `none`
+## Empty streams: `none`
 
 The empty stream is an important edge case that requires careful handling and communication.
 The built-in macro `none` accepts no values and produces an empty stream:
@@ -468,19 +461,15 @@ argument:
 (:pi (:none)) ⇒ // Error: 'pi' expects 0 arguments, given 1
 ```
 
-The special form `(::)` is an empty argument expression group, similar to
-`(:none)` but used specifically to express the absence of an argument:
+The `none` macro is equivalent to an empty expression group (`(::)`), but unlike an expression group,
+it is not limited to use as a macro argument. `(:none)` can appear anywhere an _expression_ can appear.
 
-```ion
-(:int_list (::)) ⇒ []
-(:int_list 1 (::) 2) ⇒ [1, 2]
-```
-
-TIP: While `none` and `values` both produce the empty stream, the former is preferred for
-clarity of intent and terminology.
+> [!TIP]
+> While `(:none)` and `(:values)` both produce the empty stream, the former is preferred for
+> clarity of intent and terminology.
 
 
-### Cardinality
+## Cardinality
 
 As described earlier, parameters are all streams of values, but the number of values can be
 controlled by the parameter's cardinality. So far we have seen the default exactly-one
@@ -517,7 +506,7 @@ argument as a way to denote an absent parameter.
   })
 ```
 
-Since the scale accepts the empty stream, we can pass it an empty argument group:
+Since the scale accepts the empty stream, we can pass it an empty expression group:
 
 ```ion
 (:temperature 96 F)    ⇒ {degrees:96, scale:F}
@@ -569,7 +558,7 @@ expression that produces the desired values:
 (:prices (:: 10 9.99) GBP)  ⇒ {amount:10, currency:GBP} {amount:9.99, currency:GBP}
 ```
 
-Here we use a non-empty [argument group](../todo.md) `(:: /*...*/)` to delimit
+Here we use a non-empty [expression group](macros_by_example.md#expression-groups) `(:: /*...*/)` to delimit
 the multiple elements of the `amount` stream.
 
 
@@ -612,14 +601,14 @@ Thank you to my Patreon supporters:
 '''
 ```
 
-### Argument Groups
+## Expression Groups
 
 The non-rest versions of multi-value parameters require some kind of delimiting
-syntax to contain the applicable sub-expressions. For the tagged-type parameters we've seen
+syntax to contain the applicable sub-expressions. For the tagged-type parameters we have seen
 so far, you _could_ use `:values` or some other macro to produce the stream, but that doesn't
 work for [tagless types](#tagless-and-fixed-width-types).
 The preferred syntax, supporting all argument types, is a special delimiting form
-called an _argument group_. Here is a macro to illustrate:
+called an _expression group_. Here is a macro to illustrate:
 
 ```ion
 (macro prices
@@ -635,7 +624,7 @@ It's easy to provide exactly one:
 (:prices 12.99 GBP) ⇒ {amount:12.99, currency:GBP}
 ```
 
-To provide a non-singleton stream of values, use an _argument group_.
+To provide a non-singleton stream of values, use an _expression group_.
 Inside an E-expression, a group starts with `(::`
 
 ```ion
@@ -659,18 +648,26 @@ parameter’s declared encoding.
                                        {amount:4, currency:GBP}
 ```
 
-Argument groups may only appear inside macro invocations where the corresponding
+Expression groups may only appear inside macro invocations where the corresponding
 parameter has `?`, `*`, or `+` cardinality.
 There is no binary opcode for these constructs; the encoding uses a tagless format to keep
 things as dense as possible.
 As usual, the text format mirrors this constraint.
 
-> [!WARNING]
-> The allowed combinations of cardinality and argument groups is pending
-> finalization of the binary encoding.
+In TDL, an expression group is denoted using `(..` and `)`. For example:
+
+```ion
+(macro foo (x*) { foo: (%x) })
+(macro bar () (.foo (.. b a r))) // Argument to foo is 3 expressions in an expression group
+```
+```ion
+(:bar) ⇒ { foo: b,
+           foo: a,
+           foo: r }
+```
 
 
-### Optional Arguments
+## Optional Arguments
 
 When a trailing parameter accepts the empty stream, an invocation can omit its corresponding argument expression,
 as long as no following parameter is being given an expression. We’ve seen
@@ -697,7 +694,7 @@ If we want to provide `e`, then we must also provide a group for `d`:
   ⇒ ["value for c", "value for e"]
 ```
 
-### Tagless and fixed-width types
+## Tagless and fixed-width types
 
 In Ion 1.0, the binary encoding of every value starts off with a “type tag”, an opcode that indicates
 the data-type of the next value and thus the interpretation of the following octets of data. In general,
@@ -759,7 +756,7 @@ that a text E-expression may only express things that can also be expressed usin
 binary E-expression.
 
 For the same reasons, supplying a (non-rest) tagless parameter with no value,
-or with more than one value, can only be expressed by using an argument group.
+or with more than one value, can only be expressed by using an expression group.
 
 A subset of the primitive types are _fixed-width_: they are binary-encoded with no per-value
 overhead.
@@ -787,7 +784,7 @@ exceeds the range of the binary-only type.
 Primitive types have inherent tradeoffs and require careful consideration, but in
 the right circumstances the density wins can be significant.
 
-### Macro Shapes
+## Macro Shapes
 
 We can now introduce the final kind of input constraint, macro-shaped parameters. To understand
 the motivation, consider modeling a scatter-plot as a list of points:
@@ -856,11 +853,11 @@ as needed:
 ```
 
 As with other tagless parameters, you cannot replace a group with a macro invocation,
-and you can't use a macro invocation as an _element_ of an argument group:
+and you cannot use a macro invocation as an _element_ of an expression group:
 
 ```ion
 (:scatterplot (:make_points 3 17 395 23 15 48 2023 5) "hour" "widgets")
-  ⇒ // Error: Argument group expected, found :make_points
+  ⇒ // Error: Expression group expected, found :make_points
 
 (:scatterplot (:: (3 17) (:make_points 395 23 15 48) (2023 5)) "hour" "widgets")
   ⇒ // Error: sexp expected with args for 'point', found :make_points
@@ -869,7 +866,7 @@ and you can't use a macro invocation as an _element_ of an argument group:
   ⇒ // Error: sexp expected with args for 'point', found :point
 ```
 
-This limitation mirrors the binary encoding, where both the argument group and the individual
+This limitation mirrors the binary encoding, where both the expression group and the individual
 macro invocations are tagless and there's no way to express a macro invocation.
 
 > [!TIP]

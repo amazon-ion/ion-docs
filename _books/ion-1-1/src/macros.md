@@ -1,6 +1,6 @@
 ## Macros
 
-Like other self-describing formats, Ion 1.0 makes it possible to write a stream with truly arbitrary content--no formal schema required.
+Like other self-describing formats, Ion 1.0 makes it possible to write a stream with truly arbitrary content—no formal schema required.
 However, in practice all applications have a _de facto_ schema, with each stream sharing large amounts of predictable structure and recurring values.
 This means that Ion readers and writers often spend substantial resources processing undifferentiated data.
 
@@ -20,8 +20,7 @@ Consider this example excerpt from a webserver's log file:
   statusCode: 200,
   status: "OK",
   protocol: https,
-  clientIp:
-  ip_addr::"192.168.1.100",
+  clientIp: ip_addr::"192.168.1.100",
   resource: "images/funny.jpg"
 }
 {
@@ -56,6 +55,6 @@ The same webserver log file could be written like this:
 (:getOk "192.168.1.101" "index.html")
 ```
 
-Macros are an encoding-level concern, and their use in the data stream is invisible to consuming applications. For writers, macros are always optional--a writer can always elect to write their data using value literals instead. 
+Macros are an encoding-level concern, and their use in the data stream is invisible to consuming applications. For writers, macros are always optional—a writer can always elect to write their data using value literals instead. 
 
 For a guided walkthrough of what macros can do, see [Macros by example](macros/macros_by_example.md).

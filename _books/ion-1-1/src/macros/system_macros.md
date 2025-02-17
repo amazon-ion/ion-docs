@@ -4,8 +4,8 @@ Many of the system macros _MAY_ be defined as template macros, and when possible
 Templates are given here as normative example, but system macros are not required to be implemented as template macros.
 
 The macros that can be defined as templates are included as system macros because of their broad applicability, and
-so that Ion implementations can provide optimizations for these macros that run directly in the implementations runtime
-environment rather than in the macro evaluator.
+so that Ion implementations can provide optimizations for these macros that run directly in the implementations' runtime
+environments rather than in the macro evaluator.
 For example, a macro such as [`add_symbols`](#add_symbols) does not produce user values, so an Ion Reader could bypass
 evaluating the template and directly update the encoding context with the new symbols.
 
@@ -80,46 +80,11 @@ For normative examples, see [`flatten`](https://github.com/amazon-ion/ion-tests/
 
 #### `parse_ion`
 
-Ion documents may be embedded in other Ion documents using the `parse_ion` macro.
+Technically, `parse_ion` is a [_special form_](special_forms.md) because (unlike macros) its argument must
+specifically be a _literal_ value. However, because of its usefulness for embedding an Ion stream in another 
+Ion stream, it has an address in the [system macro table](../modules/system_module.md#system-macros).
 
-```ion
-(macro parse_ion (uint8::data*) /* Not representable in TDL */)
-```
-
-The `parse_ion` macro constructs a stream of values by parsing a blob literal or string literal as a single, self-contained Ion document.
-All values produced by the expansion of `parse_ion` are application values.
-(i.e. it is as if they are all annotated with `$ion_literal`.)
-
-The IVM at the beginning of an Ion data stream is sufficient to identify whether it is text or binary, so text Ion
-can be embedded as a blob containing the UTF-8 encoded text.
-
-Embedded text example:
-```ion
-(:parse_ion
-    '''
-    $ion_1_1
-    $ion::(module _ (symbol_table ["foo" "bar"]]))
-    $1 $2
-    '''
-)
-=> foo bar
-```
-
-Embedded binary example:
-```ion
-(:parse_ion {{ 4AEB6qNmb2+jYmFy }} )
-=> foo bar
-```
-
-> [!IMPORTANT]
-> Unlike most macros, this macro specifically requires _literals_. Macros are not allowed to contain recursive calls,
-> and composing an embedded document from multiple expressions would make it possible to implement recursion in the
-> macro system.
-> 
-> The data argument is evaluated in a clean environment that cannot read anything from the parent document.
-> Allowing context to leak from the outer scope into the document being parsed would also enable recursion.
-
-For normative examples, see [`parse_ion`](https://github.com/amazon-ion/ion-tests/tree/main/conformance/system_macros/parse_ion.ion) in the Ion conformance test suite.
+See [Special forms: `parse_ion`](special_forms.md#parse_ion).
 
 ### Value Constructors
 
@@ -296,9 +261,6 @@ or equal to zero and less than 60. The evaluated arguments for all other paramet
 The `offset_minutes` and `hour` parameters may only be present if `minute` is present. Aside from `offset_minutes`, if 
 any evaluated argument is present, the evaluated arguments for all parameters to the left must also be present.
 The precision of the constructed timestamp is determined by which parameters have non-empty arguments.
-
-> [!NOTE]
-> TODO [ion-docs#256](https://github.com/amazon-ion/ion-docs/issues/256) Reconsider offset semantics, perhaps default should be UTC.
 
 Example:
 
