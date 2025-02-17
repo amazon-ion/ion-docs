@@ -10,7 +10,8 @@ Macro and module names follow the syntax rules for _identifier_ [symbol tokens](
 There may not be any whitespace from the start of the E-expression through to the end of the macro reference.
 
 Values in the E-expression body follow the same syntax as values in an [S-expression](values.md#s-expressions) body.
-E-expressions are not values, so they may not be annotated.
+E-expressions are not values, so they may not be annotated; to annotate the result of an e-expression use the 
+[`annotate`](../macros/system_macros.md#annotate) macro.
 
 ```ion
 (:pi)              // Invokes the macro 'pi'
@@ -18,6 +19,15 @@ E-expressions are not values, so they may not be annotated.
 (:constants::pi)   // Invokes the macro 'pi' from the module 'constants'
 
 (: pi)             // ERROR: whitespace is not permitted between '(:' and the macro reference
+foo::(:pi)         // ERROR: e-expression may not be annotated
+```
+
+E-expressions may also appear in structs in place of an entire name-value pair.
+```ion
+{
+  foo: 1,
+  (:bar 2), // Expands to a struct that is spliced into this struct
+}
 ```
 
 ### Expression Groups
@@ -27,7 +37,7 @@ To pass multiple arguments to a single macro parameter, the arguments to the par
 Inside an E-expression, an expression group starts with `(::`.
 The remainder of the expression group uses the same syntax as an [S-expression](values.md#s-expressions).
 Expression groups are not values, so they may not be annotated.
-Expression groups may not have another expression group as the direct 
+Expression groups may not contain another expression group.
 
 
 ```ion

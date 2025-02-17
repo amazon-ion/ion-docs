@@ -15,6 +15,8 @@ jpeg :: {{ ... }}                        // Indicates the blob contains jpeg dat
 bool :: null.int                         // A very misleading annotation on the integer null
 '' :: 1                                  // An empty annotation
 null.symbol :: 1                         // ERROR: type annotation cannot be null 
+foo::(:make_string "a" "b")              // ERROR: e-expressions may not be annotated
+(:make_string foo::(:: "a" "b"))         // ERROR: expression groups may not be annotated
 ```
 
 ## Nulls
@@ -84,7 +86,7 @@ A binary-encoded `int` consists of `0b` followed by one or more base 2 digits (`
 A hexadecimal-encoded `int` consists of `0x` followed by one or more case-insensitive base 16 digits (`0123456789abcdefABCDEF`).
 
 All integer values may be preceded by an optional minus sign (`-`), indicating that the value is negative.
-(The token `-0` is legal and equivalent to `0`.)
+(The token `-0` is legal and equivalent to `0`; to distinguish `-0` from `0`, consider encoding as a `decimal` or `float` instead.)
 Single underscores may be used to separate digits; consecutive underscores are never allowed.
 All integer values must be followed by one of the fifteen numeric stop-characters: `{}[](),\"\'\ \t\n\r\v\f`.
 
@@ -147,7 +149,7 @@ When encoding a `float` value to Ion text, an implementation MAY want to conside
 
 
 #### Examples
-Although the textual representative of `1.2e0` itself is irrational, its
+Although the textual representation of `1.2e0` itself is irrational, its
 canonical form in the data model is not (based on the rounding rules), thus
 the following text forms all map to the same `float` value:
 
@@ -263,7 +265,8 @@ In the text format, timestamps follow the [W3C note on date and time formats](ht
 but they must end with the literal `T` if not at least whole-day precision.
 Fractional seconds are allowed, with at least one digit of precision and an unlimited maximum.
 Local-time offsets may be represented as either hour:minute offsets from UTC, or as the literal `Z` to denote a local time of UTC.
-They are required on timestamps with time and are not allowed on date values.
+If the offset is `-00:00`, it indicates that the local offset in which the timestamp was recorded is unknown, and that the time is therefore encoded as UTC.
+Local-time offsets are required on timestamps with time and are not allowed on date values.
 
 ```ion
 2007-02-23T12:14Z                // Seconds are optional, but local offset is not
