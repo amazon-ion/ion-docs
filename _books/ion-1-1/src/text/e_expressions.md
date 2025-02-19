@@ -2,9 +2,12 @@
 
 In Ion text, encoding expressions ([E-expressions](../macros/macros_by_example.md)) start with `(:`, immediately 
 followed by a macro reference, which must be one of:
- * a base-10 integer macro address
  * a macro name
- * a qualified macro name consisting of a module name, double-colon (`::`), and the macro name. (See [Encoding modules](../modules/encoding_modules.md) for details about qualified macro references.)
+ * a base-10 integer macro address
+ * a qualified macro name consisting of a module name, double-colon (`::`), and the macro name
+ * a qualified macro name consisting of a module name, double-colon (`::`), and a base-10 integer macro address
+
+See [Encoding modules](../modules/encoding_modules.md) for details about qualified macro references.
 
 Macro and module names follow the syntax rules for _identifier_ [symbol tokens](symbol-tokens.md), excluding _symbol identifiers_.
 There may not be any whitespace from the start of the E-expression through to the end of the macro reference.
