@@ -9,7 +9,7 @@ A macro is defined using a `macro` clause within a [module](../modules.md)'s [`m
 
 | Argument                                        | Description                                                                                               |
 |-------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| [`name`](#macro-names)                          | A unique name assigned to the macro. To construct an anonymous macro, this argument is omitted.           |
+| [`name`](#macro-names)                          | A unique name assigned to the macro. When constructing an anonymous macro, this argument is omitted.      |
 | [`signature`](#macro-signatures)                | An s-expression enumerating the parameters this macro accepts.                                            |
 | [`template`](#template-definition-language-tdl) | A template definition language (TDL) expression that can be evaluated to produce zero or more Ion values. |
 
@@ -191,7 +191,7 @@ A TDL _expression_ can be any of the following:
 In terms of its encoding, TDL is "just Ion."
 As you shall see in the following sections, the constructs it introduces are written as s-expressions with a distinguishing leading value or values.
 
-A [grammar](../grammar.md#macro-definitions) for TDL can be found in the Grammar chapter.
+A grammar for TDL can be found in [the Grammar chapter](../grammar.md#macro-definitions).
 
 ### Ion scalars
 
@@ -406,7 +406,7 @@ $ion::
 ```bnf
 special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
 
-special-form-name  ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi | parse_ion | literal'
+special-form-name  ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi' | 'parse_ion' | 'literal'
 ```
 
 Special forms are similar to macro invocations, but they have their own expansion rules.

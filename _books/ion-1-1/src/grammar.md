@@ -108,7 +108,7 @@ macro-invocation        ::= '(.' macro-ref macro-arg* ')'
 
 special-form            ::= '(.' '$ion::'?  special-form-name tdl-expression* ')'
 
-special-form-name       ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi | literal | parse_ion '
+special-form-name       ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi' | 'literal' | 'parse_ion '
 
 macro-arg               ::= tdl-expression | expression-group
 

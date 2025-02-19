@@ -33,16 +33,28 @@ The `literal` form is an identity function that accepts its arguments as literal
 Both `literal` and `values` are identity functions, but they differ in regard to how their arguments are interpreted:
 
 ```ion
+// When the arguments are values, literal produces the same result as values
+(.literal 1 2 3) ⇒ 1 2 3
+(.values 1 2 3)  ⇒ 1 2 3
+
+// When the arguments are TDL macros or special forms, literal produces different results than values 
 (.literal (.make_string "a" "b")) ⇒ (.make_string "a" "b")
 (.values (.make_string "a" "b"))  ⇒ "ab"
+
+// When the arguments are TDL expression groups, literal produces different results than values
+(.literal (.. true false)) ⇒ ( .. true false)
+(.values (.. true false))  ⇒ true false
+
+// When the arguments are TDL variable expansions, literal produces different results than values
+// Assuming that the variable x is bound to "Hello"
+(.literal (%x)) ⇒ ( % x )
+(.values (%x))  ⇒ "Hello"
 ```
 
 
 ### `if_none`
 
-```ion
-(if_none (stream* true_branch* false_branch*) /* Not representable in TDL */)
-```
+The `if_none` special form accepts three arguments—`stream`, `true_branch`, and `false_branch`—each of which may be a single value or a stream of zero-to-many values.
 
 The `if_none` form is if/then/else syntax testing stream emptiness.
 It has three sub-expressions, the first being a stream to check. 
@@ -83,9 +95,7 @@ To refine things a bit further, trailing optional arguments can be omitted entir
 
 ### `if_some`
 
-```ion
-(if_some (stream* true_branch* false_branch*) /* Not representable in TDL */)
-```
+The `if_some` special form accepts three arguments—`stream`, `true_branch`, and `false_branch`—each of which may be a single value or a stream of zero-to-many values.
 
 If `stream` evaluates to one or more values, it produces `true_branch`. Otherwise, it produces `false_branch`.
 Exactly one of `true_branch` and `false_branch` is evaluated.
@@ -123,31 +133,54 @@ Example:
 
 ### `if_single`
 
-```ion
-(if_single (stream* true_branch* false_branch*) /* Not representable in TDL */)
-```
+The `if_single` special form accepts three arguments—`stream`, `true_branch`, and `false_branch`—each of which may be a single value or a stream of zero-to-many values.
 
 If `stream` evaluates to exactly one value, `if_single` produces the expansion of `true_branch`. Otherwise, it produces the expansion of `false_branch`.
 Exactly one of `true_branch` and `false_branch` is evaluated.
 The `stream` argument must be expanded enough to determine whether it produces exactly one value, but implementations are not required to fully expand the expression.
 
-### `if_multi`
+Example:
+```ion
+(macro foo (x)
+       {
+         foo: (.if_single (%x) (%x) [(%x)])
+       })
+```
 
 ```ion
-(if_multi (stream* true_branch* false_branch*) /* Not representable in TDL */)
+(:foo (::))     => { foo: [] }
+(:foo 2)        => { foo: 2 }
+(:foo (:: 2 3)) => { foo: [2, 3] }
 ```
+
+### `if_multi`
+
+The `if_multi` special form accepts three arguments—`stream`, `true_branch`, and `false_branch`—each of which may be a single value or a stream of zero-to-many values.
 
 If `stream` evaluates to more than one value, it produces `true_branch`. Otherwise, it produces `false_branch`.
 Exactly one of `true_branch` and `false_branch` is evaluated.
 The `stream` argument must be expanded enough to determine whether it produces more than one value, but implementations are not required to fully expand the expression.
 
-### `for`
-
+Example:
 ```ion
-(for name_and_expressions template)
+(macro foo (x)
+       {
+         foo: (.if_multi (%x) "zero or one" "many")
+       })
 ```
 
-`name_and_expressions` is a list or s-expression containing one or more s-expressions of the form `(name expr0 expr1 ... exprN)`.
+```ion
+(:foo (::))     => { foo: "zero or one" }
+(:foo 2)        => { foo: "zero or one" }
+(:foo (:: 2 3)) => { foo: "many" }
+```
+
+### `for`
+
+The `for` special form maps one or more streams to an output stream.
+
+It accepts two arguments—`stream_bindings` and `template`. 
+`stream_bindings` is a list or s-expression containing one or more s-expressions of the form `(name expr0 expr1 ... exprN)`.
 The first value is a symbol to act as a variable name. 
 The remaining expressions in the s-expression will be expanded and concatenated into a single stream; for each value in the stream, the `for` expansion will produce a copy of the `template` argument expression with any appearance of the variable replaced by the value.
 
@@ -210,11 +243,8 @@ The `for` special form can only be invoked in the body of template macro. It is 
 
 Ion documents may be embedded in other Ion documents using the `parse_ion` form.
 
-```ion
-(parse_ion (data) /* Not representable in TDL */)
-```
-
-The `parse_ion` form constructs a stream of values by parsing a blob literal or string literal as a single, self-contained Ion document.
+The `parse_ion` form accepts a single argument that must be a literal string or blob.
+It constructs a stream of values by parsing its argument as a single, self-contained Ion document.
 
 The argument must be a literal value because macros are not allowed to contain recursive calls, and composing 
 an embedded document from multiple expressions would make it possible to implement recursion in the macro system.

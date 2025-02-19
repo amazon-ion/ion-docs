@@ -80,7 +80,7 @@ For normative examples, see [`flatten`](https://github.com/amazon-ion/ion-tests/
 
 #### `parse_ion`
 
-Technically, `parse_ion` is a [_special form_](special_forms.md) because (unlike macros) its argument must
+`parse_ion` is a [_special form_](special_forms.md) because (unlike macros) its argument must
 specifically be a _literal_ value. However, because of its usefulness for embedding an Ion stream in another 
 Ion stream, it has an address in the [system macro table](../modules/system_module.md#system-macros).
 
