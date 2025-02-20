@@ -476,7 +476,7 @@ As noted in the table above:
 #### Expression groups
 
 This section describes the encoding of an expression group. For an explanation of what an expression group is and how to use it,
-see [_Argument groups_](../macros/macros_by_example.md#argument-groups).
+see [_Expression groups_](../macros/macros_by_example.md#expression-groups).
 
 An expression group begins with a [`FlexUInt`](primitives/flex_uint.md). If the `FlexUInt`'s value
 is:

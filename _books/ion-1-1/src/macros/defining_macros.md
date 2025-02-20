@@ -1,19 +1,19 @@
-## Defining macros
+# Defining macros
 
 A macro is defined using a `macro` clause within a [module](../modules.md)'s [`macro_table` clause](../modules.md#macro_table).
 
-### Syntax
+## Syntax
 ```ion
 (macro name signature template)
 ```
 
 | Argument                                        | Description                                                                                               |
 |-------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| [`name`](#macro-names)                          | A unique name assigned to the macro or--to construct an anonymous macro--`null`.                          |
+| [`name`](#macro-names)                          | A unique name assigned to the macro. When constructing an anonymous macro, this argument is omitted.      |
 | [`signature`](#macro-signatures)                | An s-expression enumerating the parameters this macro accepts.                                            |
 | [`template`](#template-definition-language-tdl) | A template definition language (TDL) expression that can be evaluated to produce zero or more Ion values. |
 
-#### Example macro clause
+### Example macro clause
 ```ion
 //      ┌─── name
 //      │     ┌─── signature
@@ -27,23 +27,25 @@ A macro is defined using a `macro` clause within a [module](../modules.md)'s [`m
 )
 ```
 
-### Macro names
+## Macro names
 
-Syntactically, macro names are [identifiers](../modules.md#identifiers). Each macro name in a macro table must be unique.
+Syntactically, macro names are [identifiers](../text/symbol-tokens.md). Each macro name in a macro table must be unique.
 
-In some circumstances, it may not make sense to name a macro. (For example, when the macro is generated automatically.) In such cases, authors may set the macro name to `null` or `null.symbol` to indicate that the macro does not have a name. Anonymous macros can only be referenced by their address in the macro table.
+In some circumstances, it may not make sense to name a macro. (For example, when the macro is generated automatically.)
+In such cases, authors may omit the macro name to indicate that the macro does not have a name.
+Anonymous macros can only be referenced by their address in the macro table.
 
-### Macro Parameters
+## Macro parameters
 
 A _parameter_ is a named stream of Ion values. The stream's contents are determined by the macro's invocation.
 A macro's parameters are declared in the [macro signature](#macro-signatures).
 
-Each parameter declaration is comprised of three elements:
+Each parameter declaration has three elements:
 1. A [name](#parameter-names)
 2. An optional [encoding](#parameter-encodings)
 3. An optional [cardinality](#parameter-cardinalities)
 
-#### Example parameter declaration
+### Example parameter declaration
 ```ion
 //     ┌─── encoding
 //     │      ┌─── name
@@ -52,28 +54,17 @@ Each parameter declaration is comprised of three elements:
    flex_uint::x*
 ```
 
-#### Parameter names
+### Parameter names
 
-A parameter's name is an [identifier](../modules.md#identifiers). The name is required; any non-identifier (including `null`, quoted symbols, `$0`, or a non-symbol) found in parameter-name position will cause the reader to raise an error.
+A parameter's name is an [identifier](../text/symbol-tokens.md). The name is required; any non-identifier (including `null`, quoted symbols, `$0`, or a non-symbol) found in parameter-name position will cause the reader to raise an error.
 
 All of a macro's parameters must have unique names.
 
-#### Parameter encodings
+### Parameter encodings
 
 In binary Ion, the default encoding for all parameters is _tagged_. Each argument passed into the macro from the callsite is prefixed by an [opcode](../binary/opcodes.md) (or "tag") that indicates the argument's type and length.
 
 Parameters may choose to specify an alternative encoding to make the corresponding arguments' binary representation more compact and/or fixed width. These "tagless" encodings do not begin with an opcode, an arrangement which saves space but also limits the domain of values they can each represent. Arguments passed to tagless parameters cannot be `null`, cannot be annotated, and may have additional range restrictions.
-
-To specify an encoding, the [parameter name](#parameter-names) is annotated with one of the following tokens:
-
-| Tagless encodings                    | Description                                                       |
-|--------------------------------------|-------------------------------------------------------------------|
-| `flex_int`                           | Variable-width, signed int                                        |
-| `flex_uint`                          | Variable-width, unsigned int                                      |
-| `int8`  `int16`   `int32`   `int64`  | Fixed-width, signed int                                           |
-| `uint8` `uint16`  `uint32`  `uint64` | Fixed-width, unsigned int                                         |
-| `float16` `float32` `float64`        | Fixed-width float                                                 |
-| `flex_symbol`                        | [`FlexSym`](../binary/primitives/flex_sym.md)-encoded SID or text |
 
 When writing text Ion, the declared encoding does not affect how values are serialized.
 However, it does constrain the domain of values that that parameter will accept.
@@ -83,7 +74,24 @@ If an `int` or a `float` is being passed to a parameter with a fixed-width encod
 that value must fit within the range of values that can be represented by that width.
 For example, the value `256` cannot be passed to a parameter with an encoding of `uint8` because a `uint8` can only represent values in the range `[0, 255]`.
 
-#### Parameter cardinalities
+To specify an encoding, the [parameter name](#parameter-names) is annotated with a _primitive encoding_ or a _macro reference_.
+Encoding types may be qualified with their module names for disambiguation when there is more than one macro with the given name that is in scope, or when a macro name shadows a _primitive encoding_.
+
+#### Primitive encodings
+
+The following _primitive encodings_ are provided by the system module.
+
+| Tagless encodings                    | Description                                                       |
+|--------------------------------------|-------------------------------------------------------------------|
+| `flex_int`                           | Variable-width, signed int                                        |
+| `flex_uint`                          | Variable-width, unsigned int                                      |
+| `int8`  `int16`   `int32`   `int64`  | Fixed-width, signed int                                           |
+| `uint8` `uint16`  `uint32`  `uint64` | Fixed-width, unsigned int                                         |
+| `float16` `float32` `float64`        | Fixed-width float                                                 |
+| `flex_symbol`                        | [`FlexSym`](../binary/primitives/flex_sym.md)-encoded SID or text |
+| `flex_string`                        | Variable-width string                                             |
+
+### Parameter cardinalities
 
 A parameter name may optionally be followed by a _cardinality modifier_. This is a sigil that indicates how many values the parameter expects the corresponding argument expression to produce when it is evaluated.
 
@@ -101,7 +109,9 @@ Parameters with a cardinality other than `exactly-one` are called _variadic para
 
 If an argument expression expands to a number of values that the cardinality forbids, the reader must raise an error.
 
-##### Optional parameters
+When a parameter has a cardinality of `zero-or-more` or `one-or-more`, the arguments for that parameter are eligible to use [_rest argument_](../text/e_expressions.md#rest-arguments) syntax in the Ion text encoding.
+
+#### Optional parameters
 
 Parameters with a cardinality that can accept an empty expression group as an argument (`?` and `*`) are called
 _optional parameters_. In text Ion, their corresponding arguments can be elided from e-expressions and TDL macro
@@ -148,12 +158,12 @@ cause them to appear in a position corresponding to a different argument.
 (:foo 1)                   => ERROR: missing required argument `y`
 ```
 
-### Macro signatures
+## Macro signatures
 
 A macro's _signature_ is the ordered sequence of parameters which an invocation of that macro must define.
 Syntactically, the signature is an s-expression of [parameter declarations](#macro-parameters).
 
-#### Example macro signature
+### Example macro signature
 ```ion
 (w flex_uint::x* float16::y? z+)
 ```
@@ -165,7 +175,7 @@ Syntactically, the signature is an s-expression of [parameter declarations](#mac
 | `y`  |  `float16`  | `zero-or-one`  |
 | `z`  |  `tagged`   | `one-or-more`  |
 
-### Template definition language (TDL)
+## Template definition language (TDL)
 
 The macro's _template_ is a single Ion value that defines how a reader should expand invocations of the macro.
 Ion 1.1 introduces a template definition language (TDL) to express this process in terms of the macro's parameters.
@@ -181,14 +191,14 @@ A TDL _expression_ can be any of the following:
 In terms of its encoding, TDL is "just Ion."
 As you shall see in the following sections, the constructs it introduces are written as s-expressions with a distinguishing leading value or values.
 
-A [grammar](#tdl-grammar) for TDL can be found at the end of this chapter.
+A grammar for TDL can be found in [the Grammar chapter](../grammar.md#macro-definitions).
 
-#### Ion scalars
+### Ion scalars
 
 Ion scalars are interpreted literally. These include values of any type except `list`, `sexp`, and `struct`.
 `null` values of any type—even `null.list`, `null.sexp`, and `null.struct`—are also interpreted literally.
 
-##### Examples
+#### Examples
 These macros are constants; they take no parameters.
 When they are invoked, they expand to a stream of a single value: the Ion scalar acting as the template expression.
 ```ion
@@ -207,7 +217,7 @@ $ion::
 (:price)    => USD::29.95
 ```
 
-#### Macro invocations
+### Macro invocations
 
 Macro invocations call an existing macro.
 The invoked macro could be a [system macro](system_macros.md), a macro imported from a 
@@ -215,7 +225,7 @@ The invoked macro could be a [system macro](system_macros.md), a macro imported 
 
 Syntactically, a macro invocation is an s-expression whose first value is the operator `.` and whose second value is a macro reference.
 
-##### Grammar
+#### Grammar
 ```bnf
 macro-invocation   ::= '(.' macro-ref macro-arg* ')'
 
@@ -230,7 +240,7 @@ macro-address      ::= unsigned-ion-integer
 expression-group   ::= '(..' expression* ')'
 ```
 
-##### Invocation syntax illustration
+#### Invocation syntax illustration
 ```ion
 // Invoking a macro defined in the same module by name.
 (.macro_name              arg1 arg2 /*...*/ argN)
@@ -243,9 +253,12 @@ expression-group   ::= '(..' expression* ')'
 
 // Invoking a macro defined in a different module by its address.
 (.module_name::0 arg1 arg2 /*...*/ argN)
+
+// Passing more than one argument expression for a single parameter using an expression group
+(.macro_name (.. expr1 expr2 /*...*/ exprN) )
 ```
 
-##### Examples
+#### Examples
 ```ion
 $ion::
 (module _
@@ -279,21 +292,21 @@ $ion::
 > )
 > ```
 
-#### Variable expansion
+### Variable expansion
 
 Templates can insert the contents of a macro parameter into their output by using a _variable expansion_,
 an s-expression whose first value is the operator `%` and whose second and final value is the variable name of the parameter to expand.
 
 If the variable name does not match one of the declared macro parameters, the implementation must raise an error.
 
-##### Grammar
+#### Grammar
 ```bnf
 variable-expansion ::= '(%' variable-name ')'
 
 variable-name      ::= ion-identifier
 ```
 
-##### Examples
+#### Examples
 
 ```ion
 $ion::
@@ -309,7 +322,7 @@ $ion::
 (:twice 1 2 3)   => 1 2 3 1 2 3
 ```
 
-#### Quasi-literal Ion containers
+### Quasi-literal Ion containers
 
 When an Ion container appears in a template definition, it is interpreted _almost_ literally.
 
@@ -321,7 +334,7 @@ Each nested value in the container is inspected.
     The macro invocation literal (for example: `(.name 1 2 3)`) is discarded.
 * **If the value is a container**, the reader will recurse into the container and repeat this process.
 
-##### Expansion within a sequence
+#### Expansion within a sequence
 
 When the container is a list or s-expression, the values in the nested expression's expansion are spliced into the sequence at the site of the expression.
 If the expansion was empty, no values are spliced into the container.
@@ -341,14 +354,14 @@ $ion::
 (:bookend_sexp !) => (! !)
 ```
 
-##### Expansion within a struct
+#### Expansion within a struct
 
 When the container is a struct, the expansion of each field value is paired with the corresponding field name.
 If the expansion produces a single value, a single field with that name will be spliced into the parent struct.
 If the expansion produces multiple values, a field with that name will be created for each value and spliced into the parent struct.
 If the expansion was empty, no fields are spliced into the parent struct.
 
-##### Examples
+#### Examples
 
 ```ion
 $ion::
@@ -388,15 +401,14 @@ $ion::
 }
 ```
 
-#### Special forms
+### Special forms
 
 ```bnf
 special-form       ::= '(.' ('$ion::')?  special-form-name expression* ')'
 
-special-form-name  ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi'
+special-form-name  ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi' | 'parse_ion' | 'literal'
 ```
 
 Special forms are similar to macro invocations, but they have their own expansion rules.
 See [_Special forms_](special_forms.md) for the list of special forms and a description of each.
 
-Note that unlike macro expansions, special forms cannot accept argument groups.

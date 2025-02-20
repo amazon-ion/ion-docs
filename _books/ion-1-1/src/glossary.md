@@ -106,7 +106,7 @@ A macro parameter that is not _optional_ and therefore requires an argument at e
 
 **rest parameter**<br/>
 A macro parameter—always the final parameter—declared with `*` or `+` cardinality,
-that accepts all remaining individual arguments to the macro as if they were in an implicit _argument group_.
+that accepts all remaining individual arguments to the macro as if they were in an implicit _expression group_.
 Applies to Ion text and TDL.
 Similar to "varargs" parameters in Java and other languages.
 

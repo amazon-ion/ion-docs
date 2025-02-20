@@ -82,7 +82,9 @@ signature               ::= '(' parameter* ')'
 
 parameter               ::= parameter-encoding? parameter-name parameter-cardinality?
 
-parameter-encoding      ::= (primitive-encoding-type | macro-name | qualified-macro-name)'::'
+parameter-encoding      ::= (primitive-encoding-type | qualified-primitive-type | macro-name | qualified-macro-name)'::'
+
+qualified-primitive-type::= '$ion::' primitive-encoding-type
 
 primitive-encoding-type ::= 'uint8' | 'uint16' | 'uint32' | 'uint64'
                           |  'int8' |  'int16' |  'int32' |  'int64'
@@ -106,7 +108,7 @@ macro-invocation        ::= '(.' macro-ref macro-arg* ')'
 
 special-form            ::= '(.' '$ion::'?  special-form-name tdl-expression* ')'
 
-special-form-name       ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi'
+special-form-name       ::= 'for' | 'if_none' | 'if_some' | 'if_single' | 'if_multi' | 'literal' | 'parse_ion '
 
 macro-arg               ::= tdl-expression | expression-group
 
