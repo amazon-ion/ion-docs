@@ -23,10 +23,9 @@ Ion 1.1 readers should be able to understand both Ion 1.0 and Ion 1.1 data.
 
 The text encoding grammar of Ion 1.1 is a superset of Ion 1.0's text encoding grammar.
 Any Ion 1.0 text data can also be parsed by an Ion 1.1 text parser.
-However, because Ion 1.1 has a different system symbol table,
-symbol IDs in an Ion 1.0 stream do not always refer to the same text as the same symbol ID in an Ion 1.1 stream.
-> [!TIP]
-> For example: in an Ion 1.0 stream, `$4` is always the text `"name"`. However, it may or may not be `"name"` in an Ion 1.1 stream. It may instead be user symbol 4 if the user has chosen not to export the system symbols.
+> [!NOTE] Because Ion 1.1 has a different system symbol table,
+> symbol IDs in an Ion 1.0 stream do not always refer to the same text as the same symbol ID in an Ion 1.1 stream.
+> For example: in an Ion 1.0 stream, `$4` is always the text `"name"`. However, `$4` may or may not be `"name"` in an Ion 1.1 stream. It may instead be user symbol 4 if the user has chosen not to export the system symbols.
 
 Ion 1.1's binary encoding is substantially different from Ion 1.0's binary encoding.
 Many changes have been made to make values more compact, faster to read and/or faster to write.
@@ -95,7 +94,7 @@ Within a list or S-expression, the stream becomes additional child elements in t
 
 Within a struct at the field name position, the resulting stream must contain structs and each of the fields in those
 structs become fields in the enclosing struct (the value portion is not specified); at the value position, the resulting
-stream of values becomes values with whatever field name corresponded before the E-expression (empty stream elides the
+stream of values becomes fields with whatever field name corresponded before the E-expression (empty stream elides the
 field all together). In the following examples, let us define `(:make_struct { c: 5 })` that evaluates to a single struct
 `{c: 5}`.
 
@@ -105,7 +104,7 @@ field all together). In the following examples, let us define `(:make_struct { c
   a: (:values 1 2 3),
   b: 4,
   (:make_struct { c: 5 }),
-  d: 6,
+  (:make_field d 6),
   e: (:none)
 }
 
@@ -132,7 +131,7 @@ which is always installed and accessible in the local symbol table, the system m
 E-expressions and not installed in the local macro table by default (unlike the local symbol table).
 
 In Ion binary, macros are always addressed in E-expressions by integer macro address. For user macros this is the offset in the local macro table. System macros may be addressed by the system macro address using a specific encoding op-code. In Ion text, macros may be addressed by
-the offset in the local macro table (mirroring binary), by name if that name is unambiguous within the local encoding context, or by qualifying the macro name/offset with the module name in the encoding context. An E-expression can
+the offset in the local macro table (mirroring binary), by name, or by qualifying the macro name/offset with the module name in the encoding context. An E-expression can
 _only_ refer to macros installed in the local macro table or a macro from the system module. In text, an E-expression
 referring to a system macro that *is not* installed in the local macro table, must use a qualified name with the `$ion`
 module name.
