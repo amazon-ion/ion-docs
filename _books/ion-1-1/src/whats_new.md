@@ -24,7 +24,8 @@ Ion 1.1 readers should be able to understand both Ion 1.0 and Ion 1.1 data.
 The text encoding grammar of Ion 1.1 is a superset of Ion 1.0's text encoding grammar.
 Any Ion 1.0 text data can also be parsed by an Ion 1.1 text parser.
 
-> [!NOTE] Because Ion 1.1 has a different system symbol table,
+> [!NOTE]
+> Because Ion 1.1 has a different system symbol table,
 > symbol IDs in an Ion 1.0 stream do not always refer to the same text as the same symbol ID in an Ion 1.1 stream.
 > For example: in an Ion 1.0 stream, `$4` is always the text `"name"`. However, `$4` may or may not be `"name"` in an Ion 1.1 stream. It may instead be user symbol 4 if the user has chosen not to export the system symbols.
 
