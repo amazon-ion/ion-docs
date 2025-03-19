@@ -5,7 +5,11 @@ module IonDocs
     safe true
     def generate(site)
       # If we have more books, either loop through them, or add a new line for each
-      system( "mdbook build ./_books/ion-1-1 -d ./../../_site/books/ion-1-1" )
+      system(
+        %w[mdbook build
+          ./_books/ion-1-1
+          -d ./../../_site/books/ion-1-1
+        ]) or fail "mdbook process exited with status $?"
     end
   end
 end
