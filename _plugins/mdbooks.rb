@@ -6,7 +6,7 @@ module IonDocs
     def generate(site)
       # If we have more books, either loop through them, or add a new line for each
       system(
-        %w[mdbook build
+        *%w[mdbook build
           ./_books/ion-1-1
           -d ./../../_site/books/ion-1-1
         ]) or fail "mdbook process exited with status $?"
