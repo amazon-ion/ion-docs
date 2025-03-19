@@ -33,13 +33,15 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: mdbook --no-default-features --features search --vers "^0.4"
+          # --locked is necessary until https://github.com/mattico/elasticlunr-rs/pull/57
+          # But it probably doesn't hurt in any case
+          args: mdbook --no-default-features --features search --vers "^0.4" --locked
 
       - name: Install MdBook-alerts
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: mdbook-alerts
+          args: mdbook-alerts --locked
 
       - name: Build
         run: |
