@@ -4,8 +4,8 @@ A module is defined by four kinds of subclauses which, if present, always appear
 
 1. `import` - a reference to a shared module definition; repeatable
 2. `module` - a nested module definition; repeatable
-3. `symbol_table` - an exported list of text values
-4. `macro_table` - an exported list of macro definitions
+3. `macros` - an exported list of macro definitions
+4. `symbols` - an exported list of text values
 
 The lexical name given to a module definition must be an [identifier](../modules.md#identifiers).
 However, it must not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
@@ -28,8 +28,8 @@ Each clause affects the environment as follows:
   An error must be signaled if the name already appears in the module bindings.
 * A `module` declaration defines a new module and binds a name to it.
   An error must be signaled if the name already appears in the module bindings.
-* A `symbol_table` declaration defines the exported symbols.
-* A `macro_table` declaration defines the exported macros.
+* A `macros` declaration defines the exported macros.
+* A `symbols` declaration defines the exported symbols.
 
 ### Resolving Macro References
 
@@ -49,7 +49,7 @@ macro-addr         ::= unannotated-uint
 Macro references are resolved to a specific macro as follows:
 
 * An unqualified _macro-name_ is looked up in the following locations:
-    1. in the macros already exported in this module's `macro_table`
+    1. in the macros already exported in this module's `macros`
     2. in the [default_module](encoding_modules.md#the-default-module)
     3. in the [system module](system_module.md)
 
@@ -94,129 +94,19 @@ if an exact match is not found, the implementation must signal an error.
 The `module` clause defines a new local module that is contained in the current module.
 
 ```bnf
-inner-module ::= '(module' module-name import* symbol-table? macro-table? ')'
+inner-module ::= '(module' module-name import* macro-table? symbol-table? ')'
 ```
 
 Inner modules automatically have access to modules previously declared in the containing module using `module` or `import`.
-The new module (and its exported symbols and macros) is available to any following `module`, `symbol_table`, and
-`macro_table` clauses in the enclosing container. 
+The new module (and its exported symbols and macros) is available to any following `module`, `symbols`, and
+`macros` clauses in the enclosing container. 
 
 See [local modules](local_modules.md) for full explanation.
 
-### `symbol_table`
+### `macros`
 
-A module can define a list of exported symbols by copying symbols from other modules and/or declaring new symbols.
-
-```bnf
-symbol-table       ::= '(symbol_table' symbol-table-entry* ')'
-
-symbol-table-entry ::= module-name | symbol-list
-
-symbol-list        ::= '[' ( symbol-text ',' )* ']'
-
-symbol-text        ::= symbol | string
-```
-
-The `symbol_table` clause assembles a list of text values for the module to export.
-It takes any number of arguments, each of which may be the name of visible module or a list of symbol-texts.
-The symbol table is a list of symbol-texts by concatenating the symbol tables of named modules and lists of symbol/string values.
-
-Where a module name occurs, its symbol table is appended.
-(The module name must refer to another module that is visible to the current module.)
-Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always requires exact matches for imported modules.
-
-> [!TIP]
-> When redefining a top-level module binding,
-> the binding being redefined can be added to the symbol table in order to retain its symbols.
-> For example:
->
-> ```ion
-> // Define module `foo`
-> $ion::
-> (module foo
->     (symbol_table ["b", "c"]))
->
-> // Redefine `foo` in terms of its former definition
-> $ion::
-> (module foo
->     (symbol_table
->         ["a"]
->         foo // The old definition of `foo` with symbols ["b", "c"]
->         ["d"]))
->
-> // Now `foo`'s symbol table is ["a", "b", "c", "d"]
-> ```
-
-Where a list occurs, it must contain only non-null, unannotated strings and symbols.
-The text of these strings and/or symbols are appended to the symbol table.
-Upon encountering any non-text value, null value, or annotated value in the list, the implementation shall signal an error.  
-To add a symbol with unknown text to the symbol table, one may use `$0`.
-
-All modules have a symbol table, so when a module has no `symbol_table` clause, the module has an empty symbol table.
-
-#### Symbol zero `$0`
-
-
-Symbol zero (i.e. `$0`) is a special symbol that is not assigned text by any symbol table, even the system symbol table.
-Symbol zero always has unknown text, and can be useful in synthesizing symbol identifiers where the text of the symbol is not known in a particular operating context.
-
-All symbol tables (even an empty symbol table) can be thought of as implicitly containing `$0`.
-However, `$0` precedes all symbol tables rather than belonging to any symbol table.
-When adding the exported symbols from one module to the symbol table of another, the preceding `$0` is not copied into the destination symbol table (because it is not part of the source symbol table). 
-
-It is important to note that `$0` is only semantically equivalent to itself and to locally-declared SIDs with unknown text.
-It is not semantically equivalent to SIDs with unknown text from shared symbol tables, so replacing such SIDs with `$0` is a destructive operation to the semantics of the data.
-
-#### Processing
-
-When the `symbol_table` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
-
-For each `arg`:
-* **If the `arg` is a list of text values**, the nested text values are appended to the end of the symbol table being constructed.
-  * When `$0` appears in the list of text values, this creates a symbol with unknown text.
-  * The presence of any other Ion value in the list raises an error.
-* **If the `arg` is the name of a module**, the symbols in that module's symbol table are appended to the end of the symbol table being constructed.
-* **If the `arg` is anything else**, the reader must raise an error.
-
-#### Example
-
-```ion
-(symbol_table         // Constructs an empty symbol table (list)
-  ["a", b, 'c']       // The text values in this list are appended to the table
-  foo                 // Module `foo`'s symbol table values are appended to the table
-  ['''g''', "h", i])  // The text values in this list are appended to the table
-```
-If module `foo`'s symbol table were `[d, e, f]`, then the symbol table defined by the above clause would be:
-```ion
-["a", "b", "c", "d", "e", "f", "g", "h", "i"]
-```
-This is an Ion 1.0 symbol table that imports two shared symbol tables and then declares some symbols of its own.
-
-```ion
-$ion_1_0
-$ion_symbol_table::{
-  imports: [{ name: "com.example.shared1", version: 1, max_id: 10 },
-            { name: "com.example.shared2", version: 2, max_id: 20 }],
-  symbols: ["s1", "s2"]
-}
-```
-Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
-
-```ion
-$ion_1_1
-$ion::(import m1 "com.example.shared1" 1)
-$ion::(import m2 "com.example.shared2" 2)
-$ion::
-(module _
-  (symbol_table m1 m2 ["s1", "s2"])
-)
-```
-
-### `macro_table`
-
-Macros are declared after symbols.
-The `macro_table` clause assembles a list of macro definitions for the module to export. It takes any number of arguments.
-All modules have a macro table, so when a module has no `macro_table` clause, the module has an empty macro table.
+The `macros` clause assembles a list of macro definitions for the module to export. It takes any number of arguments.
+All modules have a macro table, so when a module has no `macros` clause, the module has an empty macro table.
 
 Most commonly, a macro table entry is a definition of a new macro expansion function, following this general shape:
 
@@ -239,7 +129,7 @@ The _template_ defines the expansion of the macro, in terms of the signature’s
 see [Template Expressions](../macros/defining_macros.md#template-definition-language-tdl) for details.
 
 Imported macros must be explicitly exported if so desired.
-Module names and `export` clauses can be intermingled with `macro` definitions inside the `macro_table`;
+Module names and `export` clauses can be intermingled with `macro` definitions inside the `macros` clause;
 together, they determine the bindings that make up the module’s exported macro array.
 
 The _module-name_ export form is shorthand for referencing all exported macros from that module,
@@ -254,7 +144,7 @@ The referenced macro is appended to the macro table.
 
 #### Processing
 
-When the `macro_table` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
+When the `macros` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
 
 For each `arg`:
 * **If the `arg` is a `macro` clause**, the clause is processed and the resulting macro definition is appended 
@@ -291,6 +181,116 @@ An `export` clause declares a name for an existing macro and appends the macro t
   array. An error must be signaled if that name already appears in the exported macro array.
 
 
-#### Module names in `macro_table`
+#### Module names in `macros`
 A module name appends all exported macros from the module to the exported macro array.
 If any exported macro uses a name that already appears in the exported macro array, an error must be signaled.
+
+
+### `symbols`
+
+A module can define a list of exported symbols by copying symbols from other modules and/or declaring new symbols.
+
+```bnf
+symbol-table       ::= '(symbols' symbol-table-entry* ')'
+
+symbol-table-entry ::= module-name | symbol-list
+
+symbol-list        ::= '[' ( symbol-text ',' )* ']'
+
+symbol-text        ::= symbol | string
+```
+
+The `symbols` clause assembles a list of text values for the module to export.
+It takes any number of arguments, each of which may be the name of visible module or a list of symbol-texts.
+The symbol table is a list of symbol-texts by concatenating the symbol tables of named modules and lists of symbol/string values.
+
+Where a module name occurs, its symbol table is appended.
+(The module name must refer to another module that is visible to the current module.)
+Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always requires exact matches for imported modules.
+
+> [!TIP]
+> When redefining a top-level module binding,
+> the binding being redefined can be added to the symbol table in order to retain its symbols.
+> For example:
+>
+> ```ion
+> // Define module `foo`
+> $ion::
+> (module foo
+>     (symbols ["b", "c"]))
+>
+> // Redefine `foo` in terms of its former definition
+> $ion::
+> (module foo
+>     (symbols
+>         ["a"]
+>         foo // The old definition of `foo` with symbols ["b", "c"]
+>         ["d"]))
+>
+> // Now `foo`'s symbol table is ["a", "b", "c", "d"]
+> ```
+
+Where a list occurs, it must contain only non-null, unannotated strings and symbols.
+The text of these strings and/or symbols are appended to the symbol table.
+Upon encountering any non-text value, null value, or annotated value in the list, the implementation shall signal an error.  
+To add a symbol with unknown text to the symbol table, one may use `$0`.
+
+All modules have a symbol table, so when a module has no `symbols` clause, the module has an empty symbol table.
+
+#### Symbol zero `$0`
+
+
+Symbol zero (i.e. `$0`) is a special symbol that is not assigned text by any symbol table, even the system symbol table.
+Symbol zero always has unknown text, and can be useful in synthesizing symbol identifiers where the text of the symbol is not known in a particular operating context.
+
+All symbol tables (even an empty symbol table) can be thought of as implicitly containing `$0`.
+However, `$0` precedes all symbol tables rather than belonging to any symbol table.
+When adding the exported symbols from one module to the symbol table of another, the preceding `$0` is not copied into the destination symbol table (because it is not part of the source symbol table).
+
+It is important to note that `$0` is only semantically equivalent to itself and to locally-declared SIDs with unknown text.
+It is not semantically equivalent to SIDs with unknown text from shared symbol tables, so replacing such SIDs with `$0` is a destructive operation to the semantics of the data.
+
+#### Processing
+
+When the `symbols` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
+
+For each `arg`:
+* **If the `arg` is a list of text values**, the nested text values are appended to the end of the symbol table being constructed.
+  * When `$0` appears in the list of text values, this creates a symbol with unknown text.
+  * The presence of any other Ion value in the list raises an error.
+* **If the `arg` is the name of a module**, the symbols in that module's symbol table are appended to the end of the symbol table being constructed.
+* **If the `arg` is anything else**, the reader must raise an error.
+
+#### Example
+
+```ion
+(symbols         // Constructs an empty symbol table (list)
+  ["a", b, 'c']       // The text values in this list are appended to the table
+  foo                 // Module `foo`'s symbol table values are appended to the table
+  ['''g''', "h", i])  // The text values in this list are appended to the table
+```
+If module `foo`'s symbol table were `[d, e, f]`, then the symbol table defined by the above clause would be:
+```ion
+["a", "b", "c", "d", "e", "f", "g", "h", "i"]
+```
+This is an Ion 1.0 symbol table that imports two shared symbol tables and then declares some symbols of its own.
+
+```ion
+$ion_1_0
+$ion_symbol_table::{
+  imports: [{ name: "com.example.shared1", version: 1, max_id: 10 },
+            { name: "com.example.shared2", version: 2, max_id: 20 }],
+  symbols: ["s1", "s2"]
+}
+```
+Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
+
+```ion
+$ion_1_1
+$ion::(import m1 "com.example.shared1" 1)
+$ion::(import m2 "com.example.shared2" 2)
+$ion::
+(module _
+  (symbols m1 m2 ["s1", "s2"])
+)
+```

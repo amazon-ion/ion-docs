@@ -42,8 +42,8 @@ $ion::
 (module foo
     /*...imports, if any...*/
     /*...submodules, if any...*/
-    (macro_table /*...*/)
-    (symbol_table /*...*/)
+    (macros /*...*/)
+    (symbols /*...*/)
 )
 ```
 

@@ -264,7 +264,7 @@ Embedded text example:
 (:parse_ion
     '''
     $ion_1_1
-    $ion::(module _ (symbol_table ["foo" "bar"]]))
+    $ion::(module _ (symbols ["foo" "bar"]]))
     $1 $2
     '''
 )

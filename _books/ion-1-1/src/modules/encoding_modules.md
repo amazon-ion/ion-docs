@@ -11,22 +11,22 @@ For example, consider these module definitions and the subsequent encoding direc
 ```ion
 $ion::
 (module mod_a
-    (symbol_table ["a", "b", "c"])
-    (macro_table
+    (macros
         (macro foo () Foo)
-        (macro bar () Bar)))
+        (macro bar () Bar))
+    (symbols ["a", "b", "c"]))
 $ion::
 (module mod_b
-    (symbol_table ["c", "d", "e"])
-    (macro_table
+    (macros
         (macro baz () Baz)
-        (macro quux () Quux)))
+        (macro quux () Quux))
+    (symbols ["c", "d", "e"]))
 $ion::
 (module mod_c
-    (symbol_table ["f", "g", "h"])
-    (macro_table
+    (macros
         (macro quuz () Quuz)
-        (macro foo () Foo2)))
+        (macro foo () Foo2))
+    (symbols ["f", "g", "h"]))
 
 $ion::
 (encoding
@@ -81,14 +81,14 @@ For example:
 ```ion
 $ion::
 (module mod_a
-    (macro_table
+    (macros
         (macro foo () Foo)))
 
 // `mod_a` is now available
 
 $ion::
 (module mod_b
-    (macro_table
+    (macros
         (macro bar () Bar)))
 
 // `mod_b` is now available
@@ -124,14 +124,14 @@ $ion_1_1
 
 $ion::
 (module _
-    (macro_table
+    (macros
         (macro foo () Foo)))
 
 // `_` now contains macro `foo`
 
 $ion::
 (module _
-    (macro_table
+    (macros
         _ // Add all macros in `_` to its redefinition
         (macro bar () Bar)))
 
@@ -186,7 +186,7 @@ For example after these directives are evaluated:
 ```ion
 $ion::
 (module mod_a
-    (macro_table
+    (macros
         (macro foo () Foo))
         (macro bar () Bar)))
 
@@ -195,7 +195,7 @@ $ion::
 
 $ion::
 (module mod_c
-    (macro_table
+    (macros
         (macro quux () Quux)
         (macro quuz () Quuz)))
 
@@ -215,7 +215,7 @@ If we then add macros to `mod_b`, those macros will immediately become available
 ```ion
 $ion::
 (module mod_b
-    (macro_table
+    (macros
         (macro baz () Baz)))
 
 (:0) // => Foo
@@ -230,7 +230,7 @@ $ion::
 
 ## Clearing the symbol and macro tables
 ```ion
-(module _) // Redefine `_` to be an empty module
+$ion::(module _) // Redefine `_` to be an empty module
 // If other modules are in use, remove them from the encoding module sequence
 $ion::(encoding)
 ```

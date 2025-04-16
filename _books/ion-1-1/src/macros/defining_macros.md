@@ -1,6 +1,6 @@
 # Defining macros
 
-A macro is defined using a `macro` clause within a [module](../modules.md)'s [`macro_table` clause](../modules.md#macro_table).
+A macro is defined using a `macro` clause within a [module](../modules.md)'s [`macros` clause](../modules.md#macros).
 
 ## Syntax
 ```ion
@@ -204,7 +204,7 @@ When they are invoked, they expand to a stream of a single value: the Ion scalar
 ```ion
 $ion::
 (module _
-  (macro_table
+  (macros
     (macro greeting () "hello")
     (macro birthday () 1996-10-11)
     // Annotations are also literal
@@ -262,7 +262,7 @@ expression-group   ::= '(..' expression* ')'
 ```ion
 $ion::
 (module _
-  (macro_table
+  (macros
     // Calls the system macro `values`, allowing it to produce a stream of three values.
     (macro nephews () (.values Huey Dewey Louie))
 
@@ -283,7 +283,7 @@ $ion::
 > ```ion
 > $ion::
 > (module _
->   (macro_table
+>   (macros
 >     (macro list_of_nephews () [(.nephews)])
 >     //                          ^^^^^^^^
 >     // ERROR: Calls a macro that has not yet been defined in this module.
@@ -311,7 +311,7 @@ variable-name      ::= ion-identifier
 ```ion
 $ion::
 (module _
-  (macro_table
+  (macros
     // Produces a stream that repeats the content of parameter `x` twice.
     (macro twice (x*) (.values (%x) (%x)))
   )
@@ -342,7 +342,7 @@ If the expansion was empty, no values are spliced into the container.
 ```ion
 $ion::
 (module _
-  (macro_table
+  (macros
     (macro bookend_list (x y*) [(%x), (%y), (%x)])
     (macro bookend_sexp (x y*) ((%x) (%y) (%x)))
   )
@@ -366,7 +366,7 @@ If the expansion was empty, no fields are spliced into the parent struct.
 ```ion
 $ion::
 (module _
-  (macro_table
+  (macros
     (macro resident (id names*)
         {
             town: "Riverside",

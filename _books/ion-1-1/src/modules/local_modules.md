@@ -13,15 +13,15 @@ It is legal for a module binding to "shadow" a module binding in its parent scop
 ```ion
 $ion::
 (module foo // <-- Top-level module `foo`
-  (macro_table
+  (macros
     (macro quux () Quux)))
 
 $ion::
 (module bar
   (module foo // <-- Shadows the top-level module `foo`
-    (macro_table
+    (macros
       (macro quuz () Quuz)))
-  (macro_table foo::quuz) // <-- Refers to the innermost `foo`
+  (macros foo::quuz) // <-- Refers to the innermost `foo`
 )
 ```
 
@@ -31,10 +31,10 @@ However, it is _not_ legal for a local module to use the same name as a module p
 $ion::
 (module bar
   (module foo // <-- First definition of `foo` inside `bar`
-    (macro_table
+    (macros
       (macro quux () Quux)))
   (module foo // <-- ERROR: module `foo` already defined in this scope
-    (macro_table
+    (macros
       (macro quuz () Quuz)))
   /*...*/
 )
@@ -46,12 +46,12 @@ Stream-level bindings are mutable, while bindings inside a module are immutable.
 ```ion
 $ion::
 (module foo // <-- Top-level module `foo`
-  (macro_table
+  (macros
     (macro quux () Quux)))
 
 $ion::
 (module foo // <-- Redefines the top-level binding `foo`
-  (macro_table
+  (macros
     (macro quuz () Quuz)))
 ```
 
@@ -64,8 +64,8 @@ Local modules can be used to define helper macros without having to export them.
 ```ion
 $ion_shared_module::$ion_1_1::(
   "org.example.Foo" 1
-  (module util (macro_table (macro point2d (x y) { x:(%x), y:(%y) })))
-  (macro_table
+  (module util (macros (macro point2d (x y) { x:(%x), y:(%y) })))
+  (macros
     (macro y_axis_point (y) (.util::point2d 0 (%y)))
     (macro poylgon (util::point2d::points+) [(%points)]))
 )
@@ -79,12 +79,12 @@ Local modules can also be used for grouping macros into namespaces (only visible
 ```ion
 $ion_shared_module::$ion_1_1::(
   "org.example.Foo" 1
-  (module cartesian (macro_table (macro point2d (x y) { x:(%x), y:(%y) })
+  (module cartesian (macros (macro point2d (x y) { x:(%x), y:(%y) })
                                  (macro polygon (point2d::points+) [(%points)]) ))
 
-  (module polar (macro_table (macro point2d (r phi) { r:(%r), phi:(%phi) })
+  (module polar (macros (macro point2d (r phi) { r:(%r), phi:(%phi) })
                              (macro polygon (point2d::points+) [(%points)]) ))
-  (macro_table
+  (macros
     (export cartesian::polygon cartesian_poylgon)
     (export polar::polygon polar_poylgon))
 )
@@ -104,8 +104,8 @@ By first defining helper macros in an inner module, a module can export macros i
 $ion_shared_module::$ion_1_1::(
   "org.example.Foo" 1
   // point2d must be declared before polygon...
-  (module util (macro_table (macro point2d (x y) { x:(%x), y:(%y) })))
-  (macro_table
+  (module util (macros (macro point2d (x y) { x:(%x), y:(%y) })))
+  (macros
     // ...because it is used in the definition of polygon
     (macro poylgon (util::point2d::points+) [(%points)])
     // But it can be added to the macro table after polygon
@@ -119,14 +119,14 @@ Local modules can also be used for organization of symbols.
 ```ion
 $ion::
 (encoding
-  (module dairy      (symbol_table [cheese,  yogurt, milk]))
-  (module grains     (symbol_table [cereal,  bread,  rice]))
-  (module vegetables (symbol_table [carrots, celery, peas]))
-  (module meat       (symbol_table [chicken, mutton, beef]))
+  (module dairy      (symbols ["cheese",  "yogurt", "milk"]))
+  (module grains     (symbols ["cereal",  "bread",  "rice"]))
+  (module vegetables (symbols ["carrots", "celery", "peas"]))
+  (module meat       (symbols ["chicken", "mutton", "beef"]))
 
-  (symbol_table dairy
-                grains
-                vegetables
-                meat)
+  (symbols dairy
+           grains
+           vegetables
+           meat)
 )
 ```
