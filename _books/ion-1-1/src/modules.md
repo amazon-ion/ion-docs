@@ -22,11 +22,11 @@ The interface to a module consists of:
 
 The spec version is external to the module body and the precise way it is determined depends on the type of module being defined. This is explained in further detail in [Module Versioning](#module-versioning).
 
-The exported symbol array is denoted by the `symbols` clause of a module definition, and
-by the `symbols` field of a shared symbol table.
-
 The exported macro array is denoted by the module’s `macros` clause, with addresses
 allocated to macros or macro bindings in the order they are declared.
+
+The exported symbol array is denoted by the `symbols` clause of a module definition, and
+by the `symbols` field of a shared symbol table. The new symbols defined in the `symbols` clause are not available in the preceding `macros` clause.
 
 The exported symbols and exported macros are defined in the [module body](modules/defining_modules.md).
 
