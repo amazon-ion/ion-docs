@@ -27,7 +27,7 @@ encoding-directive ::= '$ion::(encoding ' module-name* ')'
 
 ### Modules
 ```bnf
-module-body             ::= import* inner-module* symbol-table? macro-table?
+module-body             ::= import* inner-module* macro-table? symbol-table? 
 
 shared-module           ::= '$ion_shared_module::' ivm '::(' catalog-key module-body ')'
 
@@ -43,7 +43,7 @@ inner-module            ::= '(module' module-name module-body ')'
 
 module-name             ::= unannotated-identifier-symbol
 
-symbol-table            ::= '(symbol_table' symbol-table-entry* ')'
+symbol-table            ::= '(symbols' symbol-table-entry* ')'
 
 symbol-table-entry      ::= module-name | symbol-list
 
@@ -51,7 +51,7 @@ symbol-list             ::= '[' symbol-text* ']'
 
 symbol-text             ::= symbol | string
 
-macro-table             ::= '(macro_table' macro-table-entry* ')'
+macro-table             ::= '(macros' macro-table-entry* ')'
 
 macro-table-entry       ::= macro-definition
                           | macro-export

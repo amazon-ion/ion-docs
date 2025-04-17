@@ -13,8 +13,8 @@ This allows the module to be serialized using any version of Ion, and its meanin
 ```ion
 $ion_shared_module::
 $ion_1_1::("com.example.symtab" 3 
-           (symbol_table ...) 
-           (macro_table ...) )
+           (macros ...) 
+           (symbols ...) )
 ```
 
 ### Example
@@ -23,9 +23,9 @@ An Ion 1.1 shared module.
 ```ion
 $ion_shared_module::
 $ion_1_1::("org.example.geometry" 2
-           (symbol_table ["x", "y", "square", "circle"])
-           (macro_table (macro point2d (x y) { x:(%x), y:(%y) })
-                        (macro polygon (point2d::points+) [(%points)]) )
+           (macros (macro point2d (x y) { x:(%x), y:(%y) })
+                   (macro polygon (point2d::points+) [(%points)]) )
+           (symbols ["x", "y", "square", "circle"])
 )
 ```
 

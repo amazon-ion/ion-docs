@@ -155,7 +155,7 @@ the begining of the local macro table.
 // In text, system macros are always addressable by name.
 // In binary, system macros may be invoked using a separate
 // opcode.
-(:$ion:none)
+(:$ion::none)
 ```
 
 ### Template definition language
