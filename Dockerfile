@@ -1,6 +1,8 @@
 # Inspired by https://github.com/simdjson/simdjson/blob/master/Dockerfile
 
-FROM ubuntu:23.04
+# https://ubuntu.com/about/release-cycle
+# Support for 24.04 (Noble Numbat) ends in 2029-04T
+FROM ubuntu:24.04
 
 ARG USER_ID
 ARG GROUP_ID
