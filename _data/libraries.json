@@ -9,8 +9,8 @@
   {
     "name": "ion-dotnet",
     "category": "core",
-    "latest_release_version": "1.3.2",
-    "latest_release_date": "2025-06-18"
+    "latest_release_version": ".1.3.4",
+    "latest_release_date": "2025-06-20"
   },
   {
     "name": "ion-java",
