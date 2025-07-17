@@ -37,6 +37,9 @@ COPY docker-bootstrap.sh ${BOOTSTRAP_DIR}/docker-bootstrap.sh
 COPY Gemfile ${BOOTSTRAP_DIR}/Gemfile
 RUN /bin/bash -- ${BOOTSTRAP_DIR}/docker-bootstrap.sh
 
+COPY docker-bootstrap-fusion.sh ${BOOTSTRAP_DIR}
+RUN /bin/bash -- ${BOOTSTRAP_DIR}/docker-bootstrap-fusion.sh
+
 WORKDIR $WORKSPACE_DIR
 
 CMD /bin/bash ./docker-run.sh

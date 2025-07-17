@@ -37,6 +37,9 @@ locateFusion() {
         then
             # It's on the PATH
             _FUSION_EXE=fusion
+        elif [[ -x ~/bootstrap/fusion-java/bin/fusion ]]
+        then
+            _FUSION_EXE=~/bootstrap/fusion-java/bin/fusion
         else
             # shellcheck disable=SC2016
             fail echo 'FUSION_HOME is not defined and `fusion` is not on PATH'
