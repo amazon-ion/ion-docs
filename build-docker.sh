@@ -11,6 +11,14 @@ IMAGE_TAG="ion-spec-asciidoc"
 #DOCKER_ARGS="--platform linux/amd64"
 DOCKER_ARGS=""
 
+
+# http://stackoverflow.com/a/677212
+if hash finch 2>/dev/null
+then
+    function docker() { finch "$@"; }
+fi
+
+
 function build_image()
 {
   run_check docker build ${DOCKER_ARGS} \
