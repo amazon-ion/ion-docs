@@ -101,6 +101,19 @@ namespace :spec do
     task :pdf     => pdf
   end
 
+  # The semantics doc needs a generated LaTeX file
+  texdir   = 'build/tex'
+  texmodel = "#{texdir}/ion-model.tex"
+  directory texdir
+  file texmodel => ['fusion/src/ion_model/model.fusion', texdir] do |t|
+    puts "Generating LaTeX for the semantic model"
+    safe_system('fusion',
+                '--repositories', './fusion',
+                'load', 'gentex.fusion',
+                out: t.name)
+  end
+  task :texmodel => texmodel
+  file 'src/Semantics.adoc' => [texmodel]
 
   task :build => [:pdf, :docbook]
 
@@ -126,6 +139,8 @@ desc "Build the book in all formats"
 task :build => "spec:build"
 
 task :watch => "spec:watch"
+
+task :model => "spec:texmodel"  # TODO This should also run the tests
 
 desc "Build the demo document for checking rendering."
 task :demo  => "build/Demo.pdf"
