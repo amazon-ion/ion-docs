@@ -4,8 +4,8 @@ This repository holds the draft proposal for Ion 1.1.
 
 ## Building
 
-The easiest way to build the spec is to use the included `Dockerfile`.  Assuming you have `docker` you can run the build
-script in the project directory as follows:
+The easiest way to build the spec is to use the included `Dockerfile`.  Assuming you have `finch` or `docker` on your
+`PATH`, you can run the build script in the project directory as follows:
 
 ```
 $ ./build-docker.sh
