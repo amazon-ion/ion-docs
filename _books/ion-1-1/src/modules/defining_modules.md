@@ -119,7 +119,7 @@ Most commonly, a macro table entry is a definition of a new macro expansion func
 ```
 (See the [_Defining macros_](../macros/defining_macros.md) for details.)
 
-When no name is given, this defines an anonymous macro that can be referenced by its numeric
+When the value `null` is given for the macro name, this defines an anonymous macro that can be referenced by its numeric
 address (that is, its index in the enclosing macro table).
 Inside the defining module, that uses a local reference like `12`.
 
