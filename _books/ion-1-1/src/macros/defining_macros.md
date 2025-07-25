@@ -7,11 +7,11 @@ A macro is defined using a `macro` clause within a [module](../modules.md)'s [`m
 (macro name signature template)
 ```
 
-| Argument                                        | Description                                                                                               |
-|-------------------------------------------------|-----------------------------------------------------------------------------------------------------------|
-| [`name`](#macro-names)                          | A unique name assigned to the macro. When constructing an anonymous macro, this argument is omitted.      |
-| [`signature`](#macro-signatures)                | An s-expression enumerating the parameters this macro accepts.                                            |
-| [`template`](#template-definition-language-tdl) | A template definition language (TDL) expression that can be evaluated to produce zero or more Ion values. |
+| Argument                                        | Description                                                                                                                    |
+|-------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| [`name`](#macro-names)                          | A unique name assigned to the macro. When constructing an anonymous macro `null` is used in the place of a unique name.        |
+| [`signature`](#macro-signatures)                | An s-expression enumerating the parameters this macro accepts.                                                                 |
+| [`template`](#template-definition-language-tdl) | A template definition language (TDL) expression that can be evaluated to produce zero or more Ion values.                      |
 
 ### Example macro clause
 ```ion
@@ -32,7 +32,7 @@ A macro is defined using a `macro` clause within a [module](../modules.md)'s [`m
 Syntactically, macro names are [identifiers](../text/symbol-tokens.md). Each macro name in a macro table must be unique.
 
 In some circumstances, it may not make sense to name a macro. (For example, when the macro is generated automatically.)
-In such cases, authors may omit the macro name to indicate that the macro does not have a name.
+In such cases, authors must use `null` to indicate that the macro does not have a name.
 Anonymous macros can only be referenced by their address in the macro table.
 
 ## Macro parameters
