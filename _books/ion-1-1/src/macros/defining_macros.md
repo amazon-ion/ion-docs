@@ -32,7 +32,7 @@ A macro is defined using a `macro` clause within a [module](../modules.md)'s [`m
 Syntactically, macro names are [identifiers](../text/symbol-tokens.md). Each macro name in a macro table must be unique.
 
 In some circumstances, it may not make sense to name a macro. (For example, when the macro is generated automatically.)
-In such cases, authors may use the symbol `null` to indicate that the macro does not have a name.
+In such cases, authors must use `null` to indicate that the macro does not have a name.
 Anonymous macros can only be referenced by their address in the macro table.
 
 ## Macro parameters
