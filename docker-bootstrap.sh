@@ -19,12 +19,5 @@ rbenv global  "$(rbenv install -l | grep -v - | tail -1)"
 cd "${BOOTSTRAP_DIR}"
 bundle install
 
-# Get required fonts for the theme
-mkdir -p ${BOOTSTRAP_DIR}/fonts
-curl -L -o fonts/vollkorn.zip http://vollkorn-typeface.com/download/vollkorn-4-105.zip
-unzip fonts/vollkorn.zip -d fonts/vollkorn
-curl -L -o fonts/iosevka.zip https://github.com/be5invis/Iosevka/releases/download/v16.0.2/ttf-iosevka-term-slab-16.0.2.zip
-unzip fonts/iosevka.zip -d fonts/iosevka
-
 # Rake doesn't like the ownership of our workspace in the container
 git config --global --add safe.directory /workspace
