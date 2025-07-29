@@ -6,33 +6,10 @@
 Version_string = "0.1"
 Date_string = Time.now.strftime("%Y-%m-%d")
 
-books = %w{IonSpec Semantics Demo}
-
-image_files = Rake::FileList.new("src/images/*.png", "src/images/*.svg") do |fl|
-  fl.exclude("~*")
-  fl.exclude(/^scratch\//)
-end
+books = %w{Semantics Demo}
 
 
 namespace :spec do
-  directory 'build/images'
-
-  desc 'copy images to build dir'
-  task :images => 'build/images'
-
-  image_files.each do |source|
-    target = source.sub(/^src\/images/, 'build/images')
-    file target => source do
-      cp source, target, :verbose => true
-      if File.extname(target) == ".png"
-        `pngquant -f #{target}`
-      end
-    end
-    task :images => target
-  end
-
-  task :prereqs => [:images]
-
 
   #=============================================================================
   # AsciiDoctor Processing
@@ -54,13 +31,6 @@ namespace :spec do
   end
 
 
-  def adoc_to_html(adoc, html)
-    puts "Converting #{adoc} to HTML..."
-    asciidoctor('--backend', 'html5',
-                '--out-file', html,
-                adoc)
-  end
-
   def adoc_to_xml(adoc, xml)
     puts "Converting #{adoc} to DocBook XML..."
     asciidoctor('--backend', 'docbook',
@@ -68,19 +38,6 @@ namespace :spec do
                 adoc)
   end
 
-  def adoc_to_pdf(adoc, pdf)
-    puts "Converting #{adoc} to PDF..."
-
-    theming = %w(-a pdf-themesdir=src/themes -a pdf-theme=basic -a pdf-fontsdir=fonts)
-    stem = %w(-r asciidoctor-mathematical -a mathematical-format=svg)
-    pdf_params = %w(-a compress)
-
-    asciidoctor(*theming, *stem, *pdf_params,
-                '--require', 'asciidoctor-pdf',
-                '--backend', 'pdf',
-                '--out-file', pdf,
-                adoc)
-  end
 
   def xml_to_pdf(xml)
     puts "Converting #{xml} to PDF..."
@@ -131,27 +88,21 @@ namespace :spec do
     adoc = "src/#{book}.adoc"
     xml  = "build/#{book}.xml"
     pdf  = "build/#{book}.pdf"
-    html = "build/#{book}.html"
 
-    file xml => [:prereqs, adoc] do
+    file xml => [adoc] do
       adoc_to_xml adoc, xml
     end
 
-    file html => [:prereqs, adoc] do
-      adoc_to_html adoc, html
-    end
-
-    file pdf => [:prereqs, xml] do
+    file pdf => [xml] do
       xml_to_pdf xml
     end
 
     task :docbook => xml
     task :pdf     => pdf
-    task :html    => html
   end
 
 
-  task :build => [:html, :pdf, :docbook]
+  task :build => [:pdf, :docbook]
 
   task watch: [:build] do
     begin
@@ -164,12 +115,9 @@ namespace :spec do
   CLOBBER.include('build')
 end
 
-task :default => "spec:build"
+task :default => "spec:pdf"
 
 task :clean => "spec:clean"
-
-desc "Build the book as HTML"
-task :html  => "spec:html"
 
 desc "Build the book as PDF"
 task :pdf   => "spec:pdf"
