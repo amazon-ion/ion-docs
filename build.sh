@@ -31,8 +31,7 @@ locateFusion() {
             _FUSION_EXE=$FUSION_HOME/bin/fusion
             if [[ ! -x $_FUSION_EXE ]]
             then
-                echo "ERROR: Invalid FUSION_HOME=$FUSION_HOME"
-                exit 1
+                fail echo "Invalid FUSION_HOME=$FUSION_HOME"
             fi
         elif hash fusion 2>/dev/null
         then
@@ -40,8 +39,7 @@ locateFusion() {
             _FUSION_EXE=fusion
         else
             # shellcheck disable=SC2016
-            echo 'ERROR: FUSION_HOME is not defined and `fusion` is not on PATH'
-            exit 1
+            fail echo 'FUSION_HOME is not defined and `fusion` is not on PATH'
         fi
     fi
 }
@@ -54,30 +52,11 @@ runFusion() {
         "${@}"
 }
 
-locateIonDocs() {
-    if [[ -z ${ION_DOCS:-} ]]
-    then
-      if [[ -d ../ion-docs ]]
-      then
-        ION_DOCS=../ion-docs
-      elif [[ -d ~/src/ion-docs ]]
-      then
-        ION_DOCS=~/src/ion-docs
-      else
-        fail echo "Unable to locate ion-docs directory."
-      fi
-    elif [[ ! -d $ION_DOCS ]]
-    then
-      fail echo "ION_DOCS isn't a directory: $ION_DOCS"
-    fi
-}
 
 locate() {
     locateFusion
-    locateIonDocs
 
     echo "Using Fusion CLI at $(which "$_FUSION_EXE")"
-    echo "Updating ion-docs at $ION_DOCS"
 }
 
 
@@ -120,19 +99,9 @@ test() {
 # Generating the document content
 
 generate() {
-    locateIonDocs
-
-    outdir="$ION_DOCS"/src/tex
-
-    echo "Generating LaTeX into $outdir"
-    runFusion --repositories ./fusion load gentex.fusion > "$outdir"/ion-model.tex
-
-    echo
-    echo "Rebuilding the PDF"
-    (
-        cd "$ION_DOCS"
-        ./build-docker.sh build/Semantics.pdf
-    )
+    echo "Generating LaTeX for the semantic model"
+    mkdir -p build/tex
+    runFusion --repositories ./fusion load gentex.fusion > build/tex/ion-model.tex
 }
 
 target=${1:-test}
