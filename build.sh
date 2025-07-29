@@ -73,15 +73,15 @@ runUnitTests() {
 }
 
 runConformanceTests() {
+    local dir=$1
+
     local test
     while IFS= read -r test
     do
         echo "----> $test"
         # TODO This should run in a namespace with only this dialect
         runFusion require "/ion_model/testing/dsl" \; load "$test"
-    done < <(find ftst/conformance -name '*.ion' -print)
-
-    # TODO Run the suite in ion-tests/conformance
+    done < <(find "$dir"/conformance -name '*.ion' -print)
 }
 
 test() {
@@ -91,7 +91,8 @@ test() {
     fi
 
     runUnitTests
-    runConformanceTests
+    runConformanceTests ftst
+    runConformanceTests ion-tests
 }
 
 
