@@ -36,7 +36,7 @@
 
 // Out-of-bounds SID
 //  At present, the model doesn't support partial expansion of the front of stream.
-(check_eval_fail "Invalid symbol address 10"
+(check_eval_fail "Invalid symbol address: 10"
   (quote_top '#$10'))
 (check_expansion_and_bounds 10
   (quote_top a)

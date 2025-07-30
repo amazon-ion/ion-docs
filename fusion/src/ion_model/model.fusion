@@ -253,7 +253,7 @@ Spec Problems
               (ts (currentSymtab r))]
           (if (< i (seq_length ts))
             (ith ts i)
-            (wrong "Invalid symbol address " i)))))
+            (wrong "Invalid symbol address: " i)))))
 
     (fn 'expand_SSymTok*' ((ss 'SSymTok*') (r Environment) -> 'SymTok*')
       (if (seq_is_empty ss)
