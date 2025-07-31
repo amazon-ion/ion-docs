@@ -1,4 +1,6 @@
 
 
 /build
+/ion-tests
 /tmp
+.envrc
