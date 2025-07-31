@@ -1,0 +1,96 @@
+= Style Demo
+
+// Demo of various markup styles we need.
+// Easier to debug in fragments than in the full document.
+
+// We use blocks with and without embedded Unicode because dblatex has trouble
+// with those in combination and we have postprocessing workarounds.
+
+include::styles.adoc[]
+
+
+Body content:
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+
+[{nrm}]
+----
+Nrm listing with non-Unicode double-arrow: => and ellipses: ...
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+[{nrm}]
+----
+Nrm listing with Unicode double-arrow: ⇒ and ellipses: …
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+
+[IMPORTANT]
+====
+Admonition block:
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+
+[{nrm}]
+----
+Nrm listing with non-Unicode double-arrow: => and ellipses: ...
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+
+[{nrm}]
+----
+Nrm listing with Unicode double-arrow: ⇒ and ellipses: …
+*bold* _italic_ _**italic+bold** italic_ _italic~italic+subscript~italic_
+----
+====
+
+
+A problematic char: ┌  and the heavy version ┏
+
+[%unbreakable]
+----
+              ┏──── Lowest bit is 1 (end), indicating
+              │     this is the only byte.
+0 0 0 1 1 1 0 1
+└─────┬─────┘
+unsigned int 14
+----
+
+
+The following math should be displayed in a block:
+
+[latexmath]
+++++
+x+y_2=[3,4]
+++++
+
+So should the following, along with a title:
+
+.Figure {counter:figure-number}. Some math in a figure
+[latexmath]
+++++
+x+y_2=[3,4]
+++++
+
+
+Here we have a semantic denotation.
+
+[{denotation}]
+++++
+\mbox{\it Fields\_get1\/}(\mbox{\it fs\/}, \mbox{\it u\/}) = \newline
+ \setandincrindent
+\:\mbox{\bf{if}}\:\#\mbox{\it fs\/}=0\newline   % Test that comments don't break things
+\:\mbox{\bf{then}}\:⟨⟩\newline
+\:\mbox{\bf{else}}\: \setandincrindent
+\:\mbox{\bf{if}}\:(\mbox{\it Symbolic\_text\_matches\/}\:(\mbox{\it Field\_name\/}\:\mbox{\it fs\/}↓0)\:\mbox{\it u\/})\newline
+\:\mbox{\bf{then}}\: \setandincrindent
+\:\mbox{\bf{if}}\:\#(\mbox{\it Fields\_get1\/}\:\mbox{\it fs\/}†1\:\mbox{\it u\/})=0\newline
+\:\mbox{\bf{then}}\:⟨(\mbox{\it Field\_value\/}\:\mbox{\it fs\/}↓0)⟩\newline
+\:\mbox{\bf{else}}\:(\mbox{\it raise\/}\:"repeated field")\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{else}}\:(\mbox{\it Fields\_get1\/}\:\mbox{\it fs\/}†1\:\mbox{\it u\/})\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+\:\mbox{\bf{endif}}\: \decrindent
+\newline
+++++

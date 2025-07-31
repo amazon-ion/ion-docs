@@ -1,0 +1,1402 @@
+// Keep document header lines together!
+// Certain attributes must be defined here to work correctly.
+// https://docs.asciidoctor.org/asciidoc/latest/document/header
+:doctitle: Ion 1.0 Denotational Semantics
+:author: Todd V. Jonker
+:email: jonker@amazon.com
+// Document header ends at first blank line.
+
+// TODO This is generating invalid DocBook: no <year> just <holder>
+:copyright: 2023 Amazon.com Inc. or Affiliates (“Amazon”)
+:doctype: article
+:stem: latexmath
+
+// Now custom attributes and styles.
+:modeltex: tex/ion-model.tex
+
+include::styles.adoc[]
+
+
+== Introduction
+
+When Ion 1.0 was created in 2007, its documentation consisted of a handful of
+wiki pages that were more of a user guide than a specification, intended to be
+easily consumed by users and other stakeholders.  Early implementations were
+built by Ion's designers and by people close to the project, so tight
+communication (and a growing test suite) made up for the lack of formality.
+Over time, however, the spec's narrative approach showed its weakness as gaps,
+errors, and inconsistencies repeatedly surfaced.
+
+This was most problematic around symbols and symbol tables, which involve
+numerous constraints and subtle algorithms intended to make
+handling of Ion data robust in the face of incomplete
+shared symbol table information.
+More generally, mental models diverged around the semantic distinction between
+the so-called "`raw layer`" (containing version markers, local symbol tables, and
+symbol IDs) and the "`application layer`" (from which those things are removed).
+
+These issues compounded during the development of Ion 1.1, when the attempt
+to introduce a template mechanism fell squarely into this zone of
+uncertainty, where misalignment on terminology and semantics caused frustration
+and delay.  As the design grew to include a full-blown macro system, we knew
+we needed a more robust way to communicate--to ourselves and to others--about the
+proposed feature's semantics and behavior.  When a day at the whiteboard sketching a
+formal model of the raw-layer semantics led to a-ha moments and bug discoveries
+within the spec, we knew this would be a fruitful approach.
+
+This work-in-progress document is the continuation of that sketch.
+It defines the _denotational semantics_ of the Ion data language,
+mapping Ion syntax to typed _domains_ in lambda calculus and using mathematical
+functions to define the meaning of the computational elements that translate
+that syntax into application data.
+
+Our primary goal is to illuminate and clarify the _evaluation_ of an Ion document,
+the process by which certain Ion encoding artifacts are consumed and/or
+transformed, ultimately producing the user's data.
+In Ion 1.0 these artifacts include version markers, local symbol table
+directives, and symbol tokens.
+Ion 1.1 introduces much more sophisticated encoding features--new directives,
+modules, encoding expressions--and this document is intended to lay the
+groundwork for a formal presentation of those features.
+
+TIP: We assume a basic familiarity with lambda calculus, though not much more
+than the ability to recognize that stem:[\lambda xy.\mbox{\it body}]
+represents a function of two arguments.
+
+
+=== A Primer
+
+Lambda calculus is a mathematical formalism for computing that uses only
+anonymous functions (i.e., abstractions or lambda), terms (i.e., variables),
+and application (i.e., invocation of functions).
+This minimal set of operations has been shown to be Turing complete and can
+encode mathematical concepts such as Booleans and natural numbers (and the
+operations on them).
+It is similarly straightforward to model data types such as _sequences_ and
+_tuples_ using lambda calculus.
+
+With these primitives we define types of lambda-calculus values as _domains_.
+For our purposes, a _domain_ can be thought of as a set of tagged
+values, where each value knows what type it is.  This allows the math to be
+strongly-typed, at the expense of some bookkeeping to convert values across
+domains.
+
+Pure lambda calculus is challenging to read, so we use quite a few conventions
+in our notation to "`pretty print`" various functions.
+We also use conventions around the names of functions and variables to help
+distinguish their roles and clarify their types.
+For instance, we write domain names in *BoldCamelCase* and function arguments in
+italic or even Greek letters.
+
+Our first fundamental domain stem:[\mbox{\bf B}] denotes Boolean values.
+It has two elements, the constants *true* and *false*.
+We test Boolean values with a function
+stem:[\mbox{\it if}(b, e_1, e_2)], where
+stem:[b \in \mbox{\bf B}], which we pretty-print as
+stem:[
+\mbox{{\bf if} $b$\:{\bf then}\:$e_1$\:{\bf else}\:$e_2$ {\bf endif}}
+].  We assume the presence of related Boolean operators _and_ (stem:[\wedge]),
+_or_ (stem:[\vee]) and _not_ (stem:[\lnot]).
+
+Our second fundamental domain, *I*, denotes integer values, which comes along
+with the obvious arithmetic operators.
+
+Given some domain *D*, we write **D**{asterisk} to mean the domain of sequences
+of *D*.
+We pretty-print such values between angle brackets stem:[\langle...\rangle],
+for example,
+stem:[\langle\mbox{\bf true}, \mbox{\bf false}\rangle \in \mbox{\bf B}^{\ast}].
+To make variable names somewhat self-describing, we use asterisks there too,
+as in stem:[d^\ast \in \mbox{\bf D}^\ast].
+We concatenate sequences with stem:[\S]; to push the element _d_ onto the front
+of sequence stem:[d^{\ast}] we can write stem:[\langle d \rangle\S d^{\ast}].
+To extract an individual element of sequence
+stem:[d^{\ast} = \langle e_0, e_1, ..., e_n\rangle] we write
+stem:[d^{\ast}\!\downarrow_{i} = e_i].
+To discard the first _i_ elements of a sequence, we write
+stem:[d^{\ast}\!\dagger i = \langle e_i, ..., e_n\rangle].
+Finally, we write stem:[\#d^{\ast}] to mean the number of items in the sequence
+stem:[d^{\ast}].
+
+Similarly, we write stem:[\mbox{\bf D?}] to mean the domain of sequences of
+exactly zero or one *D*.
+We check whether such an "`option`" (optional value) contains an element by
+writing stem:[\mbox{\it v}\interrobang].
+When that's true, we can extract the wrapped element by writing stem:[\mbox{\it v}!].
+
+For domains *D* and *E*, we write stem:[\mbox{\bf D} + \mbox{\bf E}] to mean the
+disjoint sum of domains *D* and *E*.
+We write stem:[\mbox{\bf Sum} \equiv \mbox{\bf D} + \mbox{\bf E}] to define *Sum*
+to be that disjunction, and then every element of *Sum*
+is an element of _either_ *D* _or_ *E*.
+Elements of sum domains are effectively "`tagged`", so we know which component
+domain they come from, and we can project or "`lower`" (that is, downcast) a value
+stem:[v \in \mbox{\bf Sum}] back into its component domain via
+stem:[v\mid_{\mbox{\scriptsize\bf D}}], assuming stem:[v \in \mbox{\bf D}].
+Conversely, we can inject or "`lift`" (that is, upcast or wrap) a value into
+*Sum* using the
+function stem:[\mbox{\it{in}\small \mbox{\bf Sum}}(\mbox{\it v\/})],
+assuming stem:[v \in \mbox{\bf D} \vee v \in \mbox{\bf E}].
+
+We write
+stem:[\mbox{\bf Prod} \equiv \mbox{{\bf D}:foo} \times \mbox{{\bf E}:bar}]
+to define *Prod* to be the Cartesian product of *D* and *E*.
+These are tuples, effectively constrained  sequences containing first some
+stem:[d \in \mbox{\bf D}] and then some stem:[e \in \mbox{\bf E}].
+We construct them by tagging a sequence:
+stem:[\mbox{\it{in}\small\bf Prod}(\langle d, e \rangle)].
+To make field access easier, we give the elements names and overload the
+stem:[\downarrow] operator, so that when stem:[p \in \mbox{\bf Prod}] we have
+stem:[p\!\downarrow_{\mbox{\scriptsize foo}} \in \mbox{\bf D}] and
+stem:[p\!\downarrow_{\mbox{\scriptsize bar}} \in \mbox{\bf E}].
+
+Perhaps stretching credibility, we assume another primitive domain, *Unicode*,
+denoting Unicode strings.
+While we have not explicitly modeled it as such, this is just a sequence of
+Unicode code points, effectively **I**{asterisk}.
+
+We'll also define domains describing the input and output types of functions.
+For example,
+stem:[\mbox{\bf A} \times \mbox{\bf B} \rightarrow \mbox{\bf C}]
+is the domain of two-argument functions that accept an element of *A* and
+an element of *B* and return an element of *C*.
+
+In some cases our functions make use of local variables.  The special syntax
+stem:[\mbox{\bf let}\: v = e_1 \: \mbox{\bf in}\: e_2]
+means that _v_ is bound to the value of stem:[e_1] within the scope of
+expression stem:[e_2].  The *letrec* form is similar, except the variable is
+bound within _both_ stem:[e_1] and stem:[e_2], enabling recursive definitions.
+
+
+
+=== A Roadmap
+
+At a high level, the goal of our model is to define how an Ion processor turns
+the syntax within an Ion document into data meaningful to some application.
+To maintain this focus, we abstract over the details of how Ion parses the
+wire-level octets.
+Using the domain *Document* to denote the octets of Ion-formatted data, and
+the domain *Value* to model a resulting application datum, we can formalize our
+goal in the form of a function domain:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Evaluator]
+++++
+
+// The wrapping pass macro ensures markup is rendered properly.
+:fn-module: pass:c,q[footnote:[We use the Ion 1.1 term "`shared module`" rather \
+than "`shared symbol table`" to align with the domain model, which is \
+forward-compatible with the future features.  \
+What's most important to know is that modules are generalizations of symbol \
+tables, so a shared symbol table _is_ a shared module.]]
+
+That is, given a document and a catalog (a collection
+of shared modules{fn-module}), we produce a sequence of application values.
+We use the term "`evaluation`" from the perspective that the syntax of an Ion
+document is code that we must execute in order to produce some resulting values.
+While this may feel unreasonable for Ion 1.0, the introduction of macros in 1.1
+makes this perspective essential.
+The predominant phase of evaluation is _expansion_, during which syntax forms,
+most importantly symbol IDs (and, later, macros), are transformed into their
+intended data.
+
+// TODO A diagram might be nice here.
+
+We now set upon the task of implementing such a function by way of a formal
+mathematical model.
+Here's how we'll reach that goal:
+
+* xref:datamodel[xrefstyle=short] defines the domain *Value* and a number of
+subdomains that collectively
+specify the Ion data model--that is, the set of values that an Ion document can
+encode.
+We then ease into denotational functions by implementing some
+useful operators over this data.
+
+* xref:syntaxmodel[xrefstyle=short] defines domains representing the
+structure of Ion syntax, before expansion and evaluation are performed.
+It also defines a mechanism for abstracting over the parsing of **Document**s.
+
+* xref:expansion[xrefstyle=short] visits each corner of the syntax model,
+incrementally defining layers of functions that expand abstract syntax into
+Ion data **Value**s.
+
+* xref:catalog[xrefstyle=short] specifies the structure of **Module**s--Ion's
+unit of sharing encoding information--and the responsibilities of the *Catalog*.
+
+* xref:symtabs[xrefstyle=short] specifies the compilation of encoding directives
+into new **Environment**s, most notably the compilation of local symbol tables.
+
+* xref:issues[xrefstyle=short] documents the known defects with the model in its
+current draft.
+
+
+.Under the Covers
+****
+While this document presents its model using fairly conventional denotational
+semantics notation, this is no mere whiteboard math: the equations here are in
+fact pretty-printed views of executable code.  Expressed using Ion S-expressions
+(of course) in a small domain-specific language, the code is strongly typed
+and dynamically validated, with a proper test suite and code coverage tooling.
+In a meaningful sense, this document presents a real implementation of Ion
+evaluation.
+
+Here's an example:
+----
+(fn mk_Evaluator ((p Parser) -> Evaluator)
+  (mk_fn Evaluator (d c)
+    (let [(p0 (p d)),
+          (r0 (tuple Environment c IVM_1_0 (SymToks_for_IVM IVM_1_0))),
+          (k0 (mk_fn TContinuation (r vs) vs))]
+      (TE_ParseStream p0 r0 k0))))
+----
+
+The code is rendered into stem:[\mbox{\LaTeX}] fragments by a custom library
+based on Christian Queinnec's
+https://lip6.fr/Christian.Queinnec/WWW/l2t.html[l2t]
+(formerly known as LiSP2TeX), then ``include``d into an AsciiDoc article
+containing the narrative text.
+****
+
+
+[#datamodel]
+== The Ion Data Model
+
+We start our model by defining the domain of Ion data.
+In other words, what values can be encoded in an Ion document, and what do they
+mean?
+
+At a high level, the definition will be unsurprising to those familiar with Ion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value]
+\newline
+include::{modeltex}[tag=Content]
+++++
+
+An Ion value is a potentially-empty sequence of symbol tokens annotating some
+content, which is partitioned into several typed domains.
+You'll note the absence of Ion's decimal, float, timestamp,
+blob, and clob types; these cannot contain symbols and thus "`pass through`" the
+expansion process unchanged.  Since they have little effect on the model other
+than to add a bunch of type-cases, we currently omit them for brevity.
+
+
+[id=simple]
+=== Simple Values
+
+We'll continue defining our data model with the easy cases: data types that
+cannot contain symbols and therefore don't require expansion.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=DotNull]
+\newline
+include::{modeltex}[tag=NullNull]
+\newline
+include::{modeltex}[tag=Bool]
+\newline
+include::{modeltex}[tag=Int]
+\newline
+include::{modeltex}[tag=String]
+++++
+
+The singleton domain **DotNull** contains only an opaque constant *dotnull*
+that we use as a sentinel for the various typed nulls.  Such a thing is the only
+option for the **NullNull** domain, where it denotes `null.null`.  The domains
+**Bool**, **Int**, and **String** simply combine the obvious primitive
+domains with the possibility of null.
+
+While we use a single sentinel value for all nulls, they are still
+strongly-typed in the data model, since the sentinel is "`wrapped`" by an
+appropriate domain denoting the data type.
+For example, if we have a value _v_ such that
+stem:[v \in \mbox{\bf Bool} \wedge v \in \mbox{\bf DotNull}]
+then we know that _v_ denotes `null.bool`.
+
+
+=== Symbols
+
+Symbols form the core of this denotation, which would be trivial if we didn't
+need to expand symbol addresses into their text.
+The following domains define their meaning:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Sym0]
+\newline
+include::{modeltex}[tag=AbsentSym]
+\newline
+include::{modeltex}[tag=SymTok]
+\newline
+include::{modeltex}[tag=Symbol]
+++++
+
+*Sym0* is a singleton domain containing only an opaque constant named *sym0*.
+As we'll see, this is our denotation for the syntactic token `$0`, symbol zero.
+
+*AbsentSym* denotes a missing or invalid entry in a shared symbol table.
+Per the Ion spec, such symbols are only equivalent when both the symbol table
+(aka module) name and the index within the table are the same.
+
+*SymTok* denotes an expanded symbol token, either a Unicode string or
+`$0` or on absent shared symbol.
+
+Symbol tokens are used for annotations, field names, and symbol values.
+*Symbol* denotes the latter, being either a symbol token or `null.symbol`.
+
+
+=== Containers
+
+Ion sequences are simple to denote using sequence domains of values, or null.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=List]
+\newline
+include::{modeltex}[tag=Sexp]
+++++
+
+:fn-structorder: footnote:[This model is subtly incorrect, since its fields \
+are ordered within a struct.  See xref:iss-structorder[xrefstyle=short].]
+
+The domain model for structs is not much more complicated: a struct is either
+null or a set{fn-structorder} of fields, and a field is a tuple with a symbol
+token and a value.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Struct]
+\newline
+include::{modeltex}[tag=Field]
+++++
+
+
+=== Matching Symbols
+
+Before we turn to the syntax model, let's define some functions that will be
+necessary to get from there to here during expansion.
+
+First, we need to be able to compare symbol values and tokens against Unicode
+text.  We'll use infix stem:[\cong] (read "`matches`") to notate this operation.
+Matching symbol tokens is straightforward: if the given *SymTok* is *Unicode*
+then we lower into that domain and compare with the argument.
+Otherwise, the token must be *Sym0*, so we return *false*.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SymTok_matches]
+++++
+
+TIP: When we define a function, we include its signature to the right, to be
+explicit about the types of the arguments and result.
+
+To match a symbol value, we check whether the *Symbol* is a *SymTok* (as
+opposed to *DotNull*) before calling *SymTok*-flavored comparison.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Symbol_matches]
+++++
+
+We can now check whether a *Value* or *Value?* is a symbol with specific text:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Value_is_symbol_matching]
+\newline
+include::{modeltex}[tag=Value?_is_symbol_matching]
+++++
+
+To get data out of a struct by field name, we need a lookup function.
+We'll use infix stem:[\odot] (read "`lookup`") to represent this, here with an
+asterisk to indicate that multiple values may result:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Struct_get]
+++++
+
+All that does is unwrap the struct's field sequence, making it easier to recur:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Fields_get]
+++++
+
+We recur on the tail of the field sequence (stem:[f^{\ast}\dagger 1]) and bind
+the results to stem:[v^\ast].
+If the current field's name matches _u_, we prepend (stem:[\S]) its value
+onto the recursive results.
+
+That function returns the values of all fields with the given name, but it turns
+out that our forthcoming use cases for expansion never accept more than one.
+Here's a sibling function that signals an error when the lookup is ambiguous:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Struct_get1]
+++++
+
+Note that this returns a sequence of zero or one *Value* to comply with the
+result domain *Value?*.
+
+
+[#syntaxmodel]
+== The Syntax Model
+
+The previous section defines the values presented to an Ion application,
+that is, the domain of values that can be encoded into and read from an Ion
+document or stream.
+Here we define domains denoting the _syntax_ used in Ion documents.
+It is reasonable to think of these domains as representing the abstract syntax
+trees coming
+out of the Ion parser before doing anything involving symbols and symbol tables.
+Put another way, this is an abstraction over Ion's various concrete syntax
+formats, both text and binary.
+
+NOTE: Historically, Ion documents and implementations have referred to this with
+various combinations of the words "`system`" or "`raw`" with "`view`" or "`layer`".
+The intended (but poorly-specified) connotation was that this is the data visible to
+the "`Ion system`", requiring additional processing to generate the "`application`"
+or "`user`" view of the document.
+
+The data and syntax models differ primarily in their handling of symbol
+tokens, so the domains mirror each other.
+We prefix these domain names  with **S** to indicate that they represent syntax.
+
+In the syntax model, a symbol token is either text like "``name``" or a symbol
+address like `$4`.
+Therefore, a *SSymTok* is either a Unicode string or an integer address:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SSymTok]
+++++
+
+The rest of the syntax model propagates *SSymTok* in place of *SymTok*.
+All domains are mirrored except the simple types, which cannot contain symbol tokens.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=STree]
+\newline
+include::{modeltex}[tag=SValue]
+\newline
+include::{modeltex}[tag=SContent]
+\newline
+include::{modeltex}[tag=SSymbol]
+\newline
+include::{modeltex}[tag=SList]
+\newline
+include::{modeltex}[tag=SSexp]
+\newline
+include::{modeltex}[tag=SStruct]
+\newline
+include::{modeltex}[tag=SField]
+++++
+
+One oddity here is introduction of a syntax-tree domain *STree* _above_
+*SValue*, and used in its place within containers.
+In Ion 1.0 this extra layer has no benefit, but in Ion 1.1 we need E-expression
+syntax alongside general value syntax, where they cannot be annotated.
+We include *STree* proactively to avoid refactoring this hierarchy (and
+modifying a bunch of functions) later.
+
+
+[id=stx-top]
+=== Top Level Syntax
+
+The syntax and data models also diverge at the top level of documents, which can
+contain __directives__ that are not part of the application-facing data model.
+Instead, directives affect the encoding of the data that follows.
+
+Ion 1.0 has two kinds of directives: Ion version markers (IVMs) and local symbol
+tables (LSTs).  The latter are simply annotated **SStruct**s that require no
+special handling here.  In contrast, IVMs are dedicated syntactic keywords
+(opcode in binary); to everyone's confusion, they are not symbols even though
+they match the grammar for symbols.
+
+Since IVMs cannot appear at arbitrary points in the document hierarchy, we
+cannot model them as part of *STree*.
+Instead, we model these top-level-only features through separate domain.
+A top-level syntax tree can thus be any general syntax tree, or an IVM:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TSTree]
+++++
+
+IVMs are straightforward, and we define a constant to represent `$ion_1_0`:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=IVM]
+\newline
+include::{modeltex}[tag=IVM_1_0]
+++++
+
+We'll want to compare IVMs, so here's an equality operator:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=IVM_eq]
+++++
+
+
+[id=parsing]
+=== Parsing
+
+The preceding syntax domains represent the output of an Ion parser as it steps through
+a document.  The semantics of parsing would be far too complex to approach in
+this article, so instead we assume the presence of a parsing function with the
+following signature:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Document]
+\newline
+include::{modeltex}[tag=Parser]
+++++
+
+Perhaps surprisingly, our *Parser* abstraction doesn't produce **TSTree**{asterisk}.
+This is another proactive step toward Ion 1.1, where a directive can change the
+Ion version and/or install user-defined macros, both of which affect the
+interpretation of later bytes in the document.
+To achieve this, we need a feedback loop from the evaluator to the parser after
+each top-level syntax tree.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=ParseStream]
+\newline
+include::{modeltex}[tag=ParseStep]
+++++
+
+A *ParseStream* is a function that accepts an IVM, telling the parser what Ion
+syntax follows, and returns an optional *ParseStep* whose absence denotes
+end-of-file.  When present, the *ParseStep* contains the next *TSTree* from the
+document, and a new *ParseStream* that can produce the rest of the document.
+
+Note that any necessary parser state, like its current position within the
+document, must be passed through each *ParseStream* in the chain.
+The details are specific to a particular *Parser* implementation (and perhaps to
+the Ion format being read), so we don't define a *ParseStream* function here
+and instead assume that it's provided by the *Parser*.
+
+This concludes our semantics of the syntax and data models.
+These are the inputs and outputs, respectively, of the expansion process, which
+we will now explore.
+
+
+[#expansion]
+== Expansion and Evaluation
+
+Circling back a bit, remember that our goal is to define how Ion expands the
+abstract syntax trees produced by its parser to eliminate encoding features such
+as symbol IDs and macros, thereby producing the document's application-facing data.
+To begin, let's consider the state that must be maintained while doing so.
+
+
+=== The Encoding Environment
+
+Directives effectively change the state of the decoder as it turns bytes on the
+wire into application data.
+We model this state, known as the __environment__, as follows:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Environment]
+++++
+
+The encoding environment is a tuple with three components.
+
+  * The *catalog* is a collection of shared modules provided to the
+expansion process.  The manner by which modules are collected into a catalog is
+outside the scope of the Ion specification, but we define the relevant semantics
+in xref:catalog[xrefstyle=short].
+  * The *current <<system-module,system module>>* contains the current system symbol table,
+as well as the current Ion specification version, which controls the parser and
+expansion processes.
+  * We model the *local symbol table* as a sequence of symbol tokens denoting
+the document-declared symbols, excluding the system symbols.
+
+Following computer science tradition, we use the Greek letter rho (stem:[\rho])
+as the variable denoting environments, so for example
+stem:[\rho\!\downarrow_{\mbox{\scriptsize sysModule}}] is the current system
+module.
+
+Given this model, we can derive two critical encoding features: the current
+spec version, and the current symbol table.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=currentSpecVersion]
+\newline\newline
+include::{modeltex}[tag=currentSymtab]
+++++
+
+The latter denotes that a document's current symbol table is made up of the
+symbols from the current system module, followed by the symbols declared in the
+<<compile-lst,local symbol table>>.
+Adding a compiled representation of `$0` to the front puts everything in the
+right place to enable symbol expansion to index into the current symbol
+table by SID, which we'll turn to now.
+
+
+[id=expand_SSymTok]
+=== Symbol Token Expansion
+
+We've now set enough context that we can implement the core of the expansion
+process: replacing SIDs with text.  We introduce stem:[\cal X] ("`expand`") as
+the base name of our various expansion functions, adding the input type as a
+subscript.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SSymTok]
+++++
+
+If the syntax-model symbol token *SSymTok* is in the form of Unicode text,
+we rewrap it to produce a data-model symbol token *SymTok*.
+Otherwise, the token is an integer SID, so we extract it via
+stem:[\mbox{\it s\/}\mid_{\mbox{\scriptsize \mbox{\bf I}}}] and then look it up
+in the current symbol table.
+This requires a range check, raising an error if the SID exceeds the size of the
+current symbol table.
+
+To handle annotations, we'll need a recursive function expanding a sequence of
+symbol tokens:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SSymTok*]
+++++
+
+
+=== Value Expansion
+
+Turning to the generic syntax-tree domain, expansion of one *STree* is
+(for Ion 1.0 at least) a simple pass-through:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_STree]
+++++
+
+Note that this function returns **Value**{asterisk}.
+This is more 1.1-preparedness, anticipating an additional branch for
+E-expressions, which can return any number of items.
+
+We expand a sequence of **STree**s by simple recursion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_STree*]
+++++
+
+Expanding **SValue** requires separate expansion of its annotations
+and content, combining the results into a **Value**:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SValue]
+++++
+
+To expand *SContent* we must perform a type-switch.
+The <<simple,simple domains>> **NullNull**, **Bool**, **Int**, and **String**
+pass through easily by being re-wrapped as **Content**.
+Anything else can contain symbol tokens to be expanded, and in each case we
+downcast the content, call a type-specific function, then rewrap the result.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SContent]
+++++
+
+Expanding *SSymbol* requires distinguishing `symbol.null`:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SSymbol]
+++++
+
+Expanding lists and sexps is similar, with recursion on the sequence of elements:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SList]
+\newline\newline
+include::{modeltex}[tag=expand_SSexp]
+++++
+
+To handle **SStruct** with the same pattern, we'll use a helper to expand its
+sequence of fields:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SStruct]
+++++
+
+Field expansion takes a bit more work.
+We expand the field's name and tree using the appropriately-typed variants of
+stem:[\cal X], but the latter can return multiple values (thank you, macros!).
+To handle those, we need a little recursive function that creates a same-named
+*Field* for each one.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SField]
+++++
+
+With that, expansion of a sequence of fields is simple recursion:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=expand_SField*]
+++++
+
+At this point we have fully denoted the expansion of syntax trees,
+and can turn to the top level.
+
+
+[id=eg_TE]
+=== Top-Level Evaluation
+
+TIP: Readers will likely find this section to be the most challenging of the
+whole model. Don't hesitate to go through it in multiple passes.
+
+After each *TSTree* produced by the parser is expanded, we must handle any
+directives that result.  We refer to this phase as _evaluation_.
+
+Evaluation of <<stx-top,top-level syntax>> requires us to use a new technique
+in our model, since it involves changes to the environment.
+In particular, the evaluation of a directive must produce a new environment,
+but no application values.
+
+Being purely functional, lambda calculus has no inherent concept of
+"`imperative`" concerns such as order of evaluation and mutation of state.
+The conventional way to model these in denotational semantics is via
+_continuation-passing style_.  CPS is a design pattern that effectively emulates
+those features in a purely functional manner by passing around _continuations_—functions
+that model "`what happens next`" (that is, order of operations), and supplying
+them with the computational state that results from each step of work.
+
+We've managed to avoid continuations so far because Ion only needs these
+features at top level, but we can no longer delay the inevitable.
+Diving right in, let's examine the type of our continuation functions:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TContinuation]
+++++
+
+This functional domain defines the shape of our top-level continuations.
+In general, the arguments to a continuation are the products of a single
+"`step`" of the overall computation, with regard to both typical procedural
+results and the program's mutable state.
+The job of a continuation is to combine those single-step results with
+everything that happens _before and after_ that step, returning the result of
+_the overall computation_.
+Here, the *Environment* denotes the mutable state, the given **Value**s
+are the single step results, and the resulting **Value**s denote the expansion
+of the entire stream.
+
+What does a single step look like?
+Let's see how to expand a single top-level syntax tree, using overlines like
+stem:[\overline{\cal E}] and stem:[\overline{rv}]
+to indicate top-level functions and variables.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TE_TSTree]
+++++
+
+When we encounter an IVM, we compile it into a new environment using
+stem:[{\cal C}_{\mbox{\scriptsize IVM}}] (see xref:compile-ivm[xrefstyle=short]),
+passing it to the continuation stem:[\kappa] along with an empty value sequence,
+since the IVM produces no application data.
+Here we've emulated mutation of the environment:
+the current environment stem:[\rho] not passed to the continuation and is
+therefore inaccessible to any remaining work it encapsulates.
+
+All other top-level syntax is expanded using stem:[\cal X] and the
+current environment stem:[\rho].
+After expansion, we evaluate the resulting sequence of values.
+
+To evaluate one top-level *Value*, we must check to see if it's an LST directive:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=isLocalSymbolTable]
+\newline\newline
+include::{modeltex}[tag=TE_Value]
+++++
+
+Evaluating an LST is similar to the IVM case, but here we call
+stem:[{\cal C}_{\mbox{\scriptsize LST}}] (see xref:compile-lst[xrefstyle=short])
+to compile the struct into a new environment.
+In the *else* clause, the expanded _v_ is application data, so we pass it to
+the continuation along with the unaltered environment.
+
+These definitions show that an LST directive is fully expanded using the
+environment in effect when it begins.
+The locally-declared symbols have no effect on the encoding of any part of the
+enclosing struct.
+Their scope only starts with the next top-level syntax tree.
+
+In accordance with continuation-passing style, variants of
+stem:[\overline{\cal E}] never return results "`directly`": they always either
+delegate to another variant, or invoke the continuation stem:[\kappa]
+with the next-current environment and any application values this step produces.
+The continuation is responsible for assembling those results with everything
+that happened previously, and anything that happens afterward, so the **Value**s
+returned from the continuation
+(and thus by stem:[\overline{\cal E}]) denote
+the expansion of _the entire stream_.
+
+This may become more clear by considering the evaluation of multiple top-level
+values:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TE_Value*]
+++++
+
+Here we have our most complex denotation yet, so let's break it down.
+
+* The *if* and *then* clauses detect and handle the empty-sequence base case:
+when given no top-level value, the environment is unchanged and no data
+is produced.
+* When the sequence is non-empty, we evaluate (with stem:[\overline{\cal E}])
+its head (stem:[\mbox{\it v\/}^{\ast}\!\downarrow_{0}]) using the
+current environment stem:[\rho] and a locally-defined continuation, which will
+be invoked with the _next_ environment (stem:[\rho_1]) and any application values
+that result (stem:[\mbox{\it v\/}^{\ast}_{1}]).
+* The first local continuation is responsible for evaluating the tail of the
+stream (stem:[{\mbox{\it v\/}^{\ast}}\dagger1]) via
+self-recursion on stem:[\overline{{\cal E}^{\ast}}], using whatever
+environment resulted from expanding the head (stem:[\rho_1]).
+* Those results are passed to a second local continuation, which receives the
+environment in effect at the end of the tail (stem:[\rho_2]), and the tail's
+expanded application data   (stem:[\mbox{\it v\/}^{\ast}_{2}]).
+To produce the overall results, it calls the original continuation stem:[\kappa]
+with that final environment and the results of this step: the concatenation of
+the head and tail expansions
+(stem:[\mbox{\it v\/}^{\ast}_{1}\S\mbox{\it v\/}^{\ast}_{2}]).
+
+This demonstrates how local continuations are used to break a computation down
+into steps, receiving incremental state and results, invoking the next step
+of computation, then returning the final, overall results via a continuation
+provided by the caller.
+
+We still need to tie the top-level iteration to the parser by walking the
+*ParseStream* it produces:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=TE_ParseStream]
+++++
+
+We start by invoking the current *ParseStream* _p_, passing it the current Ion
+version so the parser knows how to interpret the next bytes of input.
+The result is optional, and the *else* clause handles the EOF situation trivially.
+
+The recursive clause is structurally similar to the one above, but here we get
+the first syntax tree via
+stem:[\mbox{\it step}!\!\downarrow_{\mbox{\scriptsize tree}}]
+and the next *ParseStream* via
+stem:[\mbox{\it step}!\!\downarrow_{\mbox{\scriptsize next}}].
+
+With this method, we can evaluate an entire document, once we've converted it
+into a parse stream, and acquired a boostrap environment and continuation.
+That's the job of the *Evaluator* domain:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Evaluator]
+++++
+
+As discussed in xref:parsing[xrefstyle=short], we are not defining parsing
+functions in this article, so we can't define an entire *Evaluator*.
+Instead, we can produce one, given a *Parser*:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=mk_Evaluator]
+++++
+
+This function takes a *Parser* _p_ and produces a function in the *Evaluator*
+domain.
+The latter in turn takes a *Document* _d_ and a *Catalog* _c_, then invokes
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}]
+with an initial *ParseStream* stem:[p_0], *Environment* stem:[\rho_0],
+and *TContinuation* stem:[\kappa_0].
+The former is generated by our abstract parser from the input document.
+The initial environment contains the given catalog, and is started in Ion 1.0
+mode by using the 1.0 system module.
+The initial continuation, destined to receive the final expansion results, is
+trivial: nothing needs to happen before or after the call to
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf ParseStream}}],
+so it discards the final environment stem:[\rho] and
+returns the accumulated application data.
+
+We've now concluded the denotation functions specifying the expansion of
+symbol IDs and the affect of encoding directives on the environment.
+However, we've glossed over the mechanics of those directives by using some
+helper functions we've yet to define.
+Before we can address those details, let's discuss the modules
+that directives can import.
+
+
+[id=catalog]
+== Modules and Catalogs
+
+In general, a *Module* is anonymous and can be associated with various names in
+different contexts.
+Factoring out names, a module consists of its specification version
+(that is, the version of Ion that defines its meaning), and its exported symbol
+table:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Module]
+++++
+
+Note the use of **Unicode?**{asterisk}: a sequence of optional *Unicode*
+entries, where absence represents null or malformed entries in the symbol table.
+
+
+=== Shared Modules
+
+A shared module wraps a module with a name and a version:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=SharedModule]
+++++
+
+In Ion 1.0, shared modules appear in the form of shared symbol tables.
+Ion defines the
+https://amazon-ion.github.io/ion-docs/docs/symbols.html#shared-symbol-tables[
+standard serialization for SSTs], which we can compile into the
+*SharedModule* model:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=isSST]
+\newline\newline
+include::{modeltex}[tag=compile_SST]
+++++
+
+Compiling a SST requires normalizing its meaningful fields,
+checking presence, type, and nullness.
+We'll use stem:[\cal N] as the name of normalization helper functions.
+For `name` we return the text of non-null **String**s, normalizing everything
+else to the empty string:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=normalize_name]
+++++
+
+For `version` we normalize to 1 when absent, malformed, or less than one:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=normalize_version]
+++++
+
+For `symbols` we normalize the field to its sequence of values, which is empty
+if the field isn't an actual list:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=normalize_list]
+++++
+
+To complete the new module, we must compile the `symbols` list into a *SymTok*
+sequence.
+This takes some attention because of the rules regarding equivalence of absent
+or malformed imported symbols.
+These are not equivalent to `$0`, so we cannot return *Sym0*; we must instead
+construct an *AbsentSym* that holds the module's name and symbol's index
+within it.
+The latter forces us to keep a counter _i_ during the recursive traversal:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=compile_SST_symbols]
+++++
+
+
+=== Catalogs
+
+A catalog is just a sequence of shared modules.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=Catalog]
+++++
+
+What's tricky is implementing the "`best match`" semantics required by the Ion
+specification: if there's no exact match to the requested version, we must
+return the largest version available.
+First, we need to unwrap the Catalog:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=bestModule_Catalog]
+++++
+
+Having done that, we recursively walk the module sequence, returning either an
+exact match for the name/version, or the highest version, or nothing.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=bestModule_SMs]
+++++
+
+There are several cases to account for here.
+If the head entry (stem:[{\mbox{\it s\/}^{\ast}}\!\downarrow_0]) has a different
+name, we return the best-match from the tail (stem:[s^{\ast}_1]).
+Otherwise, the name matches, so if the version matches _or_ no match in the
+tail is present, we return the head.
+Otherwise, if the best-match in the tail (stem:[s^{\ast}_1!]) has the requested
+version, or has a larger version than the head, we return that.
+Otherwise, the head is the best we've got.
+
+In some contexts, we need to ensure we find an exact match to the requested
+version.  This is somewhat easier to accomplish, and we can signal an error when
+no match is found:
+
+
+[{denotation}]
+++++
+include::{modeltex}[tag=exactModule_Catalog]
+\newline\newline
+include::{modeltex}[tag=exactModule_SMs]
+++++
+
+[id=system-module]
+=== The System Module
+
+The Ion specification defines built-in symbols required to encode directives.
+These are packaged in the _system module_ for a given Ion version:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=systemSymbols_1_0]
+\newline\newline
+include::{modeltex}[tag=systemModule]
+++++
+
+For Ion 1.0 this is straightforward; in Ion 1.1 this will be expanded to include
+a number of _system macros_ upon which user-provided macros can be defined.
+
+
+[#symtabs]
+== Compiling Directives
+
+When top-level evaluation detects a directive, it must be turned into a new
+environment used for the following top-level syntax trees.
+We refer to the process of generating a new environment as _compilation_.
+
+The compilation of directives involves some of the more lengthy functions
+in this denotational model. The specified algorithms include a fair
+amount of type-checking and default values to ensure that even nonsensical
+directives have a well-defined and stable interpretation across implementations.
+Put another way, the specification must leave nothing unspecified, so that
+whatever nonsense appears inside an LST directive, all
+implementations will behave the same way.
+
+
+[#compile-ivm]
+=== Ion Version Markers
+
+Compiling an IVM is simple, because the environment that follows an IVM is simple.
+It retains the current environment's catalog, but replaces the system module
+with that of the new Ion version.
+Any document-declared symbols in the environment are discarded.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=compile_IVM]
+++++
+
+
+[#compile-lst]
+=== Local Symbol Tables
+
+Unsurprising, compiling a local symbol table is much more complicated.
+The resulting environment retains the current system module, but replaces
+the existing document-declared symbols with a new sequence comprised of both
+the imported and locally-defined parts.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=compile_LST]
+++++
+
+Here we encounter the first of many null checks. In particular, top-level
+`$ion_symbol_table::null.struct` is equivalent to `$ion_symbol_table::{}`.
+Otherwise, we produce the new symbol table by concatenating the imported symbols
+(stem:[i^{\ast}]) and the locally-declared symbols (stem:[s^{\ast}]).
+
+The former requires some special handling.
+If `imports` is the symbol `$ion_symbol_table`, we return the current local
+symbol table, per the little-known
+https://amazon-ion.github.io/ion-docs/docs/symbols.html#imports["`local symbol
+table extension`" feature].
+Anything in the `symbols` field is added to the end.
+
+In the usual case, we normalize both fields to a sequence of values, then
+compile them using distinct helper functions.
+What follows is effectively a recursive-descent process over the
+directive's fully-expanded *Struct*.
+
+TIP: At this point it may be worth reviewing the definitions of
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf TSTree}}] and
+stem:[\overline{\cal E}_{\mbox{\scriptsize\bf Value}}] and
+in xref:eg_TE[xrefstyle=short].
+
+
+==== Compiling Locally-Declared Symbols
+
+Starting with the easy part, we compile an element of the `symbols` list
+into a *SymTok*:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=compile_LST_symbol]
+++++
+
+For content that is a *String* and not null, we extract the Unicode and rewrap
+it.  All other values produce `$0`.
+
+
+==== Compiling Imported Symbols
+
+We follow similar patterns for the `imports` entries.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=compile_LST_imports]
+++++
+
+As expected, we recurse through the elements of stem:[v^{\ast}], compiling
+non-null **Struct**s and ignoring the rest.  To compile one such struct, we
+delegate to stem:[\cal C_{\mbox{\scriptsize import}}] below.
+
+As with SSTs, we need to normalize fields;
+we've handled the `name` and `version` already.
+For `max_id` we normalize to stem:[\langle \rangle] when absent, malformed, or
+less than zero:
+
+[{denotation}]
+++++
+include::{modeltex}[tag=normalize_max_id]
+++++
+
+To compile one import-struct, we lookup and normalize the meaningful fields,
+perform a catalog lookup, then produce a sequence of **SymTok**s from the
+retrieved module.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=compile_import]
+++++
+
+First, we ignore entries with malformed/absent names (which have been normalized
+to empty), as well as the name `$ion`; you cannot explicitly import a system
+symbol table.
+
+If _m_ is present, a valid `max_id` was given, so we call _bestModule_
+to search the catalog for the best match to the name and version;
+it returns an optional *SharedModule* _mod_.
+When a match is present, we extract its sequence of exported **SymTok**s, otherwise
+we substitute the empty sequence.  We then use the upcoming _enforceMaxId_
+to adjust the length per the `max_id`.
+
+When there's no valid `max_id` we require an exact match; remember that
+_exactModule_ will signal an error if no exact match exists.
+This time, we don't need to adjust the length of the module's *SymTok* sequence.
+
+// TODO update text
+The best-match case calls _enforceMaxId_ to ensure the import uses exactly
+`max_id` **SymTok**s.
+If the given stem:[t^{\ast}] is shorter than that, we (recursively) pad the end
+with *AbsentSym*; if it's longer, we truncate to the right length.
+
+[{denotation}]
+++++
+include::{modeltex}[tag=enforceMaxId]
+++++
+
+
+[#issues]
+== Known Issues
+
+This denotational model is currently defective with respect to the published Ion
+specification in the following ways.
+
+
+[id=iss-structorder]
+=== Improper ordering of struct fields
+
+Ion structs are unordered, but this model currently denotes them as sequences.
+This means that the same field-values in different order will _not_ be
+equivalent per lambda calculus.  Denoting this properly is possible (by
+constructing the set of all permutations) but requires a fair amount of code.
+
+
+=== Repeated text in SSTs should become undefined
+
+[quote]
+____
+When mapping from string to symbol ID, there may be multiple associated IDs (the
+same string could appear twice as children of the symbols field).
+Implementations MUST select the lowest known ID, and all other associated IDs
+MUST be handled as if undefined.
+____
+
+It's a bit unclear why the "MUST be handled as if undefined" clause exists,
+but the model doesn't specify it.
+
+
+[appendix]
+== The Full Denotation
+
+=== Legend
+
+This table summarizes the various glyphs, conventions, and low-level functions
+used throughout the denotation.
+
+// TODO (?) IF; LET; LETREC; AND/OR/NOT
+
+[cols="^.^1,3,5"]
+|===
+| Notation | Meaning | Description
+
+|stem:[\equiv]
+|Definition
+|Indicates that two equations or notations are defined to be equivalent
+
+|stem:[\mbox{\it{in}\small\bf Domain}(v)]
+|Union domain injection
+|Wraps or lifts a value _v_ into a union domain.
+
+|stem:[v\mid_{\mbox{\scriptsize\bf Domain}}]
+|Union domain projection
+|Unwraps or lowers a union domain value into a component domain.
+
+
+|stem:[\mbox{\bf Domain*}]
+|Sequence domain
+|Trailing asterisk in a domain name indicates a sequence of zero or more
+elements of the base domain
+
+|stem:[\mbox{\it name}^{\ast}]
+|Sequence indicator
+|Superscript asterisk decorates a _name_ to indicate that holds, processes,
+or returns a sequence of things
+
+|stem:[\langle ... \rangle]
+|Sequence construction
+|Delimits the elements of a sequence
+
+|stem:[\#]
+|Sequence length
+|Returns the number of elements in a sequence.
+stem:[\#\langle v_1 ... v_n \rangle ~\equiv~ n]
+
+|stem:[\S]
+|Sequence concatenation
+|Joins two sequences.
+stem:[\langle v_0 ... v_m \rangle \S \langle v_{m+1} ... v_n \rangle ~\equiv~
+\langle v_0 ... v_n \rangle]
+
+|stem:[\downarrow]
+|Sequence/tuple element selection
+|Extracts one element of a sequence.
+stem:[\langle v_0 ... v_n \rangle\!\downarrow_i ~\equiv~ v_i]
+
+Also used to extract a field from a tuple by name.
+
+|stem:[\dagger]
+|Sequence "`tail`" function
+|Returns elements from the end of a sequence.
+stem:[\langle v_0 ... v_n \rangle \dagger i ~\equiv~ \langle v_i ... v_n \rangle]
+
+
+|stem:[\mbox{\bf Domain?}]
+|Option domain
+|Trailing *?* in a domain name indicates an optional value; a sequence of at
+most one element of the base domain
+
+|stem:[\interrobang]
+|Option presence check
+|Returns true iff the option contains an element.
+stem:[v\interrobang ~\equiv~ \#v = 1]
+
+|stem:[!]
+|Option element selection
+|Returns the sole element of an option.
+stem:[v!  ~\equiv~  v \downarrow_0]
+
+|stem:[\cong]
+|Symbol matching
+|Compares an symbolic element to a Unicode string
+
+|stem:[\odot]
+|Struct lookup
+|Retrieves value(s) from a struct by Unicode field name
+
+|stem:[\cal X]
+|Expansion function
+|Transforms syntax trees into Ion data model elements
+
+|stem:[\cal E]
+|Evaluation function
+|Evaluates directives discovered at top-level
+
+|stem:[\cal C]
+|Compilation function
+|Transforms expanded data of a directive into its denotation/meaning
+
+|stem:[\cal N]
+|Normalization function
+|Normalizes the value of a field
+
+|stem:[\kappa]
+|Greek letter kappa
+|Variable name used for continuations
+
+|stem:[\rho]
+|Greek letter rho
+|Variable name used for environments
+
+|===
+
+=== Domains
+
+[{denotation}]
+++++
+include::{modeltex}[tag=domains]
+++++
+
+=== Constants
+
+[{denotation}]
+++++
+include::{modeltex}[tag=constants]
+++++
+
+=== Functions
+
+[{denotation}]
+++++
+include::{modeltex}[tag=functions]
+++++

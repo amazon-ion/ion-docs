@@ -1,0 +1,8 @@
+[bibliography]
+== References
+
+[[[lambda]]] Henk Barendregt, Erik Barendsen.  Introduction to Lambda Calculus.  Revised Edition March 2000.
+https://www.academia.edu/18746611/Introduction_to_lambda_calculus
+
+[[[lisp]]] Christian Queinnec.  Lisp in Small Pieces. 1996.
+https://www.cambridge.org/core/books/lisp-in-small-pieces/66FD2BE3EDDDC68CA87D652C82CF849E
