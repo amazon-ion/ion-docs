@@ -1,4 +1,7 @@
-(module display "/fusion"
+// Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+(module util "/fusion"
   '''
 Miscellaneous things that should really be provided by Fusion.
   '''
