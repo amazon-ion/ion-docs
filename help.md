@@ -16,6 +16,10 @@ If you need help with Ion or want to help by contibuting back to Ion, the inform
 
 Each [library](libs.html) repo has a contributing file that provides instructions for how to contribute to that library. Also note that all Amazon Ion open source projects adhere to the [Amazon Open Source Code of Conduct](https://aws.github.io/code-of-conduct.html).
 
+## Support
+
+Engage with the community on [Discord]({{ site.discord.invite_url }}).
+
 <br/>
 
 ## FAQs
