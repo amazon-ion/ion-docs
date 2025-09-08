@@ -1,7 +1,7 @@
 ---
 layout: news_item
 title: "Ion Discord Server Launched"
-date: 2025-08-01
+date: 2025-09-08
 categories: news community
 ---
 
