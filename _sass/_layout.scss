@@ -57,6 +57,25 @@
   font-size: 15px;
   color: $grey-color;
   text-align: center;
+
+  .social-links {
+    margin: 10px 0;
+
+    .discord-link {
+      color: #5865F2;
+      text-decoration: none;
+      display: inline-block;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: #4752C4;
+      }
+
+      svg {
+        vertical-align: middle;
+      }
+    }
+  }
 }
 
 

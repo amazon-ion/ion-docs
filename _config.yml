@@ -19,3 +19,7 @@ plugins:
 # Don't clobber things built into ./_site/books by our MdBookGenerator plugin
 keep_files:
   - books
+
+# Discord server invite link
+discord:
+  invite_url: "https://discord.gg/2cbJNjGU"

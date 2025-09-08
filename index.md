@@ -28,6 +28,7 @@ a decade, and we believe others will benefit as well.
 **Community Supported:** [D][mir-ion] -- [PHP][ext-ion] -- [Ion Object Mapper for .NET][dotnet-object-mapper]<br>
 **Related Projects:** [Ion Hash][ion-hash] -- [Ion Schema][ion-schema]<br>
 **Tools:** [Ion CLI][ion-cli] -- [Hive SerDe][ion-hive-serde]<br>
+**Support:** [Discord]({{ site.discord.invite_url }})<br>
 
 <br>
 
