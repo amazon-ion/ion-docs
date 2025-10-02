@@ -126,28 +126,10 @@ In this example, the writer switches to FlexSym Mode before encoding `foo` so it
 │  │        ┌─── Throwaway field name
 │  │        │  ┌─── Mode switch opcode 0xEE (switches to FlexSym Mode)
 │  │        │  │  ┌─── FlexSym: -4 (3 UTF-8 bytes follow)
-│  │        │  │  │           ┌─── Field name: FlexSym 11 ($11) [FlexSym Mode]
-│  │        │  │  │   f  o  o │
-DB 15 61 01 01 EE FB 66 6F 6F 17 61 02 17 61 03
-      └─┬─┘          └──┬───┘    └─┬─┘    └─┬─┘
-        1            3 UTF-8       2        3
-                      bytes
-```
-
-##### Switching back to SID Mode while encoding `{$10: 1, foo: 2, $11: 3}`
-In this example, the writer switches to FlexSym Mode, then back to SID Mode.
-This is possible, but not recommended.
-```
-┌──── An opcode in the range 0xD0-0xDF indicates a length-prefixed struct
-│  ┌─── Field name: FlexUInt 10 ($10) [SID Mode]
-│  │        ┌─── Throwaway field name
-│  │        │  ┌─── Mode switch opcode 0xEE (switches to FlexSym Mode)
-│  │        │  │  ┌─── FlexSym: -4 (3 UTF-8 bytes follow)
-│  │        │  │  │                 ┌─── Throwaway field name
-│  │        │  │  │                 │  ┌─── Mode switch opcode 0xEE (switches to SID Mode)
-│  │        │  │  │   f  o  o       │  │  ┌─── Field name: FlexUInt 11 ($11) [SID Mode]
-DF 15 61 01 01 EE FB 66 6F 6F 61 02 01 EE 17 61 03
-      └─┬─┘          └──┬───┘ └─┬─┘          └─┬─┘
-        1            3 UTF-8    2              3
+│  │        │  │  │                 ┌─── Field name: FlexSym 11 ($11) [FlexSym Mode]
+│  │        │  │  │   f  o  o       │
+DB 15 61 01 01 EE FB 66 6F 6F 61 02 17 61 03
+      └─┬─┘          └──┬───┘ └─┬─┘    └─┬─┘
+        1            3 UTF-8    2        3
                       bytes
 ```
