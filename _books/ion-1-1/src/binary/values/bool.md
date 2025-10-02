@@ -2,7 +2,7 @@
 
 `0x6E` represents boolean `true`, while `0x6F` represents boolean `false`.
 
-`0xEB 0x00` represents `null.bool`.
+`0x8F 0x01` represents `null.bool`.
 
 ##### Encoding of boolean `true`
 ```
@@ -16,8 +16,8 @@
 
 ##### Encoding of `null.bool`
 ```
-┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+┌──── Opcode 0x8F indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: boolean
 │  │
-EB 00
+8F 01
 ```

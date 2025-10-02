@@ -5,7 +5,7 @@
 If the high nibble of the opcode is `0xA_`, it represents a symbol whose text follows the opcode. The low nibble of the
 opcode indicates how many UTF-8 bytes follow. Opcode `0xA0` represents a symbol with empty text (`''`).
 
-`0xEB x06` represents `null.symbol`.
+`0x8F 07` represents `null.symbol`.
 
 ##### Encoding of a symbol with empty text (`''`)
 ```
@@ -26,54 +26,78 @@ AE 66 6F 75 72 74 65 65 6E 20 62 79 74 65 73
 
 ##### Encoding of a symbol with 24 bytes of inline text
 ```
-┌──── Opcode FA indicates a variable-length symbol with inline text
+┌──── Opcode F9 indicates a variable-length symbol with inline text
 │  ┌─── Length: FlexUInt 24
 │  │   v  a  r  i  a  b  l  e     l  e  n  g  t  h     e  n  c  o  d  i  n  g
-FA 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
+F9 31 76 61 72 69 61 62 6C 65 20 6C 65 6E 67 74 68 20 65 6E 63 6f 64 69 6E 67
       └────────────────────────────────┬────────────────────────────────────┘
                                   UTF-8 bytes
 ```
 
 ##### Encoding of `null.symbol`
 ```
-┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+┌──── Opcode 0x8F indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: symbol
 │  │
-EB 06
+8F 07
 ```
 
 
 ### Symbols With a Symbol Address
 
-Symbol values whose text can be found in the local symbol table are encoded using opcodes `0xE1` through `0xE3`:
+Symbol values whose text can be found in the local symbol table are encoded using opcodes `0x50` through `0x57`.
 
-* `0xE1` represents a symbol whose address in the symbol table (aka its symbol ID) is a 1-byte
-[`FixedUInt`](../primitives/fixed_uint.md) that follows the opcode.
-* `0xE2` represents a symbol whose address in the symbol table is a 2-byte [`FixedUInt`](../primitives/fixed_uint.md) that follows
-the opcode.
-* `0xE3` represents a symbol whose address in the symbol table is a [`FlexUInt`](../primitives/flex_uint.md) that follows the opcode.
+The opcodes `0x50` through `0x57` share the same 5 most-significant bits. The 3 least-significant bits are used as the
+3 least-significant bits of the symbol ID.
+The opcode is followed by a `FlexUInt`, which, once decoded, represents the most-significant bits of the symbol ID.
 
-Writers MUST encode a symbol address in the smallest number of bytes possible. For each opcode above, the symbol
-address that is decoded is biased by the number of addresses that can be encoded in fewer bytes.
+To get the symbol ID from the opcode and `FlexUInt` is simple, and can be implemented using bitwise operations or simple arithmetic operations.
+```text
+// Given an `opcode` and `flexUInt`...
+let lsb = opcode & 0b111       // or opcode - 0x50
+let msb = flexUInt << 3        // or flexUInt * 8
+let symbolId = msb | lsb       // or msb + lsb
+```
+The reverse transformation is also simple:
+```text
+// Given `symbolId`...
+let opcode = 0x50 | (symbolId & 0b111)   // or 0x50 + (symbolId % 8)
+let flexUInt = symbolId >>> 3            // or symbolId / 8 
+```
 
-| Opcode | Symbol address range | Bias   |
-|--------|----------------------|--------|
-| `0xE1` | 0 to 255             | 0      |
-| `0xE2` | 256 to 65,791        | 256    |
-| `0xE3` | 65,792 to infinity   | 65,792 |
+The number of bytes required to encode symbol addresses is as follows:
+
+| SID Range                  | Encoded size, including opcode |
+|----------------------------|-------------------------------:|
+| `$0`..`$1023`              |                              2 |
+| `$1024`..`$131071`         |                              3 |
+| `$131072`..`$16777215`     |                              4 |
+| `$16777216`..`$2147483647` |                              5 |
+
+This table only goes to ~2 billion, but the encoding itself does not have a limit on the number of symbol IDs.
+However, most Ion implementations will have some upper bound on the number of symbols that depends on the implementation language and/or the underlying hardware.
 
 
-### System Symbols
-
-System symbols (that is, symbols defined in the system module) can be encoded using the `0xEE` opcode followed by a 1-byte `FixedUInt` representing an index in the [system symbol table](../../modules/system_module.md#system-symbols).
-
-Unlike Ion 1.0, symbols are not required to use the lowest available SID for a given text, and system symbols 
-_MAY_ be encoded using other SIDs.
-
-##### Encoding of the system symbol `$ion`
-```plain
-┌──── Opcode 0xEF indicates a system symbol or macro invocation
-│  ┌─── FixedUInt 1 indicates system symbol 1
+##### Encoding of symbol with SID 1 (`$ion`)
+```
+┌──── Opcode 0x51 indicates a symbol with SID; low 3 bits = 1
+│  ┌─── FlexUInt 0 represents the high bits (0 << 3 = 0)
 │  │
-EE 01
+51 01
+```
+
+##### Encoding of symbol with SID 10
+```
+┌──── Opcode 0x52 indicates a symbol with SID; low 3 bits = 2  
+│  ┌─── FlexUInt 1 represents the high bits (1 << 3 = 8)
+│  │
+52 03
+```
+
+##### Encoding of symbol with SID 1000
+```
+┌──── Opcode 0x50 indicates a symbol with SID; low 3 bits = 0
+│  ┌─── FlexUInt 125 represents the high bits (125 << 3 = 1000)
+│  │
+50 FB 01
 ```

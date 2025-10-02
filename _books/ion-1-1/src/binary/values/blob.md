@@ -2,7 +2,7 @@
 
 Opcode `FE` indicates a blob of binary data. A `FlexUInt` follows that represents the blob's byte-length.
 
-`0xEB x07` represents `null.blob`.
+`0x8F 08` represents `null.blob`.
 
 ### Example `blob` encoding
 ```
@@ -16,8 +16,8 @@ FE 31 49 20 61 70 70 6c 61 75 64 20 79 6f 75 72 20 63 75 72 69 6f 73 69 74 79
 
 ### Encoding of `null.blob`
 ```
-┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+┌──── Opcode 0x8F indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: blob
 │  │
-EB 07
+8F 08
 ```

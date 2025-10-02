@@ -5,14 +5,14 @@ Timestamps have two encodings:
 1. [**Short-form timestamps**](#short-form-timestamps), a compact representation optimized for the most commonly used precisions and date ranges.
 2. [**Long-form timestamps**](#long-form-timestamps), a less compact representation capable of representing any timestamp in the Ion data model.
 
-`0xEB x04` represents `null.timestamp`.
+`0x8F 0x05` represents `null.timestamp`.
 
 ##### Encoding of `null.timestamp`
 ```
-┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+┌──── Opcode 0x8F indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: timestamp
 │  │
-EB 04
+8F 05
 ```
 
 > [!NOTE]
@@ -367,7 +367,7 @@ Unlike the [short-form timestamp encoding](#short-form-timestamps), which is lim
 timestamps in the most commonly referenced timestamp ranges and precisions for which it optimizes,
 the long-form timestamp encoding is capable of representing any valid timestamp.
 
-The long form begins with opcode `0xF8`. A [`FlexUInt`](../primitives/flex_uint.md) follows indicating the number
+The long form begins with opcode `0xF7`. A [`FlexUInt`](../primitives/flex_uint.md) follows indicating the number
 of bytes that were needed to represent the timestamp. The encoding consumes the minimum number
 of bytes required to represent the timestamp. The declared length can be mapped to the timestamp’s
 precision as follows:
@@ -438,9 +438,9 @@ byte 0   |YYYY:YYYY|
 
 | Text                          | Binary                             |
 |-------------------------------|------------------------------------|
-| 1947T                         | `F8 05 9B 07`                      |
-| 1947-12T                      | `F8 07 9B 07 03`                   |
-| 1947-12-23T                   | `F8 07 9B 07 5F`                   |
-| 1947-12-23T11:22:33-00:00     | `F8 0F 9B 07 DF 65 FD 7F 08`       |
-| 1947-12-23T11:22:33+01:15     | `F8 0F 9B 07 DF 65 AD 57 08`       |
-| 1947-12-23T11:22:33.127+01:15 | `F8 13 9B 07 DF 65 AD 57 08 07 7F` |
+| 1947T                         | `F7 05 9B 07`                      |
+| 1947-12T                      | `F7 07 9B 07 03`                   |
+| 1947-12-23T                   | `F7 07 9B 07 5F`                   |
+| 1947-12-23T11:22:33-00:00     | `F7 0F 9B 07 DF 65 FD 7F 08`       |
+| 1947-12-23T11:22:33+01:15     | `F7 0F 9B 07 DF 65 AD 57 08`       |
+| 1947-12-23T11:22:33.127+01:15 | `F7 13 9B 07 DF 65 AD 57 08 07 7F` |

@@ -8,9 +8,9 @@ representing its coefficient. The width of the coefficient is the total length o
 of the exponent. It is possible for the coefficient to have a width of zero, indicating a coefficient of `0`. When
 the coefficient is present but has a value of `0`, the coefficient is `-0`.
 
-Decimal values that require more than 15 bytes can be encoded using the variable-length decimal opcode: `0xF7`.
+Decimal values that require more than 15 bytes can be encoded using the variable-length decimal opcode: `0xF6`.
 
-`0xEB 0x03` represents `null.decimal`.
+`0x8F 0x04` represents `null.decimal`.
 
 ##### Encoding of decimal `0d0`
 ```
@@ -42,9 +42,9 @@ Decimal values that require more than 15 bytes can be encoded using the variable
 
 ##### Variable-length encoding of decimal `1.27`
 ```
-┌──── Opcode F7 indicates a variable-length decimal
+┌──── Opcode F6 indicates a variable-length decimal
 │
-F7 05 FD 7F
+F6 05 FD 7F
    |  |  └─── Coefficient: FixedInt 127
    |  └───── Exponent: 1-byte FlexInt -2
    └─────── Decimal length: FlexUInt 2
@@ -71,8 +71,8 @@ F7 05 FD 7F
 
 ##### Encoding of `null.decimal`
 ```
-┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+┌──── Opcode 0x8F indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: decimal
 │  │
-EB 03
+8F 04
 ```
