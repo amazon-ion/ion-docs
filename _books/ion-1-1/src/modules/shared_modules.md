@@ -29,7 +29,7 @@ $ion_1_1::("org.example.geometry" 2
 )
 ```
 
-The system module provides a convenient macro ([`use`](../macros/system_macros.md#use)) to append a shared module to the encoding module.
+The `use` directive can be used to append a shared module to the encoding module.
 ```ion
 $ion_1_1
 (:use "org.example.geometry" 2)
@@ -41,4 +41,3 @@ $ion_1_1
 ### Compatibility with Ion 1.0
 
 Ion 1.0 shared symbol tables are treated as Ion 1.1 shared modules that have an empty macro table.
-

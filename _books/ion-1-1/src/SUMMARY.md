@@ -4,9 +4,8 @@
 - [What's new](./whats_new.md)
 - [Macros](macros.md)
     - [Macros by example](macros/macros_by_example.md)
-    - [Defining macros](macros/defining_macros.md) 
-    - [Special forms](macros/special_forms.md)
-    - [System macros](macros/system_macros.md)
+    - [Defining macros](macros/defining_macros.md)
+    - [Directives](macros/directives.md)
 - [Modules](modules.md)
     - [Defining modules](modules/defining_modules.md)
     - [Directives](modules/directives.md)
@@ -56,4 +55,3 @@
     users to see it.
 -->
 - [TODO](todo.md)
-    

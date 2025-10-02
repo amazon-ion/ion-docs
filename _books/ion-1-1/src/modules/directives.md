@@ -16,9 +16,11 @@ $ion::
 ```
 
 In Ion 1.1, there are three supported directive operations:
-1. [`module`](#module-directives)
-2. [`import`](#import-directives)
-3. [`encoding`](#encoding-directives)
+- [Directives](#directives)
+  - [Top-level bindings](#top-level-bindings)
+    - [`module` directives](#module-directives)
+    - [`import` directives](#import-directives)
+  - [`encoding` directives](#encoding-directives)
 
 ## Top-level bindings
 
@@ -28,7 +30,7 @@ Once created, module bindings at this level endure until the file ends or anothe
 Module bindings at the stream-level can be redefined.
 
 > [!TIP]
-> The [`add_macros`](../macros/system_macros.md#add_macros) and [`add_symbols`](../macros/system_macros.md#add_symbols)
+> The [`add_macros`](../macros/directives.md#add_macros) and [`add_symbols`](../macros/directives.md#add_symbols)
 > system macros work by redefining the default module (`_`) in terms of itself.
 
 This behavior differs from module bindings created inside another module;

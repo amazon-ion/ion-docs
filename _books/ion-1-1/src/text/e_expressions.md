@@ -13,8 +13,7 @@ Macro and module names follow the syntax rules for _identifier_ [symbol tokens](
 There may not be any whitespace from the start of the E-expression through to the end of the macro reference.
 
 Values in the E-expression body follow the same syntax as values in an [S-expression](values.md#s-expressions) body.
-E-expressions are not values, so they may not be annotated; to annotate the result of an e-expression use the 
-[`annotate`](../macros/system_macros.md#annotate) macro.
+E-expressions may be annotated.
 
 ```ion
 (:pi)              // Invokes the macro 'pi'
@@ -22,7 +21,7 @@ E-expressions are not values, so they may not be annotated; to annotate the resu
 (:constants::pi)   // Invokes the macro 'pi' from the module 'constants'
 
 (: pi)             // ERROR: whitespace is not permitted between '(:' and the macro reference
-foo::(:pi)         // ERROR: e-expression may not be annotated
+foo::(:pi)         // E-expression annotated with 'foo'
 ```
 
 E-expressions may also appear in structs in place of an entire name-value pair.
@@ -100,5 +99,3 @@ The arguments for a macro-shape use the same syntax as the arguments to any othe
 //            └──────────┬──────────┘
 //                       └── 4 macro-shaped arguments passed to `points`
 ```
-
-
