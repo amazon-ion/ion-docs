@@ -39,7 +39,7 @@ reader to parse any arguments that may follow. The parsing of arguments is descr
 Opcodes `0x48`-`0x4F` are extensible macro addresses, with an offset of 72.
 The opcodes `0x48` through `0x4F` share the same 5 most-significant bits. The 3 least-significant bits are used as the
 3 least-significant bits of the macro address.
-The opcode is followed by a `FlexUInt`, which, once decoded, represents the most-significant bits of the symbol ID.
+The opcode is followed by a `FlexUInt`, which, once decoded, represents the most-significant bits of the macro address.
 Finally, the offset of 72 is added.
 
 To get the macro address from the opcode and `FlexUInt` is straightforward, and can be implemented using bitwise operations or simple arithmetic operations.

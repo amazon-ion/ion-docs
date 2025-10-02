@@ -89,6 +89,7 @@ F0 61 01 F0 61 02 EF 61 03 EF
 ### Tagless-Element Lists
 
 Opcode `0x5B` indicates a tagless-element list. This is a compact encoding for homogeneous collections where all elements have the same type.
+The elements of the list can be a _primitive encoding_ or a _macro-shape_.
 
 The opcode is followed by:
 1. One or more bytes describing the tagless type:

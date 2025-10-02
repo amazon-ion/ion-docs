@@ -5,7 +5,7 @@
 If the high nibble of the opcode is `0xA_`, it represents a symbol whose text follows the opcode. The low nibble of the
 opcode indicates how many UTF-8 bytes follow. Opcode `0xA0` represents a symbol with empty text (`''`).
 
-`0x8F 07` represents `null.symbol`.
+`0x8F 0x07` represents `null.symbol`.
 
 ##### Encoding of a symbol with empty text (`''`)
 ```
