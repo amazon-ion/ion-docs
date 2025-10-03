@@ -15,7 +15,7 @@ indicated by opcode `0x6D`
 > In the Ion data model, float values are always 64 bits. However, if a value can be losslessly serialized
 > in fewer than 64 bits, Ion implementations may choose to do so.
 
-`0xEB 0x02` represents `null.float`.
+`0x8F 0x03` represents `null.float`.
 
 ##### Encoding of float `0e0`
 ```
@@ -57,8 +57,8 @@ double-precision 3.141592653589793
 
 ##### Encoding of `null.float`
 ```
-┌──── Opcode 0xEB indicates a typed null; a byte follows specifying the type
+┌──── Opcode 0x8F indicates a typed null; a byte follows specifying the type
 │  ┌─── Null type: float
 │  │
-EB 02
+8F 03
 ```
