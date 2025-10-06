@@ -23,16 +23,16 @@ An Ion 1.1 shared module.
 ```ion
 $ion_shared_module::
 $ion_1_1::("org.example.geometry" 2
-           (macros (macro point2d (x y) { x:(%x), y:(%y) })
-                   (macro polygon (point2d::points+) [(%points)]) )
+           (macros (macro point2d { x:(':?'), y:(int8::':?') })
+                   (macro polygon [(':?')]) )
            (symbols ["x", "y", "square", "circle"])
 )
 ```
 
-The system module provides a convenient macro ([`use`](../macros/system_macros.md#use)) to append a shared module to the encoding module.
+Ion 1.1 provides a convenient directive ([`use`](directives.md#use-directives)) to append a shared module to the encoding module.
 ```ion
 $ion_1_1
-(:use "org.example.geometry" 2)
+(:$ion use "org.example.geometry" 2)
 (:polygon (:: (1 4) (1 8) (3 6)))
 ```
 

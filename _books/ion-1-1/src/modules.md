@@ -64,9 +64,9 @@ This allows the module to be serialized using any version of Ion, and its meanin
 ```ion
 $ion_shared_module::
 $ion_1_1::
-("com.example.symtab" 3
-    (macros ...)
-    (symbols ...))
+(module "com.example.symtab" 3
+         (macros ...)
+         (symbols ...))
 ```
 
 The spec version of a local module is always the same as the spec version of its enclosing scope.
@@ -75,8 +75,7 @@ its spec version is the Ion version of the current segment.
 
 ```ion
 $ion_1_1
-$ion::
-(module foo
+(:$ion module foo
   // Module semantics specified by Ion 1.1
   ...
 )
@@ -84,14 +83,12 @@ $ion::
 // ...
 
 $ion_1_3
-$ion::
-(module foo
+(:$ion module foo
   // Module semantics specified by Ion 1.3
   ...
 )
 //...                  // Assuming no IVM
-$ion::
-(module bar
+(:$ion module bar
   // Module semantics specified by Ion 1.3
   ...
 )
@@ -101,5 +98,5 @@ $ion::
 
 Many of the grammatical elements used to define modules and macros are _identifiers_--symbols that do not require quotation marks.
 
-More explicitly, an identifier is a sequence of one or more ASCII letters, digits, or the characters `$` (dollar sign) or `_` (underscore), not starting with a digit. 
+More explicitly, an identifier is a sequence of one or more ASCII letters, digits, or the characters `$` (dollar sign) or `_` (underscore), not starting with a digit.
 It also cannot be of the form `$\d+`, which is the syntax for symbol IDs (for example: `$3`, `$10`, `$458`, etc.), nor can it be a keyword (`true`, `false`, `null`, or `nan`).

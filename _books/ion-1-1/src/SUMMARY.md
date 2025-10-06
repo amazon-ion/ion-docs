@@ -12,7 +12,7 @@
     - [Directives](modules/directives.md)
     - [Local modules](modules/local_modules.md)
     - [Encoding modules](modules/encoding_modules.md)
-    - [System module](modules/system_module.md)
+    - [System modules](modules/system_module.md)
     - [Shared modules](modules/shared_modules.md)
 - [Text encoding](text/encoding.md)
   - [Values](text/values.md)
