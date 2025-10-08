@@ -147,7 +147,7 @@ This would expand to `{ x: 2, y: 3 }`.
 ┌──── E-expression with macro address 0 (assuming point is macro 0)
 │  ┌─── Argument 1: integer 5
 │  │     ┌─── Argument 2: absent argument
-00 61 05 EB
+00 61 05 E0
 ```
 
 This would expand to `{ x: 5, y: 0 }` since the second argument is absent and `y` has a default value of 0.
@@ -157,7 +157,7 @@ This would expand to `{ x: 5, y: 0 }` since the second argument is absent and `y
 ┌──── E-expression with macro address 0
 │  ┌─── Argument 1: absent argument
 │  │  ┌─── Argument 2: integer 10
-00 EB 61 0A
+00 E0 61 0A
 ```
 This would expand to `{ y: 10 }` since the first argument is absent and `x` has no default value.
 

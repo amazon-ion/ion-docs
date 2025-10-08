@@ -7,7 +7,7 @@ Directives are system values that modify the encoding context.
 > The [_Directives_](../modules/directives.md) section explains what they are and how they are used.
 
 The binary encoding of directives is a specialized delimited container.
-Directives are opened using opcodes `0xE1` through `0xE7`.
+Directives are opened using opcodes `0xE1` through `0xE8`.
 They may contain any number of tagged values, and they are closed with the end-container opcode (`0xEF`).
 
 Directives may only occur at the top level of a stream and may not be annotated.
@@ -22,11 +22,12 @@ Directives may only occur at the top level of a stream and may not be annotated.
 | `0xE4` | `add_macros`  |
 | `0xE5` | `use`         |
 | `0xE6` | `module`      |
-| `0xE7` | `encoding`    |
+| `0xE7` | `import`      |
+| `0xE8` | `encoding`    |
 
 ### Examples
 
-#### Encoding of `(:$set_symbols "foo" "bar")`
+#### Encoding of `(:$ion set_symbols "foo" "bar")`
 ```
 ┌──── Opcode 0xE1 indicates a set_symbols directive
 │   ┌─── String "foo"
@@ -35,7 +36,7 @@ Directives may only occur at the top level of a stream and may not be annotated.
 E1  93 66 6F 6F  93 62 61 72  EF
 ```
 
-#### Encoding of `(:$add_symbols "baz")`
+#### Encoding of `(:$ion add_symbols "baz")`
 ```
 ┌──── Opcode 0xE2 indicates an add_symbols directive
 │   ┌─── String "baz"
@@ -43,7 +44,7 @@ E1  93 66 6F 6F  93 62 61 72  EF
 E2  93 62 61 7A  EF
 ```
 
-#### Encoding of `(:$module foo "com.amazon.foo.Bar" 1)`
+#### Encoding of `(:$ion module foo "com.amazon.Bar" 1)`
 ```
 ┌──── Opcode 0xE6 indicates a module directive
 │   ┌─── Symbol "foo" (assuming SID 10)
