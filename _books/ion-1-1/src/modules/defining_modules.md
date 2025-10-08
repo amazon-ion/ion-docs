@@ -39,7 +39,7 @@ Most commonly, a macro table entry is a definition of a new macro expansion func
 ```
 (See the [_Defining macros_](../macros/defining_macros.md) for details.)
 
-When no name is given, this defines an anonymous macro that can be referenced by its numeric
+When the value `null` is given for the macro name, this defines an anonymous macro that can be referenced by its numeric
 address (that is, its index in the enclosing macro table).
 
 Module names and `export` clauses can be intermingled with `macro` definitions inside the `macros` clause;
@@ -204,3 +204,13 @@ $ion_1_1
   (symbols m1 m2 ["s1", "s2"])
 )
 ```
+
+> [!NOTE]
+> Alternately, one could use the default module directives to avoid the boilerplate of creating bindings for the imported modules.
+> However, this has slightly different semantics because `use` also brings in the macros from the imported modules.
+> ```ion
+> $ion_1_1
+> (:$ion use "com.example.shared1" 1)
+> (:$ion use "com.example.shared2" 2)
+> (:$ion add_symbols "s1" "s2")
+> ```

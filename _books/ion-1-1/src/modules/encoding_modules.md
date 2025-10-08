@@ -108,9 +108,8 @@ For example:
 
 The default module, `_`, is an empty top-level module that is implicitly defined at the beginning of every stream.
 
-When resolving an unqualified macro name, readers first look for the corresponding macro definition in `_`.
-If it is not found in `_`, they will then look in [`$ion`](system_module.md).
-If it is still not found, the reader will raise an error.
+When resolving an unqualified macro name, readers look for the corresponding macro definition in `_`.
+If it is not found, the reader will raise an error.
 
 This makes it possible to leverage macros in a lightweight way;
 writers do not have to first name/define a custom module to house their macros,
@@ -164,18 +163,12 @@ $ion_1_1
 ## Default encoding module sequence
 
 At the beginning of a stream, the encoding module sequence contains two modules:
-1. the [default module](#the-default-module), `_`
-2. the [system module](system_module.md), `$ion`
+1. the [system module](system_module.md), `$ion`
+2. the [default module](#the-default-module), `_`
 
 Recall that a segment's symbol and macro tables are logical concatenations of those found in the segment's encoding modules.
 Because `_` is empty at the beginning of the stream,
 the stream's initial symbol and macro tables are identical to those of the system module, `$ion`.
-
-This is beneficial because it allows all system macros to be invoked from the stream's macro table
-[in a single byte](../binary/e_expressions.md#e-expression-with-the-address-in-the-opcode)
-rather than [the two-byte sequence](../binary/e_expressions#system-macro-invocations)
-needed to invoke them from the system macro table.
-In this way, a writer can define its macros and symbols in a maximally compact fashion at the head of the stream.
 
 ## Modifying active modules
 
