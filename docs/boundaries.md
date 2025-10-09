@@ -101,10 +101,10 @@ Anything that is not a numeric stop-character appearing immediately after a nume
 The following S-expressions, on the other hand, all contain 3 values, one of which is an operator symbol:
 
 ```ion
-(1 --123)       // minus sign is immediately preceded by another operator symbol character
-(1 *+inf)       // plus sign is immediately preceded by another operator symbol character
-(1 -2000T)      // minus sign cannot bind to a timestamp
-(1 +infx)       // +infx is not positive infinity, this is an operator and a symbol
+(1 --123)       // equivalent to (1 '--' 123)  - minus sign is immediately preceded by another operator symbol character
+(1 *+inf)       // equivalent to (1 '*+' inf)  - plus sign is immediately preceded by another operator symbol character
+(1 -2000T)      // equivalent to (1 '-' 2000T) - minus sign cannot bind to a timestamp
+(1 +infx)       // equivalent to (1 '+' infx)  - +infx is not positive infinity, this is an operator and a symbol
 ```
 
 To use an operator before a token that begins with `+` or `-`, use whitespace around the operator:
