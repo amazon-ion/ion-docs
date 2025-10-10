@@ -98,19 +98,35 @@ The Ion 1.1 System Symbol table _replaces_ rather than extends the Ion 1.0 Syste
 In Ion 1.1 Text, system symbols can never be referenced by symbol ID; `$1` always refers to the first symbol in the user symbol table.
 This allows the Ion 1.1 system symbol table to be relatively large without taking away SID space from the user symbol table.
 
-### Directives
+### System Macros
 
-Ion 1.1 includes seven directives that describe encoding metadata in an Ion stream. Their binary opcodes are listed below.
+| ID | Hex  | Text                                                          |
+|---:|:----:|:--------------------------------------------------------------|
+|  0 | 0x00 | [`none`](../macros/system_macros.md#none)                     |
+|  1 | 0x01 | [`values`](../macros/system_macros.md#values)                 |
+|  2 | 0x02 | [`default`](../macros/system_macros.md#default)               |
+|  3 | 0x03 | [`meta`](../macros/system_macros.md#meta)                     |
+|  4 | 0x04 | [`repeat`](../macros/system_macros.md#repeat)                 |
+|  5 | 0x05 | [`flatten`](../macros/system_macros.md#flatten)               |
+|  6 | 0x06 | [`delta`](../macros/system_macros.md#delta)                   |
+|  7 | 0x07 | [`sum`](../macros/system_macros.md#sum)                       |
+|  8 | 0x08 | [`annotate`](../macros/system_macros.md#annotate)             |
+|  9 | 0x09 | [`make_string`](../macros/system_macros.md#make_string)       |
+| 10 | 0x0A | [`make_symbol`](../macros/system_macros.md#make_symbol)       |
+| 11 | 0x0B | [`make_decimal`](../macros/system_macros.md#make_decimal)     |
+| 12 | 0x0C | [`make_timestamp`](../macros/system_macros.md#make_timestamp) |
+| 13 | 0x0D | [`make_blob`](../macros/system_macros.md#make_blob)           |
+| 14 | 0x0E | [`make_list`](../macros/system_macros.md#make_list)           |
+| 15 | 0x0F | [`make_sexp`](../macros/system_macros.md#make_sexp)           |
+| 16 | 0x10 | [`make_field`](../macros/system_macros.md#make_field)         |
+| 17 | 0x11 | [`make_struct`](../macros/system_macros.md#make_struct)       |
+| 18 | 0x12 | [`parse_ion`](../macros/system_macros.md#parse_ion)           |
+| 19 | 0x13 | [`set_symbols`](../macros/system_macros.md#set_symbols)       |
+| 20 | 0x14 | [`add_symbols`](../macros/system_macros.md#add_symbols)       |
+| 21 | 0x15 | [`set_macros`](../macros/system_macros.md#set_macros)         |
+| 22 | 0x16 | [`add_macros`](../macros/system_macros.md#add_macros)         |
+| 23 | 0x17 | [`use`](../macros/system_macros.md#use)                       |
 
-| ID  | Hex  | Text                                                   |
-|----:|:----:|:-------------------------------------------------------|
-| 225 | 0xE1 | [`set_symbols`](../macros/directives.md#set_symbols)   |
-| 226 | 0xE2 | [`add_symbols`](../macros/directives.md#add_symbols)   |
-| 227 | 0xE3 | [`set_macros`](../macros/directives.md#set_macros)     |
-| 228 | 0xE4 | [`add_macros`](../macros/directives.md#add_macros)     |
-| 229 | 0xE5 | [`use`](../macros/directives.md#use)                   |
-| 230 | 0xE6 | [`module`](../macros/directives.md#module)             |
-| 231 | 0xE7 | [`encoding`](../macros/directives.md#encoding)         |
 
 ----
 

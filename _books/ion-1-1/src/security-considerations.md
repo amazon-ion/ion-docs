@@ -10,6 +10,30 @@ This document addresses various types of attacks, assuming that it is not possib
 _The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED",  "MAY", and
 "OPTIONAL" in this document are to be interpreted as described in RFC 2119._
 
+## Data expansion denial-of-service
+
+An attacker could craft an input that is relatively small, but upon expansion, produces something thousands or millions
+of times larger.
+
+For many use cases, the expansion of a template macro will grow linearly with the size of its input. However, it is
+possible to create macros with expansions that grow at greater rates.
+
+For example, a [Billion laughs attack](https://en.wikipedia.org/wiki/Billion_laughs_attack)
+could exist for any data format with macro expansion, and it is certainly possible with Ion 1.1.
+
+```ion
+(:$ion add_macros (lol0 "lol"))
+(:$ion add_macros (lol1 [(:lol0), (:lol0), (:lol0), (:lol0), (:lol0), (:lol0), (:lol0), (:lol0), (:lol0), (:lol0),]))
+(:$ion add_macros (lol2 [(:lol1), (:lol1), (:lol1), (:lol1), (:lol1), (:lol1), (:lol1), (:lol1), (:lol1), (:lol1),]))
+(:$ion add_macros (lol3 [(:lol2), (:lol2), (:lol2), (:lol2), (:lol2), (:lol2), (:lol2), (:lol2), (:lol2), (:lol2),]))
+// ...
+
+(:lol9) // Could produce a billion "lol".
+```
+
+Implementations of Ion 1.1 _MUST_ have some mechanism by which to mitigate data expansion attacks, such as by capping the size of individual macros or the macro
+table as a whole.
+
 ## Data injection via shared modules
 
 Applications are not required to use [shared modules](modules/shared_modules.md). If an application does use shared 

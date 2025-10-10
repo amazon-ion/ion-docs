@@ -10,7 +10,7 @@ In this document, the fundamental construct we explore is the _macro
 definition_, denoted using an S-expression of the form `(name template)` where `name` must be a 
 symbol denoting the macro's name.
 
-NOTE: Macros can only be defined within directives like `$set_macros` or `$add_macros`, or within
+NOTE: Macros can only be defined within directives like `set_macros` or `add_macros`, or within
 [modules](../modules.md). We will mostly omit this context in the examples below to keep things simple.
 
 
@@ -158,14 +158,19 @@ Templates can contain E-expressions, which are expanded when the macro is define
 This allows you to use previously defined macros to construct your template.
 
 ```ion
-(:$set_macros
-  (prefix_suffix [(:?), (:?)])
-  (website_url (:prefix_suffix "https://www.amazon.com/" (:?)))
-)
+(:$ion set_macros (prefix_suffix [(:?), (:?)]))
+(:$ion add_macros (website_url (:prefix_suffix "https://www.amazon.com/" (:?))))
 ```
 
 The `website_url` macro's template contains an E-expression `(:prefix_suffix ...)` which is
 expanded when the macro is defined.
+
+For example:
+
+```ion
+(:$ion add_macros (website_url (:prefix_suffix "https://www.amazon.com/" (:?))))
+  ⇒ (:$ion add_macros (website_url ["https://www.amazon.com/", (:?)]))
+```
 
 ```ion
 (:website_url "gp/cart") ⇒ ["https://www.amazon.com/", "gp/cart"]
@@ -199,27 +204,36 @@ Tagless placeholders have important restrictions:
 (:point (:) 17)        ⇒ // Error: tagless parameters cannot be omitted
 ```
 
-## Available Tagless Types
+While Ion text syntax doesn’t use tags—the types are built into the syntax—these errors ensure
+that a text E-expression may only express things that can also be expressed using an equivalent
+binary E-expression.
 
-The following tagless types are available:
+Tagless encodings have no real benefit in text, as primitive types aim to improve the binary
+encoding.
 
-| Tagless type                         | Description                          |
-|--------------------------------------|--------------------------------------|
-| `int`                                | Variable-width signed integer        |
-| `int8`  `int16`   `int32`   `int64`  | Fixed-width signed int               |
-| `uint`                               | Variable-width unsigned integer      |
-| `uint8` `uint16`  `uint32`  `uint64` | Fixed-width unsigned int             |
-| `float16` `float32` `float64`        | Fixed-width float                    |
-| `symbol`                             | Symbol (SID or text)                 |
-| `string`                             | String                               |
-| `decimal`                            | Decimal number                       |
-| `timestamp`                          | Timestamp                            |
-| `blob`                               | Binary data                          |
-| `clob`                               | Character data                       |
+This density comes at the cost of flexibility. Primitive types cannot be annotated or null, and
+arguments cannot be expressed using macros.
+
+See [tagless_encodings](todo.md) for the complete list of tagless types.
+
+## Annotated Macros
+
+Macros can be annotated, which causes the expanded value to have that annotation
+prepended to any annotations present on the expanded value.
+
+```ion
+(bar [bar])
+(foobar foo::[bar])
+```
+
+```ion
+baz::(:bar) ⇒ baz::[bar]
+baz::(:foobar) ⇒ baz::foo::[bar]
+```
 
 ## Annotated Placeholders
 
-Placeholders themselves can be annotated, which causes the expanded value to have that annotation:
+Placeholders can be annotated, which causes the expanded value to have that annotation prepended to any existing annotations.
 
 ```ion
 (annotated_value [foo::(:?)])
@@ -227,6 +241,7 @@ Placeholders themselves can be annotated, which causes the expanded value to hav
 
 ```ion
 (:annotated_value 42) ⇒ [foo::42]
+(:annotated_value bar::42) ⇒ [foo::bar::42]
 ```
 
 
@@ -237,7 +252,7 @@ It's important to understand that arguments to macros are always single Ion valu
 When an E-expression is used as an argument, it is fully expanded before being passed to the macro. The macro receives the result of that expansion, which must be a single Ion value.
 
 ```ion
-(:$set_macros
+(:$ion set_macros
   (wrap_in_list [(:?)])
   (struct_constant {x: 1, y: 2})
 )
@@ -254,7 +269,7 @@ In this example, `(:struct_constant)` is expanded first to produce `{x: 1, y: 2}
 E-expressions can appear in template definitions, but they are expanded when the macro is defined, not when it's invoked. Additionally, E-expressions may only appear in value position - they cannot appear in field name position in structs.
 
 ```ion
-(:$set_macros
+(:$ion set_macros
   (base_config {type: "standard", size: 100})
   // The following would be an error:
   // (extended_config {
@@ -266,26 +281,5 @@ E-expressions can appear in template definitions, but they are expanded when the
 
 ## Directives
 
-Ion 1.1 includes several built-in directives for managing the encoding context. These directives
-produce system values (not user-visible values) and can only appear at the top level of a stream:
-
-- `$add_symbols` - Appends symbols to the default module
-- `$set_symbols` - Clears and sets the symbols in the default module
-- `$add_macros` - Appends macros to the default module
-- `$set_macros` - Clears and sets the macros in the default module
-- `$use` - Appends symbols and macros from a module to the default module
-- `$module` - Binds a module name
-- `$encoding` - Sets the encoding module sequence
-
-These directives cannot be produced by user macros and do not expand to values.
-
-## Summary
-
-Ion 1.1 macros provide a powerful way to create custom encodings for your data:
-
-- **Templates are Ion values** with placeholders marking where arguments go
-- **Tagged placeholders** `(:?)` accept any Ion value and can have defaults
-- **Tagless placeholders** `(:?\type\)` require specific types (from the enumerated set) but enable compact encoding
-- **E-expressions in templates** are expanded at definition time to help construct the template
-- **Binary encoding** makes macro invocations extremely compact
-- **Templates cannot consist solely of a placeholder** (annotated or unannotated)
+Ion 1.1 includes built-in directives for managing the encoding context. These directives
+produce system values (not user-visible values) and can only appear at the top level of a stream. See [directives](../modules/directives.md).

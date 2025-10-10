@@ -1,6 +1,6 @@
 # Defining macros
 
-Macros are defined within directives like `$set_macros` or `$add_macros`, or in [modules](../modules.md).
+Macros are defined within directives like `set_macros` or `add_macros`, or in [modules](../modules.md).
 
 ## Syntax
 ```ion
@@ -81,7 +81,7 @@ Ion scalars are interpreted literally. These include values of any type except `
 These macros are constants; they take no parameters.
 When they are invoked, they expand to a single value: the Ion scalar acting as the template expression.
 ```ion
-(:$set_macros
+(:$ion set_macros
   (greeting "hello")
   (birthday 1996-10-11)
   // Annotations are also literal
@@ -112,7 +112,7 @@ Placeholders are positional - they correspond to arguments based on their order 
 #### Example
 ```ion
 // Given
-(:$set_macros
+(:$ion set_macros
   (line_from_origin { x0: 0, y0: 0, x1: (:?\int8\), y1: (:? 99) })
 )
 // When invoked
@@ -139,7 +139,7 @@ Placeholders may be used within sequence types (lists or s-expressions). When an
 no value is inserted into the sequence.
 
 ```ion
-(:$set_macros
+(:$ion set_macros
   (short_list [(:?), (:?), (:?)])
   (short_sexp ((:?) (:?) (:?)))
 )
@@ -154,7 +154,7 @@ Placeholders may be used within structs. Arguments are paired with the correspon
 When an argument is `(:)`, the field name and value are elided.
 
 ```ion
-(:$set_macros
+(:$ion set_macros
   (resident
     {
         town: "Riverside",

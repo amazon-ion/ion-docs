@@ -5,7 +5,6 @@
 - [Macros](macros.md)
     - [Macros by example](macros/macros_by_example.md)
     - [Defining macros](macros/defining_macros.md)
-    - [Directives](macros/directives.md)
 - [Modules](modules.md)
     - [Defining modules](modules/defining_modules.md)
     - [Directives](modules/directives.md)
