@@ -14,9 +14,8 @@ degrees::'celsius'::100                  // You can have multiple annotaions on 
 jpeg :: {{ ... }}                        // Indicates the blob contains jpeg data
 bool :: null.int                         // A very misleading annotation on the integer null
 '' :: 1                                  // An empty annotation
-null.symbol :: 1                         // ERROR: type annotation cannot be null 
-foo::(:make_string "a" "b")              // ERROR: e-expressions may not be annotated
-(:make_string foo::(:: "a" "b"))         // ERROR: expression groups may not be annotated
+foo::(:bar "a" "b")                      // E-expressions may be annotated
+null.symbol :: 1                         // ERROR: type annotation cannot be null
 ```
 
 ## Nulls
@@ -463,6 +462,27 @@ escaped with single quotes:
 ```ion
 (a/* word */b)       // An S-expression with two symbols and a comment
 (a '/*' word '*/' b) // An S-expression with five symbols
+```
+
+# Tagless-element Sequences
+
+Tagless-element sequences allow for sequences (lists or s-expressions) to be encoded in binary without repetitively
+declaring the same opcode.
+
+In text, tagless-element sequences are differentiated from regular sequences by adding a [type marker](e_expressions.md#type-markers)
+immediately after the opening delimiter.
+
+When the type is a macro-shape, the arguments for each instance of the macro invocation are enclosed in `(` and `)`.
+
+Macros that accept 0 arguments may not be used as a macro-shape type for a tagless-element sequence.
+
+Examples:
+```ion
+[:\int8\ 1, 2, 3, 4]
+[\:point\ (1 3), (1 4), (2 4)]
+(\x60\ 1 -2 3 -99999999999999999999999)
+(\:foo\)        // An empty, macro-shaped s-expression
+[\int8\ 1, 2, 3, foo::4]  // ERROR: tagless elements cannot have annotations
 ```
 
 ## Structs
