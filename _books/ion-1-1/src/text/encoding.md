@@ -7,5 +7,5 @@ Whitespace is insignificant and is only required where necessary to separate tok
 C-style comments (either block or in-line) are treated as whitespace;
 they are not part of the data model and implementations are not required to preserve them.
 
-A text Ion 1.1 stream begins with the Ion 1.1 [version marker](../todo.md) (`$ion_1_1`) followed by a series of
+A text Ion 1.1 stream begins with the Ion 1.1 version marker (`$ion_1_1`) followed by a series of
 [value literals](values.md) and/or [encoding expressions](e_expressions.md).

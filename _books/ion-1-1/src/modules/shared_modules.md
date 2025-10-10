@@ -14,7 +14,7 @@ Once the shared module has been imported and given a binding, it can be referenc
 $ion_1_1
 (:$ion import geo "org.example.geometry" 2)
 (:$ion encoding geo)
-(:geo::polygon [:#geo::point2d (1 4) (1 8) (3 6)] rgb::0xFFCC00)
+(:geo::polygon [{:geo::point2d} (1 4) (1 8) (3 6)] rgb::0xFFCC00)
 ```
 
 
@@ -23,7 +23,7 @@ Ion 1.1 also provides a convenient directive ([`use`](directives.md#use-directiv
 $ion_1_1
 (:$ion use "org.example.geometry" 2)
 // The content of the shared module is immediately available through the default module.
-(:polygon [:#point2d (1 4) (1 8) (3 6)] rgb::0xFFCC00)
+(:polygon [{:point2d} (1 4) (1 8) (3 6)] rgb::0xFFCC00)
 ```
 
 ### Compatibility with Ion 1.0

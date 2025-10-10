@@ -52,36 +52,19 @@ Examples:
 
 * Tagged value, optional, no default value: `(:?)`
 * Tagged value, optional, with default value: `(:? "foo")`
-* Tagless value (with type marker), required, default value not allowed: `(:?\int8\)`
+* Tagless value (with primitive type marker), required, default value not allowed: `(:? {#int8})`
 
 ### Type Markers
 
 Type markers are used in tagless e-expression placeholders and
 [tagless-element sequences](values.md#tagless-element-sequences).
 The text syntax for type markers consists of a [tagless type identifier](../macros/tagless_encodings.md)
-surrounded by `\`.
+preceded by either `#` (for primitive encodings) or `:` (for macro shapes), and surrounded by `{}`.
 
 Examples:
- * named macro-shape: `\:foo\`, `\:foo_module::bar_macro\`
- * macro-shape by id: `\:12\`, `\:493\`
- * tagless scalar type by name: `\int\`, `\uint8\`, `\string\`, `\symbol\`, `\timestamp\`
- * tagless scalar type by opcode: `\0x61\`, `\0xEE\`
+ * named macro-shape: `{:foo}`, `{:foo_module::bar_macro}`. May only be used in tagless-element sequences.
+ * macro-shape by id: `{:12}`, `{:493}`. May only be used in tagless-element sequences.
+ * tagless scalar type by name: `{#int}`, `{#uint8}`, `{#string}`, `{#symbol}`, `{#timestamp}`. May be used in tagless-element sequences or tagless template placeholders.
+ * tagless scalar type by opcode: `{#0x61}`, `{#0xEE}`. May be used in tagless-element sequences or tagless template placeholders.
 
 Macros that accept 0 arguments are not eligible to be used in a type marker.
-
-### Macro-shaped parameters
-
-Macro-shaped parameters are tagless parameters whose encoding type is the arguments for another macro.
-In Ion text, each set of arguments for a macro-shape parameter must be enclosed between `(` and `)`.
-The only difference between this and an E-expression is the lack of the ':' and macro reference at the start of the E-expression.
-The arguments for a macro-shape use the same syntax as the arguments to any other E-expression.
-
-```ion
-// Given the following macros:
-//   (point {x: (:?), y: (:?)})
-//   (line_segment {a: (?:\point\), b: (?:\point\)})
-
-(:line_segment (0 1) (4 8) )
-//             └─┬─┘ └─┬─┘
-//               │     └── Implicit invocation of (:point ...) for parameter b
-//               └── Implicit invocation of (:point ...) for parameter a

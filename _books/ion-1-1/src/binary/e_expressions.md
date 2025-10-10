@@ -166,7 +166,7 @@ An absent argument is encoded the same way regardless of whether the placeholder
 
 ### Tagless Arguments
 
-In contrast to the [tagged encoding](#tagged-arguments), [_tagless encodings_](../todo.md) do not begin with an opcode.
+In contrast to the [tagged encoding](#tagged-arguments), [_tagless encodings_](../macros/tagless_encodings.md) do not begin with an opcode.
 This means that they are potentially more compact than a tagged type, but are also less flexible.
 Because tagless encodings do not have an opcode, tagless arguments cannot have annotation sequences nor can the argument itself be absent.
 
@@ -175,7 +175,7 @@ information in their serialized form.
 
 Given the following macro definition
 ```ion
-(foo { foo: (:?\int8\), bar: (:?\int16\), baz: (?:\string\) })
+(foo { foo: (:? {#int8}), bar: (:? {#int16}), baz: (?: {#string}) })
 ```
 
 The text E-expression `(:foo 1 2 "three")` would be encoded like this:

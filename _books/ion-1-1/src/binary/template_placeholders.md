@@ -80,21 +80,21 @@ Opcode `0xEB` indicates a tagless template placeholder.
 A single byte follows indicating the tagless scalar type that the argument must conform to.
 No additional bytes follow.
 
-##### Encoding of `(:?\int8\)`
+##### Encoding of `(:? {#int8})`
 ```
 ┌──── Opcode 0xEB indicates a tagless template placeholder
 │  ┌─── Tagless scalar type: int8 (0x61)
 EB 61
 ```
 
-##### Encoding of `(:?\uint32\)`
+##### Encoding of `(:? {#uint32})`
 ```
 ┌──── Opcode 0xEB indicates a tagless template placeholder
 │  ┌─── Tagless scalar type: uint32 (0xE4)
 EB E4
 ```
 
-##### Encoding of `(:?\string\)`
+##### Encoding of `(:? {#string})`
 ```
 ┌──── Opcode 0xEB indicates a tagless template placeholder
 │  ┌─── Tagless scalar type: string (0xF9)

@@ -41,9 +41,9 @@ Macro signatures are derived from the placeholders in the macro template body. T
 
 The type of placeholder determines the parameter characteristics:
 
-- **Tagged placeholders** `(:?)` - Accept any Ion value, are optional parameters
-- **Tagged placeholders with defaults** `(:? default_value)` - Accept any Ion value with a default
-- **Tagless placeholders** `(:?\type\)` - Require specific types (from the enumerated set of tagless types), are required parameters
+- **Tagged placeholders** `(:?)` - Optional; accepts any Ion value
+- **Tagged placeholders with defaults** `(:? default_value)` - Optional with default; accepts any Ion value
+- **Tagless placeholders with primitive type** `(:? {#type})` - Required; specifies a type from the enumerated set of primitives
 
 All tagged parameters are optional parameters (can be elided with `(:)`).
 All tagless parameters are required parameters (cannot be elided).
@@ -53,7 +53,7 @@ All tagless parameters are required parameters (cannot be elided).
 (example {
   a: (:?),           // First parameter: tagged
   b: (:? 10),        // Second parameter: tagged with default
-  c: (:?\int8\)      // Third parameter: tagless int8
+  c: (:? {#int8})    // Third parameter: tagless int8
 })
 ```
 
@@ -113,7 +113,7 @@ Placeholders are positional - they correspond to arguments based on their order 
 ```ion
 // Given
 (:$ion set_macros
-  (line_from_origin { x0: 0, y0: 0, x1: (:?\int8\), y1: (:? 99) })
+  (line_from_origin { x0: 0, y0: 0, x1: (:? {#int8}), y1: (:? 99) })
 )
 // When invoked
 (:line_from_origin 5 10) => { x0: 0, y0: 0, x1: 5, y1: 10 }

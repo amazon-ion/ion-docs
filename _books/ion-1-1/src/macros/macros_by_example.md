@@ -182,10 +182,10 @@ In addition to tagged placeholders, Ion 1.1 supports _tagless placeholders_ that
 particular type. These are more restrictive but enable more compact binary encoding.
 
 ```ion
-(point {x: (:?\int\), y: (:?\int\)})
+(point {x: (:? {#int}), y: (:? {#int})})
 ```
 
-This macro uses tagless placeholders that require integer arguments. The `\int\` is a type marker
+This macro uses tagless placeholders that require integer arguments. The `{#int}` is a type marker
 indicating the placeholder expects an integer value.
 
 ```ion
@@ -214,7 +214,7 @@ encoding.
 This density comes at the cost of flexibility. Primitive types cannot be annotated or null, and
 arguments cannot be expressed using macros.
 
-See [tagless_encodings](todo.md) for the complete list of tagless types.
+See [tagless_encodings](../tagless_encodings.md) for the complete list of tagless types.
 
 ## Annotated Macros
 

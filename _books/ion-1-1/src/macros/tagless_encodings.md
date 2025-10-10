@@ -3,7 +3,6 @@
 Tagless encodings may be specified by type markers in template placeholders and in tagless-element sequences. In binary,
 this allows the opcode to be elided from the encoding of values that fill tagless slots.
 
-
 Consider the following data:
 ```ion
 [
@@ -13,9 +12,10 @@ Consider the following data:
   { sum: 314, sample_count: 30 },
 ]
 ```
-With a macro such as `(metric {sum: (:?\int\), sample_count: (:?\int\), unit: ms})`, it can be encoded as
+With a macro such as `(metric {sum: (:? {#int}), sample_count: (:? {#int}), unit: ms})`, it can be encoded
+using a tagless-element list as follows
 ```ion
-[\:metric\
+[{:metric} // {:<macro_name>} specifies a macro-shape
   (123 12),
   (54 8),
   (125 15),
@@ -48,3 +48,6 @@ The available tagless encodings are enumerated in the following table.
 |             | `timestamp_us`  |       7       |       `0x86`        | [Microsecond precision timestamp][t5]                                           |
 |             | `timestamp_ns`  |       8       |       `0x87`        | [Nanosecond precision timestamp][t6]                                            |
 | `symbol`    | `symbol`        |   variable    |       `0xEE`        | [`FlexSym`][flexsym]                                                            |
+
+Although both primitive and macro-shape encodings may be used in tagless-element sequences, only the primitive encodings in the above table
+may be used in tagless template placeholders.
