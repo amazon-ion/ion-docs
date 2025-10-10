@@ -90,7 +90,7 @@ The opcode is followed by:
 2. A `FlexUInt` length indicating the number of direct child values in the S-expression
 3. Each element encoded without the leading opcode or macro address
 
-##### Tagless-element S-expression of integers `(1 2 3 4)`
+##### Tagless-element S-expression of integers `({#int8} 1 2 3 4)`
 ```
 ┌──── Opcode 0x5C indicates a tagless-element S-expression
 │  ┌─── Tagless type: 0x61 (int8)
@@ -101,7 +101,7 @@ The opcode is followed by:
          4 int8 values
 ```
 
-##### Tagless-element S-expression with macro shape `[\:point\ (1 3), (1 4), (2 4)]`
+##### Tagless-element S-expression with macro shape `[{:point} (1 3), (1 4), (2 4)]`
 ```
 ┌──── Opcode 0x5C indicates a tagless-element sexp
 │  ┌─── Tagless type: 0x05 (macro address 5, assuming :point is at address 5)
@@ -115,7 +115,7 @@ The opcode is followed by:
            1     3     1     4     2     4
 ```
 
-##### Tagless-element S-expression with macro-shape using length-prefixed E-expression `[\:3\ (1 3), (1 259) ]`
+##### Tagless-element S-expression with macro-shape using length-prefixed E-expression `[{:3} (1 3), (1 259) ]`
 
 ```
 ┌──── Opcode 0x5C indicates a tagless-element sexp
