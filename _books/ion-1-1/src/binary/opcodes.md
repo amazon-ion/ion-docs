@@ -32,10 +32,9 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 | `0xD_`           | `0`        | Empty struct                                                                    |
 |                  | `1`        | _Reserved_                                                                      |
 |                  | `2`-`F`    | Structs                                                                         |
-| `0xE_`           | `0`        | Ion version marker                                                              |
-|                  | `1`-`7`    | Directives                                                                      |
-|                  | `8`-`A`    | Template placeholders                                                           |
-|                  | `B`        | Absent Argument                                                                 |
+| `0xE_`           | `0`        | Ion version marker (top-level) /  Absent Argument (in E-expression arguments)   |
+|                  | `1`-`8`    | Directives                                                                      |
+|                  | `9`-`B`    | Template placeholders                                                           |
 |                  | `C`-`D`    | NOP                                                                             |
 |                  | `E`        | Struct switch modes (SID ↔ FlexSym)                                             |
 |                  | `F`        | Delimited container end                                                         |

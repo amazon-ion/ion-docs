@@ -1,11 +1,9 @@
 # Defining modules
 
-A module is defined by four kinds of subclauses which, if present, always appear in the same order.
+A module is defined by two kinds of subclauses which, if present, always appear in the same order.
 
-1. `import` - a reference to a shared module definition; repeatable
-2. `module` - a nested module definition; repeatable
-3. `macros` - an exported list of macro definitions
-4. `symbols` - an exported list of text values
+1. `macros` - an exported list of macro definitions
+2. `symbols` - an exported list of text values
 
 The lexical name given to a module definition must be an [identifier](../modules.md#identifiers).
 However, it must not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
@@ -15,7 +13,6 @@ However, it must not begin with a `$`--this is reserved for system-defined bindi
 The body of a module tracks an internal environment by which macro references are resolved.
 This environment is constructed incrementally by each clause in the definition and consists of:
 
-* the _module bindings_, a map from identifier to module definition
 * the _exported symbols_, an array containing symbol texts
 * the _exported macros_, an array containing name/macro pairs
 
@@ -23,85 +20,8 @@ Before any clauses of the module definition are examined, each of these is empty
 
 Each clause affects the environment as follows:
 
-* An `import` declaration retrieves a shared module from the implementation’s catalog and binds a name to it,
-  making its macros available for use.
-  An error must be signaled if the name already appears in the module bindings.
-* A `module` declaration defines a new module and binds a name to it.
-  An error must be signaled if the name already appears in the module bindings.
 * A `macros` declaration defines the exported macros.
 * A `symbols` declaration defines the exported symbols.
-
-### Resolving Macro References
-
-Within a module definition, macros can be referenced in several contexts using the following
-_macro-ref_ syntax:
-
-```bnf
-qualified-ref      ::= module-name '::' macro-ref
-
-macro-ref          ::= macro-name | macro-addr
-
-macro-name         ::= unannotated-identifier-symbol
-
-macro-addr         ::= unannotated-uint 
-```
-
-Macro references are resolved to a specific macro as follows:
-
-* An unqualified _macro-name_ is looked up in the following locations:
-    1. in the macros already exported in this module's `macros`
-    2. in the [default_module](encoding_modules.md#the-default-module)
-    3. in the [system module](system_module.md)
-
-  If it maps to a macro, that’s the resolution of the reference. Otherwise, an error is signaled due to an unbound reference.
-
-* An anonymous local reference (_macro-addr_) is resolved by index in the exported macro array.
-  If the address exceeds the array boundary, an error is signaled due to an invalid reference.
-* A qualified reference (_qualified-ref_) resolves solely against the referenced module.
-  First, the module name must be resolved to a module definition.
-    * If the module name is in the module bindings, it resolves to the corresponding module definition.
-    * If the module name is not in the module bindings, resolution is attempted recursively upwards through the parent scopes.
-    * If the search reaches the top level without resolving to a module, an error is signaled due to an unbound reference.
-
-  Next, the name or address is resolved within that module definition’s exported macro table.
-
-
-### `import`
-
-```bnf
-import             ::= '(import ' module-name catalog-key ')'
-
-module-name        ::= unannotated-identifier-symbol
-
-catalog-key        ::= catalog-name catalog-version?
-
-catalog-name       ::= string
-
-catalog-version    ::= int // positive, unannotated
-```
-
-An import binds a lexically scoped module name to a shared module that is identified by a catalog key—a `(name, version)` pair.
-The `version` of the catalog key is optional—when omitted, the version is implicitly 1.
-
-In Ion 1.0, imports may be substituted with a different version if an exact match is not found.
-In Ion 1.1, however, all imports require an exact match to be found in the reader's catalog;
-if an exact match is not found, the implementation must signal an error.
-
-<!-- TODO: more details here -->
-
-### `module`
-
-The `module` clause defines a new local module that is contained in the current module.
-
-```bnf
-inner-module ::= '(module' module-name import* macro-table? symbol-table? ')'
-```
-
-Inner modules automatically have access to modules previously declared in the containing module using `module` or `import`.
-The new module (and its exported symbols and macros) is available to any following `module`, `symbols`, and
-`macros` clauses in the enclosing container. 
-
-See [local modules](local_modules.md) for full explanation.
 
 ### `macros`
 
@@ -113,22 +33,15 @@ Most commonly, a macro table entry is a definition of a new macro expansion func
 ```ion
 //  ┌─── `macro` keyword
 //  │   ┌─── macro name
-//  │   │     ┌─── signature (s-expression of parameters)
-//  │   │     │         ┌─── template (TDL expression)
-(macro foo (x y z) (.values (%x) (%y) (%z))
+//  │   │   ┌─── template
+//  │   │   │
+(macro foo {a:(:?),b:(:?)})
 ```
 (See the [_Defining macros_](../macros/defining_macros.md) for details.)
 
 When the value `null` is given for the macro name, this defines an anonymous macro that can be referenced by its numeric
 address (that is, its index in the enclosing macro table).
-Inside the defining module, that uses a local reference like `12`.
 
-The _signature_ defines the syntactic shape of expressions invoking the macro;
-see [Macro Signatures](../macros/defining_macros.md#macro-signatures) for details.
-The _template_ defines the expansion of the macro, in terms of the signature’s parameters;
-see [Template Expressions](../macros/defining_macros.md#template-definition-language-tdl) for details.
-
-Imported macros must be explicitly exported if so desired.
 Module names and `export` clauses can be intermingled with `macro` definitions inside the `macros` clause;
 together, they determine the bindings that make up the module’s exported macro array.
 
@@ -215,13 +128,11 @@ Unlike Ion 1.0, no _symbol-maxid_ is needed because Ion 1.1 always requires exac
 >
 > ```ion
 > // Define module `foo`
-> $ion::
-> (module foo
+> (:$ion module foo
 >     (symbols ["b", "c"]))
 >
 > // Redefine `foo` in terms of its former definition
-> $ion::
-> (module foo
+> (:$ion module foo
 >     (symbols
 >         ["a"]
 >         foo // The old definition of `foo` with symbols ["b", "c"]
@@ -287,10 +198,19 @@ Here’s the Ion 1.1 equivalent in terms of symbol allocation order:
 
 ```ion
 $ion_1_1
-$ion::(import m1 "com.example.shared1" 1)
-$ion::(import m2 "com.example.shared2" 2)
-$ion::
-(module _
+(:$ion import m1 "com.example.shared1" 1)
+(:$ion import m2 "com.example.shared2" 2)
+(:$ion module _ 
   (symbols m1 m2 ["s1", "s2"])
 )
 ```
+
+> [!NOTE]
+> Alternately, one could use the default module directives to avoid the boilerplate of creating bindings for the imported modules.
+> However, this has slightly different semantics because `use` also brings in the macros from the imported modules.
+> ```ion
+> $ion_1_1
+> (:$ion use "com.example.shared1" 1)
+> (:$ion use "com.example.shared2" 2)
+> (:$ion add_symbols "s1" "s2")
+> ```
