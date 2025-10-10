@@ -140,7 +140,7 @@ $ion_1_1
 (:bar) // Equivalent to `(:_::bar)`
 ```
 
-System macros like [`add_symbols`](../directives.md#add_symbols)
+Directives like [`add_symbols`](../directives.md#add_symbols)
 and [`add_macros`](../directives.md#add_macros) apply their changes to `_`,
 so we can rewrite the above more succinctly as:
 ```ion

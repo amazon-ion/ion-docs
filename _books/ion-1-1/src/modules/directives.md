@@ -152,10 +152,10 @@ If the catalog does not contain an exact match, this operation raises an error.
 // Adds the content of this shared symbol table to the default module
 (:$ion use "com.example.geometry" 2)
 
-// Equivalent to the following
+// Equivalent to the following, except that `use` does not create any top-level binding like `import` does
 ($ion import $temp "com.example.geometry" 2)
 ($ion module _ (macros _ $temp) (symbols _ $temp))
-($ion module $temp)  // No top level binding is actually created by `use`
+($ion module $temp)
 ```
 
 When the version is not provided, a default value of 1 is used.

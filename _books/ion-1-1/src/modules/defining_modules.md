@@ -1,6 +1,6 @@
 # Defining modules
 
-A module is defined by four kinds of subclauses which, if present, always appear in the same order.
+A module is defined by two kinds of subclauses which, if present, always appear in the same order.
 
 1. `macros` - an exported list of macro definitions
 2. `symbols` - an exported list of text values
