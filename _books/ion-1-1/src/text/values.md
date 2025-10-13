@@ -464,7 +464,7 @@ escaped with single quotes:
 (a '/*' word '*/' b) // An S-expression with five symbols
 ```
 
-# Tagless-element Sequences
+## Tagless-element Sequences
 
 Tagless-element sequences allow for sequences (lists or s-expressions) to be encoded in binary without repetitively
 declaring the same opcode.

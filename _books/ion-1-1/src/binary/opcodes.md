@@ -58,10 +58,10 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 
 In addition, some opcodes have different meanings when used as tagless types.
 
-| High nibble | Low nibble | Meaning                                           |
-|-------------|------------|---------------------------------------------------|
-| `0x6_`      | `0`        | `FlexInt` integer value                           |
-| `0xE_`      | `0`        | `FlexUInt` integer value                          |
-|             | `1`-`8`    | `FixedUInt` integer values from 1 to 8 bytes wide |
-|             | `A`        | Symbol value with `FlexUInt` symbol address       |
-|             | `E`        | Symbol `FlexSym`                                  |
+| High nibble | Low nibble         | Meaning                                                                                  |
+|-------------|--------------------|------------------------------------------------------------------------------------------|
+| `0x6_`      | `0`                | `FlexInt` integer value                                                                  |
+| `0x7_`      | `0`                | Decimal; tuple of (`int`,`int8`) representing the coefficient and exponent respectively. |
+| `0xE_`      | `0`                | `FlexUInt` integer value                                                                 |
+|             | `1`, `2`, `4`, `8` | `FixedUInt` integer values that are 1, 2, 4, or 8 bytes wide                             |
+|             | `E`                | Symbol `FlexSym`                                                                         |
