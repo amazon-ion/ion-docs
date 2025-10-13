@@ -28,7 +28,7 @@ A document does not necessarily exist as a file, and is not necessarily finite.
 See _encoding expression_.
 
 **encoding directive**<br/>
-In an Ion 1.1 segment, a top-level E-expression annotated with `$ion`.
+In an Ion 1.1 segment, a top-level E-expression that invokes the implicit `$ion` macro.
 Defines a new _encoding module sequence_ for the segment immediately following it.
 The _symbol table directive_ is effectively a less capable alternative syntax.
 

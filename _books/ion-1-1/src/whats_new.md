@@ -50,7 +50,7 @@ Ion 1.1 introduces a new primitive called an *encoding expression* (*E-expressio
 syntax) similar to S-expressions, but they are not part of the data model.
 E-Expressions represent encoding details, and can be used to define macros, invoke macros, and modify the encoding context.
 
-Template e-expressions and are _evaluated_ into one Ion value, which enables compact representation of Ion data. 
+Template e-expressions are _evaluated_ into one Ion value, which enables compact representation of Ion data. 
 These e-expressions represent the invocation of user defined *macros* with arguments that are either themselves E-expressions
 or value literals corresponding to the formal parameters of the macro's definition.
 The resulting stream is then expanded into the resulting Ion data model.
@@ -62,7 +62,7 @@ defined externally (i.e., shared module). A macro has a name which must be uniqu
 
 In Ion binary, macros are always addressed in E-expressions by integer macro address. 
 In Ion text, macros may be addressed by the offset in the local macro table (mirroring binary), by name, or by qualifying the macro name/offset with the module name in the encoding context.
-An E-expression can _only_ refer to macros installed in the local macro tabled.
+An E-expression can _only_ refer to macros installed in the local macro table.
 
 **E-expressions name resolution**
 ```ion
@@ -82,8 +82,7 @@ User defined macros are defined by their *template* which defines how they are i
 
 This template is defined as Ion data with a special-purpose E-Expression to signify a placeholder for an argument to be substituted.
 Placeholders may accept any type of value, with an optional default value to use if no value is provided for that argument.
-Other placeholders required an argument of a specific type—called ["tagless" values](macros/tagless_encodings.md)—whose 
-encodings do not begin with an opcode and are therefore both more compact and less flexible (For example: `int32`, `float16`).
+Placeholders for ["tagless" values](macros/tagless_encodings.md)—whose encodings do not begin with an opcode and are therefore more compact and less flexible than tagged values—require a type marker argument (e.g., `{#int32}`, `{#float16}`) to specify how the argument is encoded. 
 
 The [macro definition](macros/defining_macros.md) includes a *template body* that defines how the macro is expanded.
 
