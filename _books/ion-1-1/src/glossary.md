@@ -46,6 +46,9 @@ Ion binary devotes a large number of opcodes to e-expressions, so they can be co
 **encoding module**<br/>
 A _module_ whose symbol table and macro table can be used directly in the user data stream.
 
+**encoding tag**<br/>
+A way of conveying the encoding of a value (i.e. its _opcode_), separated from the value itself.
+
 **expression**<br/>
 A serialized syntax element that may produce values.
 _Encoding expressions_ and values are both considered expressions, whereas NOP, comments, and IVMs, for example, are not. 
@@ -70,9 +73,8 @@ The data entity that defines and exports both symbols and macros.
 A 1-byte, unsigned integer that tells the reader what the next expression represents
 and how the bytes that follow should be interpreted.
 
-**parameter**<br/>
-An input to a macro, as defined by its signature.
-At expansion time a parameter produces zero or one values.
+**placeholder**<br/>
+A special-purpose _encoding expression_ that is replaced by a macro _argument_ when evaluating the expansion of a _template_.
 
 **qualified macro reference**<br/>
 A macro reference that consists of a module name and either a macro name exported by that module,
@@ -89,7 +91,8 @@ A module that exists independent of the data stream of an Ion document. It is id
 name and version so that it can be imported by other modules.
 
 **signature**<br/>
-The (derived) part of a macro definition that specifies its "calling convention", in terms of the shape and type of arguments it accepts.
+The part of a macro definition that specifies its "calling convention", in terms of the shape and type of arguments it accepts.
+The signature is implicit in a macro definition; it is derived from the _placeholders_ that are in the _template_. 
 
 **symbol table directive**<br/>
 A top-level struct annotated with `$ion_symbol_table`.  Defines a new encoding environment
@@ -106,7 +109,7 @@ System symbols are available at all points within an Ion document, though the se
 varies by segment according to its Ion version.
 
 **tagless-element sequence**<br/>
-A list or s-expression that has homogeneous elements, allowing the type descriptor of the elements to be lifted in the 
+A list or s-expression that has homogeneous elements, allowing the type descriptor of the elements to be lifted into the 
 container's definition for more compact representation of the child values.
 
 **template**<br/>

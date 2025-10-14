@@ -52,13 +52,13 @@ Examples:
 
 * Tagged value, optional, no default value: `(:?)`
 * Tagged value, optional, with default value: `(:? "foo")`
-* Tagless value (with primitive type marker), required, default value not allowed: `(:? {#int8})`
+* Tagless value (with primitive encoding tag), required, default value not allowed: `(:? {#int8})`
 
-### Type Markers
+### Encoding Tags
 
-Type markers are used in tagless e-expression placeholders and
+Encoding tags are used in tagless e-expression placeholders and
 [tagless-element sequences](values.md#tagless-element-sequences).
-The text syntax for type markers consists of a [tagless type identifier](../macros/tagless_encodings.md)
+The text syntax for encoding tags consists of a [tagless type identifier](../macros/tagless_encodings.md)
 preceded by either `#` (for primitive encodings) or `:` (for macro shapes), and surrounded by `{}`.
 
 Examples:
@@ -67,4 +67,4 @@ Examples:
  * tagless scalar type by name: `{#int}`, `{#uint8}`, `{#string}`, `{#symbol}`, `{#timestamp}`. May be used in tagless-element sequences or tagless template placeholders.
  * tagless scalar type by opcode: `{#0x61}`, `{#0xEE}`. May be used in tagless-element sequences or tagless template placeholders.
 
-Macros that accept 0 arguments are not eligible to be used in a type marker.
+Macros that accept 0 arguments are not eligible to be used in an encoding tag.

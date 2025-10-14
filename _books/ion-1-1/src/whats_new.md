@@ -38,6 +38,8 @@ and an Ion 1.1 reader can correctly "downshift" to expecting Ion 1.0 data when i
 
 Two streams using different Ion versions can be safely concatenated together provided that they are both text or both binary.
 A concatenated stream containing both Ion 1.0 and Ion 1.1 can only be fully read by a reader that supports Ion 1.1.
+When appended to an Ion 1.1 stream, an Ion 1.0 stream must begin with the appropriate IVM to ensure that symbol tables are handled correctly,
+and when an Ion 1.0 stream is appended to another Ion 1.0 stream, an IVM may be desirable to prevent the encoding context from unintentionally leaking into the latter of the concatenated streams.
 
 Upgrading an existing application to Ion 1.1 often requires little-to-no code changes,
 as APIs typically operate at the data model level ("write an integer")
@@ -82,7 +84,7 @@ User defined macros are defined by their *template* which defines how they are i
 
 This template is defined as Ion data with a special-purpose E-Expression to signify a placeholder for an argument to be substituted.
 Placeholders may accept any type of value, with an optional default value to use if no value is provided for that argument.
-Placeholders for ["tagless" values](macros/tagless_encodings.md)—whose encodings do not begin with an opcode and are therefore more compact and less flexible than tagged values—require a type marker argument (e.g., `{#int32}`, `{#float16}`) to specify how the argument is encoded. 
+Placeholders for ["tagless" values](macros/tagless_encodings.md)—whose encodings do not begin with an opcode and are therefore more compact and less flexible than tagged values—require an encoding tag argument (e.g., `{#int32}`, `{#float16}`) to specify how the argument is encoded. 
 
 The [macro definition](macros/defining_macros.md) includes a *template body* that defines how the macro is expanded.
 
@@ -100,9 +102,9 @@ Modules can be imported from the catalog (they subsume shared symbol tables) or 
 
 ### Directives
 
-_Directives_ modify the encoding context.
-Syntactically, a directive is a top-level s-expression annotated with `$ion`.
-Its first child value is an operation name.
+A _directives_ is a top-level e-expression that modifies the encoding context.
+In text, its uses the e-expression name `$ion`, and the first child value is an operation name.
+In binary, each directive has its own _opcode_.
 The operation determines what changes will be made to the encoding context and which values or clauses may legally follow.
 
 ```ion
@@ -110,14 +112,14 @@ The operation determines what changes will be made to the encoding context and w
 ```
 
 In Ion v1.1, there are eight supported directive operations:
-1. [`module`](modules/directives.md#module-directives)
-2. [`import`](modules/directives.md#import-directives)
-3. [`encoding`](modules/directives.md#encoding-directives)
-3. [`set_symbols`](modules/directives.md#set_symbols-directives)
-3. [`add_symbols`](modules/directives.md#add_symbols-directives)
+1. [`set_symbols`](modules/directives.md#set_symbols-directives)
+2. [`add_symbols`](modules/directives.md#add_symbols-directives)
 3. [`set_macros`](modules/directives.md#set_macros-directives)
-3. [`add_macros`](modules/directives.md#add_macros-directives)
-3. [`use`](modules/directives.md#use-directives)
+4. [`add_macros`](modules/directives.md#add_macros-directives)
+5. [`use`](modules/directives.md#use-directives)
+6. [`module`](modules/directives.md#module-directives)
+7. [`import`](modules/directives.md#import-directives)
+8. [`encoding`](modules/directives.md#encoding-directives)
 
 ### Shared Modules
 
@@ -205,17 +207,12 @@ with a new encoding called [`FixedInt`](binary/primitives/fixed_int.md), which u
 A corresponding [`FixedUInt`](binary/primitives/fixed_uint.md) primitive has also been introduced; its encoding is nearly the same as
 [Ion 1.0's `UInt` primitive](https://amazon-ion.github.io/ion-docs/docs/binary.html#uint-and-int-fields), save that `UInt` is big endian where `FixedUInt` is little endian.
 
-
-
-
 A new primitive encoding type, [`FlexSym`](binary/primitives/flex_sym.md), has been introduced to flexibly encode
 symbol IDs and symbol tokens with inline text.
 
 > [!TIP]
 > `FlexSym` makes it possible for a writer to emit _any_ Ion value as binary without requiring a symbol table. 
 > This is generally less efficient when working with multiple values but there are use cases where it is convenient.
-
-
 
 ### Type encoding changes
 
