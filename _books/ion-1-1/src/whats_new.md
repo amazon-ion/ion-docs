@@ -103,7 +103,7 @@ Modules can be imported from the catalog (they subsume shared symbol tables) or 
 ### Directives
 
 A _directive_ is a top-level e-expression that modifies the encoding context.
-In text, its uses the e-expression name `$ion`, and the first child value is an operation name.
+In text, directives use the e-expression name `$ion`, and the first child value is an operation name.
 In binary, each directive has its own _opcode_.
 The operation determines what changes will be made to the encoding context and which values or clauses may legally follow.
 
