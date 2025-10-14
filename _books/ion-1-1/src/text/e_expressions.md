@@ -65,6 +65,5 @@ Examples:
  * named macro-shape: `{:foo}`, `{:foo_module::bar_macro}`. May only be used in tagless-element sequences.
  * macro-shape by id: `{:12}`, `{:493}`. May only be used in tagless-element sequences.
  * tagless scalar type by name: `{#int}`, `{#uint8}`, `{#string}`, `{#symbol}`, `{#timestamp}`. May be used in tagless-element sequences or tagless template placeholders.
- * tagless scalar type by opcode: `{#0x61}`, `{#0xEE}`. May be used in tagless-element sequences or tagless template placeholders.
 
 Macros that accept 0 arguments are not eligible to be used in a type marker.

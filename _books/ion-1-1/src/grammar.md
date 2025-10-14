@@ -17,7 +17,7 @@ document           ::= ivm segment*
 
 ivm                ::= '$ion_1_1'
 
-any-value-encoding ::= value | macro-invocation | tagless-element-list | tagless-element-sexp
+any-value-encoding ::= value | e-expression | tagless-element-list | tagless-element-sexp
 
 segment            ::= any-value-encoding* directive?
 
@@ -79,6 +79,7 @@ any-macro-ref-encoding  ::= macro-ref | qualified-macro-ref
 
 ### Macro definitions
 ```bnf
+no-argument                ::= '(:)'
 macro-name-declaration     ::= macro-name | 'null'
 macro-definition           ::= '(' macro-definition-contents ')'
 macro-definition-in-module ::= '(macro' macro-definition-contents ')'
@@ -89,7 +90,10 @@ list-with-placeholders     ::= '[' value-or-placeholder* ']' ; Note: for brevity
 sexp-with-placeholders     ::= '(' value-or-placeholder* ')'
 field-value-or-placeholder ::= symbol-text ':' value-or-placeholder
 struct-with-placeholders   ::= '{' field-value-or-placeholder* }
-value-with-placeholders    ::= value | list-with-placeholders | sexp-with-placeholders | struct-with-placeholders
+argument-or-placeholder    ::= value-with-placeholders | no-argument | placeholder
+e-exp-with-placeholders    ::= '(:' any-macro-ref-encoding argument-or-placeholder* ')'
+value-with-placeholders    ::= value | list-with-placeholders | sexp-with-placeholders
+                             | struct-with-placeholders | e-exp-with-placeholders
 
 primitive-encoding-type    ::= 'int' | 'int8' |  'int16' |  'int32' |  'int64'
                              | 'uint' | 'uint8' | 'uint16' | 'uint32' | 'uint64'
@@ -99,32 +103,22 @@ primitive-encoding-type    ::= 'int' | 'int8' |  'int16' |  'int32' |  'int64'
                              | 'timestamp_ms' | 'timestamp_us' | 'timestamp_ns'
                              | 'symbol'
 
-primitive-encoding-opcode  ::= '0x60' | '0x61' | '0x62' | '0x64' | '0x68'
-                             | '0xE0' | '0xE1' | '0xE2' | '0xE4' | '0xE8'
-                             | '0x6B' | '0x6C' | '0x6D'
-                             | '0x70'
-                             | '0x82' | '0x83' | '0x84'
-                             | '0x85' | '0x86' | '0x87'
-                             | '0xEE'
-
-primitive-type-identifier  ::= primitive-encoding-type | primitive-encoding-opcode
-primitive-type-marker      ::= '{#' primitive-type-identifier '}'
+primitive-type-marker      ::= '{#' primitive-encoding-type '}'
 macro-type-marker          ::= '{:' any-macro-ref-encoding '}'
 any-type-marker-encoding   ::= primitive-type-marker | macro-type-marker
 
 placeholder                ::= tagged-placeholder | tagged-placeholder-default | tagless-placeholder
 tagged-placeholder         ::= '(:?)'
-tagged-placeholder-default ::= '(:? ' value ')'
+tagged-placeholder-default ::= '(:? ' any-value-encoding ')'
 tagless-placeholder        ::= '(:? ' primitive-type-marker ')'
 
 tagless-element-list       ::= '[' any-type-marker-encoding value* ']'
 tagless-element-sexp       ::= '(' any-type-marker-encoding value* ')'
 ```
 
-### Macro invocations
+### E-expressions
 
 ```bnf
-no-argument             ::= '(:)'
-macro-argument          ::= any-value-encoding | no-argument
-macro-invocation        ::= '(:' any-macro-ref-encoding macro-argument* ')'
+argument            ::= any-value-encoding | no-argument
+e-expression        ::= '(:' any-macro-ref-encoding argument* ')'
 ```
