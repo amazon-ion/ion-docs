@@ -42,18 +42,14 @@ Most commonly, a macro table entry is a definition of a new macro expansion func
 When the value `null` is given for the macro name, this defines an anonymous macro that can be referenced by its numeric
 address (that is, its index in the enclosing macro table).
 
-Module names and `export` clauses can be intermingled with `macro` definitions inside the `macros` clause;
+Module names can be intermingled with `macro` definitions inside the `macros` clause;
 together, they determine the bindings that make up the module’s exported macro array.
 
 The _module-name_ export form is shorthand for referencing all exported macros from that module,
 in their original order with their original names.
 
-An `export` clause contains a single macro reference followed by an optional alias for the exported macro.
-The referenced macro is appended to the macro table.
-
 > [!TIP]
 > No name can be repeated among the exported macros, including macro definitions.
-> Name conflicts must be resolved by `export`s with aliases.
 
 #### Processing
 
@@ -61,8 +57,6 @@ When the `macros` clause is encountered, the reader constructs an empty list. Th
 
 For each `arg`:
 * **If the `arg` is a `macro` clause**, the clause is processed and the resulting macro definition is appended 
-  to the end of the macro table being constructed.
-* **If the `arg` is an `export` clause**, the clause is processed and the referenced macro definition is appended 
   to the end of the macro table being constructed.
 * **If the `arg` is the name of a module**, the macro definitions in that module's macro table are appended
   to the end of the macro table being constructed.
@@ -79,20 +73,6 @@ If a macro is added whose name conflicts with one already present in the table, 
 
 A `macro` clause [defines a new macro](../macros/defining_macros.md).
 When the macro declaration uses a name, an error must be signaled if it already appears in the exported macro array.
-
-#### `export`
-
-An `export` clause declares a name for an existing macro and appends the macro to the macro table.
-* If the reference to the existing macro is followed by a name, the existing macro is appended to the exported
-  macro array with the latter name instead of the original name, if any.
-  In this way, an anonymous macro can be given a name.
-  An error must be signaled if that name already appears in the exported macro array.
-* If the reference to the existing macro is followed by `null`, the macro is appended to the exported macro array 
-  without a name, regardless of whether the macro has a name.
-* If the reference to the existing macro is anonymous, the macro is appended to the exported macro array without a name.
-* When the reference to the existing macro uses a name, the name and macro are appended to the exported macro  
-  array. An error must be signaled if that name already appears in the exported macro array.
-
 
 #### Module names in `macros`
 A module name appends all exported macros from the module to the exported macro array.
