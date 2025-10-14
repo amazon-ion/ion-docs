@@ -464,12 +464,12 @@ escaped with single quotes:
 (a '/*' word '*/' b) // An S-expression with five symbols
 ```
 
-# Tagless-element Sequences
+## Tagless-element Sequences
 
 Tagless-element sequences allow for sequences (lists or s-expressions) to be encoded in binary without repetitively
 declaring the same opcode.
 
-In text, tagless-element sequences are differentiated from regular sequences by adding a [type marker](e_expressions.md#type-markers)
+In text, tagless-element sequences are differentiated from regular sequences by adding an [encoding tag](e_expressions.md#encoding-tags)
 immediately after the opening delimiter.
 
 When the type is a macro-shape, the arguments for each instance of the macro invocation are enclosed in `(` and `)`.

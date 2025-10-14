@@ -1,6 +1,6 @@
 # Tagless Encodings
 
-Tagless encodings may be specified by type markers in template placeholders and in tagless-element sequences. In binary,
+Tagless encodings may be specified by encoding tags in template placeholders and in tagless-element sequences. In binary,
 this allows the opcode to be elided from the encoding of values that fill tagless slots.
 
 Consider the following data:

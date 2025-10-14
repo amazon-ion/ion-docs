@@ -185,7 +185,7 @@ particular type. These are more restrictive but enable more compact binary encod
 (point {x: (:? {#int}), y: (:? {#int})})
 ```
 
-This macro uses tagless placeholders that require integer arguments. The `{#int}` is a type marker
+This macro uses tagless placeholders that require integer arguments. The `{#int}` is an encoding tag
 indicating the placeholder expects an integer value.
 
 ```ion
