@@ -64,6 +64,6 @@ preceded by either `#` (for primitive encodings) or `:` (for macro shapes), and 
 Examples:
  * named macro-shape: `{:foo}`, `{:foo_module::bar_macro}`. May only be used in tagless-element sequences.
  * macro-shape by id: `{:12}`, `{:493}`. May only be used in tagless-element sequences.
- * tagless scalar type by name: `{#int}`, `{#uint8}`, `{#string}`, `{#symbol}`, `{#timestamp}`. May be used in tagless-element sequences or tagless template placeholders.
+ * tagless scalar type by name: `{#int}`, `{#uint8}`, `{#symbol}`, `{#timestamp_day}`. May be used in tagless-element sequences or tagless template placeholders.
 
 Macros that accept 0 arguments are not eligible to be used in an encoding tag.
