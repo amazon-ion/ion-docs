@@ -125,7 +125,7 @@ $ion_1_1
 
 (:$ion module _
     (macros
-        (foo () Foo)))
+        (foo Foo)))
 
 // `_` now contains macro `foo`
 
