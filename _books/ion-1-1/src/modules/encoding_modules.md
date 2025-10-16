@@ -132,7 +132,7 @@ $ion_1_1
 (:$ion module _
     (macros
         _ // Add all macros in `_` to its redefinition
-        (bar () Bar)))
+        (bar Bar)))
 
 // `_` now contains macros `foo` and `bar`
 
