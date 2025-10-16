@@ -205,7 +205,7 @@ If we then add macros to `mod_b`, those macros will immediately become available
 ```ion
 (:$ion module mod_b
     (macros
-        (baz () Baz)))
+        (baz Baz)))
 
 (:0) // => Foo
 (:1) // => Bar
