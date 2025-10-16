@@ -6,7 +6,7 @@ A module is defined by two kinds of subclauses which, if present, always appear 
 2. `symbols` - an exported list of text values
 
 The lexical name given to a module definition must be an [identifier](../modules.md#identifiers).
-However, it must not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
+However, it must not begin with a `$`—this is reserved for system-defined bindings like `$ion`.
 
 ### Internal environment
 
@@ -42,7 +42,7 @@ Most commonly, a macro table entry is a definition of a new macro expansion func
 When the value `null` is given for the macro name, this defines an anonymous macro that can be referenced by its numeric
 address (that is, its index in the enclosing macro table).
 
-Module names can be intermingled with `macro` definitions inside the `macros` clause;
+Module names can be intermingled with macro definition s-expressions inside the `macros` clause;
 together, they determine the bindings that make up the module’s exported macro array.
 
 The _module-name_ export form is shorthand for referencing all exported macros from that module,
@@ -56,7 +56,7 @@ in their original order with their original names.
 When the `macros` clause is encountered, the reader constructs an empty list. The arguments to the clause are then processed from left to right.
 
 For each `arg`:
-* **If the `arg` is a `macro` clause**, the clause is processed and the resulting macro definition is appended 
+* **If the `arg` is an s-expression**, it is processed as a macro definition, which is appended
   to the end of the macro table being constructed.
 * **If the `arg` is the name of a module**, the macro definitions in that module's macro table are appended
   to the end of the macro table being constructed.
@@ -69,9 +69,9 @@ When a name is used, it must be an identifier per Ion’s syntax for symbols.
 Macro definitions being added to the macro table must have a unique name.
 If a macro is added whose name conflicts with one already present in the table, the implementation must raise an error.
 
-#### `macro`
+#### S-expressions in `macros`
 
-A `macro` clause [defines a new macro](../macros/defining_macros.md).
+An s-expression in `macros` [defines a new macro](../macros/defining_macros.md).
 When the macro declaration uses a name, an error must be signaled if it already appears in the exported macro array.
 
 #### Module names in `macros`

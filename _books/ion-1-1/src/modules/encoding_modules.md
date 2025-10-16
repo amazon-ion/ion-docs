@@ -125,14 +125,14 @@ $ion_1_1
 
 (:$ion module _
     (macros
-        (macro foo () Foo)))
+        (foo Foo)))
 
 // `_` now contains macro `foo`
 
 (:$ion module _
     (macros
         _ // Add all macros in `_` to its redefinition
-        (macro bar () Bar)))
+        (bar Bar)))
 
 // `_` now contains macros `foo` and `bar`
 
@@ -149,8 +149,8 @@ $ion_1_1
 // `_` exists, but is empty
 
 (:$ion add_macros
-    (macro foo () Foo)
-    (macro bar () Bar))
+    (foo Foo)
+    (bar Bar))
 
 // `_` now contains macros `foo` and `bar`
 
@@ -179,15 +179,15 @@ For example after these directives are evaluated:
 ```ion
 (:$ion module mod_a
     (macros
-        (macro foo Foo)
-        (macro bar Bar)))
+        (foo Foo)
+        (bar Bar)))
 
 (:$ion module mod_b)
 
 (:$ion module mod_c
     (macros
-        (macro quux Quux)
-        (macro quuz Quuz)))
+        (quux Quux)
+        (quuz Quuz)))
 
 (:$ion encoding mod_a mod_b mod_c)
 ```
@@ -205,7 +205,7 @@ If we then add macros to `mod_b`, those macros will immediately become available
 ```ion
 (:$ion module mod_b
     (macros
-        (macro baz () Baz)))
+        (baz Baz)))
 
 (:0) // => Foo
 (:1) // => Bar
