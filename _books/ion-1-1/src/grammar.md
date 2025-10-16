@@ -61,7 +61,7 @@ symbol-text             ::= symbol | string
 
 macro-table             ::= '(macros' macro-table-entry* ')'
 
-macro-table-entry       ::= macro-definition-in-module | module-name
+macro-table-entry       ::= macro-definition | module-name
 ```
 
 ### Macro references
@@ -81,15 +81,13 @@ any-macro-ref-encoding  ::= macro-ref | qualified-macro-ref
 ```bnf
 no-argument                ::= '(:)'
 macro-name-declaration     ::= macro-name | 'null'
-macro-definition           ::= '(' macro-definition-contents ')'
-macro-definition-in-module ::= '(macro' macro-definition-contents ')'
-macro-definition-contents  ::= macro-name-declaration value-with-placeholders ; This prohibits "identity" macros
+macro-definition           ::= '(' macro-name-declaration value-with-placeholders ')' ; This prohibits "identity" macros
 
 value-or-placeholder       ::= value-with-placeholders | placeholder
 list-with-placeholders     ::= '[' value-or-placeholder* ']' ; Note: for brevity, this grammar avoids comma handling
 sexp-with-placeholders     ::= '(' value-or-placeholder* ')'
 field-value-or-placeholder ::= symbol-text ':' value-or-placeholder
-struct-with-placeholders   ::= '{' field-value-or-placeholder* }
+struct-with-placeholders   ::= '{' field-value-or-placeholder* '}'
 argument-or-placeholder    ::= value-with-placeholders | no-argument | placeholder
 e-exp-with-placeholders    ::= '(:' any-macro-ref-encoding argument-or-placeholder* ')'
 value-with-placeholders    ::= value | list-with-placeholders | sexp-with-placeholders

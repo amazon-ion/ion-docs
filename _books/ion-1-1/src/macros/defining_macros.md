@@ -27,7 +27,6 @@ Macros are defined within directives like `set_macros` or `add_macros`, or in [m
 
 The lexical name given to a macro must be an [identifier](../modules.md#identifiers).
 However, it must not begin with a `$`—this is reserved for system-defined bindings like `$ion`.
-Each macro name in a macro table must be unique.
 
 In some circumstances, it may not make sense to name a macro. (For example, when the macro is generated automatically.)
 In such cases, authors must use `null` to indicate that the macro does not have a name.
