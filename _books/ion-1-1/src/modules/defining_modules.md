@@ -6,7 +6,7 @@ A module is defined by two kinds of subclauses which, if present, always appear 
 2. `symbols` - an exported list of text values
 
 The lexical name given to a module definition must be an [identifier](../modules.md#identifiers).
-However, it must not begin with a `$`--this is reserved for system-defined bindings like `$ion`.
+However, it must not begin with a `$`—this is reserved for system-defined bindings like `$ion`.
 
 ### Internal environment
 
