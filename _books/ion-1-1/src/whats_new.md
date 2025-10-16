@@ -121,6 +121,8 @@ In Ion v1.1, there are eight supported directive operations:
 7. [`import`](modules/directives.md#import-directives)
 8. [`encoding`](modules/directives.md#encoding-directives)
 
+In Ion 1.1, directives must be used to modify the symbol or macro table. Ion 1.0 symbol table syntax is not supported.
+
 ### Shared Modules
 
 Ion 1.1 extends the concept of a _shared symbol table_ to be a _shared module_. An Ion 1.0 shared symbol table is a
