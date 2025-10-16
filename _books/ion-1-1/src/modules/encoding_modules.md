@@ -149,8 +149,8 @@ $ion_1_1
 // `_` exists, but is empty
 
 (:$ion add_macros
-    (foo () Foo)
-    (bar () Bar))
+    (foo Foo)
+    (bar Bar))
 
 // `_` now contains macros `foo` and `bar`
 
