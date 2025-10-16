@@ -15,7 +15,7 @@ Stream-level bindings are mutable.
 
 (:$ion module foo // <-- Redefines the top-level binding `foo`
   (macros
-    (quuz () Quuz)))
+    (quuz Quuz)))
 ```
 
 Local modules inherit their spec version from the enclosing scope.
