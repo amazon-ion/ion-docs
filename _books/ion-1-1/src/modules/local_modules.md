@@ -11,7 +11,7 @@ Stream-level bindings are mutable.
 ```ion
 (:$ion module foo // <-- Top-level module `foo`
   (macros
-    (quux () Quux)))
+    (quux Quux)))
 
 (:$ion module foo // <-- Redefines the top-level binding `foo`
   (macros
