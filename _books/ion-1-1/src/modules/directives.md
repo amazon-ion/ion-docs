@@ -166,6 +166,6 @@ When the version is not provided, a default value of 1 is used.
 
 ## Ion 1.0 symbol table syntax not supported
 
-In Ion 1.1 streams, Ion 1.0 symbol table syntax (`$ion_symbol_table::{...}`) is not supported.
+In Ion 1.1 streams, Ion 1.0 symbol table syntax (for example, `$ion_symbol_table::{...}`) is not supported.
 Ion 1.1 writers should not write such an annotated struct at the top level; Ion 1.1 readers
 must treat such an annotated struct as a no-op at the top level.
