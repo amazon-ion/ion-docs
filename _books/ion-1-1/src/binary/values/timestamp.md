@@ -57,9 +57,6 @@ Each opcode with a high nibble of `0x8_` indicates a different precision and off
 | `0x8A` | Milliseconds     |                          7                          | 7 bits to represent a known offset.                            |
 | `0x8B` | Microseconds     |                          8                          | 7 bits to represent a known offset.                            |
 | `0x8C` | Nanoseconds      |                          9                          | 7 bits to represent a known offset.                            |
-| `0x8D` | _Reserved_       |                         --                          |  --                                                            |
-| `0x8E` | _Reserved_       |                         --                          |  --                                                            |
-| `0x8F` | _Reserved_       |                         --                          |  --                                                            |
 
 [^short_form_size_in_bytes]: Serialized size in bytes does not include the opcode.
 
@@ -73,6 +70,8 @@ bit-fields are defined over the body interpreted as an _integer_.
 The following letters to are used to denote bits in each subfield in diagrams that follow. Subfields occur in the same
 order in all encoding variants, and consume the same number of bits, with the exception of the fractional bits, which
 consume only enough bits to represent the fractional precision supported by the opcode being used.
+
+Unused bits are ignored by by reader implementations.
 
 The `Month` and `Day` subfields are one-based; `0` is not a valid month or day.
 
@@ -355,10 +354,6 @@ byte 0   |  0x8C   |
 | 2023-10-15T11:22:33-00:00           | `84 35 7D CB 12 02`             |
 | 2023-10-15T11:22:33+01:15           | `89 35 7D CB 2A 84`             |
 | 2023-10-15T11:22:33.444555666+01:15 | `8C 35 7D CB 2A 84 92 61 7F 1A` |
-
-
-> [!WARNING]
-> Opcodes `0x8D`, `0x8E`, and `0x8F` are illegal; they are reserved for future use.
 
 
 ### Long-form Timestamps
