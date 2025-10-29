@@ -480,8 +480,8 @@ Examples:
 ```ion
 [{#int8} 1, 2, 3, 4]
 [{:point} (1 3), (1 4), (2 4)]
-({#0x60} 1 -2 3 -99999999999999999999999)
-({:foo})                   // An empty, macro-shaped s-expression
+[{:12} (1 3), (1 4), (2 4)]
+({:foo})                   // An empty s-expression with macro-shaped elements 
 [{#int8} 1, 2, 3, foo::4]  // ERROR: tagless elements cannot have annotations
 ```
 

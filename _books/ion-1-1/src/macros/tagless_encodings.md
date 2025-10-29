@@ -7,23 +7,32 @@ Consider the following data:
 ```ion
 [
   { sum: 123, sample_count: 12 },
-  { sum: 54, sample_count: 8 },
+  { sum:  54, sample_count:  8 },
   { sum: 125, sample_count: 15 },
   { sum: 314, sample_count: 30 },
 ]
 ```
-With a macro such as `(metric {sum: (:? {#int}), sample_count: (:? {#int}), unit: ms})`, it can be encoded
-using a tagless-element list as follows
+With a macro such as `(metric {sum: (:? {#int}), sample_count: (:? {#int}), unit: ms})`, it can be encoded more compactly:
+```ion
+[
+  (:metric 123 12),
+  (:metric  54  8),
+  (:metric 125 15),
+  (:metric 314 30),
+]
+```
+We can increase the compactness even more using a tagless-element list as follows:
 ```ion
 [{:metric} // {:<macro_name>} specifies a macro-shape
   (123 12),
-  (54 8),
+  ( 54  8),
   (125 15),
   (314 30),
 ]
 ```
 
-The available tagless encodings are enumerated in the following table.
+Both primitive and macro-shape encodings may be used in tagless-element sequences, only the primitive encodings in the below table
+may be used in tagless template placeholders.
 
 | Ion Type    | Encoding Name   | Size in bytes | Binary Encoding Tag | Encoding                                                                        |
 |-------------|:----------------|:-------------:|:-------------------:|:--------------------------------------------------------------------------------|
@@ -49,5 +58,17 @@ The available tagless encodings are enumerated in the following table.
 |             | `timestamp_ns`  |       8       |       `0x87`        | [Nanosecond precision timestamp][t6]                                            |
 | `symbol`    | `symbol`        |   variable    |       `0xEE`        | [`FlexSym`][flexsym]                                                            |
 
-Although both primitive and macro-shape encodings may be used in tagless-element sequences, only the primitive encodings in the above table
-may be used in tagless template placeholders.
+[flexint]: ../binary/primitives/flex_int.md
+[fixedint]: ../binary/primitives/fixed_int.md
+[flexuint]: ../binary/primitives/flex_int.md
+[fixeduint]: ../binary/primitives/fixed_int.md
+[flexsym]: ../binary/primitives/flex_sym.md
+[f16]: https://en.wikipedia.org/wiki/Half-precision_floating-point_format
+[f32]: https://en.wikipedia.org/wiki/Single-precision_floating-point_format
+[f64]: https://en.wikipedia.org/wiki/Double-precision_floating-point_format
+[t1]: ../binary/values/timestamp.md#encoding-of-a-timestamp-with-day-precision
+[t2]: ../binary/values/timestamp.md#encoding-of-a-timestamp-with-hour-and-minutes-precision-at-utc-or-unknown-offset
+[t3]: ../binary/values/timestamp.md#encoding-of-a-timestamp-with-seconds-precision-at-utc-or-unknown-offset
+[t4]: ../binary/values/timestamp.md#encoding-of-a-timestamp-with-milliseconds-precision-at-utc-or-unknown-offset
+[t5]: ../binary/values/timestamp.md#encoding-of-a-timestamp-with-microseconds-precision-at-utc-or-unknown-offset
+[t6]: ../binary/values/timestamp.md#encoding-of-a-timestamp-with-nanoseconds-precision-at-utc-or-unknown-offset
