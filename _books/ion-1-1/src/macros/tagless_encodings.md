@@ -31,7 +31,7 @@ We can increase the compactness even more using a tagless-element list as follow
 ]
 ```
 
-Both primitive and macro-shape encodings may be used in tagless-element sequences, only the primitive encodings in the below table
+Both primitive and macro-shape encodings may be used in tagless-element sequences; only the primitive encodings in the below table
 may be used in tagless template placeholders.
 
 | Ion Type    | Encoding Name   | Size in bytes | Binary Encoding Tag | Encoding                                                                        |
@@ -60,8 +60,8 @@ may be used in tagless template placeholders.
 
 [flexint]: ../binary/primitives/flex_int.md
 [fixedint]: ../binary/primitives/fixed_int.md
-[flexuint]: ../binary/primitives/flex_int.md
-[fixeduint]: ../binary/primitives/fixed_int.md
+[flexuint]: ../binary/primitives/flex_uint.md
+[fixeduint]: ../binary/primitives/fixed_uint.md
 [flexsym]: ../binary/primitives/flex_sym.md
 [f16]: https://en.wikipedia.org/wiki/Half-precision_floating-point_format
 [f32]: https://en.wikipedia.org/wiki/Single-precision_floating-point_format

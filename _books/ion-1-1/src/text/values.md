@@ -478,11 +478,11 @@ Macros that accept 0 arguments may not be used as a macro-shape type for a tagle
 
 Examples:
 ```ion
-[{#int8} 1, 2, 3, 4]
-[{:point} (1 3), (1 4), (2 4)]
-[{:12} (1 3), (1 4), (2 4)]
-({:foo})                   // An empty s-expression with macro-shaped elements 
-[{#int8} 1, 2, 3, foo::4]  // ERROR: tagless elements cannot have annotations
+[{#int8} 1, 2, 3, 4]                // A primitive-typed tagless-element list
+[{:point} (1 3), (1 4), (2 4)]      // A "macro-shaped" tagless element list
+[{:12} (1 3), (1 4), (2 4)]         // The same list, but using the macro ID instead of the name
+({:foo})                            // An empty s-expression with macro-shaped elements 
+[{#int8} 1, 2, 3, foo::4]           // ERROR: tagless elements cannot have annotations
 ```
 
 ## Structs
