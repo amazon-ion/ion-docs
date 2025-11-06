@@ -94,10 +94,10 @@ However, most Ion implementations will have some upper bound on the number of sy
 52 03
 ```
 
-##### Encoding of symbol with SID 1000
+##### Encoding of symbol with SID 2000
 ```
 ┌──── Opcode 0x50 indicates a symbol with SID; low 3 bits = 0
-│  ┌─── FlexUInt 125 represents the high bits (125 << 3 = 1000)
+│  ┌─── FlexUInt 250 represents the high bits (250 << 3 = 2000)
 │  │
-50 FB 01
+50 EA 03
 ```
