@@ -94,7 +94,7 @@ The elements of the list can be a _primitive encoding_ or a _macro-shape_.
 The opcode is followed by:
 1. One or more bytes describing the tagless type:
    - If the byte is in `0x00`-`0x47`: only one byte (the opcode) is present; this is the macro address
-   - If the byte is in `0x48`-`0x4F`: it is followed by a `FlexUInt` to encode the entire macro address
+   - If the byte is in `0x48`-`0x4F`: it is followed by a `FlexUInt`; together, this byte and `FlexUInt` encode an extended macro address using the scheme documented [here](../e_expressions.html#e-expressions-with-extended-addresses)
    - If the byte is `0xF4`: it is followed by a `FlexUInt` which encodes the entire macro address
    - For any other byte value: only one byte (the opcode) is present
 2. A `FlexUInt` length indicating the number of direct child values in the list
