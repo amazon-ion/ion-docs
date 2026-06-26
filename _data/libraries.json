@@ -15,8 +15,8 @@
   {
     "name": "ion-java",
     "category": "core",
-    "latest_release_version": "1.11.11",
-    "latest_release_date": "2025-10-15",
+    "latest_release_version": "1.12.0",
+    "latest_release_date": "2026-06-24",
     "documentation": "https://www.javadoc.io/doc/com.amazon.ion/ion-java/"
   },
   {
@@ -29,15 +29,15 @@
   {
     "name": "ion-rust",
     "category": "core",
-    "latest_release_version": "1.0.0-rc.11",
-    "latest_release_date": "2025-01-09",
+    "latest_release_version": "1.0.0",
+    "latest_release_date": "2026-06-23",
     "documentation": "https://docs.rs/ion-rs/latest/ion_rs/"
   },
   {
     "name": "ion-python",
     "category": "core",
-    "latest_release_version": "0.13.0",
-    "latest_release_date": "2024-12-07",
+    "latest_release_version": "0.14.6",
+    "latest_release_date": "2026-06-26",
     "documentation": "https://ion-python.readthedocs.io/en/latest/amazon.ion.html"
   },
   {
