@@ -380,6 +380,8 @@ Import structs in an `import` list are processed in order as follows:
     than 1, act as if it is 1.
   * If a `max_id` field is defined but is null, not an int, or less than zero,
     act as if it is undefined.
+  * If a `max_id` field is defined and it is the integer zero, implementations
+    SHOULD ignore the import clause. (No symbols are imported either way.)
   * Select a shared symbol table instance as follows:
     * Query the catalog to retrieve the specified table by `name` and `version`.
     * If an exact match is not found:
