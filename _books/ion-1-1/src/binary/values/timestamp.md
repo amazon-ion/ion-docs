@@ -392,7 +392,8 @@ If the timestamp's overall length is greater than or equal to `8`, the `FixedUIn
 and the remaining bytes are used to encode fractional seconds. The fractional seconds are encoded as a
 `(scale, coefficient)` pair, which is _similar_ to a [decimal](decimal.md). The primary difference is that the *scale*
 represents a negative *exponent* because it is illegal for the fractional seconds value to be greater than or equal to
-`1.0` or less than `0.0`. The scale is encoded as a `FlexUInt` (instead of `FlexInt`) to discourage the
+`1.0` or less than `0.0`. The scale is encoded as a `FlexUInt` (instead of a
+decimal's signed exponent) to discourage the
 encoding of decimal numbers greater than `1.0`. The coefficient is encoded as a `FixedUInt` (instead of `FixedInt`) to
 prevent the encoding of fractional seconds less than `0.0`. Note that validation is still required; namely:
 
