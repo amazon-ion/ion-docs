@@ -244,9 +244,14 @@ They are now encoded with one of the two opcodes `0x58` or `0x59`.
 
 [Integers](binary/values/int.md) now use a `FixedInt` sub-field instead of the Ion 1.0 encoding which used sign-and-magnitude (with two opcodes).
 
-[Decimals](binary/values/decimal.md) are structurally identical to their Ion 1.0 counterpart except the negative zero coefficient. 
-The Ion 1.1 `FlexInt` encoding is two's complement, so negative zero cannot be encoded directly with it.
-Instead, an implicit zero coefficient is positive zero, and an explicit zero coefficient is negative zero.
+[Decimals](binary/values/decimal.md) now encode their exponent as a 1-byte
+`FixedInt`, followed by a `FixedInt` coefficient. Decimals whose exponent is
+outside `-128` to `127`, or whose coefficient needs more than 14 bytes, must use
+the variable-length decimal encoding, which has a `FlexInt` exponent. In both
+encodings, an empty body is `0d0`. The Ion 1.1 `FixedInt` encoding is two's
+complement, so negative zero cannot be encoded directly with it. Instead, in
+both encodings, an implicit zero coefficient is positive zero, and an explicit
+zero coefficient of any width is negative zero.
 
 [Timestamps](binary/values/timestamp.md) no longer encode their sub-field components as octet-aligned fields.
 
