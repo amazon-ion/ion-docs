@@ -13,7 +13,7 @@ For brevity, the following components are not explicitly defined in this grammar
 
 ### Documents
 ```bnf
-document           ::= ivm segment*
+document           ::= ivm segment* end-directive?
 
 ivm                ::= '$ion_1_1'
 
@@ -24,9 +24,16 @@ segment            ::= any-value-encoding* directive?
 directive          ::= ivm | encoding-directive
 ```
 
+`end-directive` is deliberately not a `directive` alternative: an `end`
+directive must be the last thing in a stream, so no segment follows it. Any
+content after an `end-directive` is not part of the stream and is outside this
+grammar.
+
 ### Directives
 ```bnf
 encoding-directive    ::= '(:$ion ' any-directive-content ')'
+
+end-directive         ::= '(:$ion ' 'end' ')'
 
 any-directive-content ::= set-symbols-content | add-symbols-content | set-macros-content | add-macros-content
                         | use-content | module-content | import-content | encoding-content
