@@ -17,7 +17,7 @@ The specification of a new entity.
 **directive**<br/>
 A keyword or unit of data in an Ion document that affects the encoding environment, and thus the way the document's data is encoded and decoded.
 In Ion 1.0 there are two directives: _Ion version markers_, and the _symbol table directives_.
-Ion 1.1 adds _encoding directives_.
+Ion 1.1 adds _encoding directives_ and the `end` directive.
 
 **document**<br/>
 A stream of octets conforming to either the Ion text or binary specification.
@@ -30,6 +30,7 @@ See _encoding expression_.
 **encoding directive**<br/>
 In an Ion 1.1 segment, a top-level E-expression that invokes the implicit `$ion` macro.
 Defines a new _encoding module sequence_ for the segment immediately following it.
+The `end` directive is not an encoding directive; no segment follows it.
 The _symbol table directive_ is effectively a less capable alternative syntax.
 
 **encoding environment**<br/>
@@ -85,6 +86,7 @@ like :_module-name_::_name-or-address_.
 A contiguous partition of a _document_ that uses the same _encoding module sequence_.
 Segment boundaries are caused by directives: an IVM, `set_symbols`, `add_symbols`, `set_macros`, `add_macros`, `use`, and `encoding` directives end segments (with a new one starting immediately afterward).
 The `import` and `module` directives can also end a segment if they are redefining a module binding that was in the encoding module sequence.
+The `end` directive closes the encoding environment; no segment follows it.
 
 **shared module**<br/>
 A module that exists independent of the data stream of an Ion document. It is identified by a
