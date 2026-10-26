@@ -40,6 +40,9 @@ Two streams using different Ion versions can be safely concatenated together pro
 A concatenated stream containing both Ion 1.0 and Ion 1.1 can only be fully read by a reader that supports Ion 1.1.
 When appended to an Ion 1.1 stream, an Ion 1.0 stream must begin with the appropriate IVM to ensure that symbol tables are handled correctly,
 and when an Ion 1.0 stream is appended to another Ion 1.0 stream, an IVM may be desirable to prevent the encoding context from unintentionally leaking into the latter of the concatenated streams.
+When a stream ends with an
+[`end` directive](modules/directives.md#end-directives), readers do not
+interpret anything appended after it, not even a following Ion version marker.
 
 Upgrading an existing application to Ion 1.1 often requires little-to-no code changes,
 as APIs typically operate at the data model level ("write an integer")
@@ -104,14 +107,15 @@ Modules can be imported from the catalog (they subsume shared symbol tables) or 
 
 A _directive_ is a top-level e-expression that modifies the encoding context.
 In text, directives use the e-expression name `$ion`, and the first child value is an operation name.
-In binary, each directive has its own _opcode_.
+In binary, each directive except `end` has its own _opcode_; `end` is a single
+`0xEF` where a top-level value could begin.
 The operation determines what changes will be made to the encoding context and which values or clauses may legally follow.
 
 ```ion
 (:$ion operation_name /*...*/ )
 ```
 
-In Ion v1.1, there are eight supported directive operations:
+In Ion v1.1, there are nine supported directive operations:
 1. [`set_symbols`](modules/directives.md#set_symbols-directives)
 2. [`add_symbols`](modules/directives.md#add_symbols-directives)
 3. [`set_macros`](modules/directives.md#set_macros-directives)
@@ -120,6 +124,7 @@ In Ion v1.1, there are eight supported directive operations:
 6. [`module`](modules/directives.md#module-directives)
 7. [`import`](modules/directives.md#import-directives)
 8. [`encoding`](modules/directives.md#encoding-directives)
+9. [`end`](modules/directives.md#end-directives)
 
 In Ion 1.1, directives must be used to modify the symbol or macro table. Ion 1.0 symbol table syntax is not supported.
 

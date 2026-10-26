@@ -9,3 +9,6 @@ they are not part of the data model and implementations are not required to pres
 
 A text Ion 1.1 stream begins with the Ion 1.1 version marker (`$ion_1_1`) followed by a series of
 [value literals](values.md) and/or [encoding expressions](e_expressions.md).
+The stream may be terminated by an
+[`end` directive](../modules/directives.md#end-directives); anything after it is
+not part of the stream.

@@ -17,7 +17,7 @@ This guarantees that the encoding context is immutable while _in_ a directive.
     (clause_N /*...*/))
 ```
 
-In Ion 1.1, there are eight supported directive operations—
+In Ion 1.1, there are nine supported directive operations—
 [`module`](#module-directives),
 [`import`](#import-directives),
 [`encoding`](#encoding-directives),
@@ -25,13 +25,15 @@ In Ion 1.1, there are eight supported directive operations—
 [`add_symbols`](#add_symbols-directives),
 [`set_macros`](#set_macros-directives),
 [`add_macros`](#add_macros-directives),
-and [`use`](#use-directives).
+[`use`](#use-directives),
+and [`end`](#end-directives).
 
 
 ## Top-level bindings
 
 The `module` and `import` directives each create a stream-level binding to a module definition.
-Once created, module bindings at this level endure until the file ends or another Ion version marker is encountered.
+Once created, module bindings at this level endure until the stream ends or
+another Ion version marker is encountered.
 Module bindings at the stream-level can be redefined.
 
 ### `module` directives
@@ -163,6 +165,40 @@ When the version is not provided, a default value of 1 is used.
 // Defaults to version 1
 (:$ion use "com.example.geometry")
 ```
+
+## `end` directives
+
+The `end` directive permanently closes the encoding context. It is the
+counterpart of an Ion version marker, which opens one. Once the encoding context
+is closed, nothing after the `end` directive is interpreted, not even a
+following Ion version marker.
+
+```ion
+(:$ion end)
+```
+
+The `end` directive is a positive signal that the stream is complete. An
+Ion-based protocol can use it to show that a stream ended deliberately rather
+than being cut short (for example, by a network error). Readers should let their
+caller distinguish a stream that ended at an `end` directive from one whose
+input was exhausted.
+
+The stream ends immediately after the directive's closing `)` in text, or after
+the `0xEF` byte in binary. Anything that follows, including whitespace and
+comments in text, is trailing content. Trailing content is not part of the
+stream and need not be valid UTF-8 or valid Ion. Readers must not interpret
+trailing content and must not raise an error because of it. This allows an Ion
+stream to be followed by other content. A reader may buffer input past an `end`
+directive, but it must be able to finish reading the stream at the `end`
+directive without requiring any input that follows it.
+
+It is an error for an `end` directive to have any clauses or values.
+
+Writing an `end` directive must be opt-in or configurable. A writer may use any
+default, but its caller must be able to control whether it is written.
+
+The `end` directive is optional. A stream that has no `end` directive ends when
+its input is exhausted.
 
 ## Ion 1.0 symbol table syntax not supported
 

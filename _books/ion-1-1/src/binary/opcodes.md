@@ -37,7 +37,7 @@ The meanings of each opcode are organized loosely by their high and low nibbles.
 |                  | `9`-`B`    | Template placeholders                                                           |
 |                  | `C`-`D`    | NOP                                                                             |
 |                  | `E`        | Struct switch modes (SID ↔ FlexSym)                                             |
-|                  | `F`        | Delimited container end                                                         |
+|                  | `F`        | `end` (top-level value position) / Delimited container or directive end         |
 | `0xF_`           | `0`        | Delimited list start                                                            |
 |                  | `1`        | Delimited S-expression start                                                    |
 |                  | `2`        | Delimited struct start (SID Mode)                                               |
