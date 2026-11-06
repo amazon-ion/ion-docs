@@ -623,6 +623,23 @@ annotations:
       symbols:["a", "b"]
     }
 
+Any annotations that follow `$ion_symbol_table` on a local symbol table MUST be
+syntactically valid, but they carry no meaning and implementations are not
+required to resolve them. In particular, an implementation MAY ignore the
+symbol ID of such an annotation, even if that symbol ID is outside the range of
+the current symbol table context. This is an exception to the requirement in
+the local symbol table [Semantics](#semantics-1) section that out-of-range
+symbol IDs raise an error.
+
+An implementation that ignores the extra annotation will interpret the
+following as a valid local symbol table, even though `$9999999999` is not
+defined in the current symbol table context:
+
+    $ion_symbol_table::$9999999999::
+    {
+      symbols:["a", "b"]
+    }
+
 <!-- references -->
 [docs]: {{ site.baseurl }}/docs.html
 [catalog]: catalog.html
